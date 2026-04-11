@@ -477,11 +477,18 @@ export default function App() {
           <div style={s.cs}>
             {ALL_CATS.map(c=><button key={c} style={s.cb(cat===c)} onClick={()=>{setCat(c);setSuperCat("Todas");}}>{c}</button>)}
           </div>
-          {/* Sub-categorías del supermercado */}
-          {(cat==="Todo"||cat==="Supermercado")&&superProds.length>0&&(
-            <div style={{...s.cs,paddingTop:4}}>
-              <button style={s.cb(superCat==="Todas")} onClick={()=>setSuperCat("Todas")}>Todas</button>
-              {SUPER_CATS.map(sc=><button key={sc} style={s.cb(superCat===sc)} onClick={()=>setSuperCat(sc)}>{sc}</button>)}
+          {/* Sub-categorías del supermercado como tarjetas */}
+          {cat==="Supermercado"&&(
+            <div style={{padding:"0 16px 8px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:4}}>
+                {[{l:"Todas",e:"🛒"},...SUPER_CATS.map(sc=>({l:sc,e:sc.split(" ")[0]}))].map(x=>(
+                  <button key={x.l} onClick={()=>setSuperCat(x.l===("Todas")?"Todas":x.l)}
+                    style={{background:superCat===(x.l==="Todas"?"Todas":x.l)?P:"#fff",border:superCat===(x.l==="Todas"?"Todas":x.l)?"none":"1px solid #f1f5f9",borderRadius:12,padding:"10px 6px",display:"flex",flexDirection:"column",alignItems:"center",gap:4,cursor:"pointer"}}>
+                    <span style={{fontSize:20}}>{x.e}</span>
+                    <span style={{fontSize:10,fontWeight:600,color:superCat===(x.l==="Todas"?"Todas":x.l)?"#fff":"#64748b",textAlign:"center",lineHeight:1.2}}>{x.l==="Todas"?"Todas":x.l.replace(/^[^\s]+\s/,"")}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           <div style={s.sec}>
