@@ -147,6 +147,7 @@ export default function App() {
   const [resetPass,setResetPass]=useState({});
 
   const [newProd,setNewProd]=useState({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false});
+  const [editingProdId,setEditingProdId]=useState(null);
   const [newPromo,setNewPromo]=useState({nombre:"",descripcion:"",precio:"",fecha_inicio:"",fecha_fin:""});
   const [logoFile,setLogoFile]=useState(null);
   const [fotoFile,setFotoFile]=useState(null);
@@ -660,9 +661,43 @@ export default function App() {
                       </div>
                     </div>
                     {p.motivo_rechazo&&<div style={{background:"#fff1f2",borderRadius:8,padding:"8px 10px",fontSize:12,color:"#be123c",marginBottom:8}}>💬 Motivo: {p.motivo_rechazo}</div>}
-                    <button onClick={async()=>{await supabase.from("productos_proveedor").update({rechazado:false,aprobado:false,motivo_rechazo:null}).eq("id",p.id);loadMyProds(provData.id);setPmsg("✅ Producto reenviado para revisión");}} style={{width:"100%",padding:"8px",borderRadius:10,border:"none",background:"#fef9c3",color:"#854d0e",fontSize:12,fontWeight:600,cursor:"pointer"}}>
-                      🔄 Corregir y reenviar para aprobación
-                    </button>
+                    {editingProdId===p.id?(
+                      <div style={{background:"#f8fafc",borderRadius:10,padding:12,border:"1px solid #e2e8f0"}}>
+                        <div style={{fontSize:13,fontWeight:600,color:P,marginBottom:8}}>✏️ Corrige tu producto</div>
+                        <label style={s.lbl}>Nombre</label>
+                        <input style={s.inp} value={newProd.nombre} onChange={e=>setNewProd({...newProd,nombre:e.target.value})}/>
+                        <label style={s.lbl}>Descripción</label>
+                        <input style={s.inp} value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
+                        <label style={s.lbl}>Precio ($)</label>
+                        <input style={s.inp} type="number" value={newProd.precio} onChange={e=>setNewProd({...newProd,precio:e.target.value})}/>
+                        <label style={s.lbl}>Foto nueva (opcional)</label>
+                        {fotoPreview&&<img src={fotoPreview} alt="" style={{width:"100%",height:90,objectFit:"cover",borderRadius:8,marginBottom:8}}/>}
+                        <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setFotoFile(f);setFotoPreview(URL.createObjectURL(f));}}}/>
+                        <button style={s.btn} disabled={loading} onClick={async()=>{
+                          setLoading(true);
+                          let foto_url=p.foto_url;
+                          if(fotoFile) foto_url=await upload(fotoFile,"productos",`${provData.id}_${Date.now()}`);
+                          await supabase.from("productos_proveedor").update({
+                            nombre:newProd.nombre,descripcion:newProd.descripcion,
+                            precio:parseFloat(newProd.precio),foto_url,
+                            rechazado:false,aprobado:false,motivo_rechazo:null
+                          }).eq("id",p.id);
+                          setLoading(false);setEditingProdId(null);
+                          setFotoFile(null);setFotoPreview(null);
+                          setPmsg("✅ Producto reenviado para aprobación");
+                          loadMyProds(provData.id);
+                        }}>{loading?"Enviando...":"📤 Enviar corrección"}</button>
+                        <button style={s.btnG} onClick={()=>{setEditingProdId(null);setFotoFile(null);setFotoPreview(null);}}>Cancelar</button>
+                      </div>
+                    ):(
+                      <button onClick={()=>{
+                        setEditingProdId(p.id);
+                        setNewProd({...newProd,nombre:p.nombre,descripcion:p.descripcion||"",precio:String(p.precio)});
+                        setProvTab("prod_rechazados");
+                      }} style={{width:"100%",padding:"8px",borderRadius:10,border:"none",background:"#fef9c3",color:"#854d0e",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                        ✏️ Corregir y reenviar para aprobación
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
