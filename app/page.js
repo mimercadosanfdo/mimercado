@@ -19,6 +19,7 @@ const MAIN_TABS = ["Inicio","Productos","Servicios","Proveedores"];
 const SUPER_CATS = ["🥩 Proteínas","🌾 Granos y cereales","🛢️ Aceites y condimentos","🥛 Lácteos","🧴 Aseo personal","🧹 Limpieza del hogar","🥦 Frutas y verduras","🧃 Bebidas"];
 const PROV_CATS = ["Comida preparada","Postres","Jugos y bebidas","Pan y repostería"];
 const ALL_CATS = ["Todo","Supermercado",...PROV_CATS];
+const PAGOS = ["Pago Móvil","Zelle","Efectivo al recibir","Binance/USDT"];
 
 const SVCS = [
   {id:"s1",name:"Mototaxi",emoji:"🛵",desc:"Te llevamos a donde necesites",price:"Desde $1.00",bg:"#fef3c7",tc:"#92400e"},
@@ -81,8 +82,11 @@ const s = {
   pf:(p)=>({background:"#22c55e",height:"100%",width:`${Math.min(p,100)}%`,borderRadius:4,transition:"width 0.3s"}),
   btn:{background:P,color:"#fff",border:"none",borderRadius:14,padding:"14px",fontSize:15,fontWeight:700,width:"100%",cursor:"pointer",marginTop:10},
   btnG:{background:"#f1f5f9",color:"#64748b",border:"none",borderRadius:14,padding:"13px",fontSize:14,fontWeight:600,width:"100%",cursor:"pointer",marginTop:8},
-  btnWa:{background:"#25d366",color:"#fff",border:"none",borderRadius:14,padding:"13px",fontSize:14,fontWeight:700,width:"100%",cursor:"pointer",marginBottom:10},
+  btnWa:{background:"#25d366",color:"#fff",border:"none",borderRadius:14,padding:"14px",fontSize:15,fontWeight:700,width:"100%",cursor:"pointer",marginTop:10},
   btnPurple:{background:"#7e22ce",color:"#fff",border:"none",borderRadius:14,padding:"13px",fontSize:14,fontWeight:700,width:"100%",cursor:"pointer",marginTop:8},
+  btnRed:{background:"#ef4444",color:"#fff",border:"none",borderRadius:10,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer"},
+  btnAmber:{background:"#f59e0b",color:P,border:"none",borderRadius:10,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer"},
+  btnGreen:{background:"#22c55e",color:"#fff",border:"none",borderRadius:10,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer"},
   inp:{width:"100%",padding:"11px 14px",borderRadius:12,border:"1px solid #e2e8f0",fontSize:14,marginBottom:10,boxSizing:"border-box",outline:"none"},
   lbl:{fontSize:12,fontWeight:600,color:"#64748b",marginBottom:4,display:"block"},
   ib:{background:"#f1f5f9",borderRadius:12,padding:"10px 14px",marginBottom:8},
@@ -92,7 +96,13 @@ const s = {
   apvBtn:{flex:1,padding:"8px",borderRadius:10,border:"none",fontSize:13,fontWeight:600,cursor:"pointer"},
   promoCard:{background:"linear-gradient(135deg,#7c3aed,#4f46e5)",borderRadius:16,padding:16,margin:"0 16px 12px",color:"#fff"},
   comboCard:{background:"#fff",borderRadius:14,padding:12,border:"2px solid #f59e0b",marginBottom:10},
-  admRow:(a)=>({width:"100%",padding:"10px 14px",background:a?"#0f172a":"#f8fafc",color:a?"#fff":"#1e293b",border:"1px solid #e2e8f0",borderRadius:10,fontSize:13,fontWeight:500,cursor:"pointer",textAlign:"left",marginBottom:6,display:"flex",justifyContent:"space-between"}),
+  admRow:(a)=>({width:"100%",padding:"10px 14px",background:a?"#0f172a":"#f8fafc",color:a?"#fff":"#1e293b",border:"1px solid #e2e8f0",borderRadius:10,fontSize:13,fontWeight:500,cursor:"pointer",textAlign:"left",marginBottom:6,display:"flex",justifyContent:"space-between",alignItems:"center"}),
+  toggleBtn:(on)=>({display:"flex",alignItems:"center",gap:8,background:on?"#f0fdf4":"#fff7ed",border:`1px solid ${on?"#86efac":"#fcd34d"}`,borderRadius:20,padding:"8px 16px",cursor:"pointer",width:"100%",justifyContent:"center"}),
+  statCard:{background:"#fff",borderRadius:12,padding:"12px 14px",border:"1px solid #f1f5f9",textAlign:"center"},
+  statNum:{fontSize:22,fontWeight:700,color:P},
+  statLbl:{fontSize:11,color:"#94a3b8",marginTop:2},
+  barWrap:{background:"#f1f5f9",borderRadius:8,overflow:"hidden",height:8,flex:1},
+  barFill:(p,c)=>({height:"100%",width:`${Math.min(p,100)}%`,background:c,borderRadius:8,transition:"width 0.5s"}),
 };
 
 const getHorario = () => {
@@ -101,6 +111,11 @@ const getHorario = () => {
   if(h>=11&&h<15) return {label:"☀️ Almuerzos del día",sub:"El menú perfecto para el mediodía"};
   if(h>=15&&h<18) return {label:"🍪 Meriendas",sub:"Algo rico para la tarde"};
   return {label:"🌙 Cenas",sub:"Termina el día con buen sabor"};
+};
+
+const formatTime = (ts) => {
+  const d = new Date(ts);
+  return `${d.getHours()}:${String(d.getMinutes()).padStart(2,"0")}`;
 };
 
 export default function App() {
@@ -114,7 +129,7 @@ export default function App() {
   const [zonaSelId,setZonaSelId] = useState("");
   const [zonaSel,setZonaSel] = useState(null);
   const [addr,setAddr] = useState({calle:"",referencia:""});
-  const [form,setForm] = useState({nombre:"",telefono:"",sexo:"",pago:"pago_movil",recibirPromos:false});
+  const [form,setForm] = useState({nombre:"",telefono:"",sexo:"",pago:"Pago Móvil",recibirPromos:false});
   const [selSvc,setSelSvc] = useState(null);
   const [svcForm,setSvcForm] = useState({nombre:"",telefono:"",direccion:"",detalle:""});
   const [superProds,setSuperProds] = useState([]);
@@ -124,6 +139,7 @@ export default function App() {
   const [resenaSheet,setResenaSheet] = useState(null);
   const [resena,setResena] = useState({estrellas:0,comentario:"",nombre:"",telefono:""});
   const [resenaMsj,setResenaMsj] = useState("");
+  const [pedidoRef,setPedidoRef] = useState("");
 
   // Proveedor
   const [provMode,setProvMode] = useState("login");
@@ -131,11 +147,15 @@ export default function App() {
   const [provData,setProvData] = useState(null);
   const [myProds,setMyProds] = useState([]);
   const [myPromos,setMyPromos] = useState([]);
+  const [myVentas,setMyVentas] = useState([]);
   const [pendProvs,setPendProvs] = useState([]);
   const [pendProds,setPendProds] = useState([]);
   const [pendResenas,setPendResenas] = useState([]);
   const [allZonas,setAllZonas] = useState([]);
-  const [topProds,setTopProds] = useState([]);
+  const [allProveedores,setAllProveedores] = useState([]);
+  const [adminVentas,setAdminVentas] = useState([]);
+  const [catFilter,setCatFilter] = useState("Todas");
+  const [combosAdmin,setCombosAdmin] = useState([]);
 
   const [newProd,setNewProd] = useState({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false});
   const [newPromo,setNewPromo] = useState({nombre:"",descripcion:"",precio:"",fecha_inicio:"",fecha_fin:""});
@@ -145,10 +165,8 @@ export default function App() {
   const [fotoPreview,setFotoPreview] = useState(null);
   const [loading,setLoading] = useState(false);
   const [pmsg,setPmsg] = useState("");
-  const [provTab,setProvTab] = useState("productos");
-  const [adminSec,setAdminSec] = useState("proveedores");
-
-  // Admin super
+  const [provTab,setProvTab] = useState("estado");
+  const [adminSec,setAdminSec] = useState("dashboard");
   const [newSP,setNewSP] = useState({nombre:"",marca:"",presentacion:"",descripcion:"",precio:"",unidad:"kg",emoji:"🛒",categoria:SUPER_CATS[0]});
   const [spFoto,setSpFoto] = useState(null);
   const [spFotoPreview,setSpFotoPreview] = useState(null);
@@ -162,36 +180,21 @@ export default function App() {
     const [z,sp,pp,pr,cb] = await Promise.all([
       supabase.from("zonas_delivery").select("*").eq("activa",true).order("municipio"),
       supabase.from("productos_supermercado").select("*").eq("disponible",true).order("categoria"),
-      supabase.from("productos_proveedor").select("*,proveedores(negocio,logo_url)").eq("aprobado",true).eq("disponible",true),
-      supabase.from("promociones_proveedor").select("*,proveedores(negocio,logo_url)").eq("aprobada",true).eq("activa",true).gte("fecha_fin",hoy),
+      supabase.from("productos_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo)").eq("aprobado",true).eq("disponible",true),
+      supabase.from("promociones_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo)").eq("aprobada",true).eq("activa",true).gte("fecha_fin",hoy),
       supabase.from("combos").select("*").eq("activa",true),
     ]);
     if(z.data) setZonas(z.data);
     if(sp.data) setSuperProds(sp.data);
-    if(pp.data) setProvProds(pp.data.filter(p=>p.permanente||(p.fecha===hoy&&p.stock>0)));
-    if(pr.data) setProvPromos(pr.data);
+    if(pp.data) setProvProds(pp.data.filter(p=>!p.proveedores?.en_pausa&&p.proveedores?.activo!==false&&(p.permanente||(p.fecha===hoy&&p.stock>0))));
+    if(pr.data) setProvPromos(pr.data.filter(p=>!p.proveedores?.en_pausa&&p.proveedores?.activo!==false));
     if(cb.data) setCombos(cb.data);
   };
 
   const allProds = [
-    ...superProds.map(p=>({
-      id:`sp_${p.id}`,name:p.nombre,cat:"Supermercado",superCat:p.categoria,
-      price:p.precio,unit:p.unidad,emoji:p.emoji||"🛒",margin:0.10,
-      foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,
-      tag:null,
-    })),
-    ...provProds.map(p=>({
-      id:`pv_${p.id}`,name:p.nombre,cat:p.categoria,price:p.precio,unit:p.unidad,
-      emoji:"🍽️",margin:0.20,kitchen:p.proveedores?.negocio,logo:p.proveedores?.logo_url,
-      foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,
-      stock:p.stock,horario:p.permanente?"Siempre disponible":`${p.horario_inicio}–${p.horario_fin}`,
-      tag:p.stock<=3?`Solo ${p.stock} disp.`:null,dbId:p.id,
-    })),
-    ...provPromos.map(pr=>({
-      id:`promo_${pr.id}`,name:pr.nombre,cat:"Comida preparada",price:pr.precio,unit:"promo",
-      emoji:"🎁",margin:0.20,kitchen:pr.proveedores?.negocio,logo:pr.proveedores?.logo_url,
-      descripcion:pr.descripcion,isPromo:true,tag:"🎉 Promo",horario:`Hasta ${pr.fecha_fin}`,
-    })),
+    ...superProds.map(p=>({id:`sp_${p.id}`,name:p.nombre,cat:"Supermercado",superCat:p.categoria,price:p.precio,unit:p.unidad,emoji:p.emoji||"🛒",margin:0.10,foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,abierto:true})),
+    ...provProds.map(p=>({id:`pv_${p.id}`,name:p.nombre,cat:p.categoria,price:p.precio,unit:p.unidad,emoji:"🍽️",margin:0.20,kitchen:p.proveedores?.negocio,logo:p.proveedores?.logo_url,foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,stock:p.stock,horario:p.permanente?"Siempre disponible":`${p.horario_inicio}–${p.horario_fin}`,tag:p.stock<=3?`Solo ${p.stock} disp.`:null,dbId:p.id,abierto:p.proveedores?.activo!==false&&!p.proveedores?.en_pausa})),
+    ...provPromos.map(pr=>({id:`promo_${pr.id}`,name:pr.nombre,cat:"Comida preparada",price:pr.precio,unit:"promo",emoji:"🎁",margin:0.20,kitchen:pr.proveedores?.negocio,logo:pr.proveedores?.logo_url,descripcion:pr.descripcion,isPromo:true,tag:"🎉 Promo",horario:`Hasta ${pr.fecha_fin}`,abierto:pr.proveedores?.activo!==false&&!pr.proveedores?.en_pausa})),
   ];
 
   const filteredProds = allProds.filter(p=>{
@@ -201,14 +204,8 @@ export default function App() {
     return matchCat&&matchSearch&&matchSuperCat;
   });
 
-  const superGroups = cat==="Todo"||cat==="Supermercado" ? SUPER_CATS.map(sc=>({
-    cat:sc,
-    items:filteredProds.filter(p=>p.cat==="Supermercado"&&(superCat==="Todas"||p.superCat===sc)&&p.superCat===sc)
-  })).filter(g=>g.items.length>0) : [];
-
-  const provGroups = PROV_CATS.filter(c=>cat==="Todo"||cat===c).map(c=>({
-    cat:c,items:filteredProds.filter(p=>p.cat===c)
-  })).filter(g=>g.items.length>0);
+  const superGroups = (cat==="Todo"||cat==="Supermercado") ? SUPER_CATS.map(sc=>({cat:sc,items:filteredProds.filter(p=>p.cat==="Supermercado"&&p.superCat===sc)})).filter(g=>g.items.length>0) : [];
+  const provGroups = PROV_CATS.filter(c=>cat==="Todo"||cat===c).map(c=>({cat:c,items:filteredProds.filter(p=>p.cat===c)})).filter(g=>g.items.length>0);
 
   const add = (p)=>setCart(c=>({...c,[p.id]:{...p,qty:(c[p.id]?.qty||0)+1}}));
   const rem = (id)=>setCart(c=>{const n={...c};n[id].qty>1?n[id]={...n[id],qty:n[id].qty-1}:delete n[id];return n;});
@@ -223,6 +220,8 @@ export default function App() {
   const total = sub+del;
   const pct = (sub/freeMin)*100;
 
+  const generarRef = () => `PED-${Date.now().toString().slice(-5)}`;
+
   const saveCliente = async () => {
     if(!form.telefono||!form.nombre) return;
     const {data:ex} = await supabase.from("clientes").select("id").eq("telefono",form.telefono).single();
@@ -231,15 +230,21 @@ export default function App() {
 
   const confirm = async () => {
     if(!form.nombre||!form.telefono||!zonaSelId) return alert("Completa nombre, teléfono y zona");
+    const ref = generarRef();
+    setPedidoRef(ref);
     await saveCliente();
-    setSheet("success");
+    setSheet("resumen");
+  };
+
+  const buildWaMsg = () => {
+    const lineas = items.map(i=>`  • ${i.name} x${i.qty} — $${(i.price*i.qty).toFixed(2)}`).join("\n");
+    const dir = `${zonaSel?.zona||""}, ${addr.calle}${addr.referencia?`, ${addr.referencia}`:""}`;
+    const hora = new Date().toLocaleTimeString("es-VE",{hour:"2-digit",minute:"2-digit"});
+    return `🛒 *Nuevo pedido ${APP_NAME} ${CITY}*\n📋 Ref: ${pedidoRef}\n${"─".repeat(28)}\n${lineas}\n${"─".repeat(28)}\nSubtotal: $${sub.toFixed(2)}\nDelivery: ${del===0?"GRATIS 🎉":"$"+del.toFixed(2)}\n*TOTAL: $${total.toFixed(2)}*\n${"─".repeat(28)}\n👤 Cliente: ${form.nombre}\n📱 Teléfono: ${form.telefono}\n📍 Zona: ${zonaSel?.zona||""}\n🏠 Dirección: ${dir}\n💳 Pago: ${form.pago}\n⏰ ${hora}`;
   };
 
   const sendWa = () => {
-    const lines = items.map(i=>`• ${i.name} x${i.qty} — $${(i.price*i.qty).toFixed(2)}`).join("\n");
-    const dir = `${zonaSel?.zona||""}, ${addr.calle}, ${addr.referencia}`;
-    const m = `*Pedido ${APP_NAME} ${CITY}*\n\n${lines}\n\nSubtotal: $${sub.toFixed(2)}\nDelivery: ${del===0?"GRATIS":"$"+del.toFixed(2)}\n*Total: $${total.toFixed(2)}*\n\nNombre: ${form.nombre}\nTeléfono: ${form.telefono}\nDirección: ${dir}\nPago: ${form.pago}`;
-    window.open(`https://wa.me/${WA}?text=${encodeURIComponent(m)}`);
+    window.open(`https://wa.me/${WA}?text=${encodeURIComponent(buildWaMsg())}`);
   };
 
   const sendSvcWa = () => {
@@ -268,7 +273,9 @@ export default function App() {
     setLoading(false);
     if(error||!data) return setPmsg("Usuario no encontrado");
     if(!data.aprobado) return setPmsg("Tu cuenta está pendiente de aprobación");
-    setProvData(data);setProvMode("dash");loadMyProds(data.id);loadMyPromos(data.id);
+    if(data.en_pausa) return setPmsg("Tu cuenta está pausada. Contacta al administrador.");
+    setProvData(data);setProvMode("dash");
+    loadMyProds(data.id);loadMyPromos(data.id);loadMyVentas(data.id);
   };
 
   const handleRegister = async () => {
@@ -276,7 +283,7 @@ export default function App() {
     setLoading(true);
     let logo_url=null;
     if(logoFile) logo_url=await upload(logoFile,"logos",`${provForm.usuario}_logo`);
-    const {error} = await supabase.from("proveedores").insert({usuario:provForm.usuario,nombre:provForm.nombre,negocio:provForm.negocio,telefono:provForm.telefono,categorias:provForm.categorias,logo_url,aprobado:true});
+    const {error} = await supabase.from("proveedores").insert({usuario:provForm.usuario,nombre:provForm.nombre,negocio:provForm.negocio,telefono:provForm.telefono,categorias:provForm.categorias,logo_url,aprobado:true,activo:true,en_pausa:false});
     setLoading(false);
     if(error) return setPmsg(error.message.includes("unique")?"Ese usuario ya existe":"Error al registrarse");
     setPmsg("✅ Registro exitoso. Ya puedes iniciar sesión.");
@@ -294,19 +301,52 @@ export default function App() {
     if(data) setMyPromos(data);
   };
 
+  const loadMyVentas = async(pid)=>{
+    const {data}=await supabase.from("ventas").select("*").eq("proveedor_id",pid).order("fecha",{ascending:false}).limit(50);
+    if(data) setMyVentas(data);
+  };
+
   const loadAdmin = async()=>{
-    const [pv,pr,re,zo,top]=await Promise.all([
+    const [pv,pr,re,zo,av,todos]=await Promise.all([
       supabase.from("proveedores").select("*").eq("aprobado",false),
       supabase.from("productos_proveedor").select("*,proveedores(negocio)").eq("aprobado",false),
       supabase.from("resenas").select("*").eq("aprobada",false),
       supabase.from("zonas_delivery").select("*").order("municipio"),
-      supabase.from("compras_clientes").select("producto_id,cantidad").order("cantidad",{ascending:false}).limit(10),
+      supabase.from("ventas").select("*").order("fecha",{ascending:false}).limit(100),
+      supabase.from("proveedores").select("*").eq("aprobado",true).order("negocio"),
     ]);
     if(pv.data) setPendProvs(pv.data);
     if(pr.data) setPendProds(pr.data);
     if(re.data) setPendResenas(re.data);
     if(zo.data) setAllZonas(zo.data);
-    if(top.data) setTopProds(top.data);
+    if(av.data) setAdminVentas(av.data);
+    if(todos.data) setAllProveedores(todos.data);
+    const {data:cb}=await supabase.from("combos").select("*").order("created_at",{ascending:false});
+    if(cb) setCombosAdmin(cb);
+  };
+
+  const togglePausa = async(id,enPausa)=>{
+    await supabase.from("proveedores").update({en_pausa:!enPausa}).eq("id",id);
+    loadAdmin();loadAll();
+  };
+
+  const toggleActivo = async(id,activo)=>{
+    await supabase.from("proveedores").update({activo:!activo}).eq("id",id);
+    loadAdmin();loadAll();
+  };
+
+  const deleteProveedor = async(id)=>{
+    if(!confirm("¿Eliminar este proveedor? Esta acción no se puede deshacer.")) return;
+    await supabase.from("productos_proveedor").delete().eq("proveedor_id",id);
+    await supabase.from("proveedores").delete().eq("id",id);
+    loadAdmin();loadAll();
+  };
+
+  const toggleMiEstado = async()=>{
+    const nuevoEstado = !provData.activo;
+    await supabase.from("proveedores").update({activo:nuevoEstado}).eq("id",provData.id);
+    setProvData({...provData,activo:nuevoEstado});
+    loadAll();
   };
 
   const publishProd = async()=>{
@@ -316,13 +356,7 @@ export default function App() {
     if(fotoFile) foto_url=await upload(fotoFile,"productos",`${provData.id}_${Date.now()}`);
     const {data:existing}=await supabase.from("productos_proveedor").select("id").eq("proveedor_id",provData.id).eq("nombre",newProd.nombre).eq("primera_aprobacion",true).limit(1);
     const auto=existing&&existing.length>0;
-    await supabase.from("productos_proveedor").insert({
-      proveedor_id:provData.id,nombre:newProd.nombre,descripcion:newProd.descripcion,
-      marca:newProd.marca,presentacion:newProd.presentacion,precio:parseFloat(newProd.precio),
-      unidad:newProd.unidad,categoria:newProd.categoria,foto_url,stock:parseInt(newProd.stock),
-      horario_inicio:newProd.hi,horario_fin:newProd.hf,aprobado:auto,disponible:true,
-      permanente:newProd.permanente,primera_aprobacion:auto,fecha:new Date().toISOString().split("T")[0],
-    });
+    await supabase.from("productos_proveedor").insert({proveedor_id:provData.id,nombre:newProd.nombre,descripcion:newProd.descripcion,marca:newProd.marca,presentacion:newProd.presentacion,precio:parseFloat(newProd.precio),unidad:newProd.unidad,categoria:newProd.categoria,foto_url,stock:parseInt(newProd.stock),horario_inicio:newProd.hi,horario_fin:newProd.hf,aprobado:auto,disponible:true,permanente:newProd.permanente,primera_aprobacion:auto,fecha:new Date().toISOString().split("T")[0]});
     setLoading(false);
     setPmsg(auto?"✅ Producto publicado directamente":"✅ Enviado al admin para aprobación");
     setNewProd({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false});
@@ -346,10 +380,10 @@ export default function App() {
   };
 
   const notifyClientes = async(promo)=>{
-    const {data:compradores}=await supabase.from("compras_clientes").select("clientes(nombre,telefono)").eq("proveedor_id",provData.id);
-    const nums=[...new Set((compradores||[]).filter(c=>c.clientes?.telefono).map(c=>c.clientes.telefono))];
+    const {data:compradores}=await supabase.from("ventas").select("cliente_telefono,cliente_nombre").eq("proveedor_id",provData.id);
+    const nums=[...new Set((compradores||[]).filter(c=>c.cliente_telefono).map(c=>c.cliente_telefono))];
     if(nums.length===0) return alert("Aún no tienes compradores registrados");
-    const msg=`🎉 *${provData.negocio}* tiene una nueva promo en *${APP_NAME} ${CITY}*!\n\n*${promo.nombre}*\n${promo.descripcion}\n💰 Precio especial: $${promo.precio}\n📅 Válida hasta: ${promo.fecha_fin}\n\n👉 ${typeof window!=="undefined"?window.location.href:"mimercado-mu5k.vercel.app"}`;
+    const msg=`🎉 *${provData.negocio}* tiene una nueva promo en *${APP_NAME} ${CITY}*!\n\n*${promo.nombre}*\n${promo.descripcion}\n💰 Precio especial: $${promo.precio}\n📅 Válida hasta: ${promo.fecha_fin}\n\n👉 Abre la app y pide: mimercado-mu5k.vercel.app`;
     window.open(`https://wa.me/${nums[0]}?text=${encodeURIComponent(msg)}`);
   };
 
@@ -370,16 +404,30 @@ export default function App() {
     loadAll();
   };
 
-  const approveP=async(id)=>{await supabase.from("proveedores").update({aprobado:true}).eq("id",id);loadAdmin();};
+  const approveP=async(id)=>{await supabase.from("proveedores").update({aprobado:true,activo:true,en_pausa:false}).eq("id",id);loadAdmin();};
   const rejectP=async(id)=>{await supabase.from("proveedores").delete().eq("id",id);loadAdmin();};
   const approvePr=async(id)=>{await supabase.from("productos_proveedor").update({aprobado:true,primera_aprobacion:true}).eq("id",id);loadAdmin();loadAll();};
   const rejectPr=async(id)=>{await supabase.from("productos_proveedor").delete().eq("id",id);loadAdmin();};
   const approveRe=async(id)=>{await supabase.from("resenas").update({aprobada:true}).eq("id",id);loadAdmin();};
   const rejectRe=async(id)=>{await supabase.from("resenas").delete().eq("id",id);loadAdmin();};
   const addZona=async()=>{if(!newZona.zona)return;await supabase.from("zonas_delivery").insert(newZona);setNewZona({municipio:"San Fernando",zona:"",tipo:"barrio",costo_delivery:1.50,delivery_gratis_super:18.00,delivery_gratis_comida:12.00});loadAdmin();loadAll();};
-  const addCombo=async()=>{if(!newCombo.nombre||!newCombo.precio)return;await supabase.from("combos").insert({...newCombo,precio:parseFloat(newCombo.precio),activa:true});setNewCombo({nombre:"",descripcion:"",precio:"",temporada:"",fecha_inicio:"",fecha_fin:""});loadAll();};
+  const addCombo=async()=>{if(!newCombo.nombre||!newCombo.precio)return;await supabase.from("combos").insert({...newCombo,precio:parseFloat(newCombo.precio),activa:true});setNewCombo({nombre:"",descripcion:"",precio:"",temporada:"",fecha_inicio:"",fecha_fin:""});loadAll();loadAdmin();};
 
   const horario=getHorario();
+
+  // Stats helpers
+  const ventasHoy = adminVentas.filter(v=>v.fecha?.startsWith(new Date().toISOString().split("T")[0]));
+  const ingresoHoy = ventasHoy.reduce((a,v)=>a+(v.total_item||0),0);
+  const ingresoTotal = adminVentas.reduce((a,v)=>a+(v.total_item||0),0);
+  const topAdminProds = Object.entries(adminVentas.reduce((a,v)=>{a[v.producto_nombre]=(a[v.producto_nombre]||0)+v.cantidad;return a;},{})).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  const myVentasHoy = myVentas.filter(v=>v.fecha?.startsWith(new Date().toISOString().split("T")[0]));
+  const myIngresoHoy = myVentasHoy.reduce((a,v)=>a+(v.total_item||0),0);
+  const myIngresoTotal = myVentas.reduce((a,v)=>a+(v.total_item||0),0);
+  const myTopProds = Object.entries(myVentas.reduce((a,v)=>{a[v.producto_nombre]=(a[v.producto_nombre]||0)+v.cantidad;return a;},{})).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const myClientes = [...new Set(myVentas.map(v=>v.cliente_telefono).filter(Boolean))].length;
+
+  const filteredProvs = catFilter==="Todas" ? allProveedores : allProveedores.filter(p=>(p.categorias||[]).includes(catFilter));
 
   const QtyCtrl=({p})=>cart[p.id]?(
     <div style={s.qR}>
@@ -389,21 +437,58 @@ export default function App() {
     </div>
   ):<button style={s.aBtn} onClick={()=>add(p)}>+</button>;
 
-  const Card=({p})=>(
-    <div style={s.card}>
-      {p.foto?<img src={p.foto} alt={p.name} style={s.cImg}/>:<div style={s.cEm}>{p.emoji}</div>}
-      {p.isPromo&&<div style={s.promoTag}>🎉 Promoción</div>}
-      {p.tag&&!p.isPromo&&<div style={s.tag}>{p.tag}</div>}
-      <div style={s.cNm}>{p.name}</div>
-      {(p.marca||p.presentacion)&&<div style={s.cMeta}>{[p.marca,p.presentacion].filter(Boolean).join(" · ")}</div>}
-      {p.descripcion&&<div style={{fontSize:10,color:"#94a3b8",lineHeight:1.3}}>{p.descripcion}</div>}
-      {p.kitchen&&<div style={s.cKt}>{p.logo&&<img src={p.logo} alt="" style={s.cLogo}/>}<span>{p.kitchen}</span></div>}
-      {p.horario&&<div style={{fontSize:10,color:"#94a3b8"}}>🕐 {p.horario}</div>}
-      <div style={s.cBt}>
-        <div><div style={s.cPr}>${p.price.toFixed(2)}</div><div style={s.cUn}>/ {p.unit}</div></div>
-        <QtyCtrl p={p}/>
+  const Card=({p})=>{
+    const cerrado = p.abierto===false;
+    return (
+      <div style={{...s.card,opacity:cerrado?0.7:1,position:"relative"}}>
+        {cerrado&&(
+          <div style={{position:"absolute",inset:0,background:"rgba(255,255,255,0.6)",borderRadius:14,zIndex:2,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:8,gap:6}}>
+            <div style={{fontSize:22}}>🔴</div>
+            <div style={{fontSize:11,fontWeight:700,color:"#be123c",textAlign:"center"}}>Cerrado ahora</div>
+            <button onClick={()=>{setCat("Todo");setSearch("");}} style={{fontSize:10,background:"#0f172a",color:"#fff",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer"}}>Ver otras opciones</button>
+          </div>
+        )}
+        {p.foto?<img src={p.foto} alt={p.name} style={s.cImg}/>:<div style={s.cEm}>{p.emoji}</div>}
+        {p.isPromo&&<div style={s.promoTag}>🎉 Promoción</div>}
+        {p.tag&&!p.isPromo&&<div style={s.tag}>{p.tag}</div>}
+        {p.kitchen&&(
+          <div style={s.cKt}>
+            {p.logo&&<img src={p.logo} alt="" style={s.cLogo}/>}
+            <span>{p.kitchen}</span>
+            <span style={{marginLeft:"auto",fontSize:10,fontWeight:600,color:cerrado?"#be123c":"#15803d"}}>
+              {cerrado?"● Cerrado":"● Abierto"}
+            </span>
+          </div>
+        )}
+        <div style={s.cNm}>{p.name}</div>
+        {(p.marca||p.presentacion)&&<div style={s.cMeta}>{[p.marca,p.presentacion].filter(Boolean).join(" · ")}</div>}
+        {p.descripcion&&<div style={{fontSize:10,color:"#94a3b8",lineHeight:1.3}}>{p.descripcion}</div>}
+        {p.horario&&<div style={{fontSize:10,color:"#94a3b8"}}>🕐 {p.horario}</div>}
+        <div style={s.cBt}>
+          <div><div style={s.cPr}>${p.price.toFixed(2)}</div><div style={s.cUn}>/ {p.unit}</div></div>
+          {cerrado ? <div style={{fontSize:11,color:"#94a3b8"}}>No disp.</div> : <QtyCtrl p={p}/>}
+        </div>
+        {p.dbId&&!cerrado&&<button onClick={()=>{setResenaSheet(p.dbId);setSheet("resena");}} style={{fontSize:10,color:"#94a3b8",background:"none",border:"none",cursor:"pointer",textAlign:"left",padding:0,marginTop:2}}>⭐ Dejar reseña</button>}
       </div>
-      {p.dbId&&<button onClick={()=>{setResenaSheet(p.dbId);setSheet("resena");}} style={{fontSize:10,color:"#94a3b8",background:"none",border:"none",cursor:"pointer",textAlign:"left",padding:0,marginTop:2}}>⭐ Dejar reseña</button>}
+    );
+  };
+
+  const StatCard=({num,lbl,color})=>(
+    <div style={s.statCard}>
+      <div style={{...s.statNum,color:color||P}}>{num}</div>
+      <div style={s.statLbl}>{lbl}</div>
+    </div>
+  );
+
+  const BarChart=({data,max})=>(
+    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+      {data.map(([name,val],i)=>(
+        <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
+          <div style={{fontSize:11,color:"#64748b",width:110,flexShrink:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name}</div>
+          <div style={s.barWrap}><div style={s.barFill((val/max)*100,["#6366f1","#f59e0b","#22c55e","#ef4444","#0ea5e9"][i%5])}/></div>
+          <div style={{fontSize:12,fontWeight:700,color:P,minWidth:24,textAlign:"right"}}>{val}</div>
+        </div>
+      ))}
     </div>
   );
 
@@ -416,7 +501,6 @@ export default function App() {
         </div>
         {count>0&&<button style={s.cBtn} onClick={()=>setSheet("cart")}>🛒 <span style={s.cN}>{count}</span><span style={{fontSize:12}}>${total.toFixed(2)}</span></button>}
       </div>
-
       <div style={s.tabs}>
         {MAIN_TABS.map(t=><button key={t} style={s.tab(tab===t)} onClick={()=>setTab(t)}>{t}</button>)}
       </div>
@@ -474,15 +558,12 @@ export default function App() {
             <span style={s.bdg("#22c55e","#fff")}>Gratis desde $10 comida · $15 super</span>
           </div>
           <div style={s.sw}><input style={s.si} placeholder="🔍  Buscar..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
-          <div style={s.cs}>
-            {ALL_CATS.map(c=><button key={c} style={s.cb(cat===c)} onClick={()=>{setCat(c);setSuperCat("Todas");}}>{c}</button>)}
-          </div>
-          {/* Sub-categorías del supermercado como tarjetas */}
+          <div style={s.cs}>{ALL_CATS.map(c=><button key={c} style={s.cb(cat===c)} onClick={()=>{setCat(c);setSuperCat("Todas");}}>{c}</button>)}</div>
           {cat==="Supermercado"&&(
             <div style={{padding:"0 16px 8px"}}>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:4}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
                 {[{l:"Todas",e:"🛒"},...SUPER_CATS.map(sc=>({l:sc,e:sc.split(" ")[0]}))].map(x=>(
-                  <button key={x.l} onClick={()=>setSuperCat(x.l===("Todas")?"Todas":x.l)}
+                  <button key={x.l} onClick={()=>setSuperCat(x.l==="Todas"?"Todas":x.l)}
                     style={{background:superCat===(x.l==="Todas"?"Todas":x.l)?P:"#fff",border:superCat===(x.l==="Todas"?"Todas":x.l)?"none":"1px solid #f1f5f9",borderRadius:12,padding:"10px 6px",display:"flex",flexDirection:"column",alignItems:"center",gap:4,cursor:"pointer"}}>
                     <span style={{fontSize:20}}>{x.e}</span>
                     <span style={{fontSize:10,fontWeight:600,color:superCat===(x.l==="Todas"?"Todas":x.l)?"#fff":"#64748b",textAlign:"center",lineHeight:1.2}}>{x.l==="Todas"?"Todas":x.l.replace(/^[^\s]+\s/,"")}</span>
@@ -492,19 +573,11 @@ export default function App() {
             </div>
           )}
           <div style={s.sec}>
-            {/* Supermercado por categorías */}
             {(cat==="Todo"||cat==="Supermercado")&&superGroups.map(g=>(
-              <div key={g.cat}>
-                <div style={s.sT}>{g.cat}</div>
-                <div style={s.grid}>{g.items.map(p=><Card key={p.id} p={p}/>)}</div>
-              </div>
+              <div key={g.cat}><div style={s.sT}>{g.cat}</div><div style={s.grid}>{g.items.map(p=><Card key={p.id} p={p}/>)}</div></div>
             ))}
-            {/* Proveedores */}
             {provGroups.map(g=>(
-              <div key={g.cat}>
-                <div style={s.sT}>{g.cat==="Comida preparada"?"🍱":g.cat==="Postres"?"🍰":g.cat==="Jugos y bebidas"?"🥤":"🍞"} {g.cat}</div>
-                <div style={s.grid}>{g.items.map(p=><Card key={p.id} p={p}/>)}</div>
-              </div>
+              <div key={g.cat}><div style={s.sT}>{g.cat==="Comida preparada"?"🍱":g.cat==="Postres"?"🍰":g.cat==="Jugos y bebidas"?"🥤":"🍞"} {g.cat}</div><div style={s.grid}>{g.items.map(p=><Card key={p.id} p={p}/>)}</div></div>
             ))}
             {filteredProds.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🔍</div><p>No encontramos ese producto</p></div>}
           </div>
@@ -523,11 +596,11 @@ export default function App() {
               <div key={sv.id} style={{background:"#fff",borderRadius:14,padding:14,border:"1px solid #f1f5f9",display:"flex",gap:12,alignItems:"flex-start",marginBottom:10}}>
                 <div style={{fontSize:28,width:44,height:44,background:sv.bg,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{sv.emoji}</div>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:14,fontWeight:700,color:"#1e293b"}}>{sv.name}</div>
-                  <div style={{fontSize:12,color:"#64748b",margin:"2px 0 6px",lineHeight:1.4}}>{sv.desc}</div>
+                  <div style={{fontSize:14,fontWeight:700}}>{sv.name}</div>
+                  <div style={{fontSize:12,color:"#64748b",margin:"2px 0 6px"}}>{sv.desc}</div>
                   <span style={{fontSize:11,fontWeight:600,color:sv.tc,background:sv.bg,padding:"2px 8px",borderRadius:8}}>{sv.price}</span>
                 </div>
-                <button style={{background:P,color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",flexShrink:0}} onClick={()=>{setSelSvc(sv);setSheet("service");}}>Solicitar</button>
+                <button style={{background:P,color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer"}} onClick={()=>{setSelSvc(sv);setSheet("service");}}>Solicitar</button>
               </div>
             ))}
           </div>
@@ -543,11 +616,11 @@ export default function App() {
               {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
               {provMode==="register"&&(
                 <>
-                  <label style={s.lbl}>Usuario (sin espacios)</label>
+                  <label style={s.lbl}>Usuario</label>
                   <input style={s.inp} placeholder="cocina_maria" value={provForm.usuario} onChange={e=>setProvForm({...provForm,usuario:e.target.value.toLowerCase().replace(/\s/g,"")})}/>
                   <label style={s.lbl}>Nombre completo</label>
                   <input style={s.inp} placeholder="María González" value={provForm.nombre} onChange={e=>setProvForm({...provForm,nombre:e.target.value})}/>
-                  <label style={s.lbl}>Nombre de tu negocio</label>
+                  <label style={s.lbl}>Nombre del negocio</label>
                   <input style={s.inp} placeholder="Cocina de María" value={provForm.negocio} onChange={e=>setProvForm({...provForm,negocio:e.target.value})}/>
                   <label style={s.lbl}>WhatsApp</label>
                   <input style={s.inp} placeholder="+58 424-000-0000" value={provForm.telefono} onChange={e=>setProvForm({...provForm,telefono:e.target.value})}/>
@@ -560,7 +633,7 @@ export default function App() {
                       </button>
                     ))}
                   </div>
-                  <label style={s.lbl}>Logo de tu negocio</label>
+                  <label style={s.lbl}>Logo del negocio</label>
                   {logoPreview&&<img src={logoPreview} alt="" style={{width:60,height:60,borderRadius:"50%",objectFit:"cover",marginBottom:8}}/>}
                   <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setLogoFile(f);setLogoPreview(URL.createObjectURL(f));}}}/>
                 </>
@@ -579,23 +652,60 @@ export default function App() {
           {provMode==="dash"&&provData&&(
             <>
               <div style={{...s.pc,background:"#f0fdf4",borderColor:"#bbf7d0"}}>
-                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
                   {provData.logo_url&&<img src={provData.logo_url} alt="" style={{width:48,height:48,borderRadius:"50%",objectFit:"cover"}}/>}
                   <div>
-                    <div style={{fontSize:14,fontWeight:700,color:"#15803d"}}>✓ {provData.negocio}</div>
+                    <div style={{fontSize:14,fontWeight:700,color:"#15803d"}}>{provData.negocio}</div>
                     <div style={{fontSize:12,color:"#64748b"}}>@{provData.usuario}</div>
                   </div>
                 </div>
+                {/* BOTÓN ABIERTO/CERRADO */}
+                <button style={s.toggleBtn(provData.activo)} onClick={toggleMiEstado}>
+                  <span style={{fontSize:20}}>{provData.activo?"🟢":"🔴"}</span>
+                  <div>
+                    <div style={{fontSize:14,fontWeight:700,color:provData.activo?"#15803d":"#92400e"}}>{provData.activo?"ABIERTO — Recibiendo pedidos":"CERRADO — No recibo pedidos"}</div>
+                    <div style={{fontSize:11,color:"#64748b"}}>Toca para {provData.activo?"cerrar":"abrir"} tu negocio</div>
+                  </div>
+                </button>
               </div>
-              <div style={{display:"flex",gap:8,marginBottom:12}}>
-                {["productos","promos"].map(t=>(
-                  <button key={t} onClick={()=>setProvTab(t)} style={{flex:1,padding:"9px",borderRadius:10,border:"none",background:provTab===t?P:"#f1f5f9",color:provTab===t?"#fff":"#64748b",fontSize:13,fontWeight:600,cursor:"pointer"}}>
-                    {t==="productos"?"📦 Productos":"🎉 Promociones"}
+
+              {/* TABS PROVEEDOR */}
+              <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}}>
+                {["estado","productos","promos","ventas"].map(t=>(
+                  <button key={t} onClick={()=>setProvTab(t)} style={{flexShrink:0,padding:"8px 12px",borderRadius:10,border:"none",background:provTab===t?P:"#f1f5f9",color:provTab===t?"#fff":"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                    {t==="estado"?"📊 Stats":t==="productos"?"📦 Productos":t==="promos"?"🎉 Promos":"💰 Ventas"}
                   </button>
                 ))}
               </div>
               {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
 
+              {/* STATS PROVEEDOR */}
+              {provTab==="estado"&&(
+                <>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+                    <StatCard num={`$${myIngresoHoy.toFixed(2)}`} lbl="Ingresos hoy" color="#22c55e"/>
+                    <StatCard num={`$${myIngresoTotal.toFixed(2)}`} lbl="Total histórico"/>
+                    <StatCard num={myVentasHoy.length} lbl="Ventas hoy" color="#6366f1"/>
+                    <StatCard num={myClientes} lbl="Clientes únicos" color="#f59e0b"/>
+                  </div>
+                  {myTopProds.length>0&&(
+                    <div style={s.pc}>
+                      <div style={s.pT}>🏆 Mis productos más pedidos</div>
+                      <BarChart data={myTopProds} max={myTopProds[0]?.[1]||1}/>
+                    </div>
+                  )}
+                  <div style={s.pc}>
+                    <div style={s.pT}>📋 Estado de mis productos</div>
+                    <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                      <div style={{background:"#dcfce7",borderRadius:10,padding:"8px 12px",fontSize:12}}><span style={{fontWeight:700,color:"#15803d"}}>{myProds.filter(p=>p.aprobado&&p.disponible).length}</span> <span style={{color:"#64748b"}}>activos</span></div>
+                      <div style={{background:"#fef9c3",borderRadius:10,padding:"8px 12px",fontSize:12}}><span style={{fontWeight:700,color:"#854d0e"}}>{myProds.filter(p=>!p.aprobado).length}</span> <span style={{color:"#64748b"}}>pendientes</span></div>
+                      <div style={{background:"#fee2e2",borderRadius:10,padding:"8px 12px",fontSize:12}}><span style={{fontWeight:700,color:"#be123c"}}>{myProds.filter(p=>p.aprobado&&!p.disponible).length}</span> <span style={{color:"#64748b"}}>agotados</span></div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* PRODUCTOS PROVEEDOR */}
               {provTab==="productos"&&(
                 <>
                   <div style={s.pc}>
@@ -605,9 +715,9 @@ export default function App() {
                     <label style={s.lbl}>Marca (opcional)</label>
                     <input style={s.inp} placeholder="Casero, artesanal..." value={newProd.marca} onChange={e=>setNewProd({...newProd,marca:e.target.value})}/>
                     <label style={s.lbl}>Presentación (opcional)</label>
-                    <input style={s.inp} placeholder="500g, 1L, 6 unidades..." value={newProd.presentacion} onChange={e=>setNewProd({...newProd,presentacion:e.target.value})}/>
+                    <input style={s.inp} placeholder="500g, 1L..." value={newProd.presentacion} onChange={e=>setNewProd({...newProd,presentacion:e.target.value})}/>
                     <label style={s.lbl}>Descripción (opcional)</label>
-                    <input style={s.inp} placeholder="Ingredientes, sabor, tamaño..." value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
+                    <input style={s.inp} placeholder="Ingredientes, sabor..." value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
                     <label style={s.lbl}>Categoría *</label>
                     <select style={{...s.inp,background:"#fff"}} value={newProd.categoria} onChange={e=>setNewProd({...newProd,categoria:e.target.value})}>
                       {(provData.categorias?.length>0?provData.categorias:PROV_CATS).map(c=><option key={c}>{c}</option>)}
@@ -615,12 +725,12 @@ export default function App() {
                     <label style={s.lbl}>Precio ($) *</label>
                     <input style={s.inp} type="number" placeholder="3.50" value={newProd.precio} onChange={e=>setNewProd({...newProd,precio:e.target.value})}/>
                     <label style={s.lbl}>Unidad *</label>
-                    <input style={s.inp} placeholder="porción, kg, unidad..." value={newProd.unidad} onChange={e=>setNewProd({...newProd,unidad:e.target.value})}/>
+                    <input style={s.inp} placeholder="porción, kg..." value={newProd.unidad} onChange={e=>setNewProd({...newProd,unidad:e.target.value})}/>
                     <label style={s.lbl}>Cantidad disponible *</label>
                     <input style={s.inp} type="number" value={newProd.stock} onChange={e=>setNewProd({...newProd,stock:e.target.value})}/>
                     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,background:"#f1f5f9",padding:"10px 14px",borderRadius:10}}>
                       <input type="checkbox" id="perm" checked={newProd.permanente} onChange={e=>setNewProd({...newProd,permanente:e.target.checked})} style={{width:18,height:18}}/>
-                      <label htmlFor="perm" style={{fontSize:13,color:"#1e293b",cursor:"pointer"}}>🔁 Disponible hasta agotar stock</label>
+                      <label htmlFor="perm" style={{fontSize:13,cursor:"pointer"}}>🔁 Disponible hasta agotar stock</label>
                     </div>
                     {!newProd.permanente&&(
                       <div style={{display:"flex",gap:10}}>
@@ -628,15 +738,14 @@ export default function App() {
                         <div style={{flex:1}}><label style={s.lbl}>Hasta</label><input style={s.inp} type="time" value={newProd.hf} onChange={e=>setNewProd({...newProd,hf:e.target.value})}/></div>
                       </div>
                     )}
-                    <label style={s.lbl}>Foto del producto</label>
+                    <label style={s.lbl}>Foto</label>
                     {fotoPreview&&<img src={fotoPreview} alt="" style={{width:"100%",height:110,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
                     <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setFotoFile(f);setFotoPreview(URL.createObjectURL(f));}}}/>
-                    <div style={{...s.ib,background:"#fef9c3"}}><div style={{fontSize:12,color:"#854d0e"}}>ℹ️ Primera publicación de cada producto requiere aprobación del admin.</div></div>
                     <button style={s.btn} onClick={publishProd} disabled={loading}>{loading?"Subiendo...":"Publicar producto"}</button>
                   </div>
                   {myProds.length>0&&(
                     <div style={s.pc}>
-                      <div style={s.pT}>📋 Mis productos ({myProds.length})</div>
+                      <div style={s.pT}>Mis productos ({myProds.length})</div>
                       {myProds.map(p=>(
                         <div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 0",borderBottom:"1px solid #f1f5f9"}}>
                           {p.foto_url?<img src={p.foto_url} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover"}}/>:<span style={{fontSize:22,width:40,textAlign:"center"}}>🍽️</span>}
@@ -646,7 +755,7 @@ export default function App() {
                           </div>
                           <div style={{display:"flex",flexDirection:"column",gap:4,alignItems:"flex-end"}}>
                             <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8,background:p.aprobado?"#dcfce7":"#fef9c3",color:p.aprobado?"#15803d":"#854d0e"}}>{p.aprobado?"✓":"⏳"}</span>
-                            {p.aprobado&&<button onClick={()=>toggleDisp(p.id,p.disponible)} style={{fontSize:10,padding:"2px 8px",borderRadius:8,border:"none",cursor:"pointer",background:p.disponible?"#dcfce7":"#fee2e2",color:p.disponible?"#15803d":"#be123c",fontWeight:600}}>{p.disponible?"Disp.":"Agotado"}</button>}
+                            {p.aprobado&&<button onClick={()=>toggleDisp(p.id,p.disponible)} style={{fontSize:10,padding:"2px 8px",borderRadius:8,border:"none",cursor:"pointer",background:p.disponible?"#dcfce7":"#fee2e2",color:p.disponible?"#15803d":"#be123c",fontWeight:600}}>{p.disponible?"Disponible":"Agotado"}</button>}
                           </div>
                         </div>
                       ))}
@@ -655,32 +764,33 @@ export default function App() {
                 </>
               )}
 
+              {/* PROMOS PROVEEDOR */}
               {provTab==="promos"&&(
                 <>
                   <div style={s.pc}>
                     <div style={s.pT}>🎉 Nueva promoción</div>
-                    <label style={s.lbl}>Nombre de la promo *</label>
-                    <input style={s.inp} placeholder="Combo familiar del día" value={newPromo.nombre} onChange={e=>setNewPromo({...newPromo,nombre:e.target.value})}/>
+                    <label style={s.lbl}>Nombre *</label>
+                    <input style={s.inp} placeholder="Combo familiar" value={newPromo.nombre} onChange={e=>setNewPromo({...newPromo,nombre:e.target.value})}/>
                     <label style={s.lbl}>Descripción * (qué incluye)</label>
-                    <input style={s.inp} placeholder="2 almuerzos + 2 jugos + postre..." value={newPromo.descripcion} onChange={e=>setNewPromo({...newPromo,descripcion:e.target.value})}/>
+                    <input style={s.inp} placeholder="2 almuerzos + jugos + postre..." value={newPromo.descripcion} onChange={e=>setNewPromo({...newPromo,descripcion:e.target.value})}/>
                     <label style={s.lbl}>Precio especial ($) *</label>
                     <input style={s.inp} type="number" placeholder="12.00" value={newPromo.precio} onChange={e=>setNewPromo({...newPromo,precio:e.target.value})}/>
                     <div style={{display:"flex",gap:10}}>
-                      <div style={{flex:1}}><label style={s.lbl}>Fecha inicio *</label><input style={s.inp} type="date" value={newPromo.fecha_inicio} onChange={e=>setNewPromo({...newPromo,fecha_inicio:e.target.value})}/></div>
-                      <div style={{flex:1}}><label style={s.lbl}>Fecha fin *</label><input style={s.inp} type="date" value={newPromo.fecha_fin} onChange={e=>setNewPromo({...newPromo,fecha_fin:e.target.value})}/></div>
+                      <div style={{flex:1}}><label style={s.lbl}>Desde *</label><input style={s.inp} type="date" value={newPromo.fecha_inicio} onChange={e=>setNewPromo({...newPromo,fecha_inicio:e.target.value})}/></div>
+                      <div style={{flex:1}}><label style={s.lbl}>Hasta *</label><input style={s.inp} type="date" value={newPromo.fecha_fin} onChange={e=>setNewPromo({...newPromo,fecha_fin:e.target.value})}/></div>
                     </div>
                     <button style={s.btnPurple} onClick={publishPromo} disabled={loading}>{loading?"Enviando...":"Enviar para aprobación"}</button>
                   </div>
                   {myPromos.length>0&&(
                     <div style={s.pc}>
-                      <div style={s.pT}>📋 Mis promociones</div>
+                      <div style={s.pT}>Mis promociones</div>
                       {myPromos.map(pr=>(
                         <div key={pr.id} style={{padding:"10px 0",borderBottom:"1px solid #f1f5f9"}}>
-                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                          <div style={{display:"flex",justifyContent:"space-between"}}>
                             <div>
                               <div style={{fontSize:13,fontWeight:700}}>{pr.nombre}</div>
                               <div style={{fontSize:11,color:"#64748b"}}>${pr.precio} · {pr.fecha_inicio} → {pr.fecha_fin}</div>
-                              <div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>{pr.descripcion}</div>
+                              <div style={{fontSize:11,color:"#94a3b8"}}>{pr.descripcion}</div>
                             </div>
                             <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8,background:pr.aprobada?"#dcfce7":"#fef9c3",color:pr.aprobada?"#15803d":"#854d0e",flexShrink:0,marginLeft:8}}>{pr.aprobada?"✓ Activa":"⏳"}</span>
                           </div>
@@ -691,7 +801,25 @@ export default function App() {
                   )}
                 </>
               )}
-              <button style={s.btnG} onClick={()=>{setProvMode("login");setProvData(null);setMyProds([]);setMyPromos([]);setPmsg("");}}>Cerrar sesión</button>
+
+              {/* VENTAS PROVEEDOR */}
+              {provTab==="ventas"&&(
+                <div style={s.pc}>
+                  <div style={s.pT}>💰 Mis ventas recientes</div>
+                  {myVentas.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>Aún no tienes ventas registradas</div>}
+                  {myVentas.slice(0,20).map(v=>(
+                    <div key={v.id} style={{padding:"8px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}>
+                      <div style={{display:"flex",justifyContent:"space-between"}}>
+                        <span style={{fontWeight:600}}>{v.producto_nombre}</span>
+                        <span style={{fontWeight:700,color:"#22c55e"}}>${(v.total_item||0).toFixed(2)}</span>
+                      </div>
+                      <div style={{color:"#94a3b8"}}>{v.cliente_nombre} · x{v.cantidad} · {v.fecha?.slice(0,10)}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <button style={{...s.btnG,marginTop:8}} onClick={()=>{setProvMode("login");setProvData(null);setMyProds([]);setMyPromos([]);setMyVentas([]);setPmsg("");}}>Cerrar sesión</button>
             </>
           )}
 
@@ -699,191 +827,271 @@ export default function App() {
           {provMode==="admin"&&(
             <>
               <div style={{...s.pc,background:"#eff6ff",borderColor:"#bfdbfe"}}>
-                <div style={{fontSize:14,fontWeight:700,color:"#1d4ed8"}}>⚙️ Panel Admin — {APP_NAME}</div>
+                <div style={{fontSize:14,fontWeight:700,color:"#1d4ed8",marginBottom:10}}>⚙️ Panel Admin — {APP_NAME}</div>
+                <button style={s.toggleBtn(!superProds.some(p=>p.pausado))} onClick={async()=>{
+                  const estado = superProds.length>0;
+                  await supabase.from("productos_supermercado").update({disponible:!estado}).neq("id","00000000-0000-0000-0000-000000000000");
+                  loadAll();
+                }}>
+                  <span style={{fontSize:20}}>{superProds.length>0?"🟢":"🔴"}</span>
+                  <div>
+                    <div style={{fontSize:13,fontWeight:700,color:superProds.length>0?"#15803d":"#92400e"}}>
+                      Supermercado: {superProds.length>0?"ABIERTO":"CERRADO"}
+                    </div>
+                    <div style={{fontSize:11,color:"#64748b"}}>Toca para {superProds.length>0?"cerrar":"abrir"} el supermercado</div>
+                  </div>
+                </button>
               </div>
               <div style={{...s.sec,paddingTop:0}}>
                 {[
-                  {key:"proveedores",label:"👤 Proveedores pendientes",n:pendProvs.length},
-                  {key:"productos",label:"🍽️ Productos pendientes",n:pendProds.length},
-                  {key:"resenas",label:"⭐ Reseñas pendientes",n:pendResenas.length},
-                  {key:"zonas",label:"🗺️ Gestionar zonas",n:0},
+                  {key:"dashboard",label:"📊 Dashboard de ventas",n:0},
+                  {key:"proveedores_lista",label:"🏪 Lista de proveedores",n:0},
+                  {key:"pendientes",label:"⏳ Pendientes de aprobación",n:pendProvs.length+pendProds.length},
+                  {key:"resenas",label:"⭐ Reseñas",n:pendResenas.length},
+                  {key:"zonas",label:"🗺️ Zonas de delivery",n:0},
                   {key:"combos",label:"🎁 Combos y temporadas",n:0},
                   {key:"super",label:"🛒 Supermercado",n:0},
-                  {key:"reportes",label:"📊 Reportes",n:0},
                 ].map(x=>(
                   <button key={x.key} style={s.admRow(adminSec===x.key)} onClick={()=>setAdminSec(x.key)}>
                     <span>{x.label}</span>
-                    {x.n>0&&<span style={{background:"#ef4444",color:"#fff",borderRadius:20,padding:"0 8px",fontSize:11,fontWeight:700}}>{x.n}</span>}
+                    {x.n>0&&<span style={{background:"#ef4444",color:"#fff",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700}}>{x.n}</span>}
                   </button>
                 ))}
               </div>
 
-              {adminSec==="proveedores"&&(
-                <div style={s.pc}>
-                  <div style={s.pT}>Proveedores por aprobar ({pendProvs.length})</div>
-                  {pendProvs.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay pendientes ✓</div>}
-                  {pendProvs.map(p=>(
-                    <div key={p.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
-                      <div style={{display:"flex",gap:8,marginBottom:8}}>
-                        {p.logo_url&&<img src={p.logo_url} alt="" style={{width:44,height:44,borderRadius:"50%",objectFit:"cover"}}/>}
-                        <div><div style={{fontSize:13,fontWeight:700}}>{p.negocio}</div><div style={{fontSize:11,color:"#64748b"}}>@{p.usuario} · {p.telefono}</div><div style={{fontSize:11,color:"#94a3b8"}}>{(p.categorias||[]).join(", ")}</div></div>
-                      </div>
-                      <div style={{display:"flex",gap:8}}>
-                        <button onClick={()=>approveP(p.id)} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Aprobar</button>
-                        <button onClick={()=>rejectP(p.id)} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Rechazar</button>
-                      </div>
+              {/* DASHBOARD ADMIN */}
+              {adminSec==="dashboard"&&(
+                <>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,margin:"0 16px 12px"}}>
+                    <StatCard num={`$${ingresoHoy.toFixed(2)}`} lbl="Ingresos hoy" color="#22c55e"/>
+                    <StatCard num={`$${ingresoTotal.toFixed(2)}`} lbl="Total histórico"/>
+                    <StatCard num={ventasHoy.length} lbl="Ventas hoy" color="#6366f1"/>
+                    <StatCard num={allProveedores.filter(p=>p.activo&&!p.en_pausa).length} lbl="Proveedores activos" color="#f59e0b"/>
+                  </div>
+                  {topAdminProds.length>0&&(
+                    <div style={s.pc}>
+                      <div style={s.pT}>🏆 Productos más vendidos del ecosistema</div>
+                      <BarChart data={topAdminProds} max={topAdminProds[0]?.[1]||1}/>
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {adminSec==="productos"&&(
-                <div style={s.pc}>
-                  <div style={s.pT}>Productos por aprobar ({pendProds.length})</div>
-                  {pendProds.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay pendientes ✓</div>}
-                  {pendProds.map(p=>(
-                    <div key={p.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
-                      <div style={{display:"flex",gap:8,marginBottom:8}}>
-                        {p.foto_url&&<img src={p.foto_url} alt="" style={{width:50,height:50,borderRadius:8,objectFit:"cover"}}/>}
-                        <div>
-                          <div style={{fontSize:13,fontWeight:700}}>{p.nombre}</div>
-                          {(p.marca||p.presentacion)&&<div style={{fontSize:11,color:"#94a3b8"}}>{[p.marca,p.presentacion].filter(Boolean).join(" · ")}</div>}
-                          <div style={{fontSize:11,color:"#64748b"}}>${p.precio} · {p.proveedores?.negocio}</div>
-                          {p.descripcion&&<div style={{fontSize:11,color:"#94a3b8"}}>{p.descripcion}</div>}
+                  )}
+                  <div style={s.pc}>
+                    <div style={s.pT}>🕐 Últimas ventas</div>
+                    {adminVentas.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>Aún no hay ventas registradas</div>}
+                    {adminVentas.slice(0,10).map(v=>(
+                      <div key={v.id} style={{padding:"7px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}>
+                        <div style={{display:"flex",justifyContent:"space-between"}}>
+                          <span style={{fontWeight:600}}>{v.producto_nombre}</span>
+                          <span style={{fontWeight:700,color:"#22c55e"}}>${(v.total_item||0).toFixed(2)}</span>
                         </div>
+                        <div style={{color:"#94a3b8"}}>{v.cliente_nombre} · {v.fecha?.slice(0,10)}</div>
                       </div>
-                      <div style={{display:"flex",gap:8}}>
-                        <button onClick={()=>approvePr(p.id)} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Aprobar</button>
-                        <button onClick={()=>rejectPr(p.id)} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Rechazar</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {adminSec==="resenas"&&(
-                <div style={s.pc}>
-                  <div style={s.pT}>Reseñas por aprobar ({pendResenas.length})</div>
-                  {pendResenas.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay pendientes ✓</div>}
-                  {pendResenas.map(r=>(
-                    <div key={r.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
-                      <div style={{fontSize:13,fontWeight:600}}>{r.cliente_nombre}</div>
-                      <div style={{color:"#f59e0b",fontSize:14}}>{"★".repeat(r.estrellas)}{"☆".repeat(5-r.estrellas)}</div>
-                      <div style={{fontSize:12,color:"#64748b",margin:"4px 0"}}>{r.comentario}</div>
-                      <div style={{display:"flex",gap:8}}>
-                        <button onClick={()=>approveRe(r.id)} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Publicar</button>
-                        <button onClick={()=>rejectRe(r.id)} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Eliminar</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {adminSec==="zonas"&&(
-                <div style={s.pc}>
-                  <div style={s.pT}>🗺️ Zonas de delivery</div>
-                  {allZonas.map(z=>(
-                    <div key={z.id} style={{padding:"8px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}>
-                      <div style={{fontWeight:600,color:P}}>{z.zona} <span style={{color:"#94a3b8"}}>({z.municipio})</span></div>
-                      <div style={{color:"#64748b"}}>Delivery: ${z.costo_delivery} · Gratis super: ${z.delivery_gratis_super} · Gratis comida: ${z.delivery_gratis_comida}</div>
-                    </div>
-                  ))}
-                  <div style={{marginTop:14}}>
-                    <div style={{fontSize:13,fontWeight:600,color:P,marginBottom:8}}>➕ Agregar zona</div>
-                    <input style={s.inp} placeholder="Nombre de zona o barrio" value={newZona.zona} onChange={e=>setNewZona({...newZona,zona:e.target.value})}/>
-                    <input style={s.inp} placeholder="Municipio" value={newZona.municipio} onChange={e=>setNewZona({...newZona,municipio:e.target.value})}/>
-                    <div style={{display:"flex",gap:8}}>
-                      <div style={{flex:1}}><label style={s.lbl}>Delivery $</label><input style={s.inp} type="number" value={newZona.costo_delivery} onChange={e=>setNewZona({...newZona,costo_delivery:parseFloat(e.target.value)})}/></div>
-                      <div style={{flex:1}}><label style={s.lbl}>Gratis super $</label><input style={s.inp} type="number" value={newZona.delivery_gratis_super} onChange={e=>setNewZona({...newZona,delivery_gratis_super:parseFloat(e.target.value)})}/></div>
-                    </div>
-                    <label style={s.lbl}>Gratis comida $</label>
-                    <input style={s.inp} type="number" value={newZona.delivery_gratis_comida} onChange={e=>setNewZona({...newZona,delivery_gratis_comida:parseFloat(e.target.value)})}/>
-                    <button style={s.btn} onClick={addZona}>Guardar zona</button>
+                    ))}
                   </div>
-                </div>
+                </>
               )}
 
-              {adminSec==="combos"&&(
-                <div style={s.pc}>
-                  <div style={s.pT}>🎁 Combos y temporadas</div>
-                  {combos.map(c=>(
-                    <div key={c.id} style={{padding:"8px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}>
-                      <div style={{fontWeight:600}}>{c.nombre} — ${c.precio}</div>
-                      <div style={{color:"#64748b"}}>{c.temporada} · {c.fecha_inicio} al {c.fecha_fin}</div>
+              {/* LISTA PROVEEDORES */}
+              {adminSec==="proveedores_lista"&&(
+                <div style={{margin:"0 16px"}}>
+                  <div style={s.pc}>
+                    <div style={s.pT}>🏪 Proveedores ({allProveedores.length})</div>
+                    <div style={s.cs}>
+                      {["Todas",...PROV_CATS].map(c=>(
+                        <button key={c} style={s.cb(catFilter===c)} onClick={()=>setCatFilter(c)}>{c}</button>
+                      ))}
                     </div>
-                  ))}
-                  <div style={{marginTop:14}}>
-                    <div style={{fontSize:13,fontWeight:600,color:P,marginBottom:8}}>➕ Nuevo combo</div>
-                    <input style={s.inp} placeholder="Nombre del combo" value={newCombo.nombre} onChange={e=>setNewCombo({...newCombo,nombre:e.target.value})}/>
-                    <input style={s.inp} placeholder="Descripción" value={newCombo.descripcion} onChange={e=>setNewCombo({...newCombo,descripcion:e.target.value})}/>
-                    <input style={s.inp} type="number" placeholder="Precio $" value={newCombo.precio} onChange={e=>setNewCombo({...newCombo,precio:e.target.value})}/>
-                    <input style={s.inp} placeholder="Temporada (Día de las Madres...)" value={newCombo.temporada} onChange={e=>setNewCombo({...newCombo,temporada:e.target.value})}/>
-                    <div style={{display:"flex",gap:8}}>
-                      <div style={{flex:1}}><label style={s.lbl}>Desde</label><input style={s.inp} type="date" value={newCombo.fecha_inicio} onChange={e=>setNewCombo({...newCombo,fecha_inicio:e.target.value})}/></div>
-                      <div style={{flex:1}}><label style={s.lbl}>Hasta</label><input style={s.inp} type="date" value={newCombo.fecha_fin} onChange={e=>setNewCombo({...newCombo,fecha_fin:e.target.value})}/></div>
-                    </div>
-                    <button style={s.btn} onClick={addCombo}>Publicar combo</button>
-                  </div>
-                </div>
-              )}
-
-              {adminSec==="super"&&(
-                <div style={s.pc}>
-                  <div style={s.pT}>🛒 Supermercado ({superProds.length} productos)</div>
-                  {superProds.map(p=>(
-                    <div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 0",borderBottom:"1px solid #f1f5f9"}}>
-                      {p.foto_url?<img src={p.foto_url} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover"}}/>:<span style={{fontSize:20}}>{p.emoji}</span>}
-                      <div style={{flex:1}}>
-                        <div style={{fontSize:13,fontWeight:600}}>{p.nombre}</div>
-                        <div style={{fontSize:11,color:"#64748b"}}>{p.categoria} · {[p.marca,p.presentacion].filter(Boolean).join(" · ")} · ${p.precio}/{p.unidad}</div>
-                      </div>
-                      <button onClick={()=>deleteSuperProd(`sp_${p.id}`)} style={{fontSize:11,padding:"3px 8px",borderRadius:8,border:"none",background:"#fee2e2",color:"#be123c",cursor:"pointer"}}>Quitar</button>
-                    </div>
-                  ))}
-                  <div style={{marginTop:14}}>
-                    <div style={{fontSize:13,fontWeight:600,color:P,marginBottom:8}}>➕ Agregar producto</div>
-                    <label style={s.lbl}>Categoría *</label>
-                    <select style={{...s.inp,background:"#fff"}} value={newSP.categoria} onChange={e=>setNewSP({...newSP,categoria:e.target.value})}>
-                      {SUPER_CATS.map(c=><option key={c}>{c}</option>)}
-                    </select>
-                    <div style={{display:"flex",gap:8,marginBottom:8}}>
-                      <input style={{...s.inp,marginBottom:0,width:50}} placeholder="🛒" value={newSP.emoji} onChange={e=>setNewSP({...newSP,emoji:e.target.value})}/>
-                      <input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Nombre *" value={newSP.nombre} onChange={e=>setNewSP({...newSP,nombre:e.target.value})}/>
-                    </div>
-                    <div style={{display:"flex",gap:8,marginBottom:8}}>
-                      <input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Marca" value={newSP.marca} onChange={e=>setNewSP({...newSP,marca:e.target.value})}/>
-                      <input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Presentación" value={newSP.presentacion} onChange={e=>setNewSP({...newSP,presentacion:e.target.value})}/>
-                    </div>
-                    <div style={{display:"flex",gap:8,marginBottom:8}}>
-                      <input style={{...s.inp,marginBottom:0,flex:1}} type="number" placeholder="Precio $ *" value={newSP.precio} onChange={e=>setNewSP({...newSP,precio:e.target.value})}/>
-                      <input style={{...s.inp,marginBottom:0,width:80}} placeholder="kg/L/und" value={newSP.unidad} onChange={e=>setNewSP({...newSP,unidad:e.target.value})}/>
-                    </div>
-                    <input style={s.inp} placeholder="Descripción (opcional)" value={newSP.descripcion} onChange={e=>setNewSP({...newSP,descripcion:e.target.value})}/>
-                    <label style={s.lbl}>Foto del producto</label>
-                    {spFotoPreview&&<img src={spFotoPreview} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
-                    <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setSpFoto(f);setSpFotoPreview(URL.createObjectURL(f));}}}/>
-                    <button style={s.btn} onClick={addSuperProd} disabled={loading}>{loading?"Guardando...":"Agregar al supermercado"}</button>
-                  </div>
-                </div>
-              )}
-
-              {adminSec==="reportes"&&(
-                <div style={s.pc}>
-                  <div style={s.pT}>📊 Reportes del ecosistema</div>
-                  <div style={s.ib}>
-                    <div style={{fontSize:13,fontWeight:600,color:P,marginBottom:8}}>🏆 Productos más vendidos</div>
-                    {topProds.length===0&&<div style={{fontSize:12,color:"#94a3b8"}}>Aún no hay ventas registradas</div>}
-                    {topProds.map((p,i)=>(
-                      <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #e2e8f0",fontSize:12}}>
-                        <span>{i+1}. {p.producto_id}</span>
-                        <span style={{fontWeight:700,color:P}}>{p.cantidad} vendidos</span>
+                    {filteredProvs.length===0&&<div style={{fontSize:13,color:"#94a3b8",padding:"10px 0"}}>No hay proveedores en esta categoría</div>}
+                    {filteredProvs.map(p=>(
+                      <div key={p.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                          {p.logo_url?<img src={p.logo_url} alt="" style={{width:44,height:44,borderRadius:"50%",objectFit:"cover"}}/>:<div style={{width:44,height:44,borderRadius:"50%",background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🏪</div>}
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:13,fontWeight:700}}>{p.negocio}</div>
+                            <div style={{fontSize:11,color:"#64748b"}}>@{p.usuario} · {p.telefono}</div>
+                            <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:3}}>
+                              {(p.categorias||[]).map(c=><span key={c} style={{fontSize:10,background:"#f1f5f9",color:"#64748b",padding:"1px 6px",borderRadius:8}}>{c}</span>)}
+                            </div>
+                          </div>
+                          <div style={{display:"flex",flexDirection:"column",gap:4,alignItems:"flex-end"}}>
+                            {p.en_pausa&&<span style={{fontSize:10,background:"#fef3c7",color:"#92400e",padding:"2px 6px",borderRadius:8,fontWeight:600}}>⏸️ EN PAUSA</span>}
+                            {!p.en_pausa&&<span style={{fontSize:10,background:"#dcfce7",color:"#15803d",padding:"2px 6px",borderRadius:8,fontWeight:600}}>✓ ACTIVO</span>}
+                          </div>
+                        </div>
+                        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                          <button onClick={()=>togglePausa(p.id,p.en_pausa)} style={{...s.btnAmber,fontSize:11}}>
+                            {p.en_pausa?"▶️ Quitar pausa":"⏸️ Pausar"}
+                          </button>
+                          <button onClick={()=>deleteProveedor(p.id)} style={{...s.btnRed,fontSize:11}}>
+                            🗑️ Eliminar
+                          </button>
+                        </div>
+                        {p.notas_admin&&<div style={{fontSize:11,color:"#94a3b8",marginTop:4}}>📝 {p.notas_admin}</div>}
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              <button style={{...s.btnG,margin:"0 0 16px"}} onClick={()=>{setProvMode("login");setPendProvs([]);setPendProds([]);setPendResenas([]);}}>Cerrar sesión admin</button>
+              {/* PENDIENTES */}
+              {adminSec==="pendientes"&&(
+                <div style={{margin:"0 16px"}}>
+                  {pendProvs.length>0&&(
+                    <div style={s.pc}>
+                      <div style={s.pT}>👤 Proveedores ({pendProvs.length})</div>
+                      {pendProvs.map(p=>(
+                        <div key={p.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
+                          <div style={{display:"flex",gap:8,marginBottom:8}}>
+                            {p.logo_url&&<img src={p.logo_url} alt="" style={{width:44,height:44,borderRadius:"50%",objectFit:"cover"}}/>}
+                            <div><div style={{fontSize:13,fontWeight:700}}>{p.negocio}</div><div style={{fontSize:11,color:"#64748b"}}>@{p.usuario} · {p.telefono}</div></div>
+                          </div>
+                          <div style={{display:"flex",gap:8}}>
+                            <button onClick={()=>approveP(p.id)} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Aprobar</button>
+                            <button onClick={()=>rejectP(p.id)} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Rechazar</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {pendProds.length>0&&(
+                    <div style={s.pc}>
+                      <div style={s.pT}>🍽️ Productos ({pendProds.length})</div>
+                      {pendProds.map(p=>(
+                        <div key={p.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
+                          <div style={{display:"flex",gap:8,marginBottom:8}}>
+                            {p.foto_url&&<img src={p.foto_url} alt="" style={{width:50,height:50,borderRadius:8,objectFit:"cover"}}/>}
+                            <div>
+                              <div style={{fontSize:13,fontWeight:700}}>{p.nombre}</div>
+                              <div style={{fontSize:11,color:"#64748b"}}>${p.precio} · {p.proveedores?.negocio}</div>
+                              {p.descripcion&&<div style={{fontSize:11,color:"#94a3b8"}}>{p.descripcion}</div>}
+                            </div>
+                          </div>
+                          <div style={{display:"flex",gap:8}}>
+                            <button onClick={()=>approvePr(p.id)} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Aprobar</button>
+                            <button onClick={()=>rejectPr(p.id)} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Rechazar</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {pendProvs.length===0&&pendProds.length===0&&<div style={{...s.pc,textAlign:"center",color:"#94a3b8"}}>No hay pendientes ✓</div>}
+                </div>
+              )}
+
+              {adminSec==="resenas"&&(
+                <div style={{margin:"0 16px"}}>
+                  <div style={s.pc}>
+                    <div style={s.pT}>Reseñas por aprobar ({pendResenas.length})</div>
+                    {pendResenas.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay pendientes ✓</div>}
+                    {pendResenas.map(r=>(
+                      <div key={r.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
+                        <div style={{fontSize:13,fontWeight:600}}>{r.cliente_nombre}</div>
+                        <div style={{color:"#f59e0b",fontSize:14}}>{"★".repeat(r.estrellas)}{"☆".repeat(5-r.estrellas)}</div>
+                        <div style={{fontSize:12,color:"#64748b",margin:"4px 0"}}>{r.comentario}</div>
+                        <div style={{display:"flex",gap:8}}>
+                          <button onClick={()=>approveRe(r.id)} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Publicar</button>
+                          <button onClick={()=>rejectRe(r.id)} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Eliminar</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {adminSec==="zonas"&&(
+                <div style={{margin:"0 16px"}}>
+                  <div style={s.pc}>
+                    <div style={s.pT}>🗺️ Zonas de delivery</div>
+                    {allZonas.map(z=>(
+                      <div key={z.id} style={{padding:"8px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}>
+                        <div style={{fontWeight:600,color:P}}>{z.zona} <span style={{color:"#94a3b8"}}>({z.municipio})</span></div>
+                        <div style={{color:"#64748b"}}>Delivery: ${z.costo_delivery} · Gratis super: ${z.delivery_gratis_super} · Gratis comida: ${z.delivery_gratis_comida}</div>
+                      </div>
+                    ))}
+                    <div style={{marginTop:14}}>
+                      <div style={{fontSize:13,fontWeight:600,color:P,marginBottom:8}}>➕ Agregar zona</div>
+                      <input style={s.inp} placeholder="Nombre de zona o barrio" value={newZona.zona} onChange={e=>setNewZona({...newZona,zona:e.target.value})}/>
+                      <input style={s.inp} placeholder="Municipio" value={newZona.municipio} onChange={e=>setNewZona({...newZona,municipio:e.target.value})}/>
+                      <div style={{display:"flex",gap:8}}>
+                        <div style={{flex:1}}><label style={s.lbl}>Delivery $</label><input style={s.inp} type="number" value={newZona.costo_delivery} onChange={e=>setNewZona({...newZona,costo_delivery:parseFloat(e.target.value)})}/></div>
+                        <div style={{flex:1}}><label style={s.lbl}>Gratis super $</label><input style={s.inp} type="number" value={newZona.delivery_gratis_super} onChange={e=>setNewZona({...newZona,delivery_gratis_super:parseFloat(e.target.value)})}/></div>
+                      </div>
+                      <label style={s.lbl}>Gratis comida $</label>
+                      <input style={s.inp} type="number" value={newZona.delivery_gratis_comida} onChange={e=>setNewZona({...newZona,delivery_gratis_comida:parseFloat(e.target.value)})}/>
+                      <button style={s.btn} onClick={addZona}>Guardar zona</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {adminSec==="combos"&&(
+                <div style={{margin:"0 16px"}}>
+                  <div style={s.pc}>
+                    <div style={s.pT}>🎁 Combos activos</div>
+                    {combosAdmin.map(c=>(
+                      <div key={c.id} style={{padding:"8px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}>
+                        <div style={{fontWeight:600}}>{c.nombre} — ${c.precio}</div>
+                        <div style={{color:"#64748b"}}>{c.temporada} · {c.fecha_inicio} al {c.fecha_fin}</div>
+                      </div>
+                    ))}
+                    <div style={{marginTop:14}}>
+                      <div style={{fontSize:13,fontWeight:600,color:P,marginBottom:8}}>➕ Nuevo combo</div>
+                      <input style={s.inp} placeholder="Nombre" value={newCombo.nombre} onChange={e=>setNewCombo({...newCombo,nombre:e.target.value})}/>
+                      <input style={s.inp} placeholder="Descripción" value={newCombo.descripcion} onChange={e=>setNewCombo({...newCombo,descripcion:e.target.value})}/>
+                      <input style={s.inp} type="number" placeholder="Precio $" value={newCombo.precio} onChange={e=>setNewCombo({...newCombo,precio:e.target.value})}/>
+                      <input style={s.inp} placeholder="Temporada (Día de las Madres...)" value={newCombo.temporada} onChange={e=>setNewCombo({...newCombo,temporada:e.target.value})}/>
+                      <div style={{display:"flex",gap:8}}>
+                        <div style={{flex:1}}><label style={s.lbl}>Desde</label><input style={s.inp} type="date" value={newCombo.fecha_inicio} onChange={e=>setNewCombo({...newCombo,fecha_inicio:e.target.value})}/></div>
+                        <div style={{flex:1}}><label style={s.lbl}>Hasta</label><input style={s.inp} type="date" value={newCombo.fecha_fin} onChange={e=>setNewCombo({...newCombo,fecha_fin:e.target.value})}/></div>
+                      </div>
+                      <button style={s.btn} onClick={addCombo}>Publicar combo</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {adminSec==="super"&&(
+                <div style={{margin:"0 16px"}}>
+                  <div style={s.pc}>
+                    <div style={s.pT}>🛒 Supermercado ({superProds.length})</div>
+                    {superProds.map(p=>(
+                      <div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 0",borderBottom:"1px solid #f1f5f9"}}>
+                        {p.foto_url?<img src={p.foto_url} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover"}}/>:<span style={{fontSize:20}}>{p.emoji}</span>}
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:13,fontWeight:600}}>{p.nombre}</div>
+                          <div style={{fontSize:11,color:"#64748b"}}>{p.categoria} · ${p.precio}/{p.unidad}</div>
+                        </div>
+                        <button onClick={()=>deleteSuperProd(`sp_${p.id}`)} style={{...s.btnRed,fontSize:11}}>Quitar</button>
+                      </div>
+                    ))}
+                    <div style={{marginTop:14}}>
+                      <div style={{fontSize:13,fontWeight:600,color:P,marginBottom:8}}>➕ Agregar producto</div>
+                      <label style={s.lbl}>Categoría *</label>
+                      <select style={{...s.inp,background:"#fff"}} value={newSP.categoria} onChange={e=>setNewSP({...newSP,categoria:e.target.value})}>
+                        {SUPER_CATS.map(c=><option key={c}>{c}</option>)}
+                      </select>
+                      <div style={{display:"flex",gap:8,marginBottom:8}}>
+                        <input style={{...s.inp,marginBottom:0,width:50}} placeholder="🛒" value={newSP.emoji} onChange={e=>setNewSP({...newSP,emoji:e.target.value})}/>
+                        <input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Nombre *" value={newSP.nombre} onChange={e=>setNewSP({...newSP,nombre:e.target.value})}/>
+                      </div>
+                      <div style={{display:"flex",gap:8,marginBottom:8}}>
+                        <input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Marca" value={newSP.marca} onChange={e=>setNewSP({...newSP,marca:e.target.value})}/>
+                        <input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Presentación" value={newSP.presentacion} onChange={e=>setNewSP({...newSP,presentacion:e.target.value})}/>
+                      </div>
+                      <div style={{display:"flex",gap:8,marginBottom:8}}>
+                        <input style={{...s.inp,marginBottom:0,flex:1}} type="number" placeholder="Precio $ *" value={newSP.precio} onChange={e=>setNewSP({...newSP,precio:e.target.value})}/>
+                        <input style={{...s.inp,marginBottom:0,width:80}} placeholder="kg/L" value={newSP.unidad} onChange={e=>setNewSP({...newSP,unidad:e.target.value})}/>
+                      </div>
+                      <input style={s.inp} placeholder="Descripción (opcional)" value={newSP.descripcion} onChange={e=>setNewSP({...newSP,descripcion:e.target.value})}/>
+                      <label style={s.lbl}>Foto</label>
+                      {spFotoPreview&&<img src={spFotoPreview} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
+                      <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setSpFoto(f);setSpFotoPreview(URL.createObjectURL(f));}}}/>
+                      <button style={s.btn} onClick={addSuperProd} disabled={loading}>{loading?"Guardando...":"Agregar"}</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <button style={{...s.btnG,margin:"8px 16px 16px"}} onClick={()=>{setProvMode("login");setPendProvs([]);setPendProds([]);setPendResenas([]);setAllProveedores([]);}}>Cerrar sesión admin</button>
             </>
           )}
         </div>
@@ -964,11 +1172,13 @@ export default function App() {
               <option value="masculino">Masculino</option>
             </select>
             <label style={s.lbl}>Método de pago</label>
-            <select style={{...s.inp,background:"#fff"}} value={form.pago} onChange={e=>setForm({...form,pago:e.target.value})}>
-              <option value="pago_movil">Pago Móvil</option>
-              <option value="zelle">Zelle</option>
-              <option value="efectivo">Efectivo al recibir</option>
-            </select>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+              {PAGOS.map(p=>(
+                <button key={p} onClick={()=>setForm({...form,pago:p})} style={{padding:"10px 8px",borderRadius:12,border:form.pago===p?`2px solid ${P}`:"1px solid #e2e8f0",background:form.pago===p?"#f8fafc":"#fff",fontSize:12,fontWeight:form.pago===p?700:400,cursor:"pointer",color:form.pago===p?P:"#64748b"}}>
+                  {p==="Pago Móvil"?"📱":p==="Zelle"?"🏦":p==="Efectivo al recibir"?"💵":"₿"} {p}
+                </button>
+              ))}
+            </div>
             <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,background:"#f0fdf4",padding:"10px 14px",borderRadius:10}}>
               <input type="checkbox" id="promos" checked={form.recibirPromos} onChange={e=>setForm({...form,recibirPromos:e.target.checked})} style={{width:18,height:18}}/>
               <label htmlFor="promos" style={{fontSize:13,color:"#15803d",cursor:"pointer"}}>📲 Quiero recibir promociones por WhatsApp</label>
@@ -977,10 +1187,47 @@ export default function App() {
               <div style={s.sr}><span style={s.sL}>Zona</span><span style={s.sV}>{zonaSel?.zona||"Sin seleccionar"}</span></div>
               <div style={s.sr}><span style={s.sL}>Delivery</span>{del===0?<span style={s.fT}>GRATIS</span>:<span style={s.sV}>${del.toFixed(2)}</span>}</div>
               <div style={s.sr}><span style={{fontWeight:700}}>Total</span><span style={{fontWeight:700,fontSize:16,color:P}}>${total.toFixed(2)}</span></div>
-              <div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>Entrega estimada: 40–60 min</div>
             </div>
-            <button style={s.btn} onClick={confirm}>✓ Confirmar — ${total.toFixed(2)}</button>
+            <button style={s.btn} onClick={confirm}>Revisar pedido →</button>
             <button style={s.btnG} onClick={()=>setSheet("cart")}>← Volver</button>
+          </div>
+        </div>
+      )}
+
+      {/* SHEET RESUMEN ANTES DE ENVIAR */}
+      {sheet==="resumen"&&(
+        <div style={s.ov}>
+          <div style={s.sh}>
+            <div style={s.hnd}/>
+            <div style={s.shT}>✅ Resumen de tu pedido</div>
+            <div style={{background:"#f0fdf4",borderRadius:12,padding:"10px 14px",marginBottom:12,fontSize:12,color:"#15803d",fontWeight:600}}>
+              📋 Ref: {pedidoRef}
+            </div>
+            {items.map(i=>(
+              <div key={i.id} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #f1f5f9",fontSize:13}}>
+                <span>{i.name} x{i.qty}</span>
+                <span style={{fontWeight:600}}>${(i.price*i.qty).toFixed(2)}</span>
+              </div>
+            ))}
+            <div style={{margin:"10px 0"}}>
+              <div style={s.sr}><span style={s.sL}>Subtotal</span><span style={s.sV}>${sub.toFixed(2)}</span></div>
+              <div style={s.sr}><span style={s.sL}>Delivery</span>{del===0?<span style={s.fT}>GRATIS</span>:<span style={s.sV}>${del.toFixed(2)}</span>}</div>
+              <div style={s.tR}><span style={{fontWeight:700}}>TOTAL</span><span style={{fontWeight:700,fontSize:18,color:"#22c55e"}}>${total.toFixed(2)}</span></div>
+            </div>
+            <div style={{...s.ib,marginTop:8}}>
+              <div style={s.sr}><span style={s.sL}>👤 Cliente</span><span style={s.sV}>{form.nombre}</span></div>
+              <div style={s.sr}><span style={s.sL}>📱 WhatsApp</span><span style={s.sV}>{form.telefono}</span></div>
+              <div style={s.sr}><span style={s.sL}>📍 Zona</span><span style={s.sV}>{zonaSel?.zona}</span></div>
+              <div style={s.sr}><span style={s.sL}>🏠 Dirección</span><span style={s.sV}>{addr.calle}</span></div>
+              <div style={s.sr}><span style={s.sL}>💳 Pago</span><span style={s.sV}>{form.pago}</span></div>
+            </div>
+            <div style={{background:"#fffbeb",borderRadius:12,padding:"10px 14px",marginBottom:4,fontSize:12,color:"#92400e"}}>
+              ⚡ Al tocar el botón se abrirá WhatsApp con tu pedido listo para enviar. Solo toca <strong>Enviar</strong>.
+            </div>
+            <button style={s.btnWa} onClick={()=>{sendWa();setSheet("success");}}>
+              📲 Enviar pedido por WhatsApp
+            </button>
+            <button style={s.btnG} onClick={()=>setSheet("checkout")}>← Modificar datos</button>
           </div>
         </div>
       )}
@@ -992,15 +1239,16 @@ export default function App() {
             <div style={s.hnd}/>
             <div style={{textAlign:"center",padding:"16px 0"}}>
               <div style={{fontSize:52,marginBottom:10}}>🎉</div>
-              <div style={{fontSize:20,fontWeight:700,color:P,marginBottom:6}}>¡Pedido confirmado!</div>
-              <div style={{fontSize:13,color:"#64748b",lineHeight:1.6,marginBottom:20}}>
-                Hola <strong>{form.nombre}</strong>, tu pedido está confirmado.<br/>
-                Te escribimos al <strong>{form.telefono}</strong>.<br/>
-                Tiempo estimado: <strong>40–60 min</strong>
+              <div style={{fontSize:20,fontWeight:700,color:P,marginBottom:6}}>¡Pedido enviado!</div>
+              <div style={{fontSize:13,color:"#64748b",lineHeight:1.7,marginBottom:20}}>
+                Tu pedido <strong>{pedidoRef}</strong> fue enviado por WhatsApp.<br/>
+                Te responderemos a <strong>{form.telefono}</strong> para coordinar el pago y confirmar la entrega.<br/><br/>
+                💳 Prepara tu pago por <strong>{form.pago}</strong>
                 {form.recibirPromos&&<><br/><span style={{color:"#15803d",fontWeight:600}}>✓ Recibirás promociones de tus proveedores</span></>}
               </div>
-              <button style={s.btnWa} onClick={sendWa}>📲 Recibir confirmación por WhatsApp</button>
-              <button style={s.btnG} onClick={()=>{setCart({});setSheet(null);setForm({nombre:"",telefono:"",sexo:"",pago:"pago_movil",recibirPromos:false});setZonaSelId("");setZonaSel(null);setAddr({calle:"",referencia:""});}}>Hacer otro pedido</button>
+              <button style={s.btnG} onClick={()=>{setCart({});setSheet(null);setForm({nombre:"",telefono:"",sexo:"",pago:"Pago Móvil",recibirPromos:false});setZonaSelId("");setZonaSel(null);setAddr({calle:"",referencia:""});setPedidoRef("");}}>
+                Hacer otro pedido
+              </button>
             </div>
           </div>
         </div>
@@ -1024,7 +1272,7 @@ export default function App() {
             <label style={s.lbl}>Detalle</label>
             <input style={s.inp} placeholder="Cuéntanos lo que necesitas" value={svcForm.detalle} onChange={e=>setSvcForm({...svcForm,detalle:e.target.value})}/>
             <div style={s.ib}><div style={{fontSize:12,color:"#64748b"}}>💬 Te contactamos por WhatsApp para confirmar.</div></div>
-            <button style={s.btnWa} onClick={sendSvcWa}>📲 Enviar solicitud por WhatsApp</button>
+            <button style={s.btnWa} onClick={sendSvcWa}>📲 Enviar solicitud</button>
             <button style={s.btnG} onClick={()=>setSheet(null)}>Cancelar</button>
           </div>
         </div>
