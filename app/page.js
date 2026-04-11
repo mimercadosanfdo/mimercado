@@ -16,7 +16,9 @@ const P = "#0f172a";
 const A = "#f59e0b";
 
 const MAIN_TABS = ["Inicio","Productos","Servicios","Proveedores"];
-const PCATS = ["Todo","Supermercado","Comida preparada","Postres","Jugos y bebidas","Pan y repostería"];
+const SUPER_CATS = ["🥩 Proteínas","🌾 Granos y cereales","🛢️ Aceites y condimentos","🥛 Lácteos","🧴 Aseo personal","🧹 Limpieza del hogar","🥦 Frutas y verduras","🧃 Bebidas"];
+const PROV_CATS = ["Comida preparada","Postres","Jugos y bebidas","Pan y repostería"];
+const ALL_CATS = ["Todo","Supermercado",...PROV_CATS];
 
 const SVCS = [
   {id:"s1",name:"Mototaxi",emoji:"🛵",desc:"Te llevamos a donde necesites",price:"Desde $1.00",bg:"#fef3c7",tc:"#92400e"},
@@ -25,19 +27,6 @@ const SVCS = [
   {id:"s4",name:"Limpieza del hogar",emoji:"🧹",desc:"Personal de confianza para tu casa",price:"Desde $10.00/día",bg:"#fdf4ff",tc:"#7e22ce"},
   {id:"s5",name:"Enfermería a domicilio",emoji:"💉",desc:"Atención profesional en tu hogar",price:"Desde $5.00",bg:"#fff1f2",tc:"#be123c"},
   {id:"s6",name:"Encomiendas locales",emoji:"📦",desc:"Enviamos lo que necesites",price:"$1.00 – $2.00",bg:"#fff7ed",tc:"#c2410c"},
-];
-
-const SUPER_INIT = [
-  {id:1,name:"Pechuga de pollo",cat:"Supermercado",price:3.00,unit:"kg",emoji:"🍗",marca:"",presentacion:"1 kg",tag:"Popular",margin:0.10},
-  {id:2,name:"Carne de res",cat:"Supermercado",price:5.50,unit:"kg",emoji:"🥩",marca:"",presentacion:"1 kg",margin:0.10},
-  {id:3,name:"Pescado fresco",cat:"Supermercado",price:4.00,unit:"kg",emoji:"🐟",marca:"",presentacion:"1 kg",margin:0.10},
-  {id:4,name:"Arroz",cat:"Supermercado",price:1.20,unit:"kg",emoji:"🌾",marca:"Cristal",presentacion:"1 kg",tag:"Oferta",margin:0.10},
-  {id:5,name:"Aceite",cat:"Supermercado",price:2.00,unit:"L",emoji:"🫙",marca:"Mazeite",presentacion:"1 L",margin:0.10},
-  {id:6,name:"Leche",cat:"Supermercado",price:1.80,unit:"L",emoji:"🥛",marca:"Parmalat",presentacion:"1 L",margin:0.10},
-  {id:7,name:"Huevos",cat:"Supermercado",price:3.50,unit:"cartón",emoji:"🥚",marca:"",presentacion:"30 unidades",margin:0.10},
-  {id:8,name:"Tomates",cat:"Supermercado",price:1.50,unit:"kg",emoji:"🍅",marca:"",presentacion:"1 kg",margin:0.10},
-  {id:9,name:"Cebollas",cat:"Supermercado",price:1.00,unit:"kg",emoji:"🧅",marca:"",presentacion:"1 kg",margin:0.10},
-  {id:10,name:"Pasta",cat:"Supermercado",price:0.90,unit:"paq",emoji:"🍝",marca:"Mavesa",presentacion:"500g",margin:0.10},
 ];
 
 const s = {
@@ -84,8 +73,7 @@ const s = {
   shT:{fontSize:18,fontWeight:700,color:P,marginBottom:14},
   ci:{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9"},
   sr:{display:"flex",justifyContent:"space-between",padding:"5px 0",fontSize:14},
-  sL:{color:"#64748b"},
-  sV:{fontWeight:600,color:"#1e293b"},
+  sL:{color:"#64748b"},sV:{fontWeight:600,color:"#1e293b"},
   tR:{display:"flex",justifyContent:"space-between",padding:"10px 0 0",fontSize:16,borderTop:"1px solid #e2e8f0",marginTop:4},
   fT:{background:"#dcfce7",color:"#15803d",fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8},
   pw:{background:"#f1f5f9",borderRadius:8,padding:"10px 12px",margin:"10px 0"},
@@ -118,6 +106,7 @@ const getHorario = () => {
 export default function App() {
   const [tab,setTab] = useState("Inicio");
   const [cat,setCat] = useState("Todo");
+  const [superCat,setSuperCat] = useState("Todas");
   const [search,setSearch] = useState("");
   const [cart,setCart] = useState({});
   const [sheet,setSheet] = useState(null);
@@ -128,10 +117,10 @@ export default function App() {
   const [form,setForm] = useState({nombre:"",telefono:"",sexo:"",pago:"pago_movil",recibirPromos:false});
   const [selSvc,setSelSvc] = useState(null);
   const [svcForm,setSvcForm] = useState({nombre:"",telefono:"",direccion:"",detalle:""});
+  const [superProds,setSuperProds] = useState([]);
   const [provProds,setProvProds] = useState([]);
   const [provPromos,setProvPromos] = useState([]);
   const [combos,setCombos] = useState([]);
-  const [superProds,setSuperProds] = useState(SUPER_INIT);
   const [resenaSheet,setResenaSheet] = useState(null);
   const [resena,setResena] = useState({estrellas:0,comentario:"",nombre:"",telefono:""});
   const [resenaMsj,setResenaMsj] = useState("");
@@ -145,8 +134,8 @@ export default function App() {
   const [pendProvs,setPendProvs] = useState([]);
   const [pendProds,setPendProds] = useState([]);
   const [pendResenas,setPendResenas] = useState([]);
-  const [topProds,setTopProds] = useState([]);
   const [allZonas,setAllZonas] = useState([]);
+  const [topProds,setTopProds] = useState([]);
 
   const [newProd,setNewProd] = useState({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false});
   const [newPromo,setNewPromo] = useState({nombre:"",descripcion:"",precio:"",fecha_inicio:"",fecha_fin:""});
@@ -160,11 +149,9 @@ export default function App() {
   const [adminSec,setAdminSec] = useState("proveedores");
 
   // Admin super
-  const [newSP,setNewSP] = useState({name:"",marca:"",presentacion:"",price:"",unit:"kg",emoji:"🛒",descripcion:""});
+  const [newSP,setNewSP] = useState({nombre:"",marca:"",presentacion:"",descripcion:"",precio:"",unidad:"kg",emoji:"🛒",categoria:SUPER_CATS[0]});
   const [spFoto,setSpFoto] = useState(null);
   const [spFotoPreview,setSpFotoPreview] = useState(null);
-
-  // Admin zonas/combos
   const [newZona,setNewZona] = useState({municipio:"San Fernando",zona:"",tipo:"barrio",costo_delivery:1.50,delivery_gratis_super:18.00,delivery_gratis_comida:12.00});
   const [newCombo,setNewCombo] = useState({nombre:"",descripcion:"",precio:"",temporada:"",fecha_inicio:"",fecha_fin:""});
 
@@ -172,37 +159,56 @@ export default function App() {
 
   const loadAll = async () => {
     const hoy = new Date().toISOString().split("T")[0];
-    const [z,pp,pr,cb] = await Promise.all([
+    const [z,sp,pp,pr,cb] = await Promise.all([
       supabase.from("zonas_delivery").select("*").eq("activa",true).order("municipio"),
+      supabase.from("productos_supermercado").select("*").eq("disponible",true).order("categoria"),
       supabase.from("productos_proveedor").select("*,proveedores(negocio,logo_url)").eq("aprobado",true).eq("disponible",true),
       supabase.from("promociones_proveedor").select("*,proveedores(negocio,logo_url)").eq("aprobada",true).eq("activa",true).gte("fecha_fin",hoy),
       supabase.from("combos").select("*").eq("activa",true),
     ]);
     if(z.data) setZonas(z.data);
+    if(sp.data) setSuperProds(sp.data);
     if(pp.data) setProvProds(pp.data.filter(p=>p.permanente||(p.fecha===hoy&&p.stock>0)));
     if(pr.data) setProvPromos(pr.data);
     if(cb.data) setCombos(cb.data);
   };
 
   const allProds = [
-    ...superProds,
+    ...superProds.map(p=>({
+      id:`sp_${p.id}`,name:p.nombre,cat:"Supermercado",superCat:p.categoria,
+      price:p.precio,unit:p.unidad,emoji:p.emoji||"🛒",margin:0.10,
+      foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,
+      tag:null,
+    })),
     ...provProds.map(p=>({
       id:`pv_${p.id}`,name:p.nombre,cat:p.categoria,price:p.precio,unit:p.unidad,
       emoji:"🍽️",margin:0.20,kitchen:p.proveedores?.negocio,logo:p.proveedores?.logo_url,
-      foto:p.foto_url,stock:p.stock,marca:p.marca,presentacion:p.presentacion,
-      horario:p.permanente?"Siempre disponible":`${p.horario_inicio}–${p.horario_fin}`,
-      tag:p.stock<=3?`Solo ${p.stock} disp.`:null,dbId:p.id,descripcion:p.descripcion,
+      foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,
+      stock:p.stock,horario:p.permanente?"Siempre disponible":`${p.horario_inicio}–${p.horario_fin}`,
+      tag:p.stock<=3?`Solo ${p.stock} disp.`:null,dbId:p.id,
     })),
     ...provPromos.map(pr=>({
       id:`promo_${pr.id}`,name:pr.nombre,cat:"Comida preparada",price:pr.precio,unit:"promo",
       emoji:"🎁",margin:0.20,kitchen:pr.proveedores?.negocio,logo:pr.proveedores?.logo_url,
-      descripcion:pr.descripcion,isPromo:true,
-      tag:"🎉 Promo",horario:`Hasta ${pr.fecha_fin}`,
+      descripcion:pr.descripcion,isPromo:true,tag:"🎉 Promo",horario:`Hasta ${pr.fecha_fin}`,
     })),
   ];
 
-  const filtered = allProds.filter(p=>(cat==="Todo"||p.cat===cat)&&p.name.toLowerCase().includes(search.toLowerCase()));
-  const catGroups = PCATS.filter(c=>c!=="Todo").map(c=>({cat:c,items:filtered.filter(p=>p.cat===c)})).filter(g=>g.items.length>0);
+  const filteredProds = allProds.filter(p=>{
+    const matchCat = cat==="Todo"||(cat==="Supermercado"?p.cat==="Supermercado":p.cat===cat);
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const matchSuperCat = cat!=="Supermercado"||superCat==="Todas"||p.superCat===superCat;
+    return matchCat&&matchSearch&&matchSuperCat;
+  });
+
+  const superGroups = cat==="Todo"||cat==="Supermercado" ? SUPER_CATS.map(sc=>({
+    cat:sc,
+    items:filteredProds.filter(p=>p.cat==="Supermercado"&&(superCat==="Todas"||p.superCat===sc)&&p.superCat===sc)
+  })).filter(g=>g.items.length>0) : [];
+
+  const provGroups = PROV_CATS.filter(c=>cat==="Todo"||cat===c).map(c=>({
+    cat:c,items:filteredProds.filter(p=>p.cat===c)
+  })).filter(g=>g.items.length>0);
 
   const add = (p)=>setCart(c=>({...c,[p.id]:{...p,qty:(c[p.id]?.qty||0)+1}}));
   const rem = (id)=>setCart(c=>{const n={...c};n[id].qty>1?n[id]={...n[id],qty:n[id].qty-1}:delete n[id];return n;});
@@ -219,14 +225,8 @@ export default function App() {
 
   const saveCliente = async () => {
     if(!form.telefono||!form.nombre) return;
-    const {data:existing} = await supabase.from("clientes").select("id").eq("telefono",form.telefono).single();
-    if(!existing) {
-      await supabase.from("clientes").insert({
-        nombre:form.nombre,telefono:form.telefono,
-        direccion:`${zonaSel?.zona||""} ${addr.calle} ${addr.referencia}`.trim(),
-        sexo:form.sexo,recibir_promos:form.recibirPromos
-      });
-    }
+    const {data:ex} = await supabase.from("clientes").select("id").eq("telefono",form.telefono).single();
+    if(!ex) await supabase.from("clientes").insert({nombre:form.nombre,telefono:form.telefono,direccion:`${zonaSel?.zona||""} ${addr.calle} ${addr.referencia}`.trim(),sexo:form.sexo,recibir_promos:form.recibirPromos});
   };
 
   const confirm = async () => {
@@ -255,7 +255,6 @@ export default function App() {
     setTimeout(()=>{setSheet(null);setResenaSheet(null);setResena({estrellas:0,comentario:"",nombre:"",telefono:""});setResenaMsj("");},2000);
   };
 
-  // Proveedor
   const upload = async(file,bucket,path)=>{
     await supabase.storage.from(bucket).upload(path,file,{upsert:true});
     return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
@@ -277,34 +276,31 @@ export default function App() {
     setLoading(true);
     let logo_url=null;
     if(logoFile) logo_url=await upload(logoFile,"logos",`${provForm.usuario}_logo`);
-    const {error} = await supabase.from("proveedores").insert({
-      usuario:provForm.usuario,nombre:provForm.nombre,negocio:provForm.negocio,
-      telefono:provForm.telefono,categorias:provForm.categorias,logo_url,aprobado:true
-    });
+    const {error} = await supabase.from("proveedores").insert({usuario:provForm.usuario,nombre:provForm.nombre,negocio:provForm.negocio,telefono:provForm.telefono,categorias:provForm.categorias,logo_url,aprobado:true});
     setLoading(false);
     if(error) return setPmsg(error.message.includes("unique")?"Ese usuario ya existe":"Error al registrarse");
     setPmsg("✅ Registro exitoso. Ya puedes iniciar sesión.");
     setProvMode("login");
   };
 
-  const loadMyProds = async(pid) => {
-    const hoy = new Date().toISOString().split("T")[0];
-    const {data} = await supabase.from("productos_proveedor").select("*").eq("proveedor_id",pid).or(`permanente.eq.true,fecha.eq.${hoy}`);
+  const loadMyProds = async(pid)=>{
+    const hoy=new Date().toISOString().split("T")[0];
+    const {data}=await supabase.from("productos_proveedor").select("*").eq("proveedor_id",pid).or(`permanente.eq.true,fecha.eq.${hoy}`);
     if(data) setMyProds(data);
   };
 
-  const loadMyPromos = async(pid) => {
-    const {data} = await supabase.from("promociones_proveedor").select("*").eq("proveedor_id",pid).order("created_at",{ascending:false});
+  const loadMyPromos = async(pid)=>{
+    const {data}=await supabase.from("promociones_proveedor").select("*").eq("proveedor_id",pid).order("created_at",{ascending:false});
     if(data) setMyPromos(data);
   };
 
-  const loadAdmin = async () => {
-    const [pv,pr,re,zo,top] = await Promise.all([
+  const loadAdmin = async()=>{
+    const [pv,pr,re,zo,top]=await Promise.all([
       supabase.from("proveedores").select("*").eq("aprobado",false),
       supabase.from("productos_proveedor").select("*,proveedores(negocio)").eq("aprobado",false),
       supabase.from("resenas").select("*").eq("aprobada",false),
       supabase.from("zonas_delivery").select("*").order("municipio"),
-      supabase.from("compras_clientes").select("producto_id,cantidad,proveedores(negocio)").order("cantidad",{ascending:false}).limit(20),
+      supabase.from("compras_clientes").select("producto_id,cantidad").order("cantidad",{ascending:false}).limit(10),
     ]);
     if(pv.data) setPendProvs(pv.data);
     if(pr.data) setPendProds(pr.data);
@@ -313,89 +309,79 @@ export default function App() {
     if(top.data) setTopProds(top.data);
   };
 
-  const publishProd = async () => {
+  const publishProd = async()=>{
     if(!newProd.nombre||!newProd.precio) return setPmsg("Completa nombre y precio");
     setLoading(true);
     let foto_url=null;
     if(fotoFile) foto_url=await upload(fotoFile,"productos",`${provData.id}_${Date.now()}`);
-    // Si ya tiene un producto con ese nombre aprobado antes → aprobación automática
-    const {data:existing} = await supabase.from("productos_proveedor").select("id").eq("proveedor_id",provData.id).eq("nombre",newProd.nombre).eq("primera_aprobacion",true).limit(1);
-    const autoApprove = existing&&existing.length>0;
+    const {data:existing}=await supabase.from("productos_proveedor").select("id").eq("proveedor_id",provData.id).eq("nombre",newProd.nombre).eq("primera_aprobacion",true).limit(1);
+    const auto=existing&&existing.length>0;
     await supabase.from("productos_proveedor").insert({
       proveedor_id:provData.id,nombre:newProd.nombre,descripcion:newProd.descripcion,
-      marca:newProd.marca,presentacion:newProd.presentacion,
-      precio:parseFloat(newProd.precio),unidad:newProd.unidad,categoria:newProd.categoria,
-      foto_url,stock:parseInt(newProd.stock),horario_inicio:newProd.hi,horario_fin:newProd.hf,
-      aprobado:autoApprove,disponible:true,permanente:newProd.permanente,primera_aprobacion:autoApprove,
-      fecha:new Date().toISOString().split("T")[0],
+      marca:newProd.marca,presentacion:newProd.presentacion,precio:parseFloat(newProd.precio),
+      unidad:newProd.unidad,categoria:newProd.categoria,foto_url,stock:parseInt(newProd.stock),
+      horario_inicio:newProd.hi,horario_fin:newProd.hf,aprobado:auto,disponible:true,
+      permanente:newProd.permanente,primera_aprobacion:auto,fecha:new Date().toISOString().split("T")[0],
     });
     setLoading(false);
-    setPmsg(autoApprove?"✅ Producto publicado directamente":"✅ Enviado al admin para aprobación (primera vez)");
+    setPmsg(auto?"✅ Producto publicado directamente":"✅ Enviado al admin para aprobación");
     setNewProd({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false});
     setFotoFile(null);setFotoPreview(null);
     loadMyProds(provData.id);loadAll();
   };
 
-  const publishPromo = async () => {
-    if(!newPromo.nombre||!newPromo.precio||!newPromo.fecha_inicio||!newPromo.fecha_fin) return setPmsg("Completa todos los campos de la promoción");
+  const publishPromo = async()=>{
+    if(!newPromo.nombre||!newPromo.precio||!newPromo.fecha_inicio||!newPromo.fecha_fin) return setPmsg("Completa todos los campos");
     setLoading(true);
-    await supabase.from("promociones_proveedor").insert({
-      proveedor_id:provData.id,...newPromo,precio:parseFloat(newPromo.precio),aprobada:false,activa:true
-    });
+    await supabase.from("promociones_proveedor").insert({proveedor_id:provData.id,...newPromo,precio:parseFloat(newPromo.precio),aprobada:false,activa:true});
     setLoading(false);
     setPmsg("✅ Promoción enviada para aprobación");
     setNewPromo({nombre:"",descripcion:"",precio:"",fecha_inicio:"",fecha_fin:""});
     loadMyPromos(provData.id);
   };
 
-  const toggleDisp = async(id,val) => {
+  const toggleDisp = async(id,val)=>{
     await supabase.from("productos_proveedor").update({disponible:!val}).eq("id",id);
     loadMyProds(provData.id);loadAll();
   };
 
-  const notifyClientes = async(promo) => {
-    const {data:compradores} = await supabase.from("compras_clientes").select("clientes(nombre,telefono)").eq("proveedor_id",provData.id);
-    const nums = [...new Set((compradores||[]).filter(c=>c.clientes?.telefono).map(c=>c.clientes.telefono))];
+  const notifyClientes = async(promo)=>{
+    const {data:compradores}=await supabase.from("compras_clientes").select("clientes(nombre,telefono)").eq("proveedor_id",provData.id);
+    const nums=[...new Set((compradores||[]).filter(c=>c.clientes?.telefono).map(c=>c.clientes.telefono))];
     if(nums.length===0) return alert("Aún no tienes compradores registrados");
-    const msg = `🎉 *${provData.negocio}* tiene una nueva promoción en *${APP_NAME} ${CITY}*!\n\n*${promo.nombre}*\n${promo.descripcion}\n💰 Precio especial: $${promo.precio}\n📅 Válida hasta: ${promo.fecha_fin}\n\n👉 Abre la app y pide ahora: mimercado-mu5k.vercel.app`;
+    const msg=`🎉 *${provData.negocio}* tiene una nueva promo en *${APP_NAME} ${CITY}*!\n\n*${promo.nombre}*\n${promo.descripcion}\n💰 Precio especial: $${promo.precio}\n📅 Válida hasta: ${promo.fecha_fin}\n\n👉 ${typeof window!=="undefined"?window.location.href:"mimercado-mu5k.vercel.app"}`;
     window.open(`https://wa.me/${nums[0]}?text=${encodeURIComponent(msg)}`);
   };
 
-  const approveP = async(id)=>{await supabase.from("proveedores").update({aprobado:true}).eq("id",id);loadAdmin();};
-  const rejectP = async(id)=>{await supabase.from("proveedores").delete().eq("id",id);loadAdmin();};
-  const approvePr = async(id)=>{await supabase.from("productos_proveedor").update({aprobado:true,primera_aprobacion:true}).eq("id",id);loadAdmin();loadAll();};
-  const rejectPr = async(id)=>{await supabase.from("productos_proveedor").delete().eq("id",id);loadAdmin();};
-  const approvePromo = async(id)=>{await supabase.from("promociones_proveedor").update({aprobada:true}).eq("id",id);loadAdmin();loadAll();};
-  const rejectPromo = async(id)=>{await supabase.from("promociones_proveedor").delete().eq("id",id);loadAdmin();};
-  const approveRe = async(id)=>{await supabase.from("resenas").update({aprobada:true}).eq("id",id);loadAdmin();};
-  const rejectRe = async(id)=>{await supabase.from("resenas").delete().eq("id",id);loadAdmin();};
-
-  const addZona = async()=>{
-    if(!newZona.zona) return;
-    await supabase.from("zonas_delivery").insert(newZona);
-    setNewZona({municipio:"San Fernando",zona:"",tipo:"barrio",costo_delivery:1.50,delivery_gratis_super:18.00,delivery_gratis_comida:12.00});
-    loadAdmin();loadAll();
-  };
-
-  const addCombo = async()=>{
-    if(!newCombo.nombre||!newCombo.precio) return;
-    await supabase.from("combos").insert({...newCombo,precio:parseFloat(newCombo.precio),activa:true});
-    setNewCombo({nombre:"",descripcion:"",precio:"",temporada:"",fecha_inicio:"",fecha_fin:""});
+  const addSuperProd = async()=>{
+    if(!newSP.nombre||!newSP.precio) return;
+    setLoading(true);
+    let foto_url=null;
+    if(spFoto) foto_url=await upload(spFoto,"productos",`super_${Date.now()}`);
+    await supabase.from("productos_supermercado").insert({nombre:newSP.nombre,categoria:newSP.categoria,marca:newSP.marca,presentacion:newSP.presentacion,descripcion:newSP.descripcion,precio:parseFloat(newSP.precio),unidad:newSP.unidad,emoji:newSP.emoji,foto_url,disponible:true});
+    setLoading(false);
+    setNewSP({nombre:"",marca:"",presentacion:"",descripcion:"",precio:"",unidad:"kg",emoji:"🛒",categoria:SUPER_CATS[0]});
+    setSpFoto(null);setSpFotoPreview(null);
     loadAll();
   };
 
-  const addSuperProd = async () => {
-    if(!newSP.name||!newSP.price) return;
-    let foto=null;
-    if(spFoto) foto=await upload(spFoto,"productos",`super_${Date.now()}`);
-    setSuperProds(p=>[...p,{id:Date.now(),name:newSP.name,cat:"Supermercado",price:parseFloat(newSP.price),unit:newSP.unit,emoji:newSP.emoji,marca:newSP.marca,presentacion:newSP.presentacion,descripcion:newSP.descripcion,foto,margin:0.10}]);
-    setNewSP({name:"",marca:"",presentacion:"",price:"",unit:"kg",emoji:"🛒",descripcion:""});
-    setSpFoto(null);setSpFotoPreview(null);
+  const deleteSuperProd = async(id)=>{
+    await supabase.from("productos_supermercado").update({disponible:false}).eq("id",id.replace("sp_",""));
+    loadAll();
   };
 
-  const horario = getHorario();
+  const approveP=async(id)=>{await supabase.from("proveedores").update({aprobado:true}).eq("id",id);loadAdmin();};
+  const rejectP=async(id)=>{await supabase.from("proveedores").delete().eq("id",id);loadAdmin();};
+  const approvePr=async(id)=>{await supabase.from("productos_proveedor").update({aprobado:true,primera_aprobacion:true}).eq("id",id);loadAdmin();loadAll();};
+  const rejectPr=async(id)=>{await supabase.from("productos_proveedor").delete().eq("id",id);loadAdmin();};
+  const approveRe=async(id)=>{await supabase.from("resenas").update({aprobada:true}).eq("id",id);loadAdmin();};
+  const rejectRe=async(id)=>{await supabase.from("resenas").delete().eq("id",id);loadAdmin();};
+  const addZona=async()=>{if(!newZona.zona)return;await supabase.from("zonas_delivery").insert(newZona);setNewZona({municipio:"San Fernando",zona:"",tipo:"barrio",costo_delivery:1.50,delivery_gratis_super:18.00,delivery_gratis_comida:12.00});loadAdmin();loadAll();};
+  const addCombo=async()=>{if(!newCombo.nombre||!newCombo.precio)return;await supabase.from("combos").insert({...newCombo,precio:parseFloat(newCombo.precio),activa:true});setNewCombo({nombre:"",descripcion:"",precio:"",temporada:"",fecha_inicio:"",fecha_fin:""});loadAll();};
 
-  const QtyCtrl = ({p})=>cart[p.id]?(
+  const horario=getHorario();
+
+  const QtyCtrl=({p})=>cart[p.id]?(
     <div style={s.qR}>
       <button style={s.qB} onClick={()=>rem(p.id)}>−</button>
       <span style={s.qN}>{cart[p.id].qty}</span>
@@ -403,7 +389,7 @@ export default function App() {
     </div>
   ):<button style={s.aBtn} onClick={()=>add(p)}>+</button>;
 
-  const Card = ({p})=>(
+  const Card=({p})=>(
     <div style={s.card}>
       {p.foto?<img src={p.foto} alt={p.name} style={s.cImg}/>:<div style={s.cEm}>{p.emoji}</div>}
       {p.isPromo&&<div style={s.promoTag}>🎉 Promoción</div>}
@@ -420,8 +406,6 @@ export default function App() {
       {p.dbId&&<button onClick={()=>{setResenaSheet(p.dbId);setSheet("resena");}} style={{fontSize:10,color:"#94a3b8",background:"none",border:"none",cursor:"pointer",textAlign:"left",padding:0,marginTop:2}}>⭐ Dejar reseña</button>}
     </div>
   );
-
-  const catIcon = c=>c==="Supermercado"?"🛒":c==="Comida preparada"?"🍱":c==="Postres"?"🍰":c==="Jugos y bebidas"?"🥤":"🍞";
 
   return (
     <div style={s.app}>
@@ -490,15 +474,32 @@ export default function App() {
             <span style={s.bdg("#22c55e","#fff")}>Gratis desde $10 comida · $15 super</span>
           </div>
           <div style={s.sw}><input style={s.si} placeholder="🔍  Buscar..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
-          <div style={s.cs}>{PCATS.map(c=><button key={c} style={s.cb(cat===c)} onClick={()=>setCat(c)}>{c}</button>)}</div>
+          <div style={s.cs}>
+            {ALL_CATS.map(c=><button key={c} style={s.cb(cat===c)} onClick={()=>{setCat(c);setSuperCat("Todas");}}>{c}</button>)}
+          </div>
+          {/* Sub-categorías del supermercado */}
+          {(cat==="Todo"||cat==="Supermercado")&&superProds.length>0&&(
+            <div style={{...s.cs,paddingTop:4}}>
+              <button style={s.cb(superCat==="Todas")} onClick={()=>setSuperCat("Todas")}>Todas</button>
+              {SUPER_CATS.map(sc=><button key={sc} style={s.cb(superCat===sc)} onClick={()=>setSuperCat(sc)}>{sc}</button>)}
+            </div>
+          )}
           <div style={s.sec}>
-            {catGroups.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🔍</div><p>No encontramos ese producto</p></div>}
-            {catGroups.map(g=>(
+            {/* Supermercado por categorías */}
+            {(cat==="Todo"||cat==="Supermercado")&&superGroups.map(g=>(
               <div key={g.cat}>
-                <div style={s.sT}>{catIcon(g.cat)} {g.cat}</div>
+                <div style={s.sT}>{g.cat}</div>
                 <div style={s.grid}>{g.items.map(p=><Card key={p.id} p={p}/>)}</div>
               </div>
             ))}
+            {/* Proveedores */}
+            {provGroups.map(g=>(
+              <div key={g.cat}>
+                <div style={s.sT}>{g.cat==="Comida preparada"?"🍱":g.cat==="Postres"?"🍰":g.cat==="Jugos y bebidas"?"🥤":"🍞"} {g.cat}</div>
+                <div style={s.grid}>{g.items.map(p=><Card key={p.id} p={p}/>)}</div>
+              </div>
+            ))}
+            {filteredProds.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🔍</div><p>No encontramos ese producto</p></div>}
           </div>
         </>
       )}
@@ -531,7 +532,7 @@ export default function App() {
         <div style={{...s.sec,marginTop:16}}>
           {(provMode==="login"||provMode==="register")&&(
             <div style={s.pc}>
-              <div style={s.pT}>{provMode==="login"?"🏪 Acceso proveedores":"📝 Registro de proveedor"}</div>
+              <div style={s.pT}>{provMode==="login"?"🏪 Acceso proveedores":"📝 Registro"}</div>
               {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
               {provMode==="register"&&(
                 <>
@@ -545,7 +546,7 @@ export default function App() {
                   <input style={s.inp} placeholder="+58 424-000-0000" value={provForm.telefono} onChange={e=>setProvForm({...provForm,telefono:e.target.value})}/>
                   <label style={s.lbl}>Categorías</label>
                   <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
-                    {["Comida preparada","Postres","Jugos y bebidas","Pan y repostería"].map(c=>(
+                    {PROV_CATS.map(c=>(
                       <button key={c} onClick={()=>setProvForm(f=>({...f,categorias:f.categorias.includes(c)?f.categorias.filter(x=>x!==c):[...f.categorias,c]}))}
                         style={{padding:"5px 10px",borderRadius:20,fontSize:12,cursor:"pointer",background:provForm.categorias.includes(c)?P:"#f1f5f9",color:provForm.categorias.includes(c)?"#fff":"#64748b",border:"none",fontWeight:500}}>
                         {c}
@@ -579,8 +580,6 @@ export default function App() {
                   </div>
                 </div>
               </div>
-
-              {/* TABS PROVEEDOR */}
               <div style={{display:"flex",gap:8,marginBottom:12}}>
                 {["productos","promos"].map(t=>(
                   <button key={t} onClick={()=>setProvTab(t)} style={{flex:1,padding:"9px",borderRadius:10,border:"none",background:provTab===t?P:"#f1f5f9",color:provTab===t?"#fff":"#64748b",fontSize:13,fontWeight:600,cursor:"pointer"}}>
@@ -588,25 +587,23 @@ export default function App() {
                   </button>
                 ))}
               </div>
-
               {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
 
-              {/* PUBLICAR PRODUCTO */}
               {provTab==="productos"&&(
                 <>
                   <div style={s.pc}>
                     <div style={s.pT}>➕ Publicar producto</div>
-                    <label style={s.lbl}>Nombre del producto *</label>
+                    <label style={s.lbl}>Nombre *</label>
                     <input style={s.inp} placeholder="Torta de zanahoria" value={newProd.nombre} onChange={e=>setNewProd({...newProd,nombre:e.target.value})}/>
                     <label style={s.lbl}>Marca (opcional)</label>
-                    <input style={s.inp} placeholder="Ej: Nestlé, casero..." value={newProd.marca} onChange={e=>setNewProd({...newProd,marca:e.target.value})}/>
+                    <input style={s.inp} placeholder="Casero, artesanal..." value={newProd.marca} onChange={e=>setNewProd({...newProd,marca:e.target.value})}/>
                     <label style={s.lbl}>Presentación (opcional)</label>
                     <input style={s.inp} placeholder="500g, 1L, 6 unidades..." value={newProd.presentacion} onChange={e=>setNewProd({...newProd,presentacion:e.target.value})}/>
                     <label style={s.lbl}>Descripción (opcional)</label>
                     <input style={s.inp} placeholder="Ingredientes, sabor, tamaño..." value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
                     <label style={s.lbl}>Categoría *</label>
                     <select style={{...s.inp,background:"#fff"}} value={newProd.categoria} onChange={e=>setNewProd({...newProd,categoria:e.target.value})}>
-                      {(provData.categorias?.length>0?provData.categorias:["Comida preparada","Postres","Jugos y bebidas","Pan y repostería"]).map(c=><option key={c}>{c}</option>)}
+                      {(provData.categorias?.length>0?provData.categorias:PROV_CATS).map(c=><option key={c}>{c}</option>)}
                     </select>
                     <label style={s.lbl}>Precio ($) *</label>
                     <input style={s.inp} type="number" placeholder="3.50" value={newProd.precio} onChange={e=>setNewProd({...newProd,precio:e.target.value})}/>
@@ -627,12 +624,9 @@ export default function App() {
                     <label style={s.lbl}>Foto del producto</label>
                     {fotoPreview&&<img src={fotoPreview} alt="" style={{width:"100%",height:110,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
                     <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setFotoFile(f);setFotoPreview(URL.createObjectURL(f));}}}/>
-                    <div style={{...s.ib,background:"#fef9c3"}}>
-                      <div style={{fontSize:12,color:"#854d0e"}}>ℹ️ La primera publicación de cada producto requiere aprobación del admin. Las siguientes son automáticas.</div>
-                    </div>
+                    <div style={{...s.ib,background:"#fef9c3"}}><div style={{fontSize:12,color:"#854d0e"}}>ℹ️ Primera publicación de cada producto requiere aprobación del admin.</div></div>
                     <button style={s.btn} onClick={publishProd} disabled={loading}>{loading?"Subiendo...":"Publicar producto"}</button>
                   </div>
-
                   {myProds.length>0&&(
                     <div style={s.pc}>
                       <div style={s.pT}>📋 Mis productos ({myProds.length})</div>
@@ -641,11 +635,11 @@ export default function App() {
                           {p.foto_url?<img src={p.foto_url} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover"}}/>:<span style={{fontSize:22,width:40,textAlign:"center"}}>🍽️</span>}
                           <div style={{flex:1}}>
                             <div style={{fontSize:13,fontWeight:600}}>{p.nombre}</div>
-                            <div style={{fontSize:11,color:"#64748b"}}>${p.precio} · Stock: {p.stock} · {p.permanente?"Permanente":`${p.horario_inicio}–${p.horario_fin}`}</div>
+                            <div style={{fontSize:11,color:"#64748b"}}>${p.precio} · Stock: {p.stock}</div>
                           </div>
                           <div style={{display:"flex",flexDirection:"column",gap:4,alignItems:"flex-end"}}>
-                            <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8,background:p.aprobado?"#dcfce7":"#fef9c3",color:p.aprobado?"#15803d":"#854d0e"}}>{p.aprobado?"✓ Aprobado":"⏳ Pendiente"}</span>
-                            {p.aprobado&&<button onClick={()=>toggleDisp(p.id,p.disponible)} style={{fontSize:10,padding:"2px 8px",borderRadius:8,border:"none",cursor:"pointer",background:p.disponible?"#dcfce7":"#fee2e2",color:p.disponible?"#15803d":"#be123c",fontWeight:600}}>{p.disponible?"Disponible":"Agotado"}</button>}
+                            <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8,background:p.aprobado?"#dcfce7":"#fef9c3",color:p.aprobado?"#15803d":"#854d0e"}}>{p.aprobado?"✓":"⏳"}</span>
+                            {p.aprobado&&<button onClick={()=>toggleDisp(p.id,p.disponible)} style={{fontSize:10,padding:"2px 8px",borderRadius:8,border:"none",cursor:"pointer",background:p.disponible?"#dcfce7":"#fee2e2",color:p.disponible?"#15803d":"#be123c",fontWeight:600}}>{p.disponible?"Disp.":"Agotado"}</button>}
                           </div>
                         </div>
                       ))}
@@ -654,14 +648,13 @@ export default function App() {
                 </>
               )}
 
-              {/* PUBLICAR PROMO */}
               {provTab==="promos"&&(
                 <>
                   <div style={s.pc}>
                     <div style={s.pT}>🎉 Nueva promoción</div>
                     <label style={s.lbl}>Nombre de la promo *</label>
                     <input style={s.inp} placeholder="Combo familiar del día" value={newPromo.nombre} onChange={e=>setNewPromo({...newPromo,nombre:e.target.value})}/>
-                    <label style={s.lbl}>Descripción * (destaca qué incluye)</label>
+                    <label style={s.lbl}>Descripción * (qué incluye)</label>
                     <input style={s.inp} placeholder="2 almuerzos + 2 jugos + postre..." value={newPromo.descripcion} onChange={e=>setNewPromo({...newPromo,descripcion:e.target.value})}/>
                     <label style={s.lbl}>Precio especial ($) *</label>
                     <input style={s.inp} type="number" placeholder="12.00" value={newPromo.precio} onChange={e=>setNewPromo({...newPromo,precio:e.target.value})}/>
@@ -669,9 +662,8 @@ export default function App() {
                       <div style={{flex:1}}><label style={s.lbl}>Fecha inicio *</label><input style={s.inp} type="date" value={newPromo.fecha_inicio} onChange={e=>setNewPromo({...newPromo,fecha_inicio:e.target.value})}/></div>
                       <div style={{flex:1}}><label style={s.lbl}>Fecha fin *</label><input style={s.inp} type="date" value={newPromo.fecha_fin} onChange={e=>setNewPromo({...newPromo,fecha_fin:e.target.value})}/></div>
                     </div>
-                    <button style={s.btnPurple} onClick={publishPromo} disabled={loading}>{loading?"Enviando...":"Enviar promoción para aprobación"}</button>
+                    <button style={s.btnPurple} onClick={publishPromo} disabled={loading}>{loading?"Enviando...":"Enviar para aprobación"}</button>
                   </div>
-
                   {myPromos.length>0&&(
                     <div style={s.pc}>
                       <div style={s.pT}>📋 Mis promociones</div>
@@ -683,25 +675,20 @@ export default function App() {
                               <div style={{fontSize:11,color:"#64748b"}}>${pr.precio} · {pr.fecha_inicio} → {pr.fecha_fin}</div>
                               <div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>{pr.descripcion}</div>
                             </div>
-                            <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8,background:pr.aprobada?"#dcfce7":"#fef9c3",color:pr.aprobada?"#15803d":"#854d0e",flexShrink:0,marginLeft:8}}>{pr.aprobada?"✓ Activa":"⏳ Pendiente"}</span>
+                            <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8,background:pr.aprobada?"#dcfce7":"#fef9c3",color:pr.aprobada?"#15803d":"#854d0e",flexShrink:0,marginLeft:8}}>{pr.aprobada?"✓ Activa":"⏳"}</span>
                           </div>
-                          {pr.aprobada&&(
-                            <button onClick={()=>notifyClientes(pr)} style={{marginTop:8,background:"#25d366",color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",width:"100%"}}>
-                              📲 Notificar compradores por WhatsApp
-                            </button>
-                          )}
+                          {pr.aprobada&&<button onClick={()=>notifyClientes(pr)} style={{marginTop:8,background:"#25d366",color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",width:"100%"}}>📲 Notificar compradores</button>}
                         </div>
                       ))}
                     </div>
                   )}
                 </>
               )}
-
               <button style={s.btnG} onClick={()=>{setProvMode("login");setProvData(null);setMyProds([]);setMyPromos([]);setPmsg("");}}>Cerrar sesión</button>
             </>
           )}
 
-          {/* PANEL ADMIN */}
+          {/* ADMIN */}
           {provMode==="admin"&&(
             <>
               <div style={{...s.pc,background:"#eff6ff",borderColor:"#bfdbfe"}}>
@@ -711,12 +698,11 @@ export default function App() {
                 {[
                   {key:"proveedores",label:"👤 Proveedores pendientes",n:pendProvs.length},
                   {key:"productos",label:"🍽️ Productos pendientes",n:pendProds.length},
-                  {key:"promos",label:"🎉 Promociones pendientes",n:0},
                   {key:"resenas",label:"⭐ Reseñas pendientes",n:pendResenas.length},
                   {key:"zonas",label:"🗺️ Gestionar zonas",n:0},
                   {key:"combos",label:"🎁 Combos y temporadas",n:0},
                   {key:"super",label:"🛒 Supermercado",n:0},
-                  {key:"reportes",label:"📊 Reportes y ventas",n:0},
+                  {key:"reportes",label:"📊 Reportes",n:0},
                 ].map(x=>(
                   <button key={x.key} style={s.admRow(adminSec===x.key)} onClick={()=>setAdminSec(x.key)}>
                     <span>{x.label}</span>
@@ -728,7 +714,7 @@ export default function App() {
               {adminSec==="proveedores"&&(
                 <div style={s.pc}>
                   <div style={s.pT}>Proveedores por aprobar ({pendProvs.length})</div>
-                  {pendProvs.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay proveedores pendientes ✓</div>}
+                  {pendProvs.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay pendientes ✓</div>}
                   {pendProvs.map(p=>(
                     <div key={p.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
                       <div style={{display:"flex",gap:8,marginBottom:8}}>
@@ -747,7 +733,7 @@ export default function App() {
               {adminSec==="productos"&&(
                 <div style={s.pc}>
                   <div style={s.pT}>Productos por aprobar ({pendProds.length})</div>
-                  {pendProds.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay productos pendientes ✓</div>}
+                  {pendProds.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay pendientes ✓</div>}
                   {pendProds.map(p=>(
                     <div key={p.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
                       <div style={{display:"flex",gap:8,marginBottom:8}}>
@@ -755,9 +741,8 @@ export default function App() {
                         <div>
                           <div style={{fontSize:13,fontWeight:700}}>{p.nombre}</div>
                           {(p.marca||p.presentacion)&&<div style={{fontSize:11,color:"#94a3b8"}}>{[p.marca,p.presentacion].filter(Boolean).join(" · ")}</div>}
-                          <div style={{fontSize:11,color:"#64748b"}}>${p.precio} · {p.unidad} · Stock: {p.stock}</div>
-                          <div style={{fontSize:11,color:"#64748b"}}>{p.proveedores?.negocio} · {p.categoria}</div>
-                          {p.descripcion&&<div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>{p.descripcion}</div>}
+                          <div style={{fontSize:11,color:"#64748b"}}>${p.precio} · {p.proveedores?.negocio}</div>
+                          {p.descripcion&&<div style={{fontSize:11,color:"#94a3b8"}}>{p.descripcion}</div>}
                         </div>
                       </div>
                       <div style={{display:"flex",gap:8}}>
@@ -769,17 +754,10 @@ export default function App() {
                 </div>
               )}
 
-              {adminSec==="promos"&&(
-                <div style={s.pc}>
-                  <div style={s.pT}>Promociones por aprobar</div>
-                  <div style={{fontSize:13,color:"#94a3b8"}}>Las promociones de proveedores aparecerán aquí para tu revisión.</div>
-                </div>
-              )}
-
               {adminSec==="resenas"&&(
                 <div style={s.pc}>
                   <div style={s.pT}>Reseñas por aprobar ({pendResenas.length})</div>
-                  {pendResenas.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay reseñas pendientes ✓</div>}
+                  {pendResenas.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay pendientes ✓</div>}
                   {pendResenas.map(r=>(
                     <div key={r.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
                       <div style={{fontSize:13,fontWeight:600}}>{r.cliente_nombre}</div>
@@ -799,7 +777,7 @@ export default function App() {
                   <div style={s.pT}>🗺️ Zonas de delivery</div>
                   {allZonas.map(z=>(
                     <div key={z.id} style={{padding:"8px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}>
-                      <div style={{fontWeight:600,color:P}}>{z.zona} <span style={{color:"#94a3b8",fontWeight:400}}>({z.municipio})</span></div>
+                      <div style={{fontWeight:600,color:P}}>{z.zona} <span style={{color:"#94a3b8"}}>({z.municipio})</span></div>
                       <div style={{color:"#64748b"}}>Delivery: ${z.costo_delivery} · Gratis super: ${z.delivery_gratis_super} · Gratis comida: ${z.delivery_gratis_comida}</div>
                     </div>
                   ))}
@@ -808,7 +786,7 @@ export default function App() {
                     <input style={s.inp} placeholder="Nombre de zona o barrio" value={newZona.zona} onChange={e=>setNewZona({...newZona,zona:e.target.value})}/>
                     <input style={s.inp} placeholder="Municipio" value={newZona.municipio} onChange={e=>setNewZona({...newZona,municipio:e.target.value})}/>
                     <div style={{display:"flex",gap:8}}>
-                      <div style={{flex:1}}><label style={s.lbl}>Costo delivery $</label><input style={s.inp} type="number" value={newZona.costo_delivery} onChange={e=>setNewZona({...newZona,costo_delivery:parseFloat(e.target.value)})}/></div>
+                      <div style={{flex:1}}><label style={s.lbl}>Delivery $</label><input style={s.inp} type="number" value={newZona.costo_delivery} onChange={e=>setNewZona({...newZona,costo_delivery:parseFloat(e.target.value)})}/></div>
                       <div style={{flex:1}}><label style={s.lbl}>Gratis super $</label><input style={s.inp} type="number" value={newZona.delivery_gratis_super} onChange={e=>setNewZona({...newZona,delivery_gratis_super:parseFloat(e.target.value)})}/></div>
                     </div>
                     <label style={s.lbl}>Gratis comida $</label>
@@ -844,37 +822,40 @@ export default function App() {
 
               {adminSec==="super"&&(
                 <div style={s.pc}>
-                  <div style={s.pT}>🛒 Supermercado</div>
-                  {superProds.map((p,i)=>(
+                  <div style={s.pT}>🛒 Supermercado ({superProds.length} productos)</div>
+                  {superProds.map(p=>(
                     <div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 0",borderBottom:"1px solid #f1f5f9"}}>
-                      {p.foto?<img src={p.foto} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover"}}/>:<span style={{fontSize:20}}>{p.emoji}</span>}
+                      {p.foto_url?<img src={p.foto_url} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover"}}/>:<span style={{fontSize:20}}>{p.emoji}</span>}
                       <div style={{flex:1}}>
-                        <div style={{fontSize:13,fontWeight:600}}>{p.name}</div>
-                        <div style={{fontSize:11,color:"#64748b"}}>{[p.marca,p.presentacion].filter(Boolean).join(" · ")} · ${p.price}/{p.unit}</div>
-                        {p.descripcion&&<div style={{fontSize:10,color:"#94a3b8"}}>{p.descripcion}</div>}
+                        <div style={{fontSize:13,fontWeight:600}}>{p.nombre}</div>
+                        <div style={{fontSize:11,color:"#64748b"}}>{p.categoria} · {[p.marca,p.presentacion].filter(Boolean).join(" · ")} · ${p.precio}/{p.unidad}</div>
                       </div>
-                      <button onClick={()=>setSuperProds(pp=>pp.filter((_,j)=>j!==i))} style={{fontSize:11,padding:"3px 8px",borderRadius:8,border:"none",background:"#fee2e2",color:"#be123c",cursor:"pointer"}}>Quitar</button>
+                      <button onClick={()=>deleteSuperProd(`sp_${p.id}`)} style={{fontSize:11,padding:"3px 8px",borderRadius:8,border:"none",background:"#fee2e2",color:"#be123c",cursor:"pointer"}}>Quitar</button>
                     </div>
                   ))}
                   <div style={{marginTop:14}}>
                     <div style={{fontSize:13,fontWeight:600,color:P,marginBottom:8}}>➕ Agregar producto</div>
+                    <label style={s.lbl}>Categoría *</label>
+                    <select style={{...s.inp,background:"#fff"}} value={newSP.categoria} onChange={e=>setNewSP({...newSP,categoria:e.target.value})}>
+                      {SUPER_CATS.map(c=><option key={c}>{c}</option>)}
+                    </select>
                     <div style={{display:"flex",gap:8,marginBottom:8}}>
                       <input style={{...s.inp,marginBottom:0,width:50}} placeholder="🛒" value={newSP.emoji} onChange={e=>setNewSP({...newSP,emoji:e.target.value})}/>
-                      <input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Nombre del producto *" value={newSP.name} onChange={e=>setNewSP({...newSP,name:e.target.value})}/>
+                      <input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Nombre *" value={newSP.nombre} onChange={e=>setNewSP({...newSP,nombre:e.target.value})}/>
                     </div>
                     <div style={{display:"flex",gap:8,marginBottom:8}}>
-                      <input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Marca (opcional)" value={newSP.marca} onChange={e=>setNewSP({...newSP,marca:e.target.value})}/>
+                      <input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Marca" value={newSP.marca} onChange={e=>setNewSP({...newSP,marca:e.target.value})}/>
                       <input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Presentación" value={newSP.presentacion} onChange={e=>setNewSP({...newSP,presentacion:e.target.value})}/>
                     </div>
                     <div style={{display:"flex",gap:8,marginBottom:8}}>
-                      <input style={{...s.inp,marginBottom:0,flex:1}} type="number" placeholder="Precio $ *" value={newSP.price} onChange={e=>setNewSP({...newSP,price:e.target.value})}/>
-                      <input style={{...s.inp,marginBottom:0,width:80}} placeholder="kg/L/und" value={newSP.unit} onChange={e=>setNewSP({...newSP,unit:e.target.value})}/>
+                      <input style={{...s.inp,marginBottom:0,flex:1}} type="number" placeholder="Precio $ *" value={newSP.precio} onChange={e=>setNewSP({...newSP,precio:e.target.value})}/>
+                      <input style={{...s.inp,marginBottom:0,width:80}} placeholder="kg/L/und" value={newSP.unidad} onChange={e=>setNewSP({...newSP,unidad:e.target.value})}/>
                     </div>
                     <input style={s.inp} placeholder="Descripción (opcional)" value={newSP.descripcion} onChange={e=>setNewSP({...newSP,descripcion:e.target.value})}/>
                     <label style={s.lbl}>Foto del producto</label>
                     {spFotoPreview&&<img src={spFotoPreview} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
                     <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setSpFoto(f);setSpFotoPreview(URL.createObjectURL(f));}}}/>
-                    <button style={s.btn} onClick={addSuperProd}>Agregar al supermercado</button>
+                    <button style={s.btn} onClick={addSuperProd} disabled={loading}>{loading?"Guardando...":"Agregar al supermercado"}</button>
                   </div>
                 </div>
               )}
@@ -882,18 +863,15 @@ export default function App() {
               {adminSec==="reportes"&&(
                 <div style={s.pc}>
                   <div style={s.pT}>📊 Reportes del ecosistema</div>
-                  <div style={{...s.ib,marginBottom:12}}>
+                  <div style={s.ib}>
                     <div style={{fontSize:13,fontWeight:600,color:P,marginBottom:8}}>🏆 Productos más vendidos</div>
                     {topProds.length===0&&<div style={{fontSize:12,color:"#94a3b8"}}>Aún no hay ventas registradas</div>}
-                    {topProds.slice(0,10).map((p,i)=>(
+                    {topProds.map((p,i)=>(
                       <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #e2e8f0",fontSize:12}}>
-                        <span style={{color:"#1e293b"}}>{p.producto_id}</span>
+                        <span>{i+1}. {p.producto_id}</span>
                         <span style={{fontWeight:700,color:P}}>{p.cantidad} vendidos</span>
                       </div>
                     ))}
-                  </div>
-                  <div style={{fontSize:12,color:"#64748b",background:"#f0fdf4",padding:"10px 14px",borderRadius:10}}>
-                    💡 Los reportes detallados por proveedor se construirán en la siguiente versión con gráficas de ventas diarias, semanales y mensuales.
                   </div>
                 </div>
               )}
@@ -1012,7 +990,7 @@ export default function App() {
                 Hola <strong>{form.nombre}</strong>, tu pedido está confirmado.<br/>
                 Te escribimos al <strong>{form.telefono}</strong>.<br/>
                 Tiempo estimado: <strong>40–60 min</strong>
-                {form.recibirPromos&&<><br/><span style={{color:"#15803d",fontWeight:600}}>✓ Recibirás promociones de tus proveedores favoritos</span></>}
+                {form.recibirPromos&&<><br/><span style={{color:"#15803d",fontWeight:600}}>✓ Recibirás promociones de tus proveedores</span></>}
               </div>
               <button style={s.btnWa} onClick={sendWa}>📲 Recibir confirmación por WhatsApp</button>
               <button style={s.btnG} onClick={()=>{setCart({});setSheet(null);setForm({nombre:"",telefono:"",sexo:"",pago:"pago_movil",recibirPromos:false});setZonaSelId("");setZonaSel(null);setAddr({calle:"",referencia:""});}}>Hacer otro pedido</button>
@@ -1038,7 +1016,7 @@ export default function App() {
             <input style={s.inp} placeholder="¿Dónde necesitas el servicio?" value={svcForm.direccion} onChange={e=>setSvcForm({...svcForm,direccion:e.target.value})}/>
             <label style={s.lbl}>Detalle</label>
             <input style={s.inp} placeholder="Cuéntanos lo que necesitas" value={svcForm.detalle} onChange={e=>setSvcForm({...svcForm,detalle:e.target.value})}/>
-            <div style={s.ib}><div style={{fontSize:12,color:"#64748b"}}>💬 Te contactamos por WhatsApp para confirmar disponibilidad y precio.</div></div>
+            <div style={s.ib}><div style={{fontSize:12,color:"#64748b"}}>💬 Te contactamos por WhatsApp para confirmar.</div></div>
             <button style={s.btnWa} onClick={sendSvcWa}>📲 Enviar solicitud por WhatsApp</button>
             <button style={s.btnG} onClick={()=>setSheet(null)}>Cancelar</button>
           </div>
