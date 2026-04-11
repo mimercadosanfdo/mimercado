@@ -1,562 +1,923 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  "https://cdiuboyklymirssxperd.supabase.co",
+  "sb_publishable_WkUnC5ElLD9xRbhzG_OKFw_13gOTwGk"
+);
 
 const CITY = "San Fernando";
 const APP_NAME = "MiMercado";
-const WHATSAPP_NUMBER = "584243232671";
-const PRIMARY = "#0f172a";
-const ACCENT = "#f59e0b";
+const WA = "584243232671";
+const ADMIN_USER = "admin";
+const ADMIN_PASS = "mimercado2024";
+const P = "#0f172a";
+const A = "#f59e0b";
 
-const DELIVERY_CENTRAL = 1.0;
-const DELIVERY_OUTSIDE = 2.0;
-const FREE_DELIVERY_FOOD = 8.0;
-const FREE_DELIVERY_SUPER_CENTRAL = 12.0;
-const FREE_DELIVERY_SUPER_OUTSIDE = 20.0;
+const MAIN_TABS = ["Inicio","Productos","Servicios","Proveedores"];
+const PCATS = ["Todo","Supermercado","Comida preparada","Postres","Jugos y bebidas","Pan y repostería"];
 
-const MAIN_SECTIONS = ["Productos","Servicios"];
-
-const PRODUCT_CATS = ["Todo","Supermercado","Comida preparada","Postres","Jugos y bebidas","Pan y repostería"];
-
-const SERVICES = [
-  { id:"s1", name:"Mototaxi", emoji:"🛵", desc:"Te llevamos a donde necesites dentro de la ciudad", price:"Desde $1.00", color:"#fef3c7", textColor:"#92400e" },
-  { id:"s2", name:"Taxi", emoji:"🚗", desc:"Viajes cómodos y seguros en San Fernando", price:"Desde $2.00", color:"#e0f2fe", textColor:"#0369a1" },
-  { id:"s3", name:"Lavandería", emoji:"👕", desc:"Recogemos tu ropa y la entregamos limpia", price:"Desde $3.00/kg", color:"#f0fdf4", textColor:"#15803d" },
-  { id:"s4", name:"Limpieza del hogar", emoji:"🧹", desc:"Personal de confianza para limpiar tu casa", price:"Desde $10.00/día", color:"#fdf4ff", textColor:"#7e22ce" },
-  { id:"s5", name:"Enfermería a domicilio", emoji:"💉", desc:"Atención de enfermería profesional en tu hogar", price:"Desde $5.00", color:"#fff1f2", textColor:"#be123c" },
-  { id:"s6", name:"Encomiendas locales", emoji:"📦", desc:"Enviamos o buscamos lo que necesites en la ciudad", price:"$1.00 – $2.00", color:"#fff7ed", textColor:"#c2410c" },
+const SVCS = [
+  {id:"s1",name:"Mototaxi",emoji:"🛵",desc:"Te llevamos a donde necesites",price:"Desde $1.00",bg:"#fef3c7",tc:"#92400e"},
+  {id:"s2",name:"Taxi",emoji:"🚗",desc:"Viajes cómodos y seguros en SF",price:"Desde $2.00",bg:"#e0f2fe",tc:"#0369a1"},
+  {id:"s3",name:"Lavandería",emoji:"👕",desc:"Recogemos y entregamos limpia",price:"Desde $3.00/kg",bg:"#f0fdf4",tc:"#15803d"},
+  {id:"s4",name:"Limpieza del hogar",emoji:"🧹",desc:"Personal de confianza para tu casa",price:"Desde $10.00/día",bg:"#fdf4ff",tc:"#7e22ce"},
+  {id:"s5",name:"Enfermería a domicilio",emoji:"💉",desc:"Atención profesional en tu hogar",price:"Desde $5.00",bg:"#fff1f2",tc:"#be123c"},
+  {id:"s6",name:"Encomiendas locales",emoji:"📦",desc:"Enviamos lo que necesites",price:"$1.00 – $2.00",bg:"#fff7ed",tc:"#c2410c"},
 ];
 
-const PRODUCTS = [
-  // Supermercado
-  { id:1, name:"Pechuga de pollo", cat:"Supermercado", price:3.00, unit:"kg", emoji:"🍗", tag:"Popular", margin:0.05 },
-  { id:2, name:"Carne de res", cat:"Supermercado", price:5.50, unit:"kg", emoji:"🥩", margin:0.05 },
-  { id:3, name:"Pescado fresco", cat:"Supermercado", price:4.00, unit:"kg", emoji:"🐟", margin:0.05 },
-  { id:4, name:"Arroz (1 kg)", cat:"Supermercado", price:1.20, unit:"kg", emoji:"🌾", tag:"Oferta", margin:0.05 },
-  { id:5, name:"Aceite (1 L)", cat:"Supermercado", price:2.00, unit:"L", emoji:"🫙", margin:0.05 },
-  { id:6, name:"Pasta (500g)", cat:"Supermercado", price:0.90, unit:"paq", emoji:"🍝", margin:0.05 },
-  { id:7, name:"Tomates", cat:"Supermercado", price:1.50, unit:"kg", emoji:"🍅", margin:0.05 },
-  { id:8, name:"Cebollas", cat:"Supermercado", price:1.00, unit:"kg", emoji:"🧅", margin:0.05 },
-  { id:9, name:"Leche (1 L)", cat:"Supermercado", price:1.80, unit:"L", emoji:"🥛", margin:0.05 },
-  { id:10, name:"Huevos (cartón)", cat:"Supermercado", price:3.50, unit:"cartón", emoji:"🥚", margin:0.05 },
-  // Comida preparada
-  { id:11, name:"Almuerzo completo", cat:"Comida preparada", price:6.50, unit:"porción", emoji:"🍱", kitchen:"Cocina del Centro", tag:"⭐ 4.8", margin:0.20 },
-  { id:12, name:"Pabellón criollo", cat:"Comida preparada", price:7.00, unit:"porción", emoji:"🫘", kitchen:"Cocina del Centro", margin:0.20 },
-  { id:13, name:"Sopa + Segundo", cat:"Comida preparada", price:5.50, unit:"porción", emoji:"🥣", kitchen:"Cocina Familiar", tag:"⭐ 4.6", margin:0.20 },
-  { id:14, name:"Pollo asado", cat:"Comida preparada", price:8.00, unit:"porción", emoji:"🍖", kitchen:"Cocina Familiar", margin:0.20 },
-  { id:15, name:"Pernil con yuca", cat:"Comida preparada", price:9.00, unit:"porción", emoji:"🍽️", kitchen:"Cocina Llanera", margin:0.20 },
-  // Postres
-  { id:16, name:"Torta de chocolate", cat:"Postres", price:4.00, unit:"porción", emoji:"🍫", kitchen:"Dulces Apure", tag:"Casero", margin:0.20 },
-  { id:17, name:"Quesillo", cat:"Postres", price:2.50, unit:"porción", emoji:"🍮", kitchen:"Dulces Apure", margin:0.20 },
-  { id:18, name:"Bienmesabe", cat:"Postres", price:3.00, unit:"porción", emoji:"🍯", kitchen:"Postres Caseros", margin:0.20 },
-  { id:19, name:"Helado artesanal", cat:"Postres", price:2.00, unit:"vasito", emoji:"🍨", kitchen:"Postres Caseros", margin:0.20 },
-  // Jugos y bebidas
-  { id:20, name:"Jugo de parchita", cat:"Jugos y bebidas", price:2.00, unit:"500ml", emoji:"🥤", kitchen:"Jugos Naturales", margin:0.20 },
-  { id:21, name:"Jugo de mango", cat:"Jugos y bebidas", price:2.00, unit:"500ml", emoji:"🥭", kitchen:"Jugos Naturales", margin:0.20 },
-  { id:22, name:"Agua de panela", cat:"Jugos y bebidas", price:1.50, unit:"500ml", emoji:"🫖", kitchen:"Jugos Naturales", margin:0.20 },
-  { id:23, name:"Batido de lechoza", cat:"Jugos y bebidas", price:2.50, unit:"500ml", emoji:"🍹", kitchen:"Jugos Naturales", margin:0.20 },
-  // Pan y repostería
-  { id:24, name:"Pan casero (12 und)", cat:"Pan y repostería", price:3.00, unit:"docena", emoji:"🍞", kitchen:"Panadería Casera", tag:"Fresco", margin:0.20 },
-  { id:25, name:"Cachitos de jamón", cat:"Pan y repostería", price:3.50, unit:"6 und", emoji:"🥐", kitchen:"Panadería Casera", margin:0.20 },
-  { id:26, name:"Tequeños (10 und)", cat:"Pan y repostería", price:4.00, unit:"10 und", emoji:"🧀", kitchen:"Panadería Casera", tag:"Popular", margin:0.20 },
-  { id:27, name:"Ponqué casero", cat:"Pan y repostería", price:5.00, unit:"porción", emoji:"🎂", kitchen:"Panadería Casera", margin:0.20 },
+const SUPER = [
+  {id:1,name:"Pechuga de pollo",cat:"Supermercado",price:3.00,unit:"kg",emoji:"🍗",tag:"Popular",margin:0.10},
+  {id:2,name:"Carne de res",cat:"Supermercado",price:5.50,unit:"kg",emoji:"🥩",margin:0.10},
+  {id:3,name:"Pescado fresco",cat:"Supermercado",price:4.00,unit:"kg",emoji:"🐟",margin:0.10},
+  {id:4,name:"Arroz (1 kg)",cat:"Supermercado",price:1.20,unit:"kg",emoji:"🌾",tag:"Oferta",margin:0.10},
+  {id:5,name:"Aceite (1 L)",cat:"Supermercado",price:2.00,unit:"L",emoji:"🫙",margin:0.10},
+  {id:6,name:"Leche (1 L)",cat:"Supermercado",price:1.80,unit:"L",emoji:"🥛",margin:0.10},
+  {id:7,name:"Huevos (cartón)",cat:"Supermercado",price:3.50,unit:"cartón",emoji:"🥚",margin:0.10},
+  {id:8,name:"Tomates",cat:"Supermercado",price:1.50,unit:"kg",emoji:"🍅",margin:0.10},
+  {id:9,name:"Cebollas",cat:"Supermercado",price:1.00,unit:"kg",emoji:"🧅",margin:0.10},
+  {id:10,name:"Pasta (500g)",cat:"Supermercado",price:0.90,unit:"paq",emoji:"🍝",margin:0.10},
 ];
 
-// ─── ESTILOS ───────────────────────────────────────────────
 const s = {
-  app:{ fontFamily:"'Segoe UI',sans-serif", background:"#f8fafc", minHeight:"100vh", maxWidth:430, margin:"0 auto" },
-  header:{ background:PRIMARY, padding:"12px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:100 },
-  logo:{ color:"#fff", fontWeight:700, fontSize:18 },
-  cityBadge:{ background:ACCENT, color:PRIMARY, fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20, marginLeft:6 },
-  cartBtn:{ background:"rgba(255,255,255,0.12)", border:"none", borderRadius:20, padding:"6px 12px", color:"#fff", display:"flex", alignItems:"center", gap:6, cursor:"pointer", fontSize:13 },
-  cartCount:{ background:ACCENT, color:PRIMARY, borderRadius:"50%", width:18, height:18, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700 },
-  banner:{ background:"linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%)", padding:"16px", color:"#fff" },
-  bannerTitle:{ fontSize:19, fontWeight:700, margin:"0 0 2px" },
-  bannerSub:{ fontSize:12, color:"rgba(255,255,255,0.7)", margin:"0 0 10px" },
-  badgeRow:{ display:"flex", gap:6, flexWrap:"wrap" },
-  badge:{ fontSize:10, fontWeight:600, padding:"3px 9px", borderRadius:12, display:"inline-block" },
-  greenBadge:{ background:"#22c55e", color:"#fff" },
-  amberBadge:{ background:ACCENT, color:PRIMARY },
-  tabRow:{ display:"flex", background:PRIMARY, borderTop:"1px solid rgba(255,255,255,0.1)" },
-  tabBtn:(a)=>({ flex:1, padding:"10px 0", border:"none", background:"transparent", color: a?"#fff":"rgba(255,255,255,0.5)", fontWeight: a?700:400, fontSize:14, cursor:"pointer", borderBottom: a?`2px solid ${ACCENT}`:"2px solid transparent" }),
-  searchWrap:{ padding:"12px 16px 0" },
-  search:{ width:"100%", padding:"10px 14px", borderRadius:12, border:"1px solid #e2e8f0", fontSize:14, background:"#fff", boxSizing:"border-box", outline:"none" },
-  catScroll:{ display:"flex", gap:8, padding:"12px 16px", overflowX:"auto" },
-  catBtn:(a)=>({ background: a?PRIMARY:"#fff", color: a?"#fff":"#64748b", border: a?"none":"1px solid #e2e8f0", borderRadius:20, padding:"6px 14px", fontSize:13, fontWeight:500, cursor:"pointer", whiteSpace:"nowrap", flexShrink:0 }),
-  section:{ padding:"0 16px 16px" },
-  sectionTitle:{ fontSize:12, fontWeight:700, color:"#94a3b8", letterSpacing:1, margin:"14px 0 8px", textTransform:"uppercase" },
-  grid:{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 },
-  card:{ background:"#fff", borderRadius:14, padding:12, border:"1px solid #f1f5f9", display:"flex", flexDirection:"column", gap:5 },
-  cardEmoji:{ fontSize:34, textAlign:"center", padding:"4px 0" },
-  cardName:{ fontSize:13, fontWeight:600, color:"#1e293b", lineHeight:1.3 },
-  cardKitchen:{ fontSize:10, color:"#94a3b8" },
-  cardBottom:{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:"auto" },
-  cardPrice:{ fontSize:15, fontWeight:700, color:PRIMARY },
-  cardUnit:{ fontSize:10, color:"#94a3b8" },
-  addBtn:{ background:PRIMARY, color:"#fff", border:"none", borderRadius:20, width:30, height:30, fontSize:20, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
-  tag:{ fontSize:10, fontWeight:600, background:"#fef3c7", color:"#92400e", padding:"2px 7px", borderRadius:8, alignSelf:"flex-start" },
-  qtyRow:{ display:"flex", alignItems:"center", gap:5 },
-  qtyBtn:{ background:"#f1f5f9", border:"none", borderRadius:"50%", width:26, height:26, cursor:"pointer", fontSize:16, display:"flex", alignItems:"center", justifyContent:"center" },
-  qtyNum:{ fontSize:14, fontWeight:700, minWidth:16, textAlign:"center" },
-  // Servicios
-  svcCard:{ background:"#fff", borderRadius:14, padding:14, border:"1px solid #f1f5f9", display:"flex", gap:12, alignItems:"flex-start" },
-  svcEmoji:{ fontSize:30, width:40, textAlign:"center", flexShrink:0 },
-  svcInfo:{ flex:1 },
-  svcName:{ fontSize:14, fontWeight:700, color:"#1e293b" },
-  svcDesc:{ fontSize:12, color:"#64748b", margin:"2px 0 6px", lineHeight:1.4 },
-  svcPrice:{ fontSize:12, fontWeight:600 },
-  svcBtn:{ background:PRIMARY, color:"#fff", border:"none", borderRadius:10, padding:"7px 14px", fontSize:12, fontWeight:600, cursor:"pointer", flexShrink:0, alignSelf:"center" },
-  // Panel proveedor
-  provCard:{ background:"#fff", borderRadius:14, padding:16, border:"1px solid #f1f5f9", marginBottom:10 },
-  provTitle:{ fontSize:15, fontWeight:700, color:PRIMARY, marginBottom:12 },
-  provInput:{ width:"100%", padding:"10px 14px", borderRadius:10, border:"1px solid #e2e8f0", fontSize:14, marginBottom:8, boxSizing:"border-box", outline:"none" },
-  provLabel:{ fontSize:12, fontWeight:600, color:"#64748b", marginBottom:3, display:"block" },
-  // Overlay / sheets
-  overlay:{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:200, display:"flex", alignItems:"flex-end", justifyContent:"center" },
-  sheet:{ background:"#fff", borderRadius:"20px 20px 0 0", width:"100%", maxWidth:430, maxHeight:"88vh", overflowY:"auto", padding:20 },
-  handle:{ width:40, height:4, background:"#e2e8f0", borderRadius:2, margin:"0 auto 16px" },
-  sheetTitle:{ fontSize:18, fontWeight:700, color:PRIMARY, marginBottom:14 },
-  cartItem:{ display:"flex", alignItems:"center", gap:10, padding:"10px 0", borderBottom:"1px solid #f1f5f9" },
-  summaryRow:{ display:"flex", justifyContent:"space-between", padding:"5px 0", fontSize:14 },
-  summaryLabel:{ color:"#64748b" },
-  summaryVal:{ fontWeight:600, color:"#1e293b" },
-  totalRow:{ display:"flex", justifyContent:"space-between", padding:"10px 0 0", fontSize:16, borderTop:"1px solid #e2e8f0", marginTop:4 },
-  freeTag:{ background:"#dcfce7", color:"#15803d", fontSize:11, fontWeight:600, padding:"2px 8px", borderRadius:8 },
-  progWrap:{ background:"#f1f5f9", borderRadius:8, padding:"10px 12px", margin:"10px 0" },
-  progTrack:{ background:"#e2e8f0", borderRadius:4, height:6, overflow:"hidden", margin:"6px 0" },
-  progFill:(p)=>({ background:"#22c55e", height:"100%", width:`${Math.min(p,100)}%`, borderRadius:4, transition:"width 0.3s" }),
-  btn:{ background:PRIMARY, color:"#fff", border:"none", borderRadius:14, padding:"14px", fontSize:15, fontWeight:700, width:"100%", cursor:"pointer", marginTop:10 },
-  btnGray:{ background:"#f1f5f9", color:"#64748b", border:"none", borderRadius:14, padding:"13px", fontSize:14, fontWeight:600, width:"100%", cursor:"pointer", marginTop:8 },
-  btnWa:{ background:"#25d366", color:"#fff", border:"none", borderRadius:14, padding:"13px", fontSize:14, fontWeight:700, width:"100%", cursor:"pointer", marginBottom:10 },
-  input:{ width:"100%", padding:"11px 14px", borderRadius:12, border:"1px solid #e2e8f0", fontSize:14, marginBottom:10, boxSizing:"border-box", outline:"none" },
-  label:{ fontSize:12, fontWeight:600, color:"#64748b", marginBottom:4, display:"block" },
-  infoBox:{ background:"#f1f5f9", borderRadius:12, padding:"10px 14px", marginBottom:8 },
+  app:{fontFamily:"'Segoe UI',sans-serif",background:"#f8fafc",minHeight:"100vh",maxWidth:430,margin:"0 auto"},
+  hdr:{background:P,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100},
+  logo:{color:"#fff",fontWeight:700,fontSize:18},
+  city:{background:A,color:P,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,marginLeft:6},
+  cBtn:{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:20,padding:"6px 12px",color:"#fff",display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13},
+  cN:{background:A,color:P,borderRadius:"50%",width:18,height:18,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700},
+  tabs:{display:"flex",background:P,borderTop:"1px solid rgba(255,255,255,0.1)"},
+  tab:(a)=>({flex:1,padding:"9px 0",border:"none",background:"transparent",color:a?"#fff":"rgba(255,255,255,0.45)",fontWeight:a?700:400,fontSize:12,cursor:"pointer",borderBottom:a?`2px solid ${A}`:"2px solid transparent"}),
+  banner:{background:"linear-gradient(135deg,#0f172a,#1e3a5f)",padding:"16px",color:"#fff"},
+  bT:{fontSize:19,fontWeight:700,margin:"0 0 2px"},
+  bS:{fontSize:12,color:"rgba(255,255,255,0.7)",margin:"0 0 10px"},
+  bdg:(bg,c)=>({fontSize:10,fontWeight:600,background:bg,color:c,padding:"3px 9px",borderRadius:12,display:"inline-block",marginRight:6,marginBottom:4}),
+  sw:{padding:"12px 16px 0"},
+  si:{width:"100%",padding:"10px 14px",borderRadius:12,border:"1px solid #e2e8f0",fontSize:14,background:"#fff",boxSizing:"border-box",outline:"none"},
+  cs:{display:"flex",gap:8,padding:"12px 16px",overflowX:"auto"},
+  cb:(a)=>({background:a?P:"#fff",color:a?"#fff":"#64748b",border:a?"none":"1px solid #e2e8f0",borderRadius:20,padding:"6px 14px",fontSize:13,fontWeight:500,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}),
+  sec:{padding:"0 16px 16px"},
+  sT:{fontSize:12,fontWeight:700,color:"#94a3b8",letterSpacing:1,margin:"14px 0 8px",textTransform:"uppercase"},
+  grid:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10},
+  card:{background:"#fff",borderRadius:14,padding:12,border:"1px solid #f1f5f9",display:"flex",flexDirection:"column",gap:5},
+  cEm:{fontSize:32,textAlign:"center",padding:"4px 0"},
+  cImg:{width:"100%",height:80,objectFit:"cover",borderRadius:8,marginBottom:4},
+  cLogo:{width:24,height:24,borderRadius:"50%",objectFit:"cover",border:"2px solid #f1f5f9"},
+  cNm:{fontSize:13,fontWeight:600,color:"#1e293b",lineHeight:1.3},
+  cKt:{fontSize:10,color:"#94a3b8",display:"flex",alignItems:"center",gap:4},
+  cBt:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"auto"},
+  cPr:{fontSize:15,fontWeight:700,color:P},
+  cUn:{fontSize:10,color:"#94a3b8"},
+  aBtn:{background:P,color:"#fff",border:"none",borderRadius:20,width:30,height:30,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0},
+  tag:{fontSize:10,fontWeight:600,background:"#fef3c7",color:"#92400e",padding:"2px 7px",borderRadius:8,alignSelf:"flex-start"},
+  qR:{display:"flex",alignItems:"center",gap:5},
+  qB:{background:"#f1f5f9",border:"none",borderRadius:"50%",width:26,height:26,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"},
+  qN:{fontSize:14,fontWeight:700,minWidth:16,textAlign:"center"},
+  stars:{display:"flex",gap:4,margin:"4px 0"},
+  star:(f)=>({fontSize:18,cursor:"pointer",color:f?"#f59e0b":"#e2e8f0"}),
+  ov:{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"},
+  sh:{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:430,maxHeight:"92vh",overflowY:"auto",padding:20},
+  hnd:{width:40,height:4,background:"#e2e8f0",borderRadius:2,margin:"0 auto 16px"},
+  shT:{fontSize:18,fontWeight:700,color:P,marginBottom:14},
+  ci:{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9"},
+  sr:{display:"flex",justifyContent:"space-between",padding:"5px 0",fontSize:14},
+  sL:{color:"#64748b"},
+  sV:{fontWeight:600,color:"#1e293b"},
+  tR:{display:"flex",justifyContent:"space-between",padding:"10px 0 0",fontSize:16,borderTop:"1px solid #e2e8f0",marginTop:4},
+  fT:{background:"#dcfce7",color:"#15803d",fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8},
+  pw:{background:"#f1f5f9",borderRadius:8,padding:"10px 12px",margin:"10px 0"},
+  pt:{background:"#e2e8f0",borderRadius:4,height:6,overflow:"hidden",margin:"6px 0"},
+  pf:(p)=>({background:"#22c55e",height:"100%",width:`${Math.min(p,100)}%`,borderRadius:4,transition:"width 0.3s"}),
+  btn:{background:P,color:"#fff",border:"none",borderRadius:14,padding:"14px",fontSize:15,fontWeight:700,width:"100%",cursor:"pointer",marginTop:10},
+  btnG:{background:"#f1f5f9",color:"#64748b",border:"none",borderRadius:14,padding:"13px",fontSize:14,fontWeight:600,width:"100%",cursor:"pointer",marginTop:8},
+  btnWa:{background:"#25d366",color:"#fff",border:"none",borderRadius:14,padding:"13px",fontSize:14,fontWeight:700,width:"100%",cursor:"pointer",marginBottom:10},
+  inp:{width:"100%",padding:"11px 14px",borderRadius:12,border:"1px solid #e2e8f0",fontSize:14,marginBottom:10,boxSizing:"border-box",outline:"none"},
+  lbl:{fontSize:12,fontWeight:600,color:"#64748b",marginBottom:4,display:"block"},
+  ib:{background:"#f1f5f9",borderRadius:12,padding:"10px 14px",marginBottom:8},
+  pc:{background:"#fff",borderRadius:14,padding:16,border:"1px solid #f1f5f9",marginBottom:10},
+  pT:{fontSize:15,fontWeight:700,color:P,marginBottom:12},
+  msg:(ok)=>({fontSize:13,color:ok?"#15803d":"#be123c",background:ok?"#f0fdf4":"#fff1f2",padding:"8px 12px",borderRadius:8,marginBottom:10}),
+  apvBtn:{flex:1,padding:"8px",borderRadius:10,border:"none",fontSize:13,fontWeight:600,cursor:"pointer"},
+  promoCard:{background:"linear-gradient(135deg,#7c3aed,#4f46e5)",borderRadius:16,padding:16,margin:"0 16px 12px",color:"#fff"},
+  comboCard:{background:"#fff",borderRadius:14,padding:12,border:"2px solid #f59e0b",marginBottom:10},
 };
 
-// ─── COMPONENTES ───────────────────────────────────────────
+const getHorarioLabel = () => {
+  const h = new Date().getHours();
+  if(h>=6&&h<11) return {label:"🌅 Desayunos del día",sub:"Lo mejor para empezar tu mañana"};
+  if(h>=11&&h<15) return {label:"☀️ Almuerzos del día",sub:"El menú perfecto para el mediodía"};
+  if(h>=15&&h<18) return {label:"🍪 Meriendas",sub:"Algo rico para la tarde"};
+  return {label:"🌙 Cenas",sub:"Termina el día con buen sabor"};
+};
+
 export default function App() {
-  const [mainTab, setMainTab] = useState("Productos");
-  const [cat, setCat] = useState("Todo");
-  const [search, setSearch] = useState("");
-  const [cart, setCart] = useState({});
-  const [sheet, setSheet] = useState(null);
-  const [zone, setZone] = useState("central");
-  const [form, setForm] = useState({ nombre:"", telefono:"", direccion:"", pago:"pago_movil" });
-  const [selService, setSelService] = useState(null);
-  const [svcForm, setSvcForm] = useState({ nombre:"", telefono:"", direccion:"", detalle:"" });
+  const [tab,setTab] = useState("Inicio");
+  const [cat,setCat] = useState("Todo");
+  const [search,setSearch] = useState("");
+  const [cart,setCart] = useState({});
+  const [sheet,setSheet] = useState(null);
+  const [zonas,setZonas] = useState([]);
+  const [zonaSelId,setZonaSelId] = useState("");
+  const [zonaSel,setZonaSel] = useState(null);
+  const [addr,setAddr] = useState({calle:"",referencia:""});
+  const [form,setForm] = useState({nombre:"",telefono:"",pago:"pago_movil"});
+  const [selSvc,setSelSvc] = useState(null);
+  const [svcForm,setSvcForm] = useState({nombre:"",telefono:"",direccion:"",detalle:""});
+  const [provProds,setProvProds] = useState([]);
+  const [combos,setCombos] = useState([]);
+  const [resenaSheet,setResenaSheet] = useState(null);
+  const [resena,setResena] = useState({estrellas:0,comentario:"",nombre:"",telefono:""});
+  const [resenaMensaje,setResenaMensaje] = useState("");
+
   // Proveedor
-  const [provView, setProvView] = useState("login");
-  const [provForm, setProvForm] = useState({ nombre:"", negocio:"", categoria:"Comida preparada", telefono:"", pass:"" });
-  const [provProducts, setProvProducts] = useState([]);
-  const [newProd, setNewProd] = useState({ name:"", price:"", unit:"porción", emoji:"🍱", disponible:true });
-  const [provLogged, setProvLogged] = useState(false);
+  const [provMode,setProvMode] = useState("login");
+  const [provForm,setProvForm] = useState({usuario:"",nombre:"",negocio:"",telefono:"",categorias:[],pass:""});
+  const [provData,setProvData] = useState(null);
+  const [myProds,setMyProds] = useState([]);
+  const [pendProvs,setPendProvs] = useState([]);
+  const [pendProds,setPendProds] = useState([]);
+  const [pendResenas,setPendResenas] = useState([]);
+  const [newProd,setNewProd] = useState({nombre:"",descripcion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false});
+  const [logoFile,setLogoFile] = useState(null);
+  const [fotoFile,setFotoFile] = useState(null);
+  const [logoPreview,setLogoPreview] = useState(null);
+  const [fotoPreview,setFotoPreview] = useState(null);
+  const [loading,setLoading] = useState(false);
+  const [pmsg,setPmsg] = useState("");
+  // Admin zonas
+  const [newZona,setNewZona] = useState({municipio:"San Fernando",zona:"",tipo:"barrio",costo_delivery:1.50,delivery_gratis_super:18.00,delivery_gratis_comida:12.00});
+  // Admin combos
+  const [newCombo,setNewCombo] = useState({nombre:"",descripcion:"",precio:"",temporada:"",fecha_inicio:"",fecha_fin:""});
+  // Admin super
+  const [superProds,setSuperProds] = useState(SUPER);
+  const [newSuperProd,setNewSuperProd] = useState({name:"",price:"",unit:"kg",emoji:"🛒"});
+  const [adminSection,setAdminSection] = useState("proveedores");
 
-  const filtered = PRODUCTS.filter(p =>
-    (cat === "Todo" || p.cat === cat) &&
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(()=>{loadAll();},[]);
 
-  const catGroups = PRODUCT_CATS.filter(c => c !== "Todo").map(c => ({
-    cat: c,
-    items: filtered.filter(p => p.cat === c)
-  })).filter(g => g.items.length > 0);
+  const loadAll = async () => {
+    const [z,pp,cb] = await Promise.all([
+      supabase.from("zonas_delivery").select("*").eq("activa",true).order("municipio"),
+      supabase.from("productos_proveedor").select("*,proveedores(negocio,logo_url)").eq("aprobado",true).eq("disponible",true),
+      supabase.from("combos").select("*").eq("activa",true),
+    ]);
+    if(z.data) setZonas(z.data);
+    if(pp.data){
+      const hoy = new Date().toISOString().split("T")[0];
+      setProvProds(pp.data.filter(p=>p.permanente||(p.fecha===hoy&&p.stock>0)));
+    }
+    if(cb.data) setCombos(cb.data);
+  };
 
-  const add = (p) => setCart(c => ({ ...c, [p.id]:{ ...p, qty:(c[p.id]?.qty||0)+1 } }));
-  const remove = (id) => setCart(c => {
-    const n = { ...c };
-    n[id].qty > 1 ? n[id] = { ...n[id], qty:n[id].qty-1 } : delete n[id];
-    return n;
-  });
+  const allProds = [
+    ...SUPER,
+    ...provProds.map(p=>({
+      id:`pv_${p.id}`,name:p.nombre,cat:p.categoria,price:p.precio,unit:p.unidad,
+      emoji:"🍽️",margin:0.20,kitchen:p.proveedores?.negocio,logo:p.proveedores?.logo_url,
+      foto:p.foto_url,stock:p.stock,horario:p.permanente?"Siempre disponible":`${p.horario_inicio}–${p.horario_fin}`,
+      tag:p.stock<=3?`Solo ${p.stock} disp.`:null,dbId:p.id,
+    }))
+  ];
+
+  const filtered = allProds.filter(p=>(cat==="Todo"||p.cat===cat)&&p.name.toLowerCase().includes(search.toLowerCase()));
+  const catGroups = PCATS.filter(c=>c!=="Todo").map(c=>({cat:c,items:filtered.filter(p=>p.cat===c)})).filter(g=>g.items.length>0);
+
+  const add = (p)=>setCart(c=>({...c,[p.id]:{...p,qty:(c[p.id]?.qty||0)+1}}));
+  const rem = (id)=>setCart(c=>{const n={...c};n[id].qty>1?n[id]={...n[id],qty:n[id].qty-1}:delete n[id];return n;});
 
   const items = Object.values(cart);
-  const count = items.reduce((a,i) => a+i.qty, 0);
-  const sub = items.reduce((a,i) => a+i.price*i.qty, 0);
+  const count = items.reduce((a,i)=>a+i.qty,0);
+  const sub = items.reduce((a,i)=>a+i.price*i.qty,0);
 
-  const hasSuperOnly = items.every(i => i.cat === "Supermercado");
-  const freeMin = hasSuperOnly
-    ? (zone === "central" ? FREE_DELIVERY_SUPER_CENTRAL : FREE_DELIVERY_SUPER_OUTSIDE)
-    : (zone === "central" ? FREE_DELIVERY_FOOD : FREE_DELIVERY_FOOD + 2);
-  const deliveryCost = zone === "central" ? DELIVERY_CENTRAL : DELIVERY_OUTSIDE;
-  const del = sub >= freeMin ? 0 : deliveryCost;
-  const total = sub + del;
-  const pct = (sub / freeMin) * 100;
+  const hasSuperOnly = items.length>0&&items.every(i=>i.cat==="Supermercado");
+  const freeMin = zonaSel ? (hasSuperOnly?zonaSel.delivery_gratis_super:zonaSel.delivery_gratis_comida) : (hasSuperOnly?15:10);
+  const delCost = zonaSel?.costo_delivery||1.00;
+  const del = sub>=freeMin?0:delCost;
+  const total = sub+del;
+  const pct = (sub/freeMin)*100;
 
-  const myGain = items.reduce((a,i) => a + (i.price * i.qty * (i.margin||0.05)), 0);
-
-  const confirm = () => {
-    if (!form.nombre || !form.telefono || !form.direccion) return alert("Completa todos los campos");
+  const confirm = ()=>{
+    if(!form.nombre||!form.telefono||!zonaSelId) return alert("Completa nombre, teléfono y zona de entrega");
     setSheet("success");
   };
 
-  const sendWa = () => {
-    const lines = items.map(i => `• ${i.name} x${i.qty} — $${(i.price*i.qty).toFixed(2)}`).join("\n");
-    const msg = `*Pedido ${APP_NAME} ${CITY}*\n\n${lines}\n\nSubtotal: $${sub.toFixed(2)}\nDelivery: ${del===0?"GRATIS":"$"+del.toFixed(2)}\n*Total: $${total.toFixed(2)}*\n\nNombre: ${form.nombre}\nTeléfono: ${form.telefono}\nDirección: ${form.direccion}\nZona: ${zone==="central"?"Casco central":"Fuera de SF"}\nPago: ${form.pago}`;
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`);
+  const sendWa = ()=>{
+    const lines = items.map(i=>`• ${i.name} x${i.qty} — $${(i.price*i.qty).toFixed(2)}`).join("\n");
+    const direccion = `${zonaSel?.zona||"Sin zona"}, ${addr.calle}, ${addr.referencia}`;
+    const m = `*Pedido ${APP_NAME} ${CITY}*\n\n${lines}\n\nSubtotal: $${sub.toFixed(2)}\nDelivery: ${del===0?"GRATIS":"$"+del.toFixed(2)}\n*Total: $${total.toFixed(2)}*\n\nNombre: ${form.nombre}\nTeléfono: ${form.telefono}\nDirección: ${direccion}\nPago: ${form.pago}`;
+    window.open(`https://wa.me/${WA}?text=${encodeURIComponent(m)}`);
   };
 
-  const sendSvcWa = () => {
-    const msg = `*Solicitud de servicio: ${selService.name}* — ${APP_NAME} ${CITY}\n\nNombre: ${svcForm.nombre}\nTeléfono: ${svcForm.telefono}\nDirección: ${svcForm.direccion}\nDetalle: ${svcForm.detalle}`;
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`);
-    setSheet(null); setSelService(null); setSvcForm({ nombre:"", telefono:"", direccion:"", detalle:"" });
+  const sendSvcWa = ()=>{
+    const m = `*Solicitud: ${selSvc.name}* — ${APP_NAME}\n\nNombre: ${svcForm.nombre}\nTeléfono: ${svcForm.telefono}\nDirección: ${svcForm.direccion}\nDetalle: ${svcForm.detalle}`;
+    window.open(`https://wa.me/${WA}?text=${encodeURIComponent(m)}`);
+    setSheet(null);setSelSvc(null);
   };
 
-  const QtyCtrl = ({ p }) => cart[p.id] ? (
-    <div style={s.qtyRow}>
-      <button style={s.qtyBtn} onClick={() => remove(p.id)}>−</button>
-      <span style={s.qtyNum}>{cart[p.id].qty}</span>
-      <button style={s.qtyBtn} onClick={() => add(p)}>+</button>
+  const enviarResena = async ()=>{
+    if(!resena.estrellas||!resena.nombre) return setResenaMensaje("Pon tu nombre y calificación");
+    await supabase.from("resenas").insert({
+      producto_id:resenaSheet,cliente_nombre:resena.nombre,
+      cliente_telefono:resena.telefono,estrellas:resena.estrellas,comentario:resena.comentario,aprobada:false
+    });
+    setResenaMensaje("✅ Gracias por tu reseña. La revisaremos pronto.");
+    setTimeout(()=>{setSheet(null);setResenaSheet(null);setResena({estrellas:0,comentario:"",nombre:"",telefono:""});setResenaMensaje("");},2000);
+  };
+
+  // Proveedor
+  const upload = async(file,bucket,path)=>{
+    await supabase.storage.from(bucket).upload(path,file,{upsert:true});
+    return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+  };
+
+  const handleLogin = async()=>{
+    if(!provForm.usuario||!provForm.pass) return setPmsg("Completa usuario y contraseña");
+    if(provForm.usuario===ADMIN_USER&&provForm.pass===ADMIN_PASS){setProvMode("admin");loadAdmin();return;}
+    setLoading(true);
+    const {data,error} = await supabase.from("proveedores").select("*").eq("usuario",provForm.usuario).single();
+    setLoading(false);
+    if(error||!data) return setPmsg("Usuario no encontrado");
+    if(!data.aprobado) return setPmsg("Tu cuenta está pendiente de aprobación");
+    setProvData(data);setProvMode("dash");loadMyProds(data.id);
+  };
+
+  const handleRegister = async()=>{
+    if(!provForm.usuario||!provForm.nombre||!provForm.negocio||!provForm.telefono||!provForm.pass) return setPmsg("Completa todos los campos");
+    setLoading(true);
+    let logo_url=null;
+    if(logoFile) logo_url=await upload(logoFile,"logos",`${provForm.usuario}_logo`);
+    const {error} = await supabase.from("proveedores").insert({usuario:provForm.usuario,nombre:provForm.nombre,negocio:provForm.negocio,telefono:provForm.telefono,categorias:provForm.categorias,logo_url,aprobado:false});
+    setLoading(false);
+    if(error) return setPmsg(error.message.includes("unique")?"Ese usuario ya existe":"Error al registrarse");
+    setPmsg("✅ Registro enviado. El admin aprobará tu cuenta pronto.");
+    setProvMode("login");
+  };
+
+  const loadMyProds = async(pid)=>{
+    const hoy = new Date().toISOString().split("T")[0];
+    const {data} = await supabase.from("productos_proveedor").select("*").eq("proveedor_id",pid).or(`permanente.eq.true,fecha.eq.${hoy}`);
+    if(data) setMyProds(data);
+  };
+
+  const loadAdmin = async()=>{
+    const [pv,pr,re,zo] = await Promise.all([
+      supabase.from("proveedores").select("*").eq("aprobado",false),
+      supabase.from("productos_proveedor").select("*,proveedores(negocio)").eq("aprobado",false),
+      supabase.from("resenas").select("*").eq("aprobada",false),
+      supabase.from("zonas_delivery").select("*").order("municipio"),
+    ]);
+    if(pv.data) setPendProvs(pv.data);
+    if(pr.data) setPendProds(pr.data);
+    if(re.data) setPendResenas(re.data);
+    if(zo.data) setZonas(zo.data);
+  };
+
+  const publishProd = async()=>{
+    if(!newProd.nombre||!newProd.precio) return setPmsg("Completa nombre y precio");
+    setLoading(true);
+    let foto_url=null;
+    if(fotoFile) foto_url=await upload(fotoFile,"productos",`${provData.id}_${Date.now()}`);
+    await supabase.from("productos_proveedor").insert({
+      proveedor_id:provData.id,nombre:newProd.nombre,descripcion:newProd.descripcion,
+      precio:parseFloat(newProd.precio),unidad:newProd.unidad,categoria:newProd.categoria,
+      foto_url,stock:parseInt(newProd.stock),horario_inicio:newProd.hi,horario_fin:newProd.hf,
+      aprobado:false,disponible:true,permanente:newProd.permanente,
+      fecha:new Date().toISOString().split("T")[0],
+    });
+    setLoading(false);
+    setPmsg("✅ Enviado al admin para aprobación");
+    setNewProd({nombre:"",descripcion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false});
+    setFotoFile(null);setFotoPreview(null);
+    loadMyProds(provData.id);
+  };
+
+  const toggleDisp = async(id,val)=>{
+    await supabase.from("productos_proveedor").update({disponible:!val}).eq("id",id);
+    loadMyProds(provData.id);loadAll();
+  };
+
+  const approveP = async(id)=>{await supabase.from("proveedores").update({aprobado:true}).eq("id",id);loadAdmin();};
+  const rejectP = async(id)=>{await supabase.from("proveedores").delete().eq("id",id);loadAdmin();};
+  const approvePr = async(id)=>{await supabase.from("productos_proveedor").update({aprobado:true}).eq("id",id);loadAdmin();loadAll();};
+  const rejectPr = async(id)=>{await supabase.from("productos_proveedor").delete().eq("id",id);loadAdmin();};
+  const approveRe = async(id)=>{await supabase.from("resenas").update({aprobada:true}).eq("id",id);loadAdmin();};
+  const rejectRe = async(id)=>{await supabase.from("resenas").delete().eq("id",id);loadAdmin();};
+
+  const addZona = async()=>{
+    if(!newZona.zona) return;
+    await supabase.from("zonas_delivery").insert(newZona);
+    setNewZona({municipio:"San Fernando",zona:"",tipo:"barrio",costo_delivery:1.50,delivery_gratis_super:18.00,delivery_gratis_comida:12.00});
+    loadAdmin();
+  };
+
+  const addCombo = async()=>{
+    if(!newCombo.nombre||!newCombo.precio) return;
+    await supabase.from("combos").insert({...newCombo,precio:parseFloat(newCombo.precio),activa:true});
+    setNewCombo({nombre:"",descripcion:"",precio:"",temporada:"",fecha_inicio:"",fecha_fin:""});
+    loadAll();
+  };
+
+  const addSuperProd = ()=>{
+    if(!newSuperProd.name||!newSuperProd.price) return;
+    setSuperProds(p=>[...p,{id:Date.now(),name:newSuperProd.name,cat:"Supermercado",price:parseFloat(newSuperProd.price),unit:newSuperProd.unit,emoji:newSuperProd.emoji,margin:0.10}]);
+    setNewSuperProd({name:"",price:"",unit:"kg",emoji:"🛒"});
+  };
+
+  const horario = getHorarioLabel();
+
+  const QtyCtrl = ({p})=>cart[p.id]?(
+    <div style={s.qR}>
+      <button style={s.qB} onClick={()=>rem(p.id)}>−</button>
+      <span style={s.qN}>{cart[p.id].qty}</span>
+      <button style={s.qB} onClick={()=>add(p)}>+</button>
     </div>
-  ) : (
-    <button style={s.addBtn} onClick={() => add(p)}>+</button>
-  );
+  ):<button style={s.aBtn} onClick={()=>add(p)}>+</button>;
 
-  const Card = ({ p }) => (
+  const Card = ({p})=>(
     <div style={s.card}>
-      {p.tag && <div style={s.tag}>{p.tag}</div>}
-      <div style={s.cardEmoji}>{p.emoji}</div>
-      <div style={s.cardName}>{p.name}</div>
-      {p.kitchen && <div style={s.cardKitchen}>{p.kitchen}</div>}
-      <div style={s.cardBottom}>
-        <div>
-          <div style={s.cardPrice}>${p.price.toFixed(2)}</div>
-          <div style={s.cardUnit}>/ {p.unit}</div>
-        </div>
-        <QtyCtrl p={p} />
+      {p.foto?<img src={p.foto} alt={p.name} style={s.cImg}/>:<div style={s.cEm}>{p.emoji}</div>}
+      {p.tag&&<div style={s.tag}>{p.tag}</div>}
+      <div style={s.cNm}>{p.name}</div>
+      {p.kitchen&&<div style={s.cKt}>{p.logo&&<img src={p.logo} alt="" style={s.cLogo}/>}<span>{p.kitchen}</span></div>}
+      {p.horario&&<div style={{fontSize:10,color:"#94a3b8"}}>🕐 {p.horario}</div>}
+      <div style={s.cBt}>
+        <div><div style={s.cPr}>${p.price.toFixed(2)}</div><div style={s.cUn}>/ {p.unit}</div></div>
+        <QtyCtrl p={p}/>
       </div>
+      {p.dbId&&(
+        <button onClick={()=>{setResenaSheet(p.dbId);setSheet("resena");}} style={{fontSize:10,color:"#94a3b8",background:"none",border:"none",cursor:"pointer",textAlign:"left",padding:0,marginTop:2}}>
+          ⭐ Dejar reseña
+        </button>
+      )}
     </div>
   );
 
-  // ── RENDER ────────────────────────────────────────────────
+  const catIcon = c=>c==="Supermercado"?"🛒":c==="Comida preparada"?"🍱":c==="Postres"?"🍰":c==="Jugos y bebidas"?"🥤":"🍞";
+
+  const AdminRow = ({label,n,onClick,active})=>(
+    <button onClick={onClick} style={{width:"100%",padding:"10px 14px",background:active?"#0f172a":"#f8fafc",color:active?"#fff":"#1e293b",border:"1px solid #e2e8f0",borderRadius:10,fontSize:13,fontWeight:500,cursor:"pointer",textAlign:"left",marginBottom:6,display:"flex",justifyContent:"space-between"}}>
+      <span>{label}</span>
+      {n>0&&<span style={{background:"#ef4444",color:"#fff",borderRadius:20,padding:"0 8px",fontSize:11,fontWeight:700}}>{n}</span>}
+    </button>
+  );
+
   return (
     <div style={s.app}>
       {/* HEADER */}
-      <div style={s.header}>
-        <div style={{ display:"flex", alignItems:"center" }}>
+      <div style={s.hdr}>
+        <div style={{display:"flex",alignItems:"center"}}>
           <span style={s.logo}>{APP_NAME}</span>
-          <span style={s.cityBadge}>{CITY}</span>
+          <span style={s.city}>{CITY}</span>
         </div>
-        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-          {count > 0 && (
-            <button style={s.cartBtn} onClick={() => setSheet("cart")}>
-              🛒 <span style={s.cartCount}>{count}</span>
-              <span style={{ fontSize:12 }}>${total.toFixed(2)}</span>
-            </button>
-          )}
-          <button style={{ ...s.cartBtn, fontSize:12 }} onClick={() => setMainTab("proveedor")}>
-            🏪 Soy proveedor
+        {count>0&&(
+          <button style={s.cBtn} onClick={()=>setSheet("cart")}>
+            🛒 <span style={s.cN}>{count}</span>
+            <span style={{fontSize:12}}>${total.toFixed(2)}</span>
           </button>
-        </div>
+        )}
       </div>
 
-      {/* TABS PRINCIPALES */}
-      <div style={s.tabRow}>
-        {MAIN_SECTIONS.map(t => (
-          <button key={t} style={s.tabBtn(mainTab===t)} onClick={() => setMainTab(t)}>{t}</button>
-        ))}
-        <button style={s.tabBtn(mainTab==="proveedor")} onClick={() => setMainTab("proveedor")}>Proveedores</button>
+      {/* TABS */}
+      <div style={s.tabs}>
+        {MAIN_TABS.map(t=><button key={t} style={s.tab(tab===t)} onClick={()=>setTab(t)}>{t}</button>)}
       </div>
 
-      {/* ══════════ SECCIÓN PRODUCTOS ══════════ */}
-      {mainTab === "Productos" && (
+      {/* ══ INICIO ══ */}
+      {tab==="Inicio"&&(
         <>
           <div style={s.banner}>
-            <p style={s.bannerTitle}>Delivery en {CITY} 🛵</p>
-            <p style={s.bannerSub}>Mercado + comida lista + postres a tu puerta</p>
-            <div style={s.badgeRow}>
-              <span style={{ ...s.badge, ...s.greenBadge }}>✓ Delivery gratis desde $8 (comida)</span>
-              <span style={{ ...s.badge, ...s.amberBadge }}>Casco central $1 · Fuera $2</span>
+            <p style={s.bT}>Bienvenido a {APP_NAME} {CITY} 👋</p>
+            <p style={s.bS}>Todo lo que necesitas sin salir de casa</p>
+            <span style={s.bdg("#22c55e","#fff")}>✓ Delivery desde $1</span>
+            <span style={s.bdg(A,P)}>Gratis desde $10</span>
+          </div>
+
+          {/* PROMO HORARIA */}
+          <div style={s.promoCard}>
+            <div style={{fontSize:18,fontWeight:700,marginBottom:4}}>{horario.label}</div>
+            <div style={{fontSize:13,color:"rgba(255,255,255,0.8)"}}>{horario.sub}</div>
+            <button onClick={()=>{setTab("Productos");setCat("Comida preparada");}} style={{marginTop:10,background:"rgba(255,255,255,0.2)",border:"none",borderRadius:10,padding:"7px 14px",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+              Ver opciones →
+            </button>
+          </div>
+
+          {/* COMBOS */}
+          {combos.length>0&&(
+            <div style={{padding:"0 16px"}}>
+              <div style={s.sT}>🎁 Combos especiales</div>
+              {combos.map(c=>(
+                <div key={c.id} style={s.comboCard}>
+                  {c.imagen_url&&<img src={c.imagen_url} alt={c.nombre} style={{width:"100%",height:100,objectFit:"cover",borderRadius:8,marginBottom:8}}/>}
+                  <div style={{fontSize:14,fontWeight:700,color:P}}>{c.nombre}</div>
+                  <div style={{fontSize:12,color:"#64748b",margin:"2px 0 6px"}}>{c.descripcion}</div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <span style={{fontSize:16,fontWeight:700,color:P}}>${parseFloat(c.precio).toFixed(2)}</span>
+                    {c.temporada&&<span style={{fontSize:11,background:"#fef3c7",color:"#92400e",padding:"2px 8px",borderRadius:8,fontWeight:600}}>{c.temporada}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ACCESOS RÁPIDOS */}
+          <div style={{padding:"0 16px 16px"}}>
+            <div style={s.sT}>Explorar</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              {[{emoji:"🛒",label:"Supermercado",cat:"Supermercado"},{emoji:"🍱",label:"Comida preparada",cat:"Comida preparada"},{emoji:"🍰",label:"Postres",cat:"Postres"},{emoji:"⚡",label:"Servicios",cat:null}].map(x=>(
+                <button key={x.label} onClick={()=>{if(x.cat){setTab("Productos");setCat(x.cat);}else setTab("Servicios");}} style={{background:"#fff",border:"1px solid #f1f5f9",borderRadius:14,padding:"16px 12px",display:"flex",flexDirection:"column",alignItems:"center",gap:6,cursor:"pointer"}}>
+                  <span style={{fontSize:28}}>{x.emoji}</span>
+                  <span style={{fontSize:13,fontWeight:600,color:P}}>{x.label}</span>
+                </button>
+              ))}
             </div>
           </div>
-          <div style={s.searchWrap}>
-            <input style={s.search} placeholder="🔍  Buscar productos..." value={search} onChange={e => setSearch(e.target.value)} />
-          </div>
-          <div style={s.catScroll}>
-            {PRODUCT_CATS.map(c => (
-              <button key={c} style={s.catBtn(cat===c)} onClick={() => setCat(c)}>{c}</button>
-            ))}
-          </div>
-          <div style={s.section}>
-            {catGroups.length === 0 && (
-              <div style={{ textAlign:"center", padding:"40px 0", color:"#94a3b8" }}>
-                <div style={{ fontSize:40 }}>🔍</div><p>No encontramos ese producto</p>
-              </div>
-            )}
-            {catGroups.map(g => (
-              <div key={g.cat}>
-                <div style={s.sectionTitle}>
-                  {g.cat==="Supermercado"?"🛒":g.cat==="Comida preparada"?"🍱":g.cat==="Postres"?"🍰":g.cat==="Jugos y bebidas"?"🥤":"🍞"} {g.cat}
-                </div>
-                <div style={s.grid}>{g.items.map(p => <Card key={p.id} p={p} />)}</div>
-              </div>
-            ))}
-          </div>
         </>
       )}
 
-      {/* ══════════ SECCIÓN SERVICIOS ══════════ */}
-      {mainTab === "Servicios" && (
+      {/* ══ PRODUCTOS ══ */}
+      {tab==="Productos"&&(
         <>
-          <div style={{ ...s.banner, paddingBottom:14 }}>
-            <p style={s.bannerTitle}>Servicios en {CITY} ⚡</p>
-            <p style={{ ...s.bannerSub, margin:0 }}>Todo lo que necesitas sin salir de casa</p>
+          <div style={s.banner}>
+            <p style={s.bT}>Tienda {CITY} 🛒</p>
+            <p style={s.bS}>Supermercado · Comida · Postres · Más</p>
+            <span style={s.bdg("#22c55e","#fff")}>Gratis desde $10 comida · $15 super</span>
           </div>
-          <div style={{ ...s.section, marginTop:14 }}>
-            {SERVICES.map(sv => (
-              <div key={sv.id} style={{ ...s.svcCard, marginBottom:10 }}>
-                <div style={{ ...s.svcEmoji, background:sv.color, borderRadius:12, padding:"8px 0" }}>{sv.emoji}</div>
-                <div style={s.svcInfo}>
-                  <div style={s.svcName}>{sv.name}</div>
-                  <div style={s.svcDesc}>{sv.desc}</div>
-                  <div style={{ ...s.svcPrice, color:sv.textColor, background:sv.color, display:"inline-block", padding:"2px 8px", borderRadius:8 }}>{sv.price}</div>
-                </div>
-                <button style={s.svcBtn} onClick={() => { setSelService(sv); setSheet("service"); }}>Solicitar</button>
+          <div style={s.sw}><input style={s.si} placeholder="🔍  Buscar productos..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
+          <div style={s.cs}>{PCATS.map(c=><button key={c} style={s.cb(cat===c)} onClick={()=>setCat(c)}>{c}</button>)}</div>
+          <div style={s.sec}>
+            {catGroups.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🔍</div><p>No encontramos ese producto</p></div>}
+            {catGroups.map(g=>(
+              <div key={g.cat}>
+                <div style={s.sT}>{catIcon(g.cat)} {g.cat}</div>
+                <div style={s.grid}>{g.items.map(p=><Card key={p.id} p={p}/>)}</div>
               </div>
             ))}
           </div>
         </>
       )}
 
-      {/* ══════════ SECCIÓN PROVEEDOR ══════════ */}
-      {mainTab === "proveedor" && (
-        <div style={{ ...s.section, marginTop:16 }}>
-          {!provLogged ? (
-            <div style={s.provCard}>
-              <div style={s.provTitle}>
-                {provView === "login" ? "🏪 Acceso proveedores" : "📝 Registro de proveedor"}
+      {/* ══ SERVICIOS ══ */}
+      {tab==="Servicios"&&(
+        <>
+          <div style={{...s.banner,paddingBottom:14}}>
+            <p style={s.bT}>Servicios en {CITY} ⚡</p>
+            <p style={{fontSize:12,color:"rgba(255,255,255,0.7)",margin:0}}>Todo lo que necesitas sin salir de casa</p>
+          </div>
+          <div style={{...s.sec,marginTop:14}}>
+            {SVCS.map(sv=>(
+              <div key={sv.id} style={{background:"#fff",borderRadius:14,padding:14,border:"1px solid #f1f5f9",display:"flex",gap:12,alignItems:"flex-start",marginBottom:10}}>
+                <div style={{fontSize:28,width:44,height:44,background:sv.bg,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{sv.emoji}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:14,fontWeight:700,color:"#1e293b"}}>{sv.name}</div>
+                  <div style={{fontSize:12,color:"#64748b",margin:"2px 0 6px",lineHeight:1.4}}>{sv.desc}</div>
+                  <span style={{fontSize:11,fontWeight:600,color:sv.tc,background:sv.bg,padding:"2px 8px",borderRadius:8}}>{sv.price}</span>
+                </div>
+                <button style={{background:P,color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",flexShrink:0}} onClick={()=>{setSelSvc(sv);setSheet("service");}}>Solicitar</button>
               </div>
-              {provView === "register" && (
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* ══ PROVEEDORES ══ */}
+      {tab==="Proveedores"&&(
+        <div style={{...s.sec,marginTop:16}}>
+
+          {(provMode==="login"||provMode==="register")&&(
+            <div style={s.pc}>
+              <div style={s.pT}>{provMode==="login"?"🏪 Acceso proveedores":"📝 Registro"}</div>
+              {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
+              {provMode==="register"&&(
                 <>
-                  <label style={s.provLabel}>Tu nombre</label>
-                  <input style={s.provInput} placeholder="María González" value={provForm.nombre} onChange={e => setProvForm({...provForm, nombre:e.target.value})} />
-                  <label style={s.provLabel}>Nombre de tu negocio / cocina</label>
-                  <input style={s.provInput} placeholder="Cocina de María" value={provForm.negocio} onChange={e => setProvForm({...provForm, negocio:e.target.value})} />
-                  <label style={s.provLabel}>Categoría</label>
-                  <select style={{ ...s.provInput, background:"#fff" }} value={provForm.categoria} onChange={e => setProvForm({...provForm, categoria:e.target.value})}>
-                    <option>Comida preparada</option>
-                    <option>Postres</option>
-                    <option>Jugos y bebidas</option>
-                    <option>Pan y repostería</option>
-                  </select>
-                  <label style={s.provLabel}>WhatsApp</label>
-                  <input style={s.provInput} placeholder="+58 424-000-0000" value={provForm.telefono} onChange={e => setProvForm({...provForm, telefono:e.target.value})} />
+                  <label style={s.lbl}>Usuario (sin espacios)</label>
+                  <input style={s.inp} placeholder="cocina_maria" value={provForm.usuario} onChange={e=>setProvForm({...provForm,usuario:e.target.value.toLowerCase().replace(/\s/g,"")})}/>
+                  <label style={s.lbl}>Nombre completo</label>
+                  <input style={s.inp} placeholder="María González" value={provForm.nombre} onChange={e=>setProvForm({...provForm,nombre:e.target.value})}/>
+                  <label style={s.lbl}>Nombre de tu negocio</label>
+                  <input style={s.inp} placeholder="Cocina de María" value={provForm.negocio} onChange={e=>setProvForm({...provForm,negocio:e.target.value})}/>
+                  <label style={s.lbl}>WhatsApp</label>
+                  <input style={s.inp} placeholder="+58 424-000-0000" value={provForm.telefono} onChange={e=>setProvForm({...provForm,telefono:e.target.value})}/>
+                  <label style={s.lbl}>Categorías</label>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
+                    {["Comida preparada","Postres","Jugos y bebidas","Pan y repostería"].map(c=>(
+                      <button key={c} onClick={()=>setProvForm(f=>({...f,categorias:f.categorias.includes(c)?f.categorias.filter(x=>x!==c):[...f.categorias,c]}))}
+                        style={{padding:"5px 10px",borderRadius:20,fontSize:12,fontWeight:500,cursor:"pointer",background:provForm.categorias.includes(c)?P:"#f1f5f9",color:provForm.categorias.includes(c)?"#fff":"#64748b",border:"none"}}>
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                  <label style={s.lbl}>Logo de tu negocio</label>
+                  {logoPreview&&<img src={logoPreview} alt="" style={{width:60,height:60,borderRadius:"50%",objectFit:"cover",marginBottom:8}}/>}
+                  <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setLogoFile(f);setLogoPreview(URL.createObjectURL(f));}}}/>
                 </>
               )}
-              <label style={s.provLabel}>Contraseña</label>
-              <input style={s.provInput} type="password" placeholder="••••••••" value={provForm.pass} onChange={e => setProvForm({...provForm, pass:e.target.value})} />
-              <button style={s.btn} onClick={() => {
-                if (provView === "login" && provForm.pass.length >= 4) setProvLogged(true);
-                else if (provView === "register" && provForm.nombre && provForm.negocio && provForm.pass.length >= 4) setProvLogged(true);
-                else alert("Completa todos los campos");
-              }}>
-                {provView === "login" ? "Entrar" : "Registrarme como proveedor"}
-              </button>
-              <button style={s.btnGray} onClick={() => setProvView(provView==="login"?"register":"login")}>
-                {provView === "login" ? "¿Eres nuevo? Regístrate aquí" : "¿Ya tienes cuenta? Inicia sesión"}
+              {provMode==="login"&&<><label style={s.lbl}>Usuario</label><input style={s.inp} placeholder="tu_usuario" value={provForm.usuario} onChange={e=>setProvForm({...provForm,usuario:e.target.value})}/></>}
+              <label style={s.lbl}>Contraseña</label>
+              <input style={s.inp} type="password" placeholder="••••••••" value={provForm.pass} onChange={e=>setProvForm({...provForm,pass:e.target.value})}/>
+              <button style={s.btn} onClick={provMode==="login"?handleLogin:handleRegister} disabled={loading}>{loading?"Procesando...":(provMode==="login"?"Entrar":"Registrarme")}</button>
+              <button style={s.btnG} onClick={()=>{setProvMode(provMode==="login"?"register":"login");setPmsg("");}}>
+                {provMode==="login"?"¿Nuevo? Regístrate aquí":"¿Ya tienes cuenta? Inicia sesión"}
               </button>
             </div>
-          ) : (
+          )}
+
+          {/* DASHBOARD PROVEEDOR */}
+          {provMode==="dash"&&provData&&(
             <>
-              <div style={{ ...s.provCard, background:"#f0fdf4", borderColor:"#bbf7d0" }}>
-                <div style={{ fontSize:13, fontWeight:700, color:"#15803d" }}>✓ Bienvenida, {provForm.negocio || "Proveedor"}</div>
-                <div style={{ fontSize:12, color:"#64748b", marginTop:2 }}>Gestiona tus productos del día</div>
+              <div style={{...s.pc,background:"#f0fdf4",borderColor:"#bbf7d0"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  {provData.logo_url&&<img src={provData.logo_url} alt="" style={{width:48,height:48,borderRadius:"50%",objectFit:"cover"}}/>}
+                  <div>
+                    <div style={{fontSize:14,fontWeight:700,color:"#15803d"}}>✓ {provData.negocio}</div>
+                    <div style={{fontSize:12,color:"#64748b"}}>@{provData.usuario}</div>
+                  </div>
+                </div>
+              </div>
+              {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
+
+              <div style={s.pc}>
+                <div style={s.pT}>➕ Publicar producto</div>
+                <label style={s.lbl}>Nombre</label>
+                <input style={s.inp} placeholder="Torta de zanahoria" value={newProd.nombre} onChange={e=>setNewProd({...newProd,nombre:e.target.value})}/>
+                <label style={s.lbl}>Descripción</label>
+                <input style={s.inp} placeholder="Ingredientes, tamaño..." value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
+                <label style={s.lbl}>Categoría</label>
+                <select style={{...s.inp,background:"#fff"}} value={newProd.categoria} onChange={e=>setNewProd({...newProd,categoria:e.target.value})}>
+                  {(provData.categorias?.length>0?provData.categorias:["Comida preparada","Postres","Jugos y bebidas","Pan y repostería"]).map(c=><option key={c}>{c}</option>)}
+                </select>
+                <label style={s.lbl}>Precio ($)</label>
+                <input style={s.inp} type="number" placeholder="3.50" value={newProd.precio} onChange={e=>setNewProd({...newProd,precio:e.target.value})}/>
+                <label style={s.lbl}>Unidad</label>
+                <input style={s.inp} placeholder="porción, kg, unidad..." value={newProd.unidad} onChange={e=>setNewProd({...newProd,unidad:e.target.value})}/>
+                <label style={s.lbl}>Cantidad disponible</label>
+                <input style={s.inp} type="number" value={newProd.stock} onChange={e=>setNewProd({...newProd,stock:e.target.value})}/>
+
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,background:"#f1f5f9",padding:"10px 14px",borderRadius:10}}>
+                  <input type="checkbox" id="perm" checked={newProd.permanente} onChange={e=>setNewProd({...newProd,permanente:e.target.checked})} style={{width:18,height:18}}/>
+                  <label htmlFor="perm" style={{fontSize:13,color:"#1e293b",cursor:"pointer"}}>
+                    🔁 Disponible hasta agotar stock (varios días)
+                  </label>
+                </div>
+
+                {!newProd.permanente&&(
+                  <div style={{display:"flex",gap:10}}>
+                    <div style={{flex:1}}><label style={s.lbl}>Desde</label><input style={s.inp} type="time" value={newProd.hi} onChange={e=>setNewProd({...newProd,hi:e.target.value})}/></div>
+                    <div style={{flex:1}}><label style={s.lbl}>Hasta</label><input style={s.inp} type="time" value={newProd.hf} onChange={e=>setNewProd({...newProd,hf:e.target.value})}/></div>
+                  </div>
+                )}
+
+                <label style={s.lbl}>Foto del producto</label>
+                {fotoPreview&&<img src={fotoPreview} alt="" style={{width:"100%",height:110,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
+                <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setFotoFile(f);setFotoPreview(URL.createObjectURL(f));}}}/>
+                <button style={s.btn} onClick={publishProd} disabled={loading}>{loading?"Subiendo...":"Enviar para aprobación"}</button>
               </div>
 
-              {/* Agregar producto */}
-              <div style={s.provCard}>
-                <div style={s.provTitle}>➕ Agregar producto del día</div>
-                <label style={s.provLabel}>Nombre del producto</label>
-                <input style={s.provInput} placeholder="Ej: Torta de zanahoria" value={newProd.name} onChange={e => setNewProd({...newProd, name:e.target.value})} />
-                <label style={s.provLabel}>Emoji</label>
-                <input style={s.provInput} placeholder="🍰" value={newProd.emoji} onChange={e => setNewProd({...newProd, emoji:e.target.value})} />
-                <label style={s.provLabel}>Precio ($)</label>
-                <input style={s.provInput} type="number" placeholder="3.50" value={newProd.price} onChange={e => setNewProd({...newProd, price:e.target.value})} />
-                <label style={s.provLabel}>Unidad</label>
-                <input style={s.provInput} placeholder="porción, kg, unidad..." value={newProd.unit} onChange={e => setNewProd({...newProd, unit:e.target.value})} />
-                <button style={s.btn} onClick={() => {
-                  if (!newProd.name || !newProd.price) return alert("Completa nombre y precio");
-                  setProvProducts(pp => [...pp, { ...newProd, id:`prov_${Date.now()}`, cat:provForm.categoria, kitchen:provForm.negocio, margin:0.20 }]);
-                  setNewProd({ name:"", price:"", unit:"porción", emoji:"🍱", disponible:true });
-                }}>Publicar producto hoy</button>
-              </div>
-
-              {/* Mis productos del día */}
-              {provProducts.length > 0 && (
-                <div style={s.provCard}>
-                  <div style={s.provTitle}>📋 Tus productos de hoy</div>
-                  {provProducts.map((p,i) => (
-                    <div key={p.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom:"1px solid #f1f5f9" }}>
-                      <span style={{ fontSize:22 }}>{p.emoji}</span>
-                      <div style={{ flex:1 }}>
-                        <div style={{ fontSize:13, fontWeight:600 }}>{p.name}</div>
-                        <div style={{ fontSize:11, color:"#64748b" }}>${parseFloat(p.price).toFixed(2)} / {p.unit}</div>
+              {myProds.length>0&&(
+                <div style={s.pc}>
+                  <div style={s.pT}>📋 Mis productos ({myProds.length})</div>
+                  {myProds.map(p=>(
+                    <div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 0",borderBottom:"1px solid #f1f5f9"}}>
+                      {p.foto_url?<img src={p.foto_url} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover"}}/>:<span style={{fontSize:22,width:40,textAlign:"center"}}>🍽️</span>}
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:13,fontWeight:600}}>{p.nombre}</div>
+                        <div style={{fontSize:11,color:"#64748b"}}>${p.precio} · Stock: {p.stock} · {p.permanente?"Permanente":`${p.horario_inicio}–${p.horario_fin}`}</div>
                       </div>
-                      <div style={{ display:"flex", gap:6, alignItems:"center" }}>
-                        <div style={{ fontSize:11, background: p.disponible?"#dcfce7":"#fee2e2", color: p.disponible?"#15803d":"#be123c", padding:"2px 8px", borderRadius:8, fontWeight:600 }}>
-                          {p.disponible ? "Disponible" : "Agotado"}
+                      <div style={{display:"flex",flexDirection:"column",gap:4,alignItems:"flex-end"}}>
+                        <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8,background:p.aprobado?"#dcfce7":"#fef9c3",color:p.aprobado?"#15803d":"#854d0e"}}>{p.aprobado?"✓ Aprobado":"⏳ Pendiente"}</span>
+                        {p.aprobado&&<button onClick={()=>toggleDisp(p.id,p.disponible)} style={{fontSize:10,padding:"2px 8px",borderRadius:8,border:"none",cursor:"pointer",background:p.disponible?"#dcfce7":"#fee2e2",color:p.disponible?"#15803d":"#be123c",fontWeight:600}}>{p.disponible?"Disponible":"Agotado"}</button>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button style={s.btnG} onClick={()=>{setProvMode("login");setProvData(null);setMyProds([]);setPmsg("");}}>Cerrar sesión</button>
+            </>
+          )}
+
+          {/* PANEL ADMIN */}
+          {provMode==="admin"&&(
+            <>
+              <div style={{...s.pc,background:"#eff6ff",borderColor:"#bfdbfe"}}>
+                <div style={{fontSize:14,fontWeight:700,color:"#1d4ed8"}}>⚙️ Panel Admin — {APP_NAME}</div>
+              </div>
+
+              <div style={{...s.sec,paddingTop:0}}>
+                <AdminRow label="👤 Proveedores pendientes" n={pendProvs.length} onClick={()=>setAdminSection("proveedores")} active={adminSection==="proveedores"}/>
+                <AdminRow label="🍽️ Productos pendientes" n={pendProds.length} onClick={()=>setAdminSection("productos")} active={adminSection==="productos"}/>
+                <AdminRow label="⭐ Reseñas pendientes" n={pendResenas.length} onClick={()=>setAdminSection("resenas")} active={adminSection==="resenas"}/>
+                <AdminRow label="🗺️ Gestionar zonas" n={0} onClick={()=>setAdminSection("zonas")} active={adminSection==="zonas"}/>
+                <AdminRow label="🎁 Combos y promociones" n={0} onClick={()=>setAdminSection("combos")} active={adminSection==="combos"}/>
+                <AdminRow label="🛒 Supermercado" n={0} onClick={()=>setAdminSection("super")} active={adminSection==="super"}/>
+              </div>
+
+              {/* PROVEEDORES PENDIENTES */}
+              {adminSection==="proveedores"&&(
+                <div style={s.pc}>
+                  <div style={s.pT}>Proveedores por aprobar ({pendProvs.length})</div>
+                  {pendProvs.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay proveedores pendientes ✓</div>}
+                  {pendProvs.map(p=>(
+                    <div key={p.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
+                      <div style={{display:"flex",gap:8,marginBottom:8}}>
+                        {p.logo_url&&<img src={p.logo_url} alt="" style={{width:44,height:44,borderRadius:"50%",objectFit:"cover"}}/>}
+                        <div>
+                          <div style={{fontSize:13,fontWeight:700}}>{p.negocio}</div>
+                          <div style={{fontSize:11,color:"#64748b"}}>@{p.usuario} · {p.telefono}</div>
+                          <div style={{fontSize:11,color:"#94a3b8"}}>{(p.categorias||[]).join(", ")}</div>
                         </div>
-                        <button style={{ background:"none", border:"none", cursor:"pointer", fontSize:16 }}
-                          onClick={() => setProvProducts(pp => pp.map((x,j) => j===i ? {...x, disponible:!x.disponible} : x))}>
-                          🔄
-                        </button>
+                      </div>
+                      <div style={{display:"flex",gap:8}}>
+                        <button onClick={()=>approveP(p.id)} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Aprobar</button>
+                        <button onClick={()=>rejectP(p.id)} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Rechazar</button>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
 
-              <button style={s.btnGray} onClick={() => { setProvLogged(false); setProvProducts([]); }}>
-                Cerrar sesión
-              </button>
+              {/* PRODUCTOS PENDIENTES */}
+              {adminSection==="productos"&&(
+                <div style={s.pc}>
+                  <div style={s.pT}>Productos por aprobar ({pendProds.length})</div>
+                  {pendProds.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay productos pendientes ✓</div>}
+                  {pendProds.map(p=>(
+                    <div key={p.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
+                      <div style={{display:"flex",gap:8,marginBottom:8}}>
+                        {p.foto_url&&<img src={p.foto_url} alt="" style={{width:50,height:50,borderRadius:8,objectFit:"cover"}}/>}
+                        <div>
+                          <div style={{fontSize:13,fontWeight:700}}>{p.nombre}</div>
+                          <div style={{fontSize:11,color:"#64748b"}}>${p.precio} · {p.unidad} · Stock: {p.stock}</div>
+                          <div style={{fontSize:11,color:"#64748b"}}>{p.proveedores?.negocio} · {p.categoria}</div>
+                          <div style={{fontSize:11,color:"#94a3b8"}}>{p.permanente?"🔁 Permanente":`📅 Solo hoy · ${p.horario_inicio}–${p.horario_fin}`}</div>
+                        </div>
+                      </div>
+                      <div style={{display:"flex",gap:8}}>
+                        <button onClick={()=>approvePr(p.id)} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Aprobar</button>
+                        <button onClick={()=>rejectPr(p.id)} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Rechazar</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* RESEÑAS PENDIENTES */}
+              {adminSection==="resenas"&&(
+                <div style={s.pc}>
+                  <div style={s.pT}>Reseñas por aprobar ({pendResenas.length})</div>
+                  {pendResenas.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay reseñas pendientes ✓</div>}
+                  {pendResenas.map(r=>(
+                    <div key={r.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
+                      <div style={{fontSize:13,fontWeight:600}}>{r.cliente_nombre}</div>
+                      <div style={{color:"#f59e0b",fontSize:14}}>{"★".repeat(r.estrellas)}{"☆".repeat(5-r.estrellas)}</div>
+                      <div style={{fontSize:12,color:"#64748b",margin:"4px 0"}}>{r.comentario}</div>
+                      <div style={{display:"flex",gap:8}}>
+                        <button onClick={()=>approveRe(r.id)} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Publicar</button>
+                        <button onClick={()=>rejectRe(r.id)} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Eliminar</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* ZONAS */}
+              {adminSection==="zonas"&&(
+                <div style={s.pc}>
+                  <div style={s.pT}>🗺️ Zonas de delivery</div>
+                  {zonas.map(z=>(
+                    <div key={z.id} style={{padding:"8px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}>
+                      <div style={{fontWeight:600,color:P}}>{z.zona} <span style={{color:"#94a3b8",fontWeight:400}}>({z.municipio})</span></div>
+                      <div style={{color:"#64748b"}}>Delivery: ${z.costo_delivery} · Gratis super: ${z.delivery_gratis_super} · Gratis comida: ${z.delivery_gratis_comida}</div>
+                    </div>
+                  ))}
+                  <div style={{marginTop:14}}>
+                    <div style={{fontSize:13,fontWeight:600,color:P,marginBottom:8}}>➕ Agregar zona</div>
+                    <input style={s.inp} placeholder="Nombre de zona o barrio" value={newZona.zona} onChange={e=>setNewZona({...newZona,zona:e.target.value})}/>
+                    <input style={s.inp} placeholder="Municipio" value={newZona.municipio} onChange={e=>setNewZona({...newZona,municipio:e.target.value})}/>
+                    <div style={{display:"flex",gap:8}}>
+                      <div style={{flex:1}}><label style={s.lbl}>Costo delivery</label><input style={s.inp} type="number" value={newZona.costo_delivery} onChange={e=>setNewZona({...newZona,costo_delivery:parseFloat(e.target.value)})}/></div>
+                      <div style={{flex:1}}><label style={s.lbl}>Gratis super desde</label><input style={s.inp} type="number" value={newZona.delivery_gratis_super} onChange={e=>setNewZona({...newZona,delivery_gratis_super:parseFloat(e.target.value)})}/></div>
+                    </div>
+                    <label style={s.lbl}>Gratis comida desde</label>
+                    <input style={s.inp} type="number" value={newZona.delivery_gratis_comida} onChange={e=>setNewZona({...newZona,delivery_gratis_comida:parseFloat(e.target.value)})}/>
+                    <button style={s.btn} onClick={addZona}>Guardar zona</button>
+                  </div>
+                </div>
+              )}
+
+              {/* COMBOS */}
+              {adminSection==="combos"&&(
+                <div style={s.pc}>
+                  <div style={s.pT}>🎁 Combos y promociones</div>
+                  {combos.map(c=>(
+                    <div key={c.id} style={{padding:"8px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}>
+                      <div style={{fontWeight:600}}>{c.nombre} — ${c.precio}</div>
+                      <div style={{color:"#64748b"}}>{c.temporada} · {c.fecha_inicio} al {c.fecha_fin}</div>
+                    </div>
+                  ))}
+                  <div style={{marginTop:14}}>
+                    <div style={{fontSize:13,fontWeight:600,color:P,marginBottom:8}}>➕ Nuevo combo</div>
+                    <input style={s.inp} placeholder="Nombre del combo" value={newCombo.nombre} onChange={e=>setNewCombo({...newCombo,nombre:e.target.value})}/>
+                    <input style={s.inp} placeholder="Descripción" value={newCombo.descripcion} onChange={e=>setNewCombo({...newCombo,descripcion:e.target.value})}/>
+                    <input style={s.inp} type="number" placeholder="Precio $" value={newCombo.precio} onChange={e=>setNewCombo({...newCombo,precio:e.target.value})}/>
+                    <input style={s.inp} placeholder="Temporada (ej: Día de las Madres)" value={newCombo.temporada} onChange={e=>setNewCombo({...newCombo,temporada:e.target.value})}/>
+                    <div style={{display:"flex",gap:8}}>
+                      <div style={{flex:1}}><label style={s.lbl}>Desde</label><input style={s.inp} type="date" value={newCombo.fecha_inicio} onChange={e=>setNewCombo({...newCombo,fecha_inicio:e.target.value})}/></div>
+                      <div style={{flex:1}}><label style={s.lbl}>Hasta</label><input style={s.inp} type="date" value={newCombo.fecha_fin} onChange={e=>setNewCombo({...newCombo,fecha_fin:e.target.value})}/></div>
+                    </div>
+                    <button style={s.btn} onClick={addCombo}>Publicar combo</button>
+                  </div>
+                </div>
+              )}
+
+              {/* SUPERMERCADO */}
+              {adminSection==="super"&&(
+                <div style={s.pc}>
+                  <div style={s.pT}>🛒 Productos del supermercado</div>
+                  {superProds.map((p,i)=>(
+                    <div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 0",borderBottom:"1px solid #f1f5f9"}}>
+                      <span style={{fontSize:20}}>{p.emoji}</span>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:13,fontWeight:600}}>{p.name}</div>
+                        <div style={{fontSize:11,color:"#64748b"}}>${p.price} / {p.unit}</div>
+                      </div>
+                      <button onClick={()=>setSuperProds(pp=>pp.filter((_,j)=>j!==i))} style={{fontSize:11,padding:"3px 8px",borderRadius:8,border:"none",background:"#fee2e2",color:"#be123c",cursor:"pointer"}}>Quitar</button>
+                    </div>
+                  ))}
+                  <div style={{marginTop:14}}>
+                    <div style={{fontSize:13,fontWeight:600,color:P,marginBottom:8}}>➕ Agregar producto</div>
+                    <div style={{display:"flex",gap:8}}>
+                      <input style={{...s.inp,marginBottom:0,width:50}} placeholder="🛒" value={newSuperProd.emoji} onChange={e=>setNewSuperProd({...newSuperProd,emoji:e.target.value})}/>
+                      <input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Nombre del producto" value={newSuperProd.name} onChange={e=>setNewSuperProd({...newSuperProd,name:e.target.value})}/>
+                    </div>
+                    <div style={{display:"flex",gap:8,marginTop:8}}>
+                      <input style={{...s.inp,marginBottom:0,flex:1}} type="number" placeholder="Precio $" value={newSuperProd.price} onChange={e=>setNewSuperProd({...newSuperProd,price:e.target.value})}/>
+                      <input style={{...s.inp,marginBottom:0,width:80}} placeholder="kg/L/und" value={newSuperProd.unit} onChange={e=>setNewSuperProd({...newSuperProd,unit:e.target.value})}/>
+                    </div>
+                    <button style={{...s.btn,marginTop:10}} onClick={addSuperProd}>Agregar al supermercado</button>
+                  </div>
+                </div>
+              )}
+
+              <button style={{...s.btnG,margin:"0 16px 16px"}} onClick={()=>{setProvMode("login");setPendProvs([]);setPendProds([]);setPendResenas([]);}}>Cerrar sesión admin</button>
             </>
           )}
         </div>
       )}
 
       {/* BOTÓN FLOTANTE */}
-      {count > 0 && !sheet && mainTab === "Productos" && (
-        <div style={{ position:"fixed", bottom:16, left:"50%", transform:"translateX(-50%)", zIndex:150, width:"calc(100% - 32px)", maxWidth:398 }}>
-          <button style={{ ...s.btn, margin:0, display:"flex", justifyContent:"space-between", alignItems:"center" }} onClick={() => setSheet("cart")}>
-            <span>🛒 Ver pedido ({count})</span>
-            <span>${total.toFixed(2)}</span>
+      {count>0&&!sheet&&tab!=="Proveedores"&&(
+        <div style={{position:"fixed",bottom:16,left:"50%",transform:"translateX(-50%)",zIndex:150,width:"calc(100% - 32px)",maxWidth:398}}>
+          <button style={{...s.btn,margin:0,display:"flex",justifyContent:"space-between",alignItems:"center"}} onClick={()=>setSheet("cart")}>
+            <span>🛒 Ver pedido ({count})</span><span>${total.toFixed(2)}</span>
           </button>
         </div>
       )}
 
-      {/* ══ SHEET: CARRITO ══ */}
-      {sheet === "cart" && (
-        <div style={s.overlay} onClick={() => setSheet(null)}>
-          <div style={s.sheet} onClick={e => e.stopPropagation()}>
-            <div style={s.handle} />
-            <div style={s.sheetTitle}>Tu pedido</div>
-            {/* Zona */}
-            <div style={{ ...s.infoBox, marginBottom:10 }}>
-              <div style={{ fontSize:12, fontWeight:600, color:"#64748b", marginBottom:6 }}>¿Dónde entregamos?</div>
-              <div style={{ display:"flex", gap:8 }}>
-                {["central","outside"].map(z => (
-                  <button key={z} onClick={() => setZone(z)} style={{ flex:1, padding:"7px", borderRadius:10, border: zone===z?`2px solid ${PRIMARY}`:"1px solid #e2e8f0", background: zone===z?"#0f172a":"#fff", color: zone===z?"#fff":"#64748b", fontSize:12, fontWeight:600, cursor:"pointer" }}>
-                    {z==="central" ? "🏙️ Casco central ($1)" : "🌄 Fuera de SF ($2)"}
-                  </button>
-                ))}
-              </div>
+      {/* SHEET CARRITO */}
+      {sheet==="cart"&&(
+        <div style={s.ov} onClick={()=>setSheet(null)}>
+          <div style={s.sh} onClick={e=>e.stopPropagation()}>
+            <div style={s.hnd}/>
+            <div style={s.shT}>Tu pedido</div>
+            <div style={s.ib}>
+              <label style={s.lbl}>Zona de entrega</label>
+              <select style={{...s.inp,marginBottom:8,background:"#fff"}} value={zonaSelId} onChange={e=>{setZonaSelId(e.target.value);setZonaSel(zonas.find(z=>z.id===e.target.value)||null);}}>
+                <option value="">Selecciona tu zona...</option>
+                {zonas.filter(z=>z.activa).map(z=><option key={z.id} value={z.id}>{z.municipio} — {z.zona} (Delivery: ${z.costo_delivery})</option>)}
+              </select>
+              <label style={s.lbl}>Calle y número</label>
+              <input style={{...s.inp,marginBottom:8}} placeholder="Calle Principal #47" value={addr.calle} onChange={e=>setAddr({...addr,calle:e.target.value})}/>
+              <label style={s.lbl}>Referencia</label>
+              <input style={{...s.inp,marginBottom:0}} placeholder="Casa azul, frente al parque..." value={addr.referencia} onChange={e=>setAddr({...addr,referencia:e.target.value})}/>
             </div>
-            {items.map(i => (
-              <div key={i.id} style={s.cartItem}>
-                <span style={{ fontSize:24, width:32, textAlign:"center" }}>{i.emoji}</span>
-                <div style={{ flex:1 }}>
-                  <div style={{ fontSize:13, fontWeight:500 }}>{i.name}</div>
-                  {i.kitchen && <div style={{ fontSize:10, color:"#94a3b8" }}>{i.kitchen}</div>}
+            {items.map(i=>(
+              <div key={i.id} style={s.ci}>
+                <span style={{fontSize:22,width:32,textAlign:"center"}}>{i.emoji}</span>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:500}}>{i.name}</div>
+                  {i.kitchen&&<div style={{fontSize:10,color:"#94a3b8"}}>{i.kitchen}</div>}
                 </div>
-                <div style={s.qtyRow}>
-                  <button style={s.qtyBtn} onClick={() => remove(i.id)}>−</button>
-                  <span style={s.qtyNum}>{i.qty}</span>
-                  <button style={s.qtyBtn} onClick={() => add(i)}>+</button>
+                <div style={s.qR}>
+                  <button style={s.qB} onClick={()=>rem(i.id)}>−</button>
+                  <span style={s.qN}>{i.qty}</span>
+                  <button style={s.qB} onClick={()=>add(i)}>+</button>
                 </div>
-                <div style={{ fontSize:13, fontWeight:700, color:PRIMARY, marginLeft:8, minWidth:50, textAlign:"right" }}>${(i.price*i.qty).toFixed(2)}</div>
+                <div style={{fontSize:13,fontWeight:700,color:P,marginLeft:8,minWidth:50,textAlign:"right"}}>${(i.price*i.qty).toFixed(2)}</div>
               </div>
             ))}
-            {sub < freeMin && (
-              <div style={s.progWrap}>
-                <div style={{ fontSize:12, color:"#64748b" }}>Te faltan <strong style={{ color:PRIMARY }}>${(freeMin-sub).toFixed(2)}</strong> para delivery gratis</div>
-                <div style={s.progTrack}><div style={s.progFill(pct)} /></div>
+            {sub<freeMin&&(
+              <div style={s.pw}>
+                <div style={{fontSize:12,color:"#64748b"}}>Te faltan <strong style={{color:P}}>${(freeMin-sub).toFixed(2)}</strong> para delivery gratis</div>
+                <div style={s.pt}><div style={s.pf(pct)}/></div>
               </div>
             )}
-            <div style={{ marginTop:10 }}>
-              <div style={s.summaryRow}><span style={s.summaryLabel}>Subtotal</span><span style={s.summaryVal}>${sub.toFixed(2)}</span></div>
-              <div style={s.summaryRow}>
-                <span style={s.summaryLabel}>Delivery</span>
-                {del===0 ? <span style={s.freeTag}>GRATIS</span> : <span style={s.summaryVal}>${del.toFixed(2)}</span>}
-              </div>
-              <div style={s.totalRow}><span style={{ fontWeight:700 }}>Total</span><span style={{ fontWeight:700, fontSize:17 }}>${total.toFixed(2)}</span></div>
+            <div style={{marginTop:10}}>
+              <div style={s.sr}><span style={s.sL}>Subtotal</span><span style={s.sV}>${sub.toFixed(2)}</span></div>
+              <div style={s.sr}><span style={s.sL}>Delivery</span>{del===0?<span style={s.fT}>GRATIS</span>:<span style={s.sV}>${del.toFixed(2)}</span>}</div>
+              <div style={s.tR}><span style={{fontWeight:700}}>Total</span><span style={{fontWeight:700,fontSize:17}}>${total.toFixed(2)}</span></div>
             </div>
-            <button style={s.btn} onClick={() => setSheet("checkout")}>Continuar →</button>
-            <button style={s.btnGray} onClick={() => setSheet(null)}>Seguir comprando</button>
+            <button style={s.btn} onClick={()=>setSheet("checkout")}>Continuar →</button>
+            <button style={s.btnG} onClick={()=>setSheet(null)}>Seguir comprando</button>
           </div>
         </div>
       )}
 
-      {/* ══ SHEET: CHECKOUT ══ */}
-      {sheet === "checkout" && (
-        <div style={s.overlay} onClick={() => setSheet("cart")}>
-          <div style={s.sheet} onClick={e => e.stopPropagation()}>
-            <div style={s.handle} />
-            <div style={s.sheetTitle}>¿A dónde enviamos?</div>
-            <label style={s.label}>Tu nombre</label>
-            <input style={s.input} placeholder="María González" value={form.nombre} onChange={e => setForm({...form, nombre:e.target.value})} />
-            <label style={s.label}>WhatsApp</label>
-            <input style={s.input} placeholder="+58 424-000-0000" value={form.telefono} onChange={e => setForm({...form, telefono:e.target.value})} />
-            <label style={s.label}>Dirección de entrega</label>
-            <input style={s.input} placeholder="Calle, número, referencia..." value={form.direccion} onChange={e => setForm({...form, direccion:e.target.value})} />
-            <label style={s.label}>Método de pago</label>
-            <select style={{ ...s.input, background:"#fff" }} value={form.pago} onChange={e => setForm({...form, pago:e.target.value})}>
+      {/* SHEET CHECKOUT */}
+      {sheet==="checkout"&&(
+        <div style={s.ov} onClick={()=>setSheet("cart")}>
+          <div style={s.sh} onClick={e=>e.stopPropagation()}>
+            <div style={s.hnd}/>
+            <div style={s.shT}>Datos de entrega</div>
+            <label style={s.lbl}>Tu nombre</label>
+            <input style={s.inp} placeholder="María González" value={form.nombre} onChange={e=>setForm({...form,nombre:e.target.value})}/>
+            <label style={s.lbl}>WhatsApp</label>
+            <input style={s.inp} placeholder="+58 424-000-0000" value={form.telefono} onChange={e=>setForm({...form,telefono:e.target.value})}/>
+            <label style={s.lbl}>Método de pago</label>
+            <select style={{...s.inp,background:"#fff"}} value={form.pago} onChange={e=>setForm({...form,pago:e.target.value})}>
               <option value="pago_movil">Pago Móvil</option>
               <option value="zelle">Zelle</option>
               <option value="efectivo">Efectivo al recibir</option>
             </select>
-            <div style={s.infoBox}>
-              <div style={s.summaryRow}><span style={s.summaryLabel}>Total</span><span style={{ fontWeight:700, fontSize:16, color:PRIMARY }}>${total.toFixed(2)}</span></div>
-              <div style={{ fontSize:11, color:"#94a3b8", marginTop:2 }}>Entrega estimada: 40–60 min</div>
+            <div style={s.ib}>
+              <div style={s.sr}><span style={s.sL}>Zona</span><span style={s.sV}>{zonaSel?.zona||"Sin seleccionar"}</span></div>
+              <div style={s.sr}><span style={s.sL}>Delivery</span>{del===0?<span style={s.fT}>GRATIS</span>:<span style={s.sV}>${del.toFixed(2)}</span>}</div>
+              <div style={s.sr}><span style={{fontWeight:700}}>Total</span><span style={{fontWeight:700,fontSize:16,color:P}}>${total.toFixed(2)}</span></div>
+              <div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>Entrega estimada: 40–60 min</div>
             </div>
             <button style={s.btn} onClick={confirm}>✓ Confirmar — ${total.toFixed(2)}</button>
-            <button style={s.btnGray} onClick={() => setSheet("cart")}>← Volver</button>
+            <button style={s.btnG} onClick={()=>setSheet("cart")}>← Volver</button>
           </div>
         </div>
       )}
 
-      {/* ══ SHEET: ÉXITO ══ */}
-      {sheet === "success" && (
-        <div style={s.overlay}>
-          <div style={s.sheet}>
-            <div style={s.handle} />
-            <div style={{ textAlign:"center", padding:"16px 0" }}>
-              <div style={{ fontSize:52, marginBottom:10 }}>🎉</div>
-              <div style={{ fontSize:20, fontWeight:700, color:PRIMARY, marginBottom:6 }}>¡Pedido confirmado!</div>
-              <div style={{ fontSize:13, color:"#64748b", lineHeight:1.6, marginBottom:20 }}>
-                Hola <strong>{form.nombre}</strong>, tu pedido está en camino.<br />
-                Te escribimos al <strong>{form.telefono}</strong>.<br />
+      {/* SHEET ÉXITO */}
+      {sheet==="success"&&(
+        <div style={s.ov}>
+          <div style={s.sh}>
+            <div style={s.hnd}/>
+            <div style={{textAlign:"center",padding:"16px 0"}}>
+              <div style={{fontSize:52,marginBottom:10}}>🎉</div>
+              <div style={{fontSize:20,fontWeight:700,color:P,marginBottom:6}}>¡Pedido confirmado!</div>
+              <div style={{fontSize:13,color:"#64748b",lineHeight:1.6,marginBottom:20}}>
+                Hola <strong>{form.nombre}</strong>, tu pedido está confirmado.<br/>
+                Te escribimos al <strong>{form.telefono}</strong>.<br/>
                 Tiempo estimado: <strong>40–60 min</strong>
               </div>
               <button style={s.btnWa} onClick={sendWa}>📲 Recibir confirmación por WhatsApp</button>
-              <button style={s.btnGray} onClick={() => { setCart({}); setSheet(null); setForm({ nombre:"", telefono:"", direccion:"", pago:"pago_movil" }); }}>
-                Hacer otro pedido
-              </button>
+              <button style={s.btnG} onClick={()=>{setCart({});setSheet(null);setForm({nombre:"",telefono:"",pago:"pago_movil"});setZonaSelId("");setZonaSel(null);setAddr({calle:"",referencia:""});}}>Hacer otro pedido</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ══ SHEET: SERVICIO ══ */}
-      {sheet === "service" && selService && (
-        <div style={s.overlay} onClick={() => setSheet(null)}>
-          <div style={s.sheet} onClick={e => e.stopPropagation()}>
-            <div style={s.handle} />
-            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
-              <span style={{ fontSize:30 }}>{selService.emoji}</span>
-              <div style={s.sheetTitle}>{selService.name}</div>
+      {/* SHEET SERVICIO */}
+      {sheet==="service"&&selSvc&&(
+        <div style={s.ov} onClick={()=>setSheet(null)}>
+          <div style={s.sh} onClick={e=>e.stopPropagation()}>
+            <div style={s.hnd}/>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+              <span style={{fontSize:28}}>{selSvc.emoji}</span>
+              <div style={s.shT}>{selSvc.name}</div>
             </div>
-            <label style={s.label}>Tu nombre</label>
-            <input style={s.input} placeholder="María González" value={svcForm.nombre} onChange={e => setSvcForm({...svcForm, nombre:e.target.value})} />
-            <label style={s.label}>WhatsApp</label>
-            <input style={s.input} placeholder="+58 424-000-0000" value={svcForm.telefono} onChange={e => setSvcForm({...svcForm, telefono:e.target.value})} />
-            <label style={s.label}>Dirección</label>
-            <input style={s.input} placeholder="¿Dónde necesitas el servicio?" value={svcForm.direccion} onChange={e => setSvcForm({...svcForm, direccion:e.target.value})} />
-            <label style={s.label}>Detalle de tu solicitud</label>
-            <input style={s.input} placeholder={
-              selService.name==="Mototaxi" ? "¿A dónde vas?" :
-              selService.name==="Taxi" ? "Origen y destino" :
-              selService.name==="Lavandería" ? "¿Cuánta ropa aproximadamente?" :
-              selService.name==="Limpieza del hogar" ? "¿Cuántas habitaciones? ¿Qué día?" :
-              selService.name==="Encomiendas locales" ? "¿Qué enviamos y a dónde?" :
-              "Cuéntanos lo que necesitas"
-            } value={svcForm.detalle} onChange={e => setSvcForm({...svcForm, detalle:e.target.value})} />
-            <div style={{ ...s.infoBox, marginBottom:8 }}>
-              <div style={{ fontSize:12, color:"#64748b" }}>💬 Te contactaremos por WhatsApp para confirmar disponibilidad y precio exacto.</div>
-            </div>
+            <label style={s.lbl}>Tu nombre</label>
+            <input style={s.inp} placeholder="María González" value={svcForm.nombre} onChange={e=>setSvcForm({...svcForm,nombre:e.target.value})}/>
+            <label style={s.lbl}>WhatsApp</label>
+            <input style={s.inp} placeholder="+58 424-000-0000" value={svcForm.telefono} onChange={e=>setSvcForm({...svcForm,telefono:e.target.value})}/>
+            <label style={s.lbl}>Dirección</label>
+            <input style={s.inp} placeholder="¿Dónde necesitas el servicio?" value={svcForm.direccion} onChange={e=>setSvcForm({...svcForm,direccion:e.target.value})}/>
+            <label style={s.lbl}>Detalle</label>
+            <input style={s.inp} placeholder="Cuéntanos lo que necesitas" value={svcForm.detalle} onChange={e=>setSvcForm({...svcForm,detalle:e.target.value})}/>
+            <div style={s.ib}><div style={{fontSize:12,color:"#64748b"}}>💬 Te contactamos por WhatsApp para confirmar disponibilidad y precio.</div></div>
             <button style={s.btnWa} onClick={sendSvcWa}>📲 Enviar solicitud por WhatsApp</button>
-            <button style={s.btnGray} onClick={() => setSheet(null)}>Cancelar</button>
+            <button style={s.btnG} onClick={()=>setSheet(null)}>Cancelar</button>
           </div>
         </div>
       )}
 
-      <div style={{ height:80 }} />
+      {/* SHEET RESEÑA */}
+      {sheet==="resena"&&(
+        <div style={s.ov} onClick={()=>setSheet(null)}>
+          <div style={s.sh} onClick={e=>e.stopPropagation()}>
+            <div style={s.hnd}/>
+            <div style={s.shT}>⭐ Dejar reseña</div>
+            {resenaMensaje&&<div style={s.msg(resenaMensaje.includes("✅"))}>{resenaMensaje}</div>}
+            <label style={s.lbl}>Tu nombre</label>
+            <input style={s.inp} placeholder="María González" value={resena.nombre} onChange={e=>setResena({...resena,nombre:e.target.value})}/>
+            <label style={s.lbl}>Calificación</label>
+            <div style={s.stars}>
+              {[1,2,3,4,5].map(n=>(
+                <span key={n} style={s.star(resena.estrellas>=n)} onClick={()=>setResena({...resena,estrellas:n})}>★</span>
+              ))}
+            </div>
+            <label style={s.lbl}>Comentario (opcional)</label>
+            <input style={s.inp} placeholder="¿Cómo estuvo el producto?" value={resena.comentario} onChange={e=>setResena({...resena,comentario:e.target.value})}/>
+            <button style={s.btn} onClick={enviarResena}>Enviar reseña</button>
+            <button style={s.btnG} onClick={()=>setSheet(null)}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      <div style={{height:80}}/>
     </div>
   );
 }
