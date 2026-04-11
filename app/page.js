@@ -164,6 +164,16 @@ export default function App() {
 
   useEffect(()=>{loadAll();},[]);
 
+  // Actualización automática cada 30 segundos
+  useEffect(()=>{
+    const interval = setInterval(()=>{
+      loadAll();
+      if(provData){loadMyProds(provData.id);loadMyPromos(provData.id);}
+      if(provMode==="admin"){loadAdmin();}
+    },30000);
+    return ()=>clearInterval(interval);
+  },[provData,provMode]);
+
   const loadAll=async()=>{
     const hoy=new Date().toISOString().split("T")[0];
     const [z,sp,pp,pr,cb]=await Promise.all([
@@ -243,7 +253,7 @@ export default function App() {
     if(error||!data)return setPmsg("Usuario no encontrado");
     if(data.en_pausa)return setPmsg("Tu cuenta está pausada. Contacta al administrador.");
     if(data.password_plain&&data.password_plain!==provForm.pass)return setPmsg("Contraseña incorrecta");
-    setProvData(data);setProvMode("dash");
+    setProvData(data);setProvMode("dash");setProvTab("prod_aprobados");
     loadMyProds(data.id);loadMyPromos(data.id);loadMyVentas(data.id);
   };
 
@@ -528,23 +538,19 @@ export default function App() {
 
           {provTab==="productos"&&(<>
             {/* TABS INVENTARIO */}
-            {["nuevo","aprobados","pendientes","rechazados"].map((t,_,arr)=>{
-              const counts={aprobados:myProds.filter(p=>p.aprobado&&!p.rechazado).length,pendientes:myProds.filter(p=>!p.aprobado&&!p.rechazado).length,rechazados:myProds.filter(p=>p.rechazado).length};
-              return null;
-            })}
             <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}}>
               {[
-                {k:"nuevo",l:"➕ Nuevo"},
-                {k:"aprobados",l:`✅ En tienda (${myProds.filter(p=>p.aprobado&&!p.rechazado).length})`},
-                {k:"pendientes",l:`⏳ Pendientes (${myProds.filter(p=>!p.aprobado&&!p.rechazado).length})`},
-                {k:"rechazados",l:`✗ Rechazados (${myProds.filter(p=>p.rechazado).length})`},
+                {k:"prod_nuevo",l:"➕ Nuevo"},
+                {k:"prod_aprobados",l:`✅ En tienda (${myProds.filter(p=>p.aprobado&&!p.rechazado).length})`},
+                {k:"prod_pendientes",l:`⏳ Pendientes (${myProds.filter(p=>!p.aprobado&&!p.rechazado).length})`},
+                {k:"prod_rechazados",l:`✗ Rechazados (${myProds.filter(p=>p.rechazado).length})`},
               ].map(t=>(
-                <button key={t.k} onClick={()=>setProvTab(`prod_${t.k}`)} style={{flexShrink:0,padding:"7px 11px",borderRadius:10,border:"none",background:provTab===`prod_${t.k}`?P:"#f1f5f9",color:provTab===`prod_${t.k}`?"#fff":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer"}}>{t.l}</button>
+                <button key={t.k} onClick={()=>setProvTab(t.k)} style={{flexShrink:0,padding:"7px 11px",borderRadius:10,border:"none",background:provTab===t.k?P:"#f1f5f9",color:provTab===t.k?"#fff":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer"}}>{t.l}</button>
               ))}
             </div>
 
             {/* NUEVO PRODUCTO */}
-            {(provTab==="productos"||provTab==="prod_nuevo")&&(
+            {provTab==="prod_nuevo"&&(
               <div style={s.pc}>
                 <div style={s.pT}>➕ Publicar producto</div>
                 <label style={s.lbl}>Nombre *</label>
