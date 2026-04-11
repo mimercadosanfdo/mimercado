@@ -253,7 +253,7 @@ export default function App() {
     if(error||!data)return setPmsg("Usuario no encontrado");
     if(data.en_pausa)return setPmsg("Tu cuenta está pausada. Contacta al administrador.");
     if(data.password_plain&&data.password_plain!==provForm.pass)return setPmsg("Contraseña incorrecta");
-    setProvData(data);setProvMode("dash");setProvTab("prod_aprobados");
+    setProvData(data);setProvMode("dash");setProvTab("prod_aprobados");setPmsg("");
     loadMyProds(data.id);loadMyPromos(data.id);loadMyVentas(data.id);
   };
 
@@ -536,7 +536,7 @@ export default function App() {
             </div>
           </>)}
 
-          {provTab==="productos"&&(<>
+          {(provTab==="productos"||provTab==="prod_nuevo"||provTab==="prod_aprobados"||provTab==="prod_pendientes"||provTab==="prod_rechazados")&&(<>
             {/* TABS INVENTARIO */}
             <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}}>
               {[
