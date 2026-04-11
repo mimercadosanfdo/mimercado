@@ -283,10 +283,10 @@ export default function App() {
     setLoading(true);
     let logo_url=null;
     if(logoFile) logo_url=await upload(logoFile,"logos",`${provForm.usuario}_logo`);
-    const {error} = await supabase.from("proveedores").insert({usuario:provForm.usuario,nombre:provForm.nombre,negocio:provForm.negocio,telefono:provForm.telefono,categorias:provForm.categorias,logo_url,aprobado:true,activo:true,en_pausa:false});
+    const {error} = await supabase.from("proveedores").insert({usuario:provForm.usuario,nombre:provForm.nombre,negocio:provForm.negocio,telefono:provForm.telefono,categorias:provForm.categorias,logo_url,aprobado:true,activo:false,en_pausa:false});
     setLoading(false);
     if(error) return setPmsg(error.message.includes("unique")?"Ese usuario ya existe":"Error al registrarse");
-    setPmsg("✅ Registro exitoso. Ya puedes iniciar sesión.");
+    setPmsg("✅ Registro exitoso. Ya puedes iniciar sesión y abrir tu negocio.");
     setProvMode("login");
   };
 
