@@ -387,7 +387,7 @@ export default function App() {
       supabase.from("proveedores").select("*").eq("aprobado",true).order("negocio"),
       supabase.from("combos").select("*").order("created_at",{ascending:false}),
       supabase.from("pedidos").select("*").order("created_at",{ascending:false}).limit(200),
-      supabase.from("promociones_proveedor").select("*,proveedores(negocio)").eq("aprobada",false).eq("activa",true),
+      supabase.from("promociones_proveedor").select("*,proveedores(negocio)").eq("aprobada",false).eq("activa",true).is("motivo_rechazo",null),
     ]);
     if(pr.data)setPendProds(pr.data);
     if(re.data)setPendResenas(re.data);
@@ -707,7 +707,7 @@ export default function App() {
           </div>
 
           <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}}>
-            {["estado","productos","promos","ventas"].map(t=>(<button key={t} onClick={()=>setProvTab(t)} style={{flexShrink:0,padding:"8px 12px",borderRadius:10,border:"none",background:provTab===t?P:"#f1f5f9",color:provTab===t?"#fff":"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t==="estado"?"📊 Stats":t==="productos"?"📦 Productos":t==="promos"?"🎉 Promos":"💰 Ventas"}</button>))}
+            {["estado","productos","promos","ventas"].map(t=>(<button key={t} onClick={()=>setProvTab(t)} style={{flexShrink:0,padding:"8px 12px",borderRadius:10,border:"none",background:provTab===t?P:"#f1f5f9",color:provTab===t?"#fff":"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t==="estado"?"📊 Stats":t==="productos"?"📦 Productos":t==="promos"?(myPromos.filter(pr=>!pr.aprobada&&pr.motivo_rechazo).length>0?`🎉 Promos ⚠️${myPromos.filter(pr=>!pr.aprobada&&pr.motivo_rechazo).length}`:"🎉 Promos"):"💰 Ventas"}</button>))}
           </div>
           {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
 
@@ -933,10 +933,10 @@ export default function App() {
             {myPromos.length>0&&(
               <div style={s.pc}>
                 <div style={s.pT}>Mis promociones ({myPromos.length})</div>
-                {myPromos.filter(pr=>pr.activa===false&&!pr.aprobada).length>0&&(
+                {myPromos.filter(pr=>!pr.aprobada&&pr.motivo_rechazo).length>0&&(
                   <div style={{marginBottom:12}}>
                     <div style={{fontSize:11,fontWeight:700,color:"#be123c",marginBottom:8,letterSpacing:0.5}}>✗ RECHAZADAS</div>
-                    {myPromos.filter(pr=>pr.activa===false&&!pr.aprobada).map(pr=>(
+                    {myPromos.filter(pr=>!pr.aprobada&&pr.motivo_rechazo).map(pr=>(
                       <div key={pr.id} style={{background:"#fff1f2",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #fecdd3"}}>
                         {pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:80,objectFit:"cover",borderRadius:8,marginBottom:6}}/>}
                         <div style={{fontSize:13,fontWeight:700,color:"#be123c"}}>{pr.nombre}</div>
@@ -946,10 +946,10 @@ export default function App() {
                     ))}
                   </div>
                 )}
-                {myPromos.filter(pr=>!pr.aprobada&&pr.activa!==false).length>0&&(
+                {myPromos.filter(pr=>!pr.aprobada&&!pr.motivo_rechazo).length>0&&(
                   <div style={{marginBottom:12}}>
                     <div style={{fontSize:11,fontWeight:700,color:"#854d0e",marginBottom:8,letterSpacing:0.5}}>⏳ PENDIENTES</div>
-                    {myPromos.filter(pr=>!pr.aprobada&&pr.activa!==false).map(pr=>(
+                    {myPromos.filter(pr=>!pr.aprobada&&!pr.motivo_rechazo).map(pr=>(
                       <div key={pr.id} style={{background:"#fef9c3",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #fde68a"}}>
                         {pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:80,objectFit:"cover",borderRadius:8,marginBottom:6}}/>}
                         <div style={{fontSize:13,fontWeight:700}}>{pr.nombre}</div>
@@ -1165,7 +1165,7 @@ export default function App() {
                     <label style={s.lbl}>Motivo del rechazo * (obligatorio para rechazar)</label>
                     <div style={{display:"flex",gap:6}}>
                       <input style={{...s.inp,marginBottom:0,flex:1,fontSize:12,padding:"8px 10px"}} placeholder="Ej: Falta foto, descripción incompleta..." value={rejectMotivo[`promo_${p.id}`]||""} onChange={e=>setRejectMotivo({...rejectMotivo,[`promo_${p.id}`]:e.target.value})}/>
-                      <button onClick={async()=>{const motivo=rejectMotivo[`promo_${p.id}`]||"";if(!motivo.trim())return alert("Escribe el motivo del rechazo antes de continuar");await supabase.from("promociones_proveedor").update({aprobada:false,activa:false,motivo_rechazo:motivo}).eq("id",p.id);setRejectMotivo(prev=>({...prev,[`promo_${p.id}`]:""}));loadAdmin();}} style={{...s.btnRed,fontSize:11,flexShrink:0}}>✗ Rechazar</button>
+                      <button onClick={async()=>{const motivo=rejectMotivo[`promo_${p.id}`]||"";if(!motivo.trim())return alert("Escribe el motivo del rechazo antes de continuar");await supabase.from("promociones_proveedor").update({aprobada:false,activa:false,motivo_rechazo:motivo}).eq("id",p.id);setRejectMotivo(prev=>({...prev,[`promo_${p.id}`]:""}));await loadAdmin();}} style={{...s.btnRed,fontSize:11,flexShrink:0}}>✗ Rechazar</button>
                     </div>
                   </div>
                 ))}
