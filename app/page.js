@@ -206,14 +206,22 @@ export default function App() {
   const superGroups=(cat==="Todo"||cat==="Supermercado")?SUPER_CATS.map(sc=>({cat:sc,items:filteredProds.filter(p=>p.cat==="Supermercado"&&p.superCat===sc)})).filter(g=>g.items.length>0):[];
   const provGroups=PROV_CATS.filter(c=>cat==="Todo"||cat===c).map(c=>({cat:c,items:filteredProds.filter(p=>p.cat===c)})).filter(g=>g.items.length>0);
 
-  const add=(p)=>setCart(c=>({...c,[p.id]:{...p,qty:(c[p.id]?.qty||0)+1}}));
+  const [notaSheet,setNotaSheet]=useState(null);
+  const [notaTemp,setNotaTemp]=useState("");
+
+  const add=(p)=>{
+    const stockMax=p.stock||999;
+    const actual=cart[p.id]?.qty||0;
+    if(actual>=stockMax){alert(`Solo hay ${stockMax} unidades disponibles`);return;}
+    setCart(c=>({...c,[p.id]:{...p,qty:actual+1,nota:c[p.id]?.nota||""}}));
+  };
   const rem=(id)=>setCart(c=>{const n={...c};n[id].qty>1?n[id]={...n[id],qty:n[id].qty-1}:delete n[id];return n;});
   const items=Object.values(cart);
   const count=items.reduce((a,i)=>a+i.qty,0);
   const sub=items.reduce((a,i)=>a+i.price*i.qty,0);
   const delCost=zonaSel?.costo_delivery||1.00;
+  const esCascoCentral=zonaSel?.tipo==="casco"||zonaSel?.zona==="Casco Central";
 
-  // Separar items por origen
   const superItems=items.filter(i=>i.cat==="Supermercado");
   const foodItems=items.filter(i=>i.cat!=="Supermercado");
   const superSub=superItems.reduce((a,i)=>a+i.price*i.qty,0);
@@ -222,15 +230,20 @@ export default function App() {
   const freeMinSuper=zonaSel?.delivery_gratis_super??15;
   const freeMinFood=zonaSel?.delivery_gratis_comida??10;
 
-  // Cobra delivery solo si esa sección tiene items Y no cumple el mínimo
-  const delSuper=superItems.length>0&&superSub<freeMinSuper?delCost:0;
-  const delFood=foodItems.length>0&&foodSub<freeMinFood?delCost:0;
+  // Casco central: gratis si cumple mínimo. Resto: descuenta $1 si cumple, nunca gratis
+  const calcDel=(secItems,secSub,freeMin)=>{
+    if(secItems.length===0) return 0;
+    if(esCascoCentral) return secSub>=freeMin?0:delCost;
+    return secSub>=freeMin?Math.max(0,delCost-1):delCost;
+  };
+
+  const delSuper=calcDel(superItems,superSub,freeMinSuper);
+  const delFood=calcDel(foodItems,foodSub,freeMinFood);
   const del=delSuper+delFood;
   const total=sub+del;
 
   const hasSuperOnly=items.length>0&&foodItems.length===0;
   const hasFoodOnly=items.length>0&&superItems.length===0;
-  const freeMin=hasSuperOnly?freeMinSuper:hasFoodOnly?freeMinFood:freeMinFood;
   const pct=hasSuperOnly?(superSub/freeMinSuper)*100:(foodSub/freeMinFood)*100;
 
   const generarRef=()=>`PED-${Date.now().toString().slice(-5)}`;
@@ -407,10 +420,31 @@ export default function App() {
   const myClientes=[...new Set(myVentas.map(v=>v.cliente_telefono).filter(Boolean))].length;
   const filteredProvs=catFilter==="Todas"?allProveedores:allProveedores.filter(p=>(p.categorias||[]).includes(catFilter));
 
-  const QtyCtrl=({p})=>cart[p.id]?(<div style={s.qR}><button style={s.qB} onClick={()=>rem(p.id)}>−</button><span style={s.qN}>{cart[p.id].qty}</span><button style={s.qB} onClick={()=>add(p)}>+</button></div>):<button style={s.aBtn} onClick={()=>add(p)}>+</button>;
+  const QtyCtrl=({p})=>cart[p.id]?(
+    <div style={{display:"flex",flexDirection:"column",gap:4,alignItems:"flex-end"}}>
+      <div style={s.qR}>
+        <button style={s.qB} onClick={()=>rem(p.id)}>−</button>
+        <span style={s.qN}>{cart[p.id].qty}</span>
+        <button style={s.qB} onClick={()=>add(p)}>+</button>
+      </div>
+      <button onClick={()=>{setNotaSheet(p.id);setNotaTemp(cart[p.id]?.nota||"");}} style={{fontSize:9,color:cart[p.id]?.nota?"#7e22ce":"#94a3b8",background:cart[p.id]?.nota?"#fdf4ff":"none",border:"none",cursor:"pointer",padding:"1px 4px",borderRadius:6}}>
+        {cart[p.id]?.nota?"📝 Nota añadida":"+ nota"}
+      </button>
+    </div>
+  ):<button style={s.aBtn} onClick={()=>add(p)}>+</button>;
+
+  const [prodResenas,setProdResenas]=useState({});
+
+  const loadResenas=async(prodId)=>{
+    if(prodResenas[prodId]) return;
+    const{data}=await supabase.from("resenas").select("*").eq("producto_id",prodId).eq("aprobada",true).order("created_at",{ascending:false}).limit(5);
+    if(data) setProdResenas(r=>({...r,[prodId]:data}));
+  };
 
   const Card=({p})=>{
     const cerrado=p.abierto===false;
+    const resenas=prodResenas[p.dbId]||[];
+    const avgStars=resenas.length>0?(resenas.reduce((a,r)=>a+r.estrellas,0)/resenas.length).toFixed(1):null;
     return(
       <div style={{...s.card,position:"relative",opacity:cerrado?0.75:1}}>
         {cerrado&&(
@@ -434,6 +468,24 @@ export default function App() {
         {(p.marca||p.presentacion)&&<div style={s.cMeta}>{[p.marca,p.presentacion].filter(Boolean).join(" · ")}</div>}
         {p.descripcion&&<div style={{fontSize:10,color:"#94a3b8",lineHeight:1.3}}>{p.descripcion}</div>}
         {p.horario&&<div style={{fontSize:10,color:"#94a3b8"}}>🕐 {p.horario}</div>}
+        {/* RESEÑAS */}
+        {p.dbId&&(
+          <div>
+            {avgStars?(
+              <div style={{fontSize:10,color:"#f59e0b",display:"flex",alignItems:"center",gap:3}}>
+                {"★".repeat(Math.round(avgStars))}{"☆".repeat(5-Math.round(avgStars))}
+                <span style={{color:"#64748b"}}>{avgStars} ({resenas.length})</span>
+              </div>
+            ):(
+              <button onClick={()=>loadResenas(p.dbId)} style={{fontSize:10,color:"#94a3b8",background:"none",border:"none",cursor:"pointer",padding:0}}>Ver reseñas</button>
+            )}
+            {resenas.length>0&&resenas.slice(0,2).map((r,i)=>(
+              <div key={i} style={{fontSize:10,color:"#64748b",background:"#f8fafc",borderRadius:6,padding:"4px 6px",marginTop:3}}>
+                <span style={{color:"#f59e0b"}}>{"★".repeat(r.estrellas)}</span> {r.comentario&&`"${r.comentario}"`}
+              </div>
+            ))}
+          </div>
+        )}
         <div style={s.cBt}>
           <div><div style={s.cPr}>${p.price.toFixed(2)}</div><div style={s.cUn}>/ {p.unit}</div></div>
           {cerrado?<div style={{fontSize:11,color:"#94a3b8"}}>No disp.</div>:<QtyCtrl p={p}/>}
@@ -868,6 +920,31 @@ export default function App() {
 
       {/* SHEET SERVICIO */}
       {sheet==="service"&&selSvc&&(<div style={s.ov} onClick={()=>setSheet(null)}><div style={s.sh} onClick={e=>e.stopPropagation()}><div style={s.hnd}/><div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}><span style={{fontSize:28}}>{selSvc.emoji}</span><div style={s.shT}>{selSvc.name}</div></div><label style={s.lbl}>Tu nombre</label><input style={s.inp} placeholder="María González" value={svcForm.nombre} onChange={e=>setSvcForm({...svcForm,nombre:e.target.value})}/><label style={s.lbl}>WhatsApp</label><input style={s.inp} placeholder="+58 424-000-0000" value={svcForm.telefono} onChange={e=>setSvcForm({...svcForm,telefono:e.target.value})}/><label style={s.lbl}>Dirección</label><input style={s.inp} placeholder="¿Dónde necesitas el servicio?" value={svcForm.direccion} onChange={e=>setSvcForm({...svcForm,direccion:e.target.value})}/><label style={s.lbl}>Detalle</label><input style={s.inp} placeholder="Cuéntanos lo que necesitas" value={svcForm.detalle} onChange={e=>setSvcForm({...svcForm,detalle:e.target.value})}/><div style={s.ib}><div style={{fontSize:12,color:"#64748b"}}>💬 Te contactamos por WhatsApp para confirmar.</div></div><button style={s.btnWa} onClick={sendSvcWa}>📲 Enviar solicitud</button><button style={s.btnG} onClick={()=>setSheet(null)}>Cancelar</button></div></div>)}
+
+      {/* SHEET NOTA */}
+      {notaSheet&&(
+        <div style={s.ov} onClick={()=>setNotaSheet(null)}>
+          <div style={s.sh} onClick={e=>e.stopPropagation()}>
+            <div style={s.hnd}/>
+            <div style={s.shT}>📝 Nota para este producto</div>
+            <div style={{fontSize:13,color:"#64748b",marginBottom:10}}>¿Tienes alguna indicación especial? Ej: sin cebolla, extra salsa, solo chocolate negro...</div>
+            <textarea
+              style={{...s.inp,height:100,resize:"none",fontFamily:"'Segoe UI',sans-serif"}}
+              placeholder="Escribe tu nota aquí..."
+              value={notaTemp}
+              onChange={e=>setNotaTemp(e.target.value)}
+            />
+            <button style={s.btn} onClick={()=>{
+              setCart(c=>({...c,[notaSheet]:{...c[notaSheet],nota:notaTemp}}));
+              setNotaSheet(null);
+            }}>Guardar nota</button>
+            <button style={s.btnG} onClick={()=>{
+              setCart(c=>({...c,[notaSheet]:{...c[notaSheet],nota:""}}));
+              setNotaTemp("");setNotaSheet(null);
+            }}>Quitar nota</button>
+          </div>
+        </div>
+      )}
 
       {/* SHEET RESEÑA */}
       {sheet==="resena"&&(<div style={s.ov} onClick={()=>setSheet(null)}><div style={s.sh} onClick={e=>e.stopPropagation()}><div style={s.hnd}/><div style={s.shT}>⭐ Dejar reseña</div>{resenaMsj&&<div style={s.msg(resenaMsj.includes("✅"))}>{resenaMsj}</div>}<label style={s.lbl}>Tu nombre *</label><input style={s.inp} placeholder="María González" value={resena.nombre} onChange={e=>setResena({...resena,nombre:e.target.value})}/><label style={s.lbl}>Calificación *</label><div style={s.stars}>{[1,2,3,4,5].map(n=><span key={n} style={s.star(resena.estrellas>=n)} onClick={()=>setResena({...resena,estrellas:n})}>★</span>)}</div><label style={s.lbl}>Comentario (opcional)</label><input style={s.inp} placeholder="¿Cómo estuvo el producto?" value={resena.comentario} onChange={e=>setResena({...resena,comentario:e.target.value})}/><button style={s.btn} onClick={enviarResena}>Enviar reseña</button><button style={s.btnG} onClick={()=>setSheet(null)}>Cancelar</button></div></div>)}
