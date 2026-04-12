@@ -594,7 +594,6 @@ export default function App() {
         <div style={s.banner}><p style={s.bT}>Bienvenido a {APP_NAME} {CITY} 👋</p><p style={s.bS}>Todo lo que necesitas sin salir de casa</p><span style={s.bdg("#22c55e","#fff")}>✓ Delivery desde $1</span><span style={s.bdg(A,P)}>Gratis desde $10</span></div>
         <div style={s.promoCard}><div style={{fontSize:18,fontWeight:700,marginBottom:4}}>{horario.label}</div><div style={{fontSize:13,color:"rgba(255,255,255,0.8)"}}>{horario.sub}</div><button onClick={()=>{setTab("Productos");setCat("Comida preparada");}} style={{marginTop:10,background:"rgba(255,255,255,0.2)",border:"none",borderRadius:10,padding:"7px 14px",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>Ver opciones →</button></div>
         {combos.length>0&&(<div style={{padding:"0 16px"}}><div style={s.sT}>🎁 Combos especiales</div>{combos.map(c=>(<div key={c.id} style={s.comboCard}>{c.imagen_url&&<img src={c.imagen_url} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:8,marginBottom:8}}/>}<div style={{fontSize:14,fontWeight:700,color:P}}>{c.nombre}</div><div style={{fontSize:12,color:"#64748b",margin:"2px 0 6px"}}>{c.descripcion}</div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:16,fontWeight:700,color:P}}>${parseFloat(c.precio).toFixed(2)}</span>{c.temporada&&<span style={{fontSize:11,background:"#fef3c7",color:"#92400e",padding:"2px 8px",borderRadius:8,fontWeight:600}}>{c.temporada}</span>}</div></div>))}</div>)}
-        {/* PROMOS ACTIVAS EN INICIO */}
         {provPromos.length>0&&(
           <div style={{padding:"0 16px 4px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 8px"}}>
@@ -604,12 +603,12 @@ export default function App() {
             <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:4}}>
               {provPromos.slice(0,6).map(p=>(
                 <div key={p.id} onClick={()=>{setTab("Productos");setCat("Comida preparada");}} style={{flexShrink:0,width:150,background:"#fff",borderRadius:12,border:"2px solid #f59e0b",overflow:"hidden",cursor:"pointer"}}>
-                  {p.foto?<img src={p.foto} alt={p.name} style={{width:"100%",height:80,objectFit:"cover"}}/>:<div style={{height:80,background:"#fef3c7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28}}>🎁</div>}
+                  {p.foto_url?<img src={p.foto_url} alt={p.nombre} style={{width:"100%",height:80,objectFit:"cover"}}/>:<div style={{height:80,background:"#fef3c7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28}}>🎁</div>}
                   <div style={{padding:"6px 8px"}}>
                     <div style={{fontSize:11,color:"#7e22ce",fontWeight:700,marginBottom:2}}>🎉 Promo</div>
-                    <div style={{fontSize:12,fontWeight:600,color:P,lineHeight:1.2}}>{p.name}</div>
-                    {p.kitchen&&<div style={{fontSize:10,color:"#94a3b8",marginTop:2}}>{p.kitchen}</div>}
-                    <div style={{fontSize:13,fontWeight:700,color:P,marginTop:4}}>${p.price.toFixed(2)}</div>
+                    <div style={{fontSize:12,fontWeight:600,color:P,lineHeight:1.2}}>{p.nombre}</div>
+                    {p.proveedores?.negocio&&<div style={{fontSize:10,color:"#94a3b8",marginTop:2}}>{p.proveedores.negocio}</div>}
+                    <div style={{fontSize:13,fontWeight:700,color:P,marginTop:4}}>${parseFloat(p.precio||0).toFixed(2)}</div>
                   </div>
                 </div>
               ))}
@@ -679,14 +678,13 @@ export default function App() {
               <span style={{fontSize:20}}>{provData.activo?"🟢":"🔴"}</span>
               <div><div style={{fontSize:14,fontWeight:700,color:provData.activo?"#15803d":"#92400e"}}>{provData.activo?"ABIERTO — Recibiendo pedidos":"CERRADO — No recibo pedidos"}</div><div style={{fontSize:11,color:"#64748b"}}>Toca para {provData.activo?"cerrar":"abrir"} tu negocio</div></div>
             </button>
-            {/* HORARIO DE ATENCIÓN */}
             {!editandoHorario?(
               <div style={{marginTop:10,background:"#f8fafc",borderRadius:12,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div>
+                <div style={{flex:1}}>
                   <div style={{fontSize:11,fontWeight:700,color:"#64748b",marginBottom:2}}>🕐 Horario de atención</div>
                   {provData.horario_desde&&provData.horario_hasta
-                    ?<div style={{fontSize:13,color:P,fontWeight:600}}>{provData.horario_desde} – {provData.horario_hasta}{provData.horario_desc&&<span style={{fontSize:11,color:"#64748b",fontWeight:400}}> · {provData.horario_desc}</span>}</div>
-                    :<div style={{fontSize:12,color:"#94a3b8"}}>No configurado — los clientes no saben tu horario</div>
+                    ?<div style={{fontSize:13,color:P,fontWeight:600}}>{provData.horario_desde} – {provData.horario_hasta}{provData.horario_desc?<span style={{fontSize:11,color:"#64748b",fontWeight:400}}> · {provData.horario_desc}</span>:null}</div>
+                    :<div style={{fontSize:12,color:"#94a3b8"}}>Sin horario — tus clientes no saben cuándo estás</div>
                   }
                 </div>
                 <button onClick={()=>{setHorarioNegocio({desde:provData.horario_desde||"08:00",hasta:provData.horario_hasta||"20:00",descripcion:provData.horario_desc||""});setEditandoHorario(true);}} style={{background:P,color:"#fff",border:"none",borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:600,cursor:"pointer",flexShrink:0,marginLeft:8}}>✏️ Editar</button>
@@ -698,10 +696,10 @@ export default function App() {
                   <div style={{flex:1}}><label style={s.lbl}>Abre a las</label><input style={s.inp} type="time" value={horarioNegocio.desde} onChange={e=>setHorarioNegocio({...horarioNegocio,desde:e.target.value})}/></div>
                   <div style={{flex:1}}><label style={s.lbl}>Cierra a las</label><input style={s.inp} type="time" value={horarioNegocio.hasta} onChange={e=>setHorarioNegocio({...horarioNegocio,hasta:e.target.value})}/></div>
                 </div>
-                <label style={s.lbl}>Nota para clientes (opcional)</label>
+                <label style={s.lbl}>Nota (opcional)</label>
                 <input style={s.inp} placeholder="Ej: Solo cenas, Desayunos y almuerzos..." value={horarioNegocio.descripcion} onChange={e=>setHorarioNegocio({...horarioNegocio,descripcion:e.target.value})}/>
                 <div style={{display:"flex",gap:8}}>
-                  <button onClick={async()=>{await supabase.from("proveedores").update({horario_desde:horarioNegocio.desde,horario_hasta:horarioNegocio.hasta,horario_desc:horarioNegocio.descripcion}).eq("id",provData.id);setProvData({...provData,horario_desde:horarioNegocio.desde,horario_hasta:horarioNegocio.hasta,horario_desc:horarioNegocio.descripcion});setEditandoHorario(false);setPmsg("✅ Horario actualizado");}} style={{...s.btnGreen,flex:1,borderRadius:10,padding:"9px",fontSize:12}}>Guardar horario</button>
+                  <button onClick={async()=>{await supabase.from("proveedores").update({horario_desde:horarioNegocio.desde,horario_hasta:horarioNegocio.hasta,horario_desc:horarioNegocio.descripcion}).eq("id",provData.id);setProvData({...provData,horario_desde:horarioNegocio.desde,horario_hasta:horarioNegocio.hasta,horario_desc:horarioNegocio.descripcion});setEditandoHorario(false);setPmsg("✅ Horario actualizado");}} style={{...s.btnGreen,flex:1,borderRadius:10,padding:"9px",fontSize:12}}>Guardar</button>
                   <button onClick={()=>setEditandoHorario(false)} style={{...s.btnG,flex:1,marginTop:0,borderRadius:10,padding:"9px",fontSize:12}}>Cancelar</button>
                 </div>
               </div>
@@ -935,10 +933,9 @@ export default function App() {
             {myPromos.length>0&&(
               <div style={s.pc}>
                 <div style={s.pT}>Mis promociones ({myPromos.length})</div>
-                {/* RECHAZADAS */}
                 {myPromos.filter(pr=>pr.activa===false&&!pr.aprobada).length>0&&(
                   <div style={{marginBottom:12}}>
-                    <div style={{fontSize:11,fontWeight:700,color:"#be123c",marginBottom:6,letterSpacing:0.5}}>✗ RECHAZADAS ({myPromos.filter(pr=>pr.activa===false&&!pr.aprobada).length})</div>
+                    <div style={{fontSize:11,fontWeight:700,color:"#be123c",marginBottom:8,letterSpacing:0.5}}>✗ RECHAZADAS</div>
                     {myPromos.filter(pr=>pr.activa===false&&!pr.aprobada).map(pr=>(
                       <div key={pr.id} style={{background:"#fff1f2",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #fecdd3"}}>
                         {pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:80,objectFit:"cover",borderRadius:8,marginBottom:6}}/>}
@@ -949,10 +946,9 @@ export default function App() {
                     ))}
                   </div>
                 )}
-                {/* PENDIENTES */}
                 {myPromos.filter(pr=>!pr.aprobada&&pr.activa!==false).length>0&&(
                   <div style={{marginBottom:12}}>
-                    <div style={{fontSize:11,fontWeight:700,color:"#854d0e",marginBottom:6,letterSpacing:0.5}}>⏳ PENDIENTES ({myPromos.filter(pr=>!pr.aprobada&&pr.activa!==false).length})</div>
+                    <div style={{fontSize:11,fontWeight:700,color:"#854d0e",marginBottom:8,letterSpacing:0.5}}>⏳ PENDIENTES</div>
                     {myPromos.filter(pr=>!pr.aprobada&&pr.activa!==false).map(pr=>(
                       <div key={pr.id} style={{background:"#fef9c3",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #fde68a"}}>
                         {pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:80,objectFit:"cover",borderRadius:8,marginBottom:6}}/>}
@@ -963,7 +959,6 @@ export default function App() {
                     ))}
                   </div>
                 )}
-                {/* ACTIVAS */}
                 {myPromos.filter(pr=>pr.aprobada).map(pr=>(
                   <div key={pr.id} style={{padding:"10px 0",borderBottom:"1px solid #f1f5f9"}}>
                     {pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:8,marginBottom:6}}/>}
