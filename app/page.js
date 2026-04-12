@@ -213,26 +213,25 @@ export default function App() {
   const sub=items.reduce((a,i)=>a+i.price*i.qty,0);
   const delCost=zonaSel?.costo_delivery||1.00;
 
-  // Calcular delivery por sección
+  // Separar items por origen
   const superItems=items.filter(i=>i.cat==="Supermercado");
   const foodItems=items.filter(i=>i.cat!=="Supermercado");
   const superSub=superItems.reduce((a,i)=>a+i.price*i.qty,0);
   const foodSub=foodItems.reduce((a,i)=>a+i.price*i.qty,0);
 
-  const freeMinSuper=zonaSel?.delivery_gratis_super||15;
-  const freeMinFood=zonaSel?.delivery_gratis_comida||10;
+  const freeMinSuper=zonaSel?.delivery_gratis_super??15;
+  const freeMinFood=zonaSel?.delivery_gratis_comida??10;
 
-  // Cada sección paga delivery si no cumple su mínimo
+  // Cobra delivery solo si esa sección tiene items Y no cumple el mínimo
   const delSuper=superItems.length>0&&superSub<freeMinSuper?delCost:0;
   const delFood=foodItems.length>0&&foodSub<freeMinFood?delCost:0;
   const del=delSuper+delFood;
   const total=sub+del;
 
-  // Para la barra de progreso mostramos el mínimo más cercano a alcanzar
   const hasSuperOnly=items.length>0&&foodItems.length===0;
   const hasFoodOnly=items.length>0&&superItems.length===0;
-  const freeMin=hasSuperOnly?freeMinSuper:hasFoodOnly?freeMinFood:Math.min(freeMinSuper,freeMinFood);
-  const pct=hasSuperOnly?(superSub/freeMinSuper)*100:hasFoodOnly?(foodSub/freeMinFood)*100:Math.min((superSub/freeMinSuper)*100,(foodSub/freeMinFood)*100);
+  const freeMin=hasSuperOnly?freeMinSuper:hasFoodOnly?freeMinFood:freeMinFood;
+  const pct=hasSuperOnly?(superSub/freeMinSuper)*100:(foodSub/freeMinFood)*100;
 
   const generarRef=()=>`PED-${Date.now().toString().slice(-5)}`;
 
