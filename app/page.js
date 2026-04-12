@@ -130,6 +130,11 @@ export default function App() {
   const [resenaMsj,setResenaMsj]=useState("");
   const [pedidoRef,setPedidoRef]=useState("");
 
+  // ── PEDIDOS (NUEVO) ──────────────────────────────────────
+  const [pedidos,setPedidos]=useState([]);
+  const [pedidoFiltro,setPedidoFiltro]=useState("todos");
+  // ─────────────────────────────────────────────────────────
+
   const [provMode,setProvMode]=useState("login");
   const [provForm,setProvForm]=useState({usuario:"",nombre:"",negocio:"",telefono:"",email:"",categorias:[],pass:""});
   const [provData,setProvData]=useState(null);
@@ -165,15 +170,17 @@ export default function App() {
   const [spFotoPreview,setSpFotoPreview]=useState(null);
   const [newZona,setNewZona]=useState({municipio:"San Fernando",zona:"",tipo:"barrio",costo_delivery:1.50,delivery_gratis_super:18.00,delivery_gratis_comida:12.00});
   const [newCombo,setNewCombo]=useState({nombre:"",descripcion:"",precio:"",temporada:"",fecha_inicio:"",fecha_fin:""});
+  const [notaSheet,setNotaSheet]=useState(null);
+  const [notaTemp,setNotaTemp]=useState("");
+  const [prodResenas,setProdResenas]=useState({});
 
   useEffect(()=>{loadAll();},[]);
 
-  // Actualización automática cada 30 segundos
   useEffect(()=>{
-    const interval = setInterval(()=>{
+    const interval=setInterval(()=>{
       loadAll();
       if(provData){loadMyProds(provData.id);loadMyPromos(provData.id);}
-      if(provMode==="admin"){loadAdmin();}
+      if(provMode==="admin"){loadAdmin();loadPedidos();}
     },30000);
     return ()=>clearInterval(interval);
   },[provData,provMode]);
@@ -194,11 +201,64 @@ export default function App() {
     if(cb.data)setCombos(cb.data);
   };
 
+  // ── FUNCIONES DE PEDIDOS (NUEVO) ─────────────────────────
+  const loadPedidos=async()=>{
+    const{data}=await supabase
+      .from("pedidos")
+      .select("*")
+      .order("created_at",{ascending:false})
+      .limit(200);
+    if(data)setPedidos(data);
+  };
+
+  const actualizarEstadoPedido=async(id,nuevoEstado)=>{
+    await supabase
+      .from("pedidos")
+      .update({estado:nuevoEstado,updated_at:new Date().toISOString()})
+      .eq("id",id);
+    loadPedidos();
+  };
+
+  const guardarPedidoEnDB=async()=>{
+    const itemsParaGuardar=items.map(i=>({
+      id:i.id,
+      nombre:i.name,
+      precio:i.price,
+      qty:i.qty,
+      kitchen:i.kitchen||null,
+      nota:i.nota||null,
+      categoria:i.cat,
+    }));
+    const margenTotal=items.reduce((a,i)=>{
+      const margen=i.cat==="Supermercado"?0.10:0.20;
+      return a+(i.price*i.qty*margen);
+    },0);
+    const{error}=await supabase.from("pedidos").insert({
+      ref:pedidoRef,
+      cliente_nombre:form.nombre,
+      cliente_telefono:form.telefono,
+      cliente_direccion:`${zonaSel?.zona||""}, ${addr.calle} ${addr.referencia}`.trim(),
+      zona:zonaSel?.zona||"",
+      zona_id:zonaSelId||null,
+      metodo_pago:form.pago,
+      items:itemsParaGuardar,
+      subtotal:parseFloat(sub.toFixed(2)),
+      delivery:parseFloat(del.toFixed(2)),
+      total:parseFloat(total.toFixed(2)),
+      ganancia:parseFloat(margenTotal.toFixed(2)),
+      estado:"nuevo",
+    });
+    if(error)console.error("Error guardando pedido:",error.message);
+  };
+  // ─────────────────────────────────────────────────────────
+
   const allProds=[
     ...superProds.map(p=>({id:`sp_${p.id}`,name:p.nombre,cat:"Supermercado",superCat:p.categoria,price:p.precio,unit:p.unidad,emoji:p.emoji||"🛒",margin:0.10,foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,abierto:true})),
     ...provProds.map(p=>({id:`pv_${p.id}`,name:p.nombre,cat:p.categoria,price:p.precio,unit:p.unidad,emoji:"🍽️",margin:0.20,kitchen:p.proveedores?.negocio,logo:p.proveedores?.logo_url,foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,stock:p.stock,horario:p.permanente?"Siempre disponible":`${p.horario_inicio}–${p.horario_fin}`,tag:p.stock<=3?`Solo ${p.stock} disp.`:null,dbId:p.id,abierto:p.proveedores?.activo!==false&&!p.proveedores?.en_pausa})),
     ...provPromos.map(pr=>({id:`promo_${pr.id}`,name:pr.nombre,cat:"Comida preparada",price:pr.precio,unit:"promo",emoji:"🎁",margin:0.20,kitchen:pr.proveedores?.negocio,logo:pr.proveedores?.logo_url,descripcion:pr.descripcion,isPromo:true,tag:"🎉 Promo",horario:`Hasta ${pr.fecha_fin}`,abierto:pr.proveedores?.activo!==false&&!pr.proveedores?.en_pausa})),
   ];
+
+  const allProdsConMargen=allProds.map(p=>({...p,priceOriginal:p.price,price:p.cat==="Supermercado"?p.price:parseFloat((p.price*1.20).toFixed(2))}));
 
   const filteredProds=allProdsConMargen.filter(p=>{
     const matchCat=cat==="Todo"||(cat==="Supermercado"?p.cat==="Supermercado":p.cat===cat);
@@ -208,8 +268,6 @@ export default function App() {
   });
   const superGroups=(cat==="Todo"||cat==="Supermercado")?SUPER_CATS.map(sc=>({cat:sc,items:filteredProds.filter(p=>p.cat==="Supermercado"&&p.superCat===sc)})).filter(g=>g.items.length>0):[];
   const provGroups=PROV_CATS.filter(c=>cat==="Todo"||cat===c).map(c=>({cat:c,items:filteredProds.filter(p=>p.cat===c)})).filter(g=>g.items.length>0);
-  const [notaSheet,setNotaSheet]=useState(null);
-  const [notaTemp,setNotaTemp]=useState("");
 
   const add=(p)=>{
     const stockMax=p.stock||999;
@@ -231,11 +289,11 @@ export default function App() {
 
   const freeMinSuper=zonaSel?.delivery_gratis_super??15;
   const freeMinFood=zonaSel?.delivery_gratis_comida??10;
+  const freeMin=Math.min(freeMinSuper,freeMinFood);
 
-  // Casco central: gratis si cumple mínimo. Resto: descuenta $1 si cumple, nunca gratis
   const calcDel=(secItems,secSub,freeMin)=>{
-    if(secItems.length===0) return 0;
-    if(esCascoCentral) return secSub>=freeMin?0:delCost;
+    if(secItems.length===0)return 0;
+    if(esCascoCentral)return secSub>=freeMin?0:delCost;
     return secSub>=freeMin?Math.max(0,delCost-1):delCost;
   };
 
@@ -250,13 +308,10 @@ export default function App() {
 
   const generarRef=()=>`PED-${Date.now().toString().slice(-5)}`;
 
-  // Aplicar margen al precio según categoría
   const precioConMargen=(p)=>{
-    if(p.cat==="Supermercado") return p.price; // ya tiene margen incluido desde admin
-    return parseFloat((p.price*1.20).toFixed(2)); // 20% comida preparada
+    if(p.cat==="Supermercado")return p.price;
+    return parseFloat((p.price*1.20).toFixed(2));
   };
-
-  const allProdsConMargen=allProds.map(p=>({...p,priceOriginal:p.price,price:p.cat==="Supermercado"?p.price:parseFloat((p.price*1.20).toFixed(2))}));
 
   const saveCliente=async()=>{
     if(!form.telefono||!form.nombre)return;
@@ -274,7 +329,7 @@ export default function App() {
     const lineas=items.map(i=>`  • ${i.name} x${i.qty} — ${(i.price*i.qty).toFixed(2)}`).join("\n");
     const dir=`${zonaSel?.zona||""}, ${addr.calle}${addr.referencia?`, ${addr.referencia}`:""}`;
     const hora=new Date().toLocaleTimeString("es-VE",{hour:"2-digit",minute:"2-digit"});
-    const delDetalle=del===0?"GRATIS 🎉":`${del.toFixed(2)}${delSuper>0&&delFood>0?` (super ${delSuper.toFixed(2)} + comida ${delFood.toFixed(2)})`:""}`; 
+    const delDetalle=del===0?"GRATIS 🎉":`${del.toFixed(2)}${delSuper>0&&delFood>0?` (super ${delSuper.toFixed(2)} + comida ${delFood.toFixed(2)})`:""}`;
     return `🛒 *Nuevo pedido ${APP_NAME} ${CITY}*\n📋 Ref: ${pedidoRef}\n${"─".repeat(28)}\n${lineas}\n${"─".repeat(28)}\nSubtotal: ${sub.toFixed(2)}\nDelivery: ${delDetalle}\n*TOTAL: ${total.toFixed(2)}*\n${"─".repeat(28)}\n👤 ${form.nombre}\n📱 ${form.telefono}\n📍 ${zonaSel?.zona||""}\n🏠 ${dir}\n💳 ${form.pago}\n⏰ ${hora}`;
   };
 
@@ -286,7 +341,7 @@ export default function App() {
 
   const handleLogin=async()=>{
     if(!provForm.usuario||!provForm.pass)return setPmsg("Completa usuario y contraseña");
-    if(provForm.usuario===ADMIN_USER&&provForm.pass===ADMIN_PASS){setProvMode("admin");loadAdmin();return;}
+    if(provForm.usuario===ADMIN_USER&&provForm.pass===ADMIN_PASS){setProvMode("admin");loadAdmin();loadPedidos();return;}
     setLoading(true);
     const{data,error}=await supabase.from("proveedores").select("*").eq("usuario",provForm.usuario).single();
     setLoading(false);
@@ -342,6 +397,12 @@ export default function App() {
     if(promo.data)setPendPromos(promo.data);
   };
 
+  const loadResenas=async(prodId)=>{
+    if(prodResenas[prodId])return;
+    const{data}=await supabase.from("resenas").select("*").eq("producto_id",prodId).eq("aprobada",true).order("created_at",{ascending:false}).limit(5);
+    if(data)setProdResenas(r=>({...r,[prodId]:data}));
+  };
+
   const togglePausa=async(id,enPausa)=>{await supabase.from("proveedores").update({en_pausa:!enPausa}).eq("id",id);loadAdmin();loadAll();};
   const deleteProveedor=async(id)=>{if(!window.confirm("¿Eliminar este proveedor? No se puede deshacer."))return;await supabase.from("productos_proveedor").delete().eq("proveedor_id",id);await supabase.from("proveedores").delete().eq("id",id);loadAdmin();loadAll();};
   const toggleMiEstado=async()=>{const n=!provData.activo;await supabase.from("proveedores").update({activo:n}).eq("id",provData.id);setProvData({...provData,activo:n});loadAll();};
@@ -385,7 +446,7 @@ export default function App() {
     if(!newPromo.nombre||!newPromo.precio||!newPromo.fecha_inicio||!newPromo.fecha_fin)return setPmsg("Completa todos los campos");
     setLoading(true);
     let foto_url=null;
-    if(promoFotoFile) foto_url=await upload(promoFotoFile,"productos",`promo_${provData.id}_${Date.now()}`);
+    if(promoFotoFile)foto_url=await upload(promoFotoFile,"productos",`promo_${provData.id}_${Date.now()}`);
     const{error}=await supabase.from("promociones_proveedor").insert({
       proveedor_id:provData.id,...newPromo,precio:parseFloat(newPromo.precio),
       foto_url,aprobada:false,activa:true
@@ -453,14 +514,6 @@ export default function App() {
     </div>
   ):<button style={s.aBtn} onClick={()=>add(p)}>+</button>;
 
-  const [prodResenas,setProdResenas]=useState({});
-
-  const loadResenas=async(prodId)=>{
-    if(prodResenas[prodId]) return;
-    const{data}=await supabase.from("resenas").select("*").eq("producto_id",prodId).eq("aprobada",true).order("created_at",{ascending:false}).limit(5);
-    if(data) setProdResenas(r=>({...r,[prodId]:data}));
-  };
-
   const Card=({p})=>{
     const cerrado=p.abierto===false;
     const resenas=prodResenas[p.dbId]||[];
@@ -488,7 +541,6 @@ export default function App() {
         {(p.marca||p.presentacion)&&<div style={s.cMeta}>{[p.marca,p.presentacion].filter(Boolean).join(" · ")}</div>}
         {p.descripcion&&<div style={{fontSize:10,color:"#94a3b8",lineHeight:1.3}}>{p.descripcion}</div>}
         {p.horario&&<div style={{fontSize:10,color:"#94a3b8"}}>🕐 {p.horario}</div>}
-        {/* RESEÑAS */}
         {p.dbId&&(
           <div>
             {avgStars?(
@@ -626,7 +678,6 @@ export default function App() {
           </>)}
 
           {(provTab==="productos"||provTab==="prod_nuevo"||provTab==="prod_aprobados"||provTab==="prod_pendientes"||provTab==="prod_rechazados")&&(<>
-            {/* TABS INVENTARIO */}
             <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}}>
               {[
                 {k:"prod_nuevo",l:"➕ Nuevo"},
@@ -638,7 +689,6 @@ export default function App() {
               ))}
             </div>
 
-            {/* NUEVO PRODUCTO */}
             {provTab==="prod_nuevo"&&(
               <div style={s.pc}>
                 <div style={s.pT}>➕ Publicar producto</div>
@@ -671,7 +721,6 @@ export default function App() {
               </div>
             )}
 
-            {/* EN TIENDA — APROBADOS */}
             {provTab==="prod_aprobados"&&(
               <div style={s.pc}>
                 <div style={s.pT}>✅ Productos en tienda</div>
@@ -692,7 +741,6 @@ export default function App() {
                         </div>
                       </div>
                     </div>
-                    {/* ACTUALIZAR STOCK */}
                     <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:6}}>
                       <span style={{fontSize:12,color:"#64748b",flexShrink:0}}>Cantidad:</span>
                       <button onClick={async()=>{const ns=Math.max(0,p.stock-1);await supabase.from("productos_proveedor").update({stock:ns,disponible:ns>0}).eq("id",p.id);loadMyProds(provData.id);loadAll();}} style={{...s.qB,flexShrink:0}}>−</button>
@@ -702,7 +750,6 @@ export default function App() {
                         onBlur={async e=>{const v=parseInt(e.target.value);if(!isNaN(v)&&v>=0){await supabase.from("productos_proveedor").update({stock:v,disponible:v>0}).eq("id",p.id);loadMyProds(provData.id);loadAll();}e.target.value="";}}
                         onKeyDown={async e=>{if(e.key==="Enter"){const v=parseInt(e.target.value);if(!isNaN(v)&&v>=0){await supabase.from("productos_proveedor").update({stock:v,disponible:v>0}).eq("id",p.id);loadMyProds(provData.id);loadAll();}e.target.value="";}}}/>
                     </div>
-                    {/* ACCIONES */}
                     <div style={{display:"flex",gap:6}}>
                       <button onClick={()=>toggleDisp(p.id,p.disponible)} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:p.disponible?"#fff7ed":"#f0fdf4",color:p.disponible?"#c2410c":"#15803d"}}>
                         {p.disponible?"⏸️ Pausar":"▶️ Activar"}
@@ -716,7 +763,6 @@ export default function App() {
               </div>
             )}
 
-            {/* PENDIENTES */}
             {provTab==="prod_pendientes"&&(
               <div style={s.pc}>
                 <div style={s.pT}>⏳ Esperando aprobación</div>
@@ -734,7 +780,6 @@ export default function App() {
               </div>
             )}
 
-            {/* RECHAZADOS */}
             {provTab==="prod_rechazados"&&(
               <div style={s.pc}>
                 <div style={s.pT}>✗ Productos rechazados</div>
@@ -764,7 +809,7 @@ export default function App() {
                         <button style={s.btn} disabled={loading} onClick={async()=>{
                           setLoading(true);
                           let foto_url=p.foto_url;
-                          if(fotoFile) foto_url=await upload(fotoFile,"productos",`${provData.id}_${Date.now()}`);
+                          if(fotoFile)foto_url=await upload(fotoFile,"productos",`${provData.id}_${Date.now()}`);
                           await supabase.from("productos_proveedor").update({
                             nombre:newProd.nombre,descripcion:newProd.descripcion,
                             precio:parseFloat(newProd.precio),foto_url,
@@ -836,9 +881,19 @@ export default function App() {
             ].map(x=>(<button key={x.key} style={s.admRow(adminSec===x.key)} onClick={()=>{setAdminSec(x.key);if(x.key==="pedidos")loadPedidos();}}><span>{x.label}</span>{x.n>0&&<span style={{background:"#ef4444",color:"#fff",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700}}>{x.n}</span>}</button>))}
           </div>
 
+          {adminSec==="dashboard"&&(<>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,margin:"0 16px 12px"}}>
+              <StatCard num={`$${ingresoHoy.toFixed(2)}`} lbl="Ingresos hoy" color="#22c55e"/>
+              <StatCard num={`$${ingresoTotal.toFixed(2)}`} lbl="Total histórico"/>
+              <StatCard num={ventasHoy.length} lbl="Ventas hoy" color="#6366f1"/>
+              <StatCard num={allProveedores.filter(p=>p.activo&&!p.en_pausa).length} lbl="Proveedores activos" color="#f59e0b"/>
+            </div>
+            {topAdminProds.length>0&&(<div style={{margin:"0 16px"}}><div style={s.pc}><div style={s.pT}>🏆 Más vendidos del ecosistema</div><BarChart data={topAdminProds} max={topAdminProds[0]?.[1]||1}/></div></div>)}
+            <div style={{margin:"0 16px"}}><div style={s.pc}><div style={s.pT}>🕐 Últimas ventas</div>{adminVentas.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>Aún no hay ventas</div>}{adminVentas.slice(0,10).map(v=>(<div key={v.id} style={{padding:"7px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}><div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontWeight:600}}>{v.producto_nombre}</span><span style={{fontWeight:700,color:"#22c55e"}}>${(v.total_item||0).toFixed(2)}</span></div><div style={{color:"#94a3b8"}}>{v.cliente_nombre} · {v.fecha?.slice(0,10)}</div></div>))}</div></div>
+          </>)}
+
           {adminSec==="pedidos"&&(
             <div style={{margin:"0 16px"}}>
-              {/* FILTROS */}
               <div style={s.cs}>
                 {[
                   {k:"todos",l:"Todos"},
@@ -849,13 +904,11 @@ export default function App() {
                   {k:"anulado",l:"🔴 Anulados"},
                 ].map(f=>(<button key={f.k} style={s.cb(pedidoFiltro===f.k)} onClick={()=>setPedidoFiltro(f.k)}>{f.l}</button>))}
               </div>
-              {/* STATS RÁPIDOS */}
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
-                <div style={s.statCard}><div style={{...s.statNum,fontSize:16,color:"#22c55e"}}>${pedidos.filter(p=>p.estado==="entregado").reduce((a,p)=>a+p.ganancia,0).toFixed(2)}</div><div style={s.statLbl}>Ganancia real</div></div>
+                <div style={s.statCard}><div style={{...s.statNum,fontSize:16,color:"#22c55e"}}>${pedidos.filter(p=>p.estado==="entregado").reduce((a,p)=>a+(p.ganancia||0),0).toFixed(2)}</div><div style={s.statLbl}>Ganancia real</div></div>
                 <div style={s.statCard}><div style={{...s.statNum,fontSize:16,color:"#6366f1"}}>{pedidos.filter(p=>p.estado==="entregado").length}</div><div style={s.statLbl}>Entregados</div></div>
                 <div style={s.statCard}><div style={{...s.statNum,fontSize:16,color:"#ef4444"}}>{pedidos.filter(p=>p.estado==="anulado").length}</div><div style={s.statLbl}>Anulados</div></div>
               </div>
-              {/* LISTA DE PEDIDOS */}
               {(pedidoFiltro==="todos"?pedidos:pedidos.filter(p=>p.estado===pedidoFiltro)).length===0&&(
                 <div style={{...s.pc,textAlign:"center",color:"#94a3b8"}}>No hay pedidos en esta categoría</div>
               )}
@@ -877,29 +930,25 @@ export default function App() {
                       </div>
                       <span style={{fontSize:11,fontWeight:600,padding:"3px 8px",borderRadius:8,background:estadoConfig.bg,color:estadoConfig.color}}>{estadoConfig.label}</span>
                     </div>
-                    {/* ITEMS */}
                     <div style={{background:"#f8fafc",borderRadius:8,padding:"8px 10px",marginBottom:8}}>
                       {itemsList.map((it,i)=>(
                         <div key={i} style={{fontSize:12,padding:"2px 0",borderBottom:i<itemsList.length-1?"1px solid #f1f5f9":"none"}}>
-                          <span style={{fontWeight:500}}>{it.nombre}</span> x{it.qty} — <span style={{color:"#22c55e",fontWeight:600}}>${(it.precio*it.qty).toFixed(2)}</span>
+                          <span style={{fontWeight:500}}>{it.nombre}</span> x{it.qty} — <span style={{color:"#22c55e",fontWeight:600}}>${((it.precio||0)*(it.qty||1)).toFixed(2)}</span>
                           {it.nota&&<div style={{fontSize:10,color:"#7e22ce"}}>📝 {it.nota}</div>}
                           {it.kitchen&&<span style={{fontSize:10,color:"#94a3b8"}}> ({it.kitchen})</span>}
                         </div>
                       ))}
                     </div>
-                    {/* INFO CLIENTE */}
                     <div style={{fontSize:12,color:"#64748b",marginBottom:8}}>
                       <div>👤 {ped.cliente_nombre} · 📱 {ped.cliente_telefono}</div>
                       <div>📍 {ped.cliente_direccion}</div>
                       <div>💳 {ped.metodo_pago}</div>
                     </div>
-                    {/* TOTALES */}
                     <div style={{display:"flex",justifyContent:"space-between",fontSize:12,background:"#f0fdf4",padding:"6px 10px",borderRadius:8,marginBottom:8}}>
-                      <span>Total: <strong>${ped.total?.toFixed(2)}</strong></span>
-                      <span>Delivery: <strong>${ped.delivery?.toFixed(2)}</strong></span>
-                      <span style={{color:"#22c55e"}}>Ganancia: <strong>${ped.ganancia?.toFixed(2)}</strong></span>
+                      <span>Total: <strong>${(ped.total||0).toFixed(2)}</strong></span>
+                      <span>Delivery: <strong>${(ped.delivery||0).toFixed(2)}</strong></span>
+                      <span style={{color:"#22c55e"}}>Ganancia: <strong>${(ped.ganancia||0).toFixed(2)}</strong></span>
                     </div>
-                    {/* BOTONES DE ESTADO */}
                     {ped.estado!=="entregado"&&ped.estado!=="anulado"&&(
                       <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                         {ped.estado==="nuevo"&&(<>
@@ -914,7 +963,6 @@ export default function App() {
                         )}
                       </div>
                     )}
-                    {/* BOTÓN WHATSAPP CLIENTE */}
                     <button onClick={()=>window.open(`https://wa.me/${ped.cliente_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${ped.cliente_nombre} 👋 Tu pedido *${ped.ref}* está ${estadoConfig.label}`)}`)} style={{...s.btnWa,marginTop:6,padding:"8px",fontSize:12}}>
                       📲 Escribir al cliente
                     </button>
@@ -923,15 +971,6 @@ export default function App() {
               })}
             </div>
           )}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,margin:"0 16px 12px"}}>
-              <StatCard num={`$${ingresoHoy.toFixed(2)}`} lbl="Ingresos hoy" color="#22c55e"/>
-              <StatCard num={`$${ingresoTotal.toFixed(2)}`} lbl="Total histórico"/>
-              <StatCard num={ventasHoy.length} lbl="Ventas hoy" color="#6366f1"/>
-              <StatCard num={allProveedores.filter(p=>p.activo&&!p.en_pausa).length} lbl="Proveedores activos" color="#f59e0b"/>
-            </div>
-            {topAdminProds.length>0&&(<div style={s.pc}><div style={s.pT}>🏆 Más vendidos del ecosistema</div><BarChart data={topAdminProds} max={topAdminProds[0]?.[1]||1}/></div>)}
-            <div style={s.pc}><div style={s.pT}>🕐 Últimas ventas</div>{adminVentas.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>Aún no hay ventas</div>}{adminVentas.slice(0,10).map(v=>(<div key={v.id} style={{padding:"7px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}><div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontWeight:600}}>{v.producto_nombre}</span><span style={{fontWeight:700,color:"#22c55e"}}>${(v.total_item||0).toFixed(2)}</span></div><div style={{color:"#94a3b8"}}>{v.cliente_nombre} · {v.fecha?.slice(0,10)}</div></div>))}</div>
-          </>)}
 
           {adminSec==="proveedores_lista"&&(<div style={{margin:"0 16px"}}>
             <div style={s.pc}>
@@ -953,7 +992,6 @@ export default function App() {
                   <button onClick={()=>togglePausa(p.id,p.en_pausa)} style={{...s.btnAmber,fontSize:11}}>{p.en_pausa?"▶️ Quitar pausa":"⏸️ Pausar"}</button>
                   <button onClick={()=>deleteProveedor(p.id)} style={{...s.btnRed,fontSize:11}}>🗑️ Eliminar</button>
                 </div>
-                {/* CAMBIAR CLAVE */}
                 <div style={{display:"flex",gap:6,alignItems:"center"}}>
                   <input style={{...s.inp,marginBottom:0,flex:1,fontSize:12,padding:"7px 10px"}} type="password" placeholder="Nueva clave..." value={resetPass[p.id]||""} onChange={e=>setResetPass({...resetPass,[p.id]:e.target.value})}/>
                   <button onClick={()=>cambiarClave(p.id,resetPass[p.id]||"")} style={{...s.btnGreen,fontSize:11,flexShrink:0}}>🔑 Cambiar</button>
@@ -1007,7 +1045,9 @@ export default function App() {
                 ))}
               </div>
             </div>
-          )}<div style={{margin:"0 16px"}}><div style={s.pc}><div style={s.pT}>Reseñas ({pendResenas.length})</div>{pendResenas.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay pendientes ✓</div>}{pendResenas.map(r=>(<div key={r.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}><div style={{fontSize:13,fontWeight:600}}>{r.cliente_nombre}</div><div style={{color:"#f59e0b",fontSize:14}}>{"★".repeat(r.estrellas)}{"☆".repeat(5-r.estrellas)}</div><div style={{fontSize:12,color:"#64748b",margin:"4px 0"}}>{r.comentario}</div><div style={{display:"flex",gap:8}}><button onClick={()=>approveRe(r.id)} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Publicar</button><button onClick={()=>rejectRe(r.id)} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Eliminar</button></div></div>))}</div></div>)}
+          )}
+
+          {adminSec==="resenas"&&(<div style={{margin:"0 16px"}}><div style={s.pc}><div style={s.pT}>Reseñas ({pendResenas.length})</div>{pendResenas.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay pendientes ✓</div>}{pendResenas.map(r=>(<div key={r.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}><div style={{fontSize:13,fontWeight:600}}>{r.cliente_nombre}</div><div style={{color:"#f59e0b",fontSize:14}}>{"★".repeat(r.estrellas)}{"☆".repeat(5-r.estrellas)}</div><div style={{fontSize:12,color:"#64748b",margin:"4px 0"}}>{r.comentario}</div><div style={{display:"flex",gap:8}}><button onClick={()=>approveRe(r.id)} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Publicar</button><button onClick={()=>rejectRe(r.id)} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Eliminar</button></div></div>))}</div></div>)}
 
           {adminSec==="zonas"&&(<div style={{margin:"0 16px"}}><div style={s.pc}><div style={s.pT}>🗺️ Zonas</div>{allZonas.map(z=>(<div key={z.id} style={{padding:"8px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}><div style={{fontWeight:600,color:P}}>{z.zona} <span style={{color:"#94a3b8"}}>({z.municipio})</span></div><div style={{color:"#64748b"}}>Delivery: ${z.costo_delivery} · Gratis super: ${z.delivery_gratis_super} · comida: ${z.delivery_gratis_comida}</div></div>))}<div style={{marginTop:14}}><input style={s.inp} placeholder="Nombre de zona" value={newZona.zona} onChange={e=>setNewZona({...newZona,zona:e.target.value})}/><input style={s.inp} placeholder="Municipio" value={newZona.municipio} onChange={e=>setNewZona({...newZona,municipio:e.target.value})}/><div style={{display:"flex",gap:8}}><div style={{flex:1}}><label style={s.lbl}>Delivery $</label><input style={s.inp} type="number" value={newZona.costo_delivery} onChange={e=>setNewZona({...newZona,costo_delivery:parseFloat(e.target.value)})}/></div><div style={{flex:1}}><label style={s.lbl}>Gratis super $</label><input style={s.inp} type="number" value={newZona.delivery_gratis_super} onChange={e=>setNewZona({...newZona,delivery_gratis_super:parseFloat(e.target.value)})}/></div></div><label style={s.lbl}>Gratis comida $</label><input style={s.inp} type="number" value={newZona.delivery_gratis_comida} onChange={e=>setNewZona({...newZona,delivery_gratis_comida:parseFloat(e.target.value)})}/><button style={s.btn} onClick={addZona}>Guardar zona</button></div></div></div>)}
 
@@ -1015,7 +1055,7 @@ export default function App() {
 
           {adminSec==="super"&&(<div style={{margin:"0 16px"}}><div style={s.pc}><div style={s.pT}>🛒 Supermercado ({superProds.length})</div>{superProds.map(p=>(<div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 0",borderBottom:"1px solid #f1f5f9"}}>{p.foto_url?<img src={p.foto_url} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover"}}/>:<span style={{fontSize:20}}>{p.emoji}</span>}<div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{p.nombre}</div><div style={{fontSize:11,color:"#64748b"}}>{p.categoria} · ${p.precio}/{p.unidad}</div></div><button onClick={()=>deleteSuperProd(`sp_${p.id}`)} style={{...s.btnRed,fontSize:11}}>Quitar</button></div>))}<div style={{marginTop:14}}><label style={s.lbl}>Categoría *</label><select style={{...s.inp,background:"#fff"}} value={newSP.categoria} onChange={e=>setNewSP({...newSP,categoria:e.target.value})}>{SUPER_CATS.map(c=><option key={c}>{c}</option>)}</select><div style={{display:"flex",gap:8,marginBottom:8}}><input style={{...s.inp,marginBottom:0,width:50}} placeholder="🛒" value={newSP.emoji} onChange={e=>setNewSP({...newSP,emoji:e.target.value})}/><input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Nombre *" value={newSP.nombre} onChange={e=>setNewSP({...newSP,nombre:e.target.value})}/></div><div style={{display:"flex",gap:8,marginBottom:8}}><input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Marca" value={newSP.marca} onChange={e=>setNewSP({...newSP,marca:e.target.value})}/><input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Presentación" value={newSP.presentacion} onChange={e=>setNewSP({...newSP,presentacion:e.target.value})}/></div><div style={{display:"flex",gap:8,marginBottom:8}}><input style={{...s.inp,marginBottom:0,flex:1}} type="number" placeholder="Precio $" value={newSP.precio} onChange={e=>setNewSP({...newSP,precio:e.target.value})}/><input style={{...s.inp,marginBottom:0,width:80}} placeholder="kg/L" value={newSP.unidad} onChange={e=>setNewSP({...newSP,unidad:e.target.value})}/></div><input style={s.inp} placeholder="Descripción (opcional)" value={newSP.descripcion} onChange={e=>setNewSP({...newSP,descripcion:e.target.value})}/><label style={s.lbl}>Foto</label>{spFotoPreview&&<img src={spFotoPreview} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}<input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setSpFoto(f);setSpFotoPreview(URL.createObjectURL(f));}}}/><button style={s.btn} onClick={addSuperProd} disabled={loading}>{loading?"Guardando...":"Agregar"}</button></div></div></div>)}
 
-          <button style={{...s.btnG,margin:"8px 16px 16px"}} onClick={()=>{setProvMode("login");setPendProds([]);setPendResenas([]);setAllProveedores([]);}}>Cerrar sesión admin</button>
+          <button style={{...s.btnG,margin:"8px 16px 16px"}} onClick={()=>{setProvMode("login");setPendProds([]);setPendResenas([]);setAllProveedores([]);setPedidos([]);}}>Cerrar sesión admin</button>
         </>)}
       </div>)}
 
@@ -1023,19 +1063,15 @@ export default function App() {
       {count>0&&!sheet&&tab!=="Proveedores"&&(<div style={{position:"fixed",bottom:16,left:"50%",transform:"translateX(-50%)",zIndex:150,width:"calc(100% - 32px)",maxWidth:398}}><button style={{...s.btn,margin:0,display:"flex",justifyContent:"space-between",alignItems:"center"}} onClick={()=>setSheet("cart")}><span>🛒 Ver pedido ({count})</span><span>${total.toFixed(2)}</span></button></div>)}
 
       {/* SHEET CARRITO */}
-      {sheet==="cart"&&(<div style={s.ov} onClick={()=>setSheet(null)}><div style={s.sh} onClick={e=>e.stopPropagation()}><div style={s.hnd}/><div style={s.shT}>Tu pedido</div><div style={s.ib}><label style={s.lbl}>Zona de entrega *</label><select style={{...s.inp,marginBottom:8,background:"#fff"}} value={zonaSelId} onChange={e=>{setZonaSelId(e.target.value);setZonaSel(zonas.find(z=>z.id===e.target.value)||null);}}><option value="">Selecciona tu zona...</option>{zonas.map(z=><option key={z.id} value={z.id}>{z.municipio} — {z.zona} (${z.costo_delivery})</option>)}</select><label style={s.lbl}>Calle y número</label><input style={{...s.inp,marginBottom:8}} placeholder="Calle Principal #47" value={addr.calle} onChange={e=>setAddr({...addr,calle:e.target.value})}/><label style={s.lbl}>Referencia</label><input style={{...s.inp,marginBottom:0}} placeholder="Casa azul, frente al parque..." value={addr.referencia} onChange={e=>setAddr({...addr,referencia:e.target.value})}/></div>{items.map(i=>(<div key={i.id} style={s.ci}><span style={{fontSize:22,width:32,textAlign:"center"}}>{i.emoji}</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{i.name}</div>{i.kitchen&&<div style={{fontSize:10,color:"#94a3b8"}}>{i.kitchen}</div>}</div><div style={s.qR}><button style={s.qB} onClick={()=>rem(i.id)}>−</button><span style={s.qN}>{i.qty}</span><button style={s.qB} onClick={()=>add(i)}>+</button></div><div style={{fontSize:13,fontWeight:700,color:P,marginLeft:8,minWidth:50,textAlign:"right"}}>${(i.price*i.qty).toFixed(2)}</div></div>))}            {sub<freeMin&&zonaSel&&(
-              <div style={s.pw}>
-                {superItems.length>0&&superSub<freeMinSuper&&(
-                  <div style={{fontSize:12,color:"#64748b",marginBottom:4}}>🛒 Supermercado: te faltan <strong style={{color:P}}>${(freeMinSuper-superSub).toFixed(2)}</strong> para delivery gratis</div>
-                )}
-                {foodItems.length>0&&foodSub<freeMinFood&&(
-                  <div style={{fontSize:12,color:"#64748b"}}>🍱 Comida: te faltan <strong style={{color:P}}>${(freeMinFood-foodSub).toFixed(2)}</strong> para delivery gratis</div>
-                )}
-              </div>
-            )}
-            {!zonaSel&&sub>0&&(
-              <div style={{...s.ib,background:"#fff7ed"}}><div style={{fontSize:12,color:"#c2410c"}}>⚠️ Selecciona tu zona para calcular el delivery</div></div>
-            )}<div style={{marginTop:10}}><div style={s.sr}><span style={s.sL}>Subtotal</span><span style={s.sV}>${sub.toFixed(2)}</span></div><div style={s.sr}><span style={s.sL}>Delivery</span>{del===0?<span style={s.fT}>GRATIS</span>:<span style={s.sV}>${del.toFixed(2)}</span>}</div><div style={s.tR}><span style={{fontWeight:700}}>Total</span><span style={{fontWeight:700,fontSize:17}}>${total.toFixed(2)}</span></div></div><button style={s.btn} onClick={()=>setSheet("checkout")}>Continuar →</button><button style={s.btnG} onClick={()=>setSheet(null)}>Seguir comprando</button></div></div>)}
+      {sheet==="cart"&&(<div style={s.ov} onClick={()=>setSheet(null)}><div style={s.sh} onClick={e=>e.stopPropagation()}><div style={s.hnd}/><div style={s.shT}>Tu pedido</div><div style={s.ib}><label style={s.lbl}>Zona de entrega *</label><select style={{...s.inp,marginBottom:8,background:"#fff"}} value={zonaSelId} onChange={e=>{setZonaSelId(e.target.value);setZonaSel(zonas.find(z=>z.id===e.target.value)||null);}}><option value="">Selecciona tu zona...</option>{zonas.map(z=><option key={z.id} value={z.id}>{z.municipio} — {z.zona} (${z.costo_delivery})</option>)}</select><label style={s.lbl}>Calle y número</label><input style={{...s.inp,marginBottom:8}} placeholder="Calle Principal #47" value={addr.calle} onChange={e=>setAddr({...addr,calle:e.target.value})}/><label style={s.lbl}>Referencia</label><input style={{...s.inp,marginBottom:0}} placeholder="Casa azul, frente al parque..." value={addr.referencia} onChange={e=>setAddr({...addr,referencia:e.target.value})}/></div>{items.map(i=>(<div key={i.id} style={s.ci}><span style={{fontSize:22,width:32,textAlign:"center"}}>{i.emoji}</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{i.name}</div>{i.kitchen&&<div style={{fontSize:10,color:"#94a3b8"}}>{i.kitchen}</div>}</div><div style={s.qR}><button style={s.qB} onClick={()=>rem(i.id)}>−</button><span style={s.qN}>{i.qty}</span><button style={s.qB} onClick={()=>add(i)}>+</button></div><div style={{fontSize:13,fontWeight:700,color:P,marginLeft:8,minWidth:50,textAlign:"right"}}>${(i.price*i.qty).toFixed(2)}</div></div>))}
+        {zonaSel&&(superItems.length>0&&superSub<freeMinSuper||foodItems.length>0&&foodSub<freeMinFood)&&(
+          <div style={s.pw}>
+            {superItems.length>0&&superSub<freeMinSuper&&(<div style={{fontSize:12,color:"#64748b",marginBottom:4}}>🛒 Supermercado: te faltan <strong style={{color:P}}>${(freeMinSuper-superSub).toFixed(2)}</strong> para delivery gratis</div>)}
+            {foodItems.length>0&&foodSub<freeMinFood&&(<div style={{fontSize:12,color:"#64748b"}}>🍱 Comida: te faltan <strong style={{color:P}}>${(freeMinFood-foodSub).toFixed(2)}</strong> para delivery gratis</div>)}
+          </div>
+        )}
+        {!zonaSel&&sub>0&&(<div style={{...s.ib,background:"#fff7ed"}}><div style={{fontSize:12,color:"#c2410c"}}>⚠️ Selecciona tu zona para calcular el delivery</div></div>)}
+        <div style={{marginTop:10}}><div style={s.sr}><span style={s.sL}>Subtotal</span><span style={s.sV}>${sub.toFixed(2)}</span></div><div style={s.sr}><span style={s.sL}>Delivery</span>{del===0?<span style={s.fT}>GRATIS</span>:<span style={s.sV}>${del.toFixed(2)}</span>}</div><div style={s.tR}><span style={{fontWeight:700}}>Total</span><span style={{fontWeight:700,fontSize:17}}>${total.toFixed(2)}</span></div></div><button style={s.btn} onClick={()=>setSheet("checkout")}>Continuar →</button><button style={s.btnG} onClick={()=>setSheet(null)}>Seguir comprando</button></div></div>)}
 
       {/* SHEET CHECKOUT */}
       {sheet==="checkout"&&(<div style={s.ov} onClick={()=>setSheet("cart")}><div style={s.sh} onClick={e=>e.stopPropagation()}><div style={s.hnd}/><div style={s.shT}>Datos de entrega</div><label style={s.lbl}>Tu nombre *</label><input style={s.inp} placeholder="María González" value={form.nombre} onChange={e=>setForm({...form,nombre:e.target.value})}/><label style={s.lbl}>WhatsApp *</label><input style={s.inp} placeholder="+58 424-000-0000" value={form.telefono} onChange={e=>setForm({...form,telefono:e.target.value})}/><label style={s.lbl}>Sexo (opcional)</label><select style={{...s.inp,background:"#fff"}} value={form.sexo} onChange={e=>setForm({...form,sexo:e.target.value})}><option value="">Prefiero no decir</option><option value="femenino">Femenino</option><option value="masculino">Masculino</option></select><label style={s.lbl}>Método de pago</label><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>{PAGOS.map(p=>(<button key={p} onClick={()=>setForm({...form,pago:p})} style={{padding:"10px 8px",borderRadius:12,border:form.pago===p?`2px solid ${P}`:"1px solid #e2e8f0",background:form.pago===p?"#f8fafc":"#fff",fontSize:12,fontWeight:form.pago===p?700:400,cursor:"pointer",color:form.pago===p?P:"#64748b"}}>{p==="Pago Móvil"?"📱":p==="Zelle"?"🏦":p==="Efectivo al recibir"?"💵":"₿"} {p}</button>))}</div><div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,background:"#f0fdf4",padding:"10px 14px",borderRadius:10}}><input type="checkbox" id="promos" checked={form.recibirPromos} onChange={e=>setForm({...form,recibirPromos:e.target.checked})} style={{width:18,height:18}}/><label htmlFor="promos" style={{fontSize:13,color:"#15803d",cursor:"pointer"}}>📲 Quiero recibir promociones por WhatsApp</label></div><div style={s.ib}><div style={s.sr}><span style={s.sL}>Zona</span><span style={s.sV}>{zonaSel?.zona||"Sin seleccionar"}</span></div><div style={s.sr}><span style={s.sL}>Delivery</span>{del===0?<span style={s.fT}>GRATIS</span>:<span style={s.sV}>${del.toFixed(2)}</span>}</div><div style={s.sr}><span style={{fontWeight:700}}>Total</span><span style={{fontWeight:700,fontSize:16,color:P}}>${total.toFixed(2)}</span></div></div><button style={s.btn} onClick={confirm}>Revisar pedido →</button><button style={s.btnG} onClick={()=>setSheet("cart")}>← Volver</button></div></div>)}
@@ -1045,8 +1081,21 @@ export default function App() {
         <div style={s.hnd}/>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
           <div style={s.shT}>✅ Resumen de tu pedido</div>
-          <button onClick={()=>{setSheet(null);}} style={{background:"#f1f5f9",border:"none",borderRadius:20,width:30,height:30,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
-        </div><div style={{background:"#f0fdf4",borderRadius:12,padding:"10px 14px",marginBottom:12,fontSize:12,color:"#15803d",fontWeight:600}}>📋 Ref: {pedidoRef}</div>{items.map(i=>(<div key={i.id} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #f1f5f9",fontSize:13}}><span>{i.name} x{i.qty}</span><span style={{fontWeight:600}}>${(i.price*i.qty).toFixed(2)}</span></div>))}<div style={{margin:"10px 0"}}><div style={s.sr}><span style={s.sL}>Subtotal</span><span style={s.sV}>${sub.toFixed(2)}</span></div><div style={s.sr}><span style={s.sL}>Delivery</span>{del===0?<span style={s.fT}>GRATIS</span>:<span style={s.sV}>${del.toFixed(2)}</span>}</div><div style={s.tR}><span style={{fontWeight:700}}>TOTAL</span><span style={{fontWeight:700,fontSize:18,color:"#22c55e"}}>${total.toFixed(2)}</span></div></div><div style={{...s.ib,marginTop:8}}><div style={s.sr}><span style={s.sL}>👤</span><span style={s.sV}>{form.nombre}</span></div><div style={s.sr}><span style={s.sL}>📱</span><span style={s.sV}>{form.telefono}</span></div><div style={s.sr}><span style={s.sL}>📍</span><span style={s.sV}>{zonaSel?.zona}</span></div><div style={s.sr}><span style={s.sL}>🏠</span><span style={s.sV}>{addr.calle}</span></div><div style={s.sr}><span style={s.sL}>💳</span><span style={s.sV}>{form.pago}</span></div></div><div style={{background:"#fffbeb",borderRadius:12,padding:"10px 14px",marginBottom:4,fontSize:12,color:"#92400e"}}>⚡ Al tocar el botón se abrirá WhatsApp con tu pedido listo. Solo toca <strong>Enviar</strong>.</div><button style={s.btnWa} onClick={()=>{sendWa();setSheet("success");}}>📲 Enviar pedido por WhatsApp</button><button style={s.btnG} onClick={()=>setSheet("checkout")}>← Modificar datos</button></div></div>)}
+          <button onClick={()=>setSheet(null)} style={{background:"#f1f5f9",border:"none",borderRadius:20,width:30,height:30,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+        </div>
+        <div style={{background:"#f0fdf4",borderRadius:12,padding:"10px 14px",marginBottom:12,fontSize:12,color:"#15803d",fontWeight:600}}>📋 Ref: {pedidoRef}</div>
+        {items.map(i=>(<div key={i.id} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #f1f5f9",fontSize:13}}><span>{i.name} x{i.qty}</span><span style={{fontWeight:600}}>${(i.price*i.qty).toFixed(2)}</span></div>))}
+        <div style={{margin:"10px 0"}}><div style={s.sr}><span style={s.sL}>Subtotal</span><span style={s.sV}>${sub.toFixed(2)}</span></div><div style={s.sr}><span style={s.sL}>Delivery</span>{del===0?<span style={s.fT}>GRATIS</span>:<span style={s.sV}>${del.toFixed(2)}</span>}</div><div style={s.tR}><span style={{fontWeight:700}}>TOTAL</span><span style={{fontWeight:700,fontSize:18,color:"#22c55e"}}>${total.toFixed(2)}</span></div></div>
+        <div style={{...s.ib,marginTop:8}}><div style={s.sr}><span style={s.sL}>👤</span><span style={s.sV}>{form.nombre}</span></div><div style={s.sr}><span style={s.sL}>📱</span><span style={s.sV}>{form.telefono}</span></div><div style={s.sr}><span style={s.sL}>📍</span><span style={s.sV}>{zonaSel?.zona}</span></div><div style={s.sr}><span style={s.sL}>🏠</span><span style={s.sV}>{addr.calle}</span></div><div style={s.sr}><span style={s.sL}>💳</span><span style={s.sV}>{form.pago}</span></div></div>
+        <div style={{background:"#fffbeb",borderRadius:12,padding:"10px 14px",marginBottom:4,fontSize:12,color:"#92400e"}}>⚡ Al tocar el botón se abrirá WhatsApp con tu pedido listo. Solo toca <strong>Enviar</strong>.</div>
+        {/* ── BOTÓN CORREGIDO: guarda en DB antes de abrir WhatsApp ── */}
+        <button style={s.btnWa} onClick={async()=>{
+          await guardarPedidoEnDB();
+          sendWa();
+          setSheet("success");
+        }}>📲 Enviar pedido por WhatsApp</button>
+        <button style={s.btnG} onClick={()=>setSheet("checkout")}>← Modificar datos</button>
+      </div></div>)}
 
       {/* SHEET ÉXITO */}
       {sheet==="success"&&(<div style={s.ov}><div style={s.sh}><div style={s.hnd}/><div style={{textAlign:"center",padding:"16px 0"}}><div style={{fontSize:52,marginBottom:10}}>🎉</div><div style={{fontSize:20,fontWeight:700,color:P,marginBottom:6}}>¡Pedido enviado!</div><div style={{fontSize:13,color:"#64748b",lineHeight:1.7,marginBottom:20}}>Tu pedido <strong>{pedidoRef}</strong> fue enviado por WhatsApp.<br/>Te responderemos a <strong>{form.telefono}</strong> para coordinar el pago.<br/><br/>💳 Prepara tu pago por <strong>{form.pago}</strong>{form.recibirPromos&&<><br/><span style={{color:"#15803d",fontWeight:600}}>✓ Recibirás promociones</span></>}</div><button style={s.btnG} onClick={()=>{setCart({});setSheet(null);setForm({nombre:"",telefono:"",sexo:"",pago:"Pago Móvil",recibirPromos:false});setZonaSelId("");setZonaSel(null);setAddr({calle:"",referencia:""});setPedidoRef("");}}>Hacer otro pedido</button></div></div></div>)}
@@ -1061,20 +1110,9 @@ export default function App() {
             <div style={s.hnd}/>
             <div style={s.shT}>📝 Nota para este producto</div>
             <div style={{fontSize:13,color:"#64748b",marginBottom:10}}>¿Tienes alguna indicación especial? Ej: sin cebolla, extra salsa, solo chocolate negro...</div>
-            <textarea
-              style={{...s.inp,height:100,resize:"none",fontFamily:"'Segoe UI',sans-serif"}}
-              placeholder="Escribe tu nota aquí..."
-              value={notaTemp}
-              onChange={e=>setNotaTemp(e.target.value)}
-            />
-            <button style={s.btn} onClick={()=>{
-              setCart(c=>({...c,[notaSheet]:{...c[notaSheet],nota:notaTemp}}));
-              setNotaSheet(null);
-            }}>Guardar nota</button>
-            <button style={s.btnG} onClick={()=>{
-              setCart(c=>({...c,[notaSheet]:{...c[notaSheet],nota:""}}));
-              setNotaTemp("");setNotaSheet(null);
-            }}>Quitar nota</button>
+            <textarea style={{...s.inp,height:100,resize:"none",fontFamily:"'Segoe UI',sans-serif"}} placeholder="Escribe tu nota aquí..." value={notaTemp} onChange={e=>setNotaTemp(e.target.value)}/>
+            <button style={s.btn} onClick={()=>{setCart(c=>({...c,[notaSheet]:{...c[notaSheet],nota:notaTemp}}));setNotaSheet(null);}}>Guardar nota</button>
+            <button style={s.btnG} onClick={()=>{setCart(c=>({...c,[notaSheet]:{...c[notaSheet],nota:""}}));setNotaTemp("");setNotaSheet(null);}}>Quitar nota</button>
           </div>
         </div>
       )}
