@@ -153,6 +153,8 @@ export default function App() {
   const [resetPass,setResetPass]=useState({});
 
   const [newProd,setNewProd]=useState({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false});
+  const [editandoHorario,setEditandoHorario]=useState(false);
+  const [horarioNegocio,setHorarioNegocio]=useState({desde:"08:00",hasta:"20:00",descripcion:""});
   const [editingProdId,setEditingProdId]=useState(null);
   const [newPromo,setNewPromo]=useState({nombre:"",descripcion:"",precio:"",fecha_inicio:"",fecha_fin:""});
   const [promoFotoFile,setPromoFotoFile]=useState(null);
@@ -190,8 +192,8 @@ export default function App() {
     const [z,sp,pp,pr,cb]=await Promise.all([
       supabase.from("zonas_delivery").select("*").eq("activa",true).order("municipio"),
       supabase.from("productos_supermercado").select("*").eq("disponible",true).order("categoria"),
-      supabase.from("productos_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo)").eq("aprobado",true).eq("disponible",true).eq("rechazado",false),
-      supabase.from("promociones_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo)").eq("aprobada",true).eq("activa",true).gte("fecha_fin",hoy),
+      supabase.from("productos_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc)").eq("aprobado",true).eq("disponible",true).eq("rechazado",false),
+      supabase.from("promociones_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc)").eq("aprobada",true).eq("activa",true).gte("fecha_fin",hoy),
       supabase.from("combos").select("*").eq("activa",true),
     ]);
     if(z.data)setZonas(z.data);
@@ -254,8 +256,8 @@ export default function App() {
 
   const allProds=[
     ...superProds.map(p=>({id:`sp_${p.id}`,name:p.nombre,cat:"Supermercado",superCat:p.categoria,price:p.precio,unit:p.unidad,emoji:p.emoji||"🛒",margin:0.10,foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,abierto:true})),
-    ...provProds.map(p=>({id:`pv_${p.id}`,name:p.nombre,cat:p.categoria,price:p.precio,unit:p.unidad,emoji:"🍽️",margin:0.20,kitchen:p.proveedores?.negocio,logo:p.proveedores?.logo_url,foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,stock:p.stock,horario:p.permanente?"Siempre disponible":`${p.horario_inicio}–${p.horario_fin}`,tag:p.stock<=3?`Solo ${p.stock} disp.`:null,dbId:p.id,abierto:p.proveedores?.activo!==false&&!p.proveedores?.en_pausa})),
-    ...provPromos.map(pr=>({id:`promo_${pr.id}`,name:pr.nombre,cat:"Comida preparada",price:pr.precio,unit:"promo",emoji:"🎁",margin:0.20,kitchen:pr.proveedores?.negocio,logo:pr.proveedores?.logo_url,descripcion:pr.descripcion,isPromo:true,tag:"🎉 Promo",horario:`Hasta ${pr.fecha_fin}`,abierto:pr.proveedores?.activo!==false&&!pr.proveedores?.en_pausa})),
+    ...provProds.map(p=>({id:`pv_${p.id}`,name:p.nombre,cat:p.categoria,price:p.precio,unit:p.unidad,emoji:"🍽️",margin:0.20,kitchen:p.proveedores?.negocio,logo:p.proveedores?.logo_url,foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,stock:p.stock,horario:p.permanente?"Siempre disponible":`${p.horario_inicio}–${p.horario_fin}`,tag:p.stock<=3?`Solo ${p.stock} disp.`:null,dbId:p.id,abierto:p.proveedores?.activo!==false&&!p.proveedores?.en_pausa,horarioNeg:p.proveedores?.horario_desde&&p.proveedores?.horario_hasta?`${p.proveedores.horario_desde}–${p.proveedores.horario_hasta}${p.proveedores.horario_desc?" ("+p.proveedores.horario_desc+")":""}`:null})),
+    ...provPromos.map(pr=>({id:`promo_${pr.id}`,name:pr.nombre,cat:"Comida preparada",price:pr.precio,unit:"promo",emoji:"🎁",margin:0.20,kitchen:pr.proveedores?.negocio,logo:pr.proveedores?.logo_url,foto:pr.foto_url,descripcion:pr.descripcion,isPromo:true,tag:"🎉 Promo",horario:`Hasta ${pr.fecha_fin}`,abierto:pr.proveedores?.activo!==false&&!pr.proveedores?.en_pausa,horarioNeg:pr.proveedores?.horario_desde&&pr.proveedores?.horario_hasta?`${pr.proveedores.horario_desde}–${pr.proveedores.horario_hasta}${pr.proveedores.horario_desc?" ("+pr.proveedores.horario_desc+")":""}`:null})),
   ];
 
   const allProdsConMargen=allProds.map(p=>({...p,priceOriginal:p.price,price:p.cat==="Supermercado"?p.price:parseFloat((p.price*1.20).toFixed(2))}));
@@ -531,10 +533,13 @@ export default function App() {
         {p.isPromo&&<div style={s.promoTag}>🎉 Promoción</div>}
         {p.tag&&!p.isPromo&&<div style={s.tag}>{p.tag}</div>}
         {p.kitchen&&(
-          <div style={s.cKt}>
-            {p.logo&&<img src={p.logo} alt="" style={s.cLogo}/>}
-            <span>{p.kitchen}</span>
-            <span style={{marginLeft:"auto",fontSize:10,fontWeight:600,color:cerrado?"#be123c":"#15803d"}}>{cerrado?"● Cerrado":"● Abierto"}</span>
+          <div style={{...s.cKt,flexDirection:"column",alignItems:"flex-start",gap:2}}>
+            <div style={{display:"flex",alignItems:"center",gap:4,width:"100%"}}>
+              {p.logo&&<img src={p.logo} alt="" style={s.cLogo}/>}
+              <span>{p.kitchen}</span>
+              <span style={{marginLeft:"auto",fontSize:10,fontWeight:600,color:cerrado?"#be123c":"#15803d"}}>{cerrado?"● Cerrado":"● Abierto"}</span>
+            </div>
+            {p.horarioNeg&&<div style={{fontSize:10,color:"#94a3b8"}}>🕐 {p.horarioNeg}</div>}
           </div>
         )}
         <div style={s.cNm}>{p.name}</div>
@@ -589,6 +594,28 @@ export default function App() {
         <div style={s.banner}><p style={s.bT}>Bienvenido a {APP_NAME} {CITY} 👋</p><p style={s.bS}>Todo lo que necesitas sin salir de casa</p><span style={s.bdg("#22c55e","#fff")}>✓ Delivery desde $1</span><span style={s.bdg(A,P)}>Gratis desde $10</span></div>
         <div style={s.promoCard}><div style={{fontSize:18,fontWeight:700,marginBottom:4}}>{horario.label}</div><div style={{fontSize:13,color:"rgba(255,255,255,0.8)"}}>{horario.sub}</div><button onClick={()=>{setTab("Productos");setCat("Comida preparada");}} style={{marginTop:10,background:"rgba(255,255,255,0.2)",border:"none",borderRadius:10,padding:"7px 14px",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>Ver opciones →</button></div>
         {combos.length>0&&(<div style={{padding:"0 16px"}}><div style={s.sT}>🎁 Combos especiales</div>{combos.map(c=>(<div key={c.id} style={s.comboCard}>{c.imagen_url&&<img src={c.imagen_url} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:8,marginBottom:8}}/>}<div style={{fontSize:14,fontWeight:700,color:P}}>{c.nombre}</div><div style={{fontSize:12,color:"#64748b",margin:"2px 0 6px"}}>{c.descripcion}</div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:16,fontWeight:700,color:P}}>${parseFloat(c.precio).toFixed(2)}</span>{c.temporada&&<span style={{fontSize:11,background:"#fef3c7",color:"#92400e",padding:"2px 8px",borderRadius:8,fontWeight:600}}>{c.temporada}</span>}</div></div>))}</div>)}
+        {/* PROMOS ACTIVAS EN INICIO */}
+        {provPromos.length>0&&(
+          <div style={{padding:"0 16px 4px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 8px"}}>
+              <div style={s.sT}>🎉 Promociones activas</div>
+              <button onClick={()=>{setTab("Productos");setCat("Comida preparada");}} style={{fontSize:11,color:P,background:"none",border:"none",cursor:"pointer",fontWeight:600}}>Ver todo →</button>
+            </div>
+            <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:4}}>
+              {provPromos.slice(0,6).map(p=>(
+                <div key={p.id} onClick={()=>{setTab("Productos");setCat("Comida preparada");}} style={{flexShrink:0,width:150,background:"#fff",borderRadius:12,border:"2px solid #f59e0b",overflow:"hidden",cursor:"pointer"}}>
+                  {p.foto?<img src={p.foto} alt={p.name} style={{width:"100%",height:80,objectFit:"cover"}}/>:<div style={{height:80,background:"#fef3c7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28}}>🎁</div>}
+                  <div style={{padding:"6px 8px"}}>
+                    <div style={{fontSize:11,color:"#7e22ce",fontWeight:700,marginBottom:2}}>🎉 Promo</div>
+                    <div style={{fontSize:12,fontWeight:600,color:P,lineHeight:1.2}}>{p.name}</div>
+                    {p.kitchen&&<div style={{fontSize:10,color:"#94a3b8",marginTop:2}}>{p.kitchen}</div>}
+                    <div style={{fontSize:13,fontWeight:700,color:P,marginTop:4}}>${p.price.toFixed(2)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <div style={{padding:"0 16px 16px"}}><div style={s.sT}>Explorar</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>{[{e:"🛒",l:"Supermercado",c:"Supermercado"},{e:"🍱",l:"Comida preparada",c:"Comida preparada"},{e:"🍰",l:"Postres",c:"Postres"},{e:"⚡",l:"Servicios",c:null}].map(x=>(<button key={x.l} onClick={()=>{if(x.c){setTab("Productos");setCat(x.c);}else setTab("Servicios");}} style={{background:"#fff",border:"1px solid #f1f5f9",borderRadius:14,padding:"16px 12px",display:"flex",flexDirection:"column",alignItems:"center",gap:6,cursor:"pointer"}}><span style={{fontSize:28}}>{x.e}</span><span style={{fontSize:13,fontWeight:600,color:P}}>{x.l}</span></button>))}</div></div>
       </>)}
 
@@ -652,6 +679,33 @@ export default function App() {
               <span style={{fontSize:20}}>{provData.activo?"🟢":"🔴"}</span>
               <div><div style={{fontSize:14,fontWeight:700,color:provData.activo?"#15803d":"#92400e"}}>{provData.activo?"ABIERTO — Recibiendo pedidos":"CERRADO — No recibo pedidos"}</div><div style={{fontSize:11,color:"#64748b"}}>Toca para {provData.activo?"cerrar":"abrir"} tu negocio</div></div>
             </button>
+            {/* HORARIO DE ATENCIÓN */}
+            {!editandoHorario?(
+              <div style={{marginTop:10,background:"#f8fafc",borderRadius:12,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div>
+                  <div style={{fontSize:11,fontWeight:700,color:"#64748b",marginBottom:2}}>🕐 Horario de atención</div>
+                  {provData.horario_desde&&provData.horario_hasta
+                    ?<div style={{fontSize:13,color:P,fontWeight:600}}>{provData.horario_desde} – {provData.horario_hasta}{provData.horario_desc&&<span style={{fontSize:11,color:"#64748b",fontWeight:400}}> · {provData.horario_desc}</span>}</div>
+                    :<div style={{fontSize:12,color:"#94a3b8"}}>No configurado — los clientes no saben tu horario</div>
+                  }
+                </div>
+                <button onClick={()=>{setHorarioNegocio({desde:provData.horario_desde||"08:00",hasta:provData.horario_hasta||"20:00",descripcion:provData.horario_desc||""});setEditandoHorario(true);}} style={{background:P,color:"#fff",border:"none",borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:600,cursor:"pointer",flexShrink:0,marginLeft:8}}>✏️ Editar</button>
+              </div>
+            ):(
+              <div style={{marginTop:10,background:"#f0fdf4",borderRadius:12,padding:"12px 14px",border:"1px solid #bbf7d0"}}>
+                <div style={{fontSize:12,fontWeight:700,color:"#15803d",marginBottom:10}}>🕐 Configura tu horario</div>
+                <div style={{display:"flex",gap:10,marginBottom:8}}>
+                  <div style={{flex:1}}><label style={s.lbl}>Abre a las</label><input style={s.inp} type="time" value={horarioNegocio.desde} onChange={e=>setHorarioNegocio({...horarioNegocio,desde:e.target.value})}/></div>
+                  <div style={{flex:1}}><label style={s.lbl}>Cierra a las</label><input style={s.inp} type="time" value={horarioNegocio.hasta} onChange={e=>setHorarioNegocio({...horarioNegocio,hasta:e.target.value})}/></div>
+                </div>
+                <label style={s.lbl}>Nota para clientes (opcional)</label>
+                <input style={s.inp} placeholder="Ej: Solo cenas, Desayunos y almuerzos..." value={horarioNegocio.descripcion} onChange={e=>setHorarioNegocio({...horarioNegocio,descripcion:e.target.value})}/>
+                <div style={{display:"flex",gap:8}}>
+                  <button onClick={async()=>{await supabase.from("proveedores").update({horario_desde:horarioNegocio.desde,horario_hasta:horarioNegocio.hasta,horario_desc:horarioNegocio.descripcion}).eq("id",provData.id);setProvData({...provData,horario_desde:horarioNegocio.desde,horario_hasta:horarioNegocio.hasta,horario_desc:horarioNegocio.descripcion});setEditandoHorario(false);setPmsg("✅ Horario actualizado");}} style={{...s.btnGreen,flex:1,borderRadius:10,padding:"9px",fontSize:12}}>Guardar horario</button>
+                  <button onClick={()=>setEditandoHorario(false)} style={{...s.btnG,flex:1,marginTop:0,borderRadius:10,padding:"9px",fontSize:12}}>Cancelar</button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}}>
@@ -878,7 +932,50 @@ export default function App() {
               <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setPromoFotoFile(f);setPromoFotoPreview(URL.createObjectURL(f));}}}/>
               <button style={s.btnPurple} onClick={()=>{if(!promoFotoFile)return setPmsg("⚠️ Debes agregar una foto a la promoción antes de enviar");publishPromo();}} disabled={loading}>{loading?"Enviando...":"Enviar para aprobación"}</button>
             </div>
-            {myPromos.length>0&&(<div style={s.pc}><div style={s.pT}>Mis promociones</div>{myPromos.map(pr=>(<div key={pr.id} style={{padding:"10px 0",borderBottom:"1px solid #f1f5f9"}}>{pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:8,marginBottom:6}}/>}<div style={{display:"flex",justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:700}}>{pr.nombre}</div><div style={{fontSize:11,color:"#64748b"}}>${pr.precio} · {pr.fecha_inicio} → {pr.fecha_fin}</div><div style={{fontSize:11,color:"#94a3b8"}}>{pr.descripcion}</div></div><span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8,background:pr.aprobada?"#dcfce7":pr.activa===false?"#fee2e2":"#fef9c3",color:pr.aprobada?"#15803d":pr.activa===false?"#be123c":"#854d0e",flexShrink:0,marginLeft:8}}>{pr.aprobada?"✓ Activa":pr.activa===false?"✗ Rechazada":"⏳"}</span></div>{pr.activa===false&&pr.motivo_rechazo&&<div style={{background:"#fff1f2",borderRadius:8,padding:"6px 10px",fontSize:11,color:"#be123c",marginTop:4}}>💬 Motivo rechazo: {pr.motivo_rechazo}</div>}{pr.aprobada&&<button onClick={()=>notifyClientes(pr)} style={{marginTop:8,background:"#25d366",color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",width:"100%"}}>📲 Notificar compradores</button>}</div>))}</div>)}
+            {myPromos.length>0&&(
+              <div style={s.pc}>
+                <div style={s.pT}>Mis promociones ({myPromos.length})</div>
+                {/* RECHAZADAS */}
+                {myPromos.filter(pr=>pr.activa===false&&!pr.aprobada).length>0&&(
+                  <div style={{marginBottom:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#be123c",marginBottom:6,letterSpacing:0.5}}>✗ RECHAZADAS ({myPromos.filter(pr=>pr.activa===false&&!pr.aprobada).length})</div>
+                    {myPromos.filter(pr=>pr.activa===false&&!pr.aprobada).map(pr=>(
+                      <div key={pr.id} style={{background:"#fff1f2",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #fecdd3"}}>
+                        {pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:80,objectFit:"cover",borderRadius:8,marginBottom:6}}/>}
+                        <div style={{fontSize:13,fontWeight:700,color:"#be123c"}}>{pr.nombre}</div>
+                        <div style={{fontSize:11,color:"#64748b"}}>${pr.precio} · {pr.descripcion}</div>
+                        {pr.motivo_rechazo&&<div style={{background:"#fee2e2",borderRadius:6,padding:"6px 8px",fontSize:11,color:"#be123c",marginTop:6}}>💬 Motivo: {pr.motivo_rechazo}</div>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* PENDIENTES */}
+                {myPromos.filter(pr=>!pr.aprobada&&pr.activa!==false).length>0&&(
+                  <div style={{marginBottom:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#854d0e",marginBottom:6,letterSpacing:0.5}}>⏳ PENDIENTES ({myPromos.filter(pr=>!pr.aprobada&&pr.activa!==false).length})</div>
+                    {myPromos.filter(pr=>!pr.aprobada&&pr.activa!==false).map(pr=>(
+                      <div key={pr.id} style={{background:"#fef9c3",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #fde68a"}}>
+                        {pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:80,objectFit:"cover",borderRadius:8,marginBottom:6}}/>}
+                        <div style={{fontSize:13,fontWeight:700}}>{pr.nombre}</div>
+                        <div style={{fontSize:11,color:"#64748b"}}>${pr.precio} · {pr.descripcion}</div>
+                        <div style={{fontSize:11,color:"#92400e",marginTop:4}}>⏳ En revisión por el admin</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* ACTIVAS */}
+                {myPromos.filter(pr=>pr.aprobada).map(pr=>(
+                  <div key={pr.id} style={{padding:"10px 0",borderBottom:"1px solid #f1f5f9"}}>
+                    {pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:8,marginBottom:6}}/>}
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                      <div><div style={{fontSize:13,fontWeight:700}}>{pr.nombre}</div><div style={{fontSize:11,color:"#64748b"}}>${pr.precio} · {pr.fecha_inicio} → {pr.fecha_fin}</div><div style={{fontSize:11,color:"#94a3b8"}}>{pr.descripcion}</div></div>
+                      <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8,background:"#dcfce7",color:"#15803d",flexShrink:0,marginLeft:8}}>✓ Activa</span>
+                    </div>
+                    <button onClick={()=>notifyClientes(pr)} style={{marginTop:8,background:"#25d366",color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",width:"100%"}}>📲 Notificar compradores</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </>)}
 
           {provTab==="ventas"&&(<div style={s.pc}><div style={s.pT}>💰 Mis ventas recientes</div>{myVentas.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>Aún no tienes ventas registradas</div>}{myVentas.slice(0,20).map(v=>(<div key={v.id} style={{padding:"8px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}><div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontWeight:600}}>{v.producto_nombre}</span><span style={{fontWeight:700,color:"#22c55e"}}>${(v.total_item||0).toFixed(2)}</span></div><div style={{color:"#94a3b8"}}>{v.cliente_nombre} · x{v.cantidad} · {v.fecha?.slice(0,10)}</div></div>))}</div>)}
