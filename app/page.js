@@ -797,23 +797,41 @@ export default function App() {
                     {editingProdId===p.id?(
                       <div style={{background:"#f8fafc",borderRadius:10,padding:12,border:"1px solid #e2e8f0"}}>
                         <div style={{fontSize:13,fontWeight:600,color:P,marginBottom:8}}>✏️ Corrige tu producto</div>
-                        <label style={s.lbl}>Nombre</label>
-                        <input style={s.inp} value={newProd.nombre} onChange={e=>setNewProd({...newProd,nombre:e.target.value})}/>
-                        <label style={s.lbl}>Descripción</label>
-                        <input style={s.inp} value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
-                        <label style={s.lbl}>Precio ($)</label>
-                        <input style={s.inp} type="number" value={newProd.precio} onChange={e=>setNewProd({...newProd,precio:e.target.value})}/>
-                        <label style={s.lbl}>Foto nueva (opcional)</label>
-                        {fotoPreview&&<img src={fotoPreview} alt="" style={{width:"100%",height:90,objectFit:"cover",borderRadius:8,marginBottom:8}}/>}
+                        <label style={s.lbl}>Nombre *</label>
+                        <input style={s.inp} placeholder="Ej: Torta de zanahoria" value={newProd.nombre} onChange={e=>setNewProd({...newProd,nombre:e.target.value})}/>
+                        <label style={s.lbl}>Marca (opcional)</label>
+                        <input style={s.inp} placeholder="Casero, artesanal..." value={newProd.marca} onChange={e=>setNewProd({...newProd,marca:e.target.value})}/>
+                        <label style={s.lbl}>Presentación (opcional)</label>
+                        <input style={s.inp} placeholder="500g, 1 porción..." value={newProd.presentacion} onChange={e=>setNewProd({...newProd,presentacion:e.target.value})}/>
+                        <label style={s.lbl}>Descripción (opcional)</label>
+                        <input style={s.inp} placeholder="Ingredientes, sabor..." value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
+                        <label style={s.lbl}>Categoría *</label>
+                        <select style={{...s.inp,background:"#fff"}} value={newProd.categoria} onChange={e=>setNewProd({...newProd,categoria:e.target.value})}>{(provData.categorias?.length>0?provData.categorias:PROV_CATS).map(c=><option key={c}>{c}</option>)}</select>
+                        <label style={s.lbl}>Precio ($) *</label>
+                        <input style={s.inp} type="number" placeholder="3.50" value={newProd.precio} onChange={e=>setNewProd({...newProd,precio:e.target.value})}/>
+                        <label style={s.lbl}>Unidad *</label>
+                        <input style={s.inp} placeholder="porción, kg, litro..." value={newProd.unidad} onChange={e=>setNewProd({...newProd,unidad:e.target.value})}/>
+                        <label style={s.lbl}>Cantidad disponible *</label>
+                        <input style={s.inp} type="number" value={newProd.stock} onChange={e=>setNewProd({...newProd,stock:e.target.value})}/>
+                        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,background:"#f1f5f9",padding:"10px 14px",borderRadius:10}}>
+                          <input type="checkbox" id={`perm_edit_${p.id}`} checked={newProd.permanente} onChange={e=>setNewProd({...newProd,permanente:e.target.checked})} style={{width:18,height:18}}/>
+                          <label htmlFor={`perm_edit_${p.id}`} style={{fontSize:13,cursor:"pointer"}}>🔁 Disponible hasta agotar stock</label>
+                        </div>
+                        {!newProd.permanente&&(<div style={{display:"flex",gap:10}}><div style={{flex:1}}><label style={s.lbl}>Disponible desde</label><input style={s.inp} type="time" value={newProd.hi} onChange={e=>setNewProd({...newProd,hi:e.target.value})}/></div><div style={{flex:1}}><label style={s.lbl}>Hasta</label><input style={s.inp} type="time" value={newProd.hf} onChange={e=>setNewProd({...newProd,hf:e.target.value})}/></div></div>)}
+                        <label style={s.lbl}>📸 Foto del producto</label>
+                        {(fotoPreview||p.foto_url)&&<img src={fotoPreview||p.foto_url} alt="" style={{width:"100%",height:120,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
                         <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setFotoFile(f);setFotoPreview(URL.createObjectURL(f));}}}/>
                         <button style={s.btn} disabled={loading} onClick={async()=>{
                           setLoading(true);
                           let foto_url=p.foto_url;
                           if(fotoFile)foto_url=await upload(fotoFile,"productos",`${provData.id}_${Date.now()}`);
                           await supabase.from("productos_proveedor").update({
-                            nombre:newProd.nombre,descripcion:newProd.descripcion,
-                            precio:parseFloat(newProd.precio),foto_url,
-                            rechazado:false,aprobado:false,motivo_rechazo:null
+                            nombre:newProd.nombre,marca:newProd.marca||null,presentacion:newProd.presentacion||null,
+                            descripcion:newProd.descripcion||null,categoria:newProd.categoria,
+                            precio:parseFloat(newProd.precio),unidad:newProd.unidad,
+                            stock:parseInt(newProd.stock)||1,permanente:newProd.permanente,
+                            horario_inicio:newProd.hi,horario_fin:newProd.hf,
+                            foto_url,rechazado:false,aprobado:false,motivo_rechazo:null,
                           }).eq("id",p.id);
                           setLoading(false);setEditingProdId(null);
                           setFotoFile(null);setFotoPreview(null);
@@ -825,7 +843,14 @@ export default function App() {
                     ):(
                       <button onClick={()=>{
                         setEditingProdId(p.id);
-                        setNewProd({...newProd,nombre:p.nombre,descripcion:p.descripcion||"",precio:String(p.precio)});
+                        setNewProd({
+                          nombre:p.nombre||"",descripcion:p.descripcion||"",marca:p.marca||"",
+                          presentacion:p.presentacion||"",precio:String(p.precio||""),
+                          unidad:p.unidad||"porción",categoria:p.categoria||"Comida preparada",
+                          stock:p.stock||1,hi:p.horario_inicio||"08:00",hf:p.horario_fin||"18:00",
+                          permanente:p.permanente||false,
+                        });
+                        setFotoPreview(null);setFotoFile(null);
                         setProvTab("prod_rechazados");
                       }} style={{width:"100%",padding:"8px",borderRadius:10,border:"none",background:"#fef9c3",color:"#854d0e",fontSize:12,fontWeight:600,cursor:"pointer"}}>
                         ✏️ Corregir y reenviar para aprobación
@@ -847,9 +872,13 @@ export default function App() {
               <label style={s.lbl}>Precio ($) *</label>
               <input style={s.inp} type="number" placeholder="12.00" value={newPromo.precio} onChange={e=>setNewPromo({...newPromo,precio:e.target.value})}/>
               <div style={{display:"flex",gap:10}}><div style={{flex:1}}><label style={s.lbl}>Desde *</label><input style={s.inp} type="date" value={newPromo.fecha_inicio} onChange={e=>setNewPromo({...newPromo,fecha_inicio:e.target.value})}/></div><div style={{flex:1}}><label style={s.lbl}>Hasta *</label><input style={s.inp} type="date" value={newPromo.fecha_fin} onChange={e=>setNewPromo({...newPromo,fecha_fin:e.target.value})}/></div></div>
-              <button style={s.btnPurple} onClick={publishPromo} disabled={loading}>{loading?"Enviando...":"Enviar para aprobación"}</button>
+              <label style={s.lbl}>📸 Foto de la promoción *</label>
+              <div style={{...s.ib,background:"#fef9c3",marginBottom:8}}><div style={{fontSize:12,color:"#854d0e"}}>⚠️ La foto es obligatoria. Las promociones sin foto serán rechazadas.</div></div>
+              {promoFotoPreview&&<img src={promoFotoPreview} alt="" style={{width:"100%",height:140,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
+              <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setPromoFotoFile(f);setPromoFotoPreview(URL.createObjectURL(f));}}}/>
+              <button style={s.btnPurple} onClick={()=>{if(!promoFotoFile)return setPmsg("⚠️ Debes agregar una foto a la promoción antes de enviar");publishPromo();}} disabled={loading}>{loading?"Enviando...":"Enviar para aprobación"}</button>
             </div>
-            {myPromos.length>0&&(<div style={s.pc}><div style={s.pT}>Mis promociones</div>{myPromos.map(pr=>(<div key={pr.id} style={{padding:"10px 0",borderBottom:"1px solid #f1f5f9"}}><div style={{display:"flex",justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:700}}>{pr.nombre}</div><div style={{fontSize:11,color:"#64748b"}}>${pr.precio} · {pr.fecha_inicio} → {pr.fecha_fin}</div><div style={{fontSize:11,color:"#94a3b8"}}>{pr.descripcion}</div></div><span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8,background:pr.aprobada?"#dcfce7":"#fef9c3",color:pr.aprobada?"#15803d":"#854d0e",flexShrink:0,marginLeft:8}}>{pr.aprobada?"✓ Activa":"⏳"}</span></div>{pr.aprobada&&<button onClick={()=>notifyClientes(pr)} style={{marginTop:8,background:"#25d366",color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",width:"100%"}}>📲 Notificar compradores</button>}</div>))}</div>)}
+            {myPromos.length>0&&(<div style={s.pc}><div style={s.pT}>Mis promociones</div>{myPromos.map(pr=>(<div key={pr.id} style={{padding:"10px 0",borderBottom:"1px solid #f1f5f9"}}>{pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:8,marginBottom:6}}/>}<div style={{display:"flex",justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:700}}>{pr.nombre}</div><div style={{fontSize:11,color:"#64748b"}}>${pr.precio} · {pr.fecha_inicio} → {pr.fecha_fin}</div><div style={{fontSize:11,color:"#94a3b8"}}>{pr.descripcion}</div></div><span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8,background:pr.aprobada?"#dcfce7":pr.activa===false?"#fee2e2":"#fef9c3",color:pr.aprobada?"#15803d":pr.activa===false?"#be123c":"#854d0e",flexShrink:0,marginLeft:8}}>{pr.aprobada?"✓ Activa":pr.activa===false?"✗ Rechazada":"⏳"}</span></div>{pr.activa===false&&pr.motivo_rechazo&&<div style={{background:"#fff1f2",borderRadius:8,padding:"6px 10px",fontSize:11,color:"#be123c",marginTop:4}}>💬 Motivo rechazo: {pr.motivo_rechazo}</div>}{pr.aprobada&&<button onClick={()=>notifyClientes(pr)} style={{marginTop:8,background:"#25d366",color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",width:"100%"}}>📲 Notificar compradores</button>}</div>))}</div>)}
           </>)}
 
           {provTab==="ventas"&&(<div style={s.pc}><div style={s.pT}>💰 Mis ventas recientes</div>{myVentas.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>Aún no tienes ventas registradas</div>}{myVentas.slice(0,20).map(v=>(<div key={v.id} style={{padding:"8px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}><div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontWeight:600}}>{v.producto_nombre}</span><span style={{fontWeight:700,color:"#22c55e"}}>${(v.total_item||0).toFixed(2)}</span></div><div style={{color:"#94a3b8"}}>{v.cliente_nombre} · x{v.cantidad} · {v.fecha?.slice(0,10)}</div></div>))}</div>)}
@@ -1032,14 +1061,19 @@ export default function App() {
                 {pendPromos.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay promociones pendientes ✓</div>}
                 {pendPromos.map(p=>(
                   <div key={p.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
-                    {p.foto_url&&<img src={p.foto_url} alt="" style={{width:"100%",height:120,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
+                    {p.foto_url
+                      ?<img src={p.foto_url} alt="" style={{width:"100%",height:140,objectFit:"cover",borderRadius:10,marginBottom:8}}/>
+                      :<div style={{background:"#fee2e2",borderRadius:10,padding:"10px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18}}>⚠️</span><div style={{fontSize:12,color:"#be123c",fontWeight:600}}>Esta promoción NO tiene foto — se recomienda rechazar</div></div>
+                    }
                     <div style={{fontSize:13,fontWeight:700}}>{p.nombre}</div>
                     <div style={{fontSize:11,color:"#64748b",margin:"2px 0"}}>{p.proveedores?.negocio} · ${p.precio}</div>
-                    <div style={{fontSize:11,color:"#94a3b8",marginBottom:6}}>{p.descripcion}</div>
-                    <div style={{fontSize:11,color:"#64748b",marginBottom:8}}>📅 {p.fecha_inicio} → {p.fecha_fin}</div>
-                    <div style={{display:"flex",gap:8}}>
-                      <button onClick={async()=>{await supabase.from("promociones_proveedor").update({aprobada:true}).eq("id",p.id);loadAdmin();loadAll();}} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Aprobar</button>
-                      <button onClick={async()=>{await supabase.from("promociones_proveedor").delete().eq("id",p.id);loadAdmin();}} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Rechazar</button>
+                    <div style={{fontSize:11,color:"#94a3b8",marginBottom:4}}>{p.descripcion}</div>
+                    <div style={{fontSize:11,color:"#64748b",marginBottom:10}}>📅 {p.fecha_inicio} → {p.fecha_fin}</div>
+                    <button onClick={async()=>{await supabase.from("promociones_proveedor").update({aprobada:true}).eq("id",p.id);loadAdmin();loadAll();}} style={{...s.btnGreen,width:"100%",marginBottom:10,borderRadius:10,padding:"9px",fontSize:13}}>✓ Aprobar promoción</button>
+                    <label style={s.lbl}>Motivo del rechazo * (obligatorio para rechazar)</label>
+                    <div style={{display:"flex",gap:6}}>
+                      <input style={{...s.inp,marginBottom:0,flex:1,fontSize:12,padding:"8px 10px"}} placeholder="Ej: Falta foto, descripción incompleta..." value={rejectMotivo[`promo_${p.id}`]||""} onChange={e=>setRejectMotivo({...rejectMotivo,[`promo_${p.id}`]:e.target.value})}/>
+                      <button onClick={async()=>{const motivo=rejectMotivo[`promo_${p.id}`]||"";if(!motivo.trim())return alert("Escribe el motivo del rechazo antes de continuar");await supabase.from("promociones_proveedor").update({aprobada:false,activa:false,motivo_rechazo:motivo}).eq("id",p.id);setRejectMotivo(prev=>({...prev,[`promo_${p.id}`]:""}));loadAdmin();}} style={{...s.btnRed,fontSize:11,flexShrink:0}}>✗ Rechazar</button>
                     </div>
                   </div>
                 ))}
