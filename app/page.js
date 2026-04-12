@@ -193,7 +193,7 @@ export default function App() {
       supabase.from("zonas_delivery").select("*").eq("activa",true).order("municipio"),
       supabase.from("productos_supermercado").select("*").eq("disponible",true).order("categoria"),
       supabase.from("productos_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc)").eq("aprobado",true).eq("disponible",true).eq("rechazado",false),
-      supabase.from("promociones_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc)").eq("aprobada",true).eq("activa",true).gte("fecha_fin",hoy),
+      supabase.from("promociones_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc)").eq("aprobada",true).eq("activa",true),
       supabase.from("combos").select("*").eq("activa",true),
     ]);
     if(z.data)setZonas(z.data);
@@ -387,7 +387,7 @@ export default function App() {
       supabase.from("proveedores").select("*").eq("aprobado",true).order("negocio"),
       supabase.from("combos").select("*").order("created_at",{ascending:false}),
       supabase.from("pedidos").select("*").order("created_at",{ascending:false}).limit(200),
-      supabase.from("promociones_proveedor").select("*,proveedores(negocio)").eq("aprobada",false).eq("activa",true).is("motivo_rechazo",null),
+      supabase.from("promociones_proveedor").select("*,proveedores(negocio)").eq("aprobada",false).eq("activa",true),
     ]);
     if(pr.data)setPendProds(pr.data);
     if(re.data)setPendResenas(re.data);
@@ -994,7 +994,7 @@ export default function App() {
               {key:"pedidos",label:"📦 Pedidos",n:pedidos.filter(p=>p.estado==="nuevo").length},
               {key:"proveedores_lista",label:"🏪 Proveedores",n:0},
               {key:"pendientes",label:"⏳ Productos pendientes",n:pendProds.length},
-              {key:"promos_pend",label:"🎉 Promos pendientes",n:pendPromos.length},
+              {key:"promos_pend",label:"🎉 Promos pendientes",n:pendPromos.filter(p=>!p.motivo_rechazo).length},
               {key:"resenas",label:"⭐ Reseñas",n:pendResenas.length},
               {key:"zonas",label:"🗺️ Zonas de delivery",n:0},
               {key:"combos",label:"🎁 Combos",n:0},
@@ -1150,8 +1150,8 @@ export default function App() {
             <div style={{margin:"0 16px"}}>
               <div style={s.pc}>
                 <div style={s.pT}>🎉 Promociones por aprobar ({pendPromos.length})</div>
-                {pendPromos.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay promociones pendientes ✓</div>}
-                {pendPromos.map(p=>(
+                {pendPromos.filter(p=>!p.motivo_rechazo).length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay promociones pendientes ✓</div>}
+                {pendPromos.filter(p=>!p.motivo_rechazo).map(p=>(
                   <div key={p.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
                     {p.foto_url
                       ?<img src={p.foto_url} alt="" style={{width:"100%",height:140,objectFit:"cover",borderRadius:10,marginBottom:8}}/>
@@ -1161,7 +1161,7 @@ export default function App() {
                     <div style={{fontSize:11,color:"#64748b",margin:"2px 0"}}>{p.proveedores?.negocio} · ${p.precio}</div>
                     <div style={{fontSize:11,color:"#94a3b8",marginBottom:4}}>{p.descripcion}</div>
                     <div style={{fontSize:11,color:"#64748b",marginBottom:10}}>📅 {p.fecha_inicio} → {p.fecha_fin}</div>
-                    <button onClick={async()=>{await supabase.from("promociones_proveedor").update({aprobada:true}).eq("id",p.id);loadAdmin();loadAll();}} style={{...s.btnGreen,width:"100%",marginBottom:10,borderRadius:10,padding:"9px",fontSize:13}}>✓ Aprobar promoción</button>
+                    <button onClick={async()=>{await supabase.from("promociones_proveedor").update({aprobada:true,activa:true,motivo_rechazo:null}).eq("id",p.id);await loadAdmin();loadAll();}} style={{...s.btnGreen,width:"100%",marginBottom:10,borderRadius:10,padding:"9px",fontSize:13}}>✓ Aprobar promoción</button>
                     <label style={s.lbl}>Motivo del rechazo * (obligatorio para rechazar)</label>
                     <div style={{display:"flex",gap:6}}>
                       <input style={{...s.inp,marginBottom:0,flex:1,fontSize:12,padding:"8px 10px"}} placeholder="Ej: Falta foto, descripción incompleta..." value={rejectMotivo[`promo_${p.id}`]||""} onChange={e=>setRejectMotivo({...rejectMotivo,[`promo_${p.id}`]:e.target.value})}/>
