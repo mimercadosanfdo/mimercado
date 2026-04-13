@@ -707,7 +707,7 @@ export default function App() {
           </div>
 
           <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}}>
-            {["estado","productos","promos","ventas"].map(t=>(<button key={t} onClick={()=>setProvTab(t)} style={{flexShrink:0,padding:"8px 12px",borderRadius:10,border:"none",background:provTab===t?P:"#f1f5f9",color:provTab===t?"#fff":"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t==="estado"?"📊 Stats":t==="productos"?"📦 Productos":t==="promos"?(myPromos.filter(pr=>!pr.aprobada&&pr.motivo_rechazo).length>0?`🎉 Promos ⚠️${myPromos.filter(pr=>!pr.aprobada&&pr.motivo_rechazo).length}`:"🎉 Promos"):"💰 Ventas"}</button>))}
+            {["estado","productos","promos","ventas"].map(t=>(<button key={t} onClick={()=>setProvTab(t==="promos"?"promo_nueva":t)} style={{flexShrink:0,padding:"8px 12px",borderRadius:10,border:"none",background:provTab===t?P:"#f1f5f9",color:provTab===t?"#fff":"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t==="estado"?"📊 Stats":t==="productos"?"📦 Productos":t==="promos"?(myPromos.filter(pr=>pr.motivo_rechazo).length>0?`🎉 Promos ⚠️${myPromos.filter(pr=>pr.motivo_rechazo).length}`:"🎉 Promos"):"💰 Ventas"}</button>))}
           </div>
           {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
 
@@ -915,6 +915,20 @@ export default function App() {
           </>)}
 
           {provTab==="promos"&&(<>
+            {/* SUB-TABS PROMOS */}
+            <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}}>
+              {[
+                {k:"promo_nueva",l:"➕ Nueva"},
+                {k:"promo_activas",l:`✅ Activas (${myPromos.filter(pr=>pr.aprobada).length})`},
+                {k:"promo_pendientes",l:`⏳ Pendientes (${myPromos.filter(pr=>!pr.aprobada&&!pr.motivo_rechazo).length})`},
+                {k:"promo_rechazadas",l:`✗ Rechazadas (${myPromos.filter(pr=>pr.motivo_rechazo).length})`},
+              ].map(t=>(
+                <button key={t.k} onClick={()=>setProvTab(t.k)} style={{flexShrink:0,padding:"7px 11px",borderRadius:10,border:"none",background:provTab===t.k?P:"#f1f5f9",color:provTab===t.k?"#fff":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer"}}>{t.l}</button>
+              ))}
+            </div>
+
+            {/* NUEVA PROMO */}
+            {(provTab==="promos"||provTab==="promo_nueva")&&(
             <div style={s.pc}>
               <div style={s.pT}>🎉 Nueva promoción</div>
               <label style={s.lbl}>Nombre *</label>
@@ -930,43 +944,103 @@ export default function App() {
               <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setPromoFotoFile(f);setPromoFotoPreview(URL.createObjectURL(f));}}}/>
               <button style={s.btnPurple} onClick={()=>{if(!promoFotoFile)return setPmsg("⚠️ Debes agregar una foto a la promoción antes de enviar");publishPromo();}} disabled={loading}>{loading?"Enviando...":"Enviar para aprobación"}</button>
             </div>
-            {myPromos.length>0&&(
+            )}
+
+            {/* ACTIVAS */}
+            {provTab==="promo_activas"&&(
               <div style={s.pc}>
-                <div style={s.pT}>Mis promociones ({myPromos.length})</div>
-                {myPromos.filter(pr=>!pr.aprobada&&pr.motivo_rechazo).length>0&&(
-                  <div style={{marginBottom:12}}>
-                    <div style={{fontSize:11,fontWeight:700,color:"#be123c",marginBottom:8,letterSpacing:0.5}}>✗ RECHAZADAS</div>
-                    {myPromos.filter(pr=>!pr.aprobada&&pr.motivo_rechazo).map(pr=>(
-                      <div key={pr.id} style={{background:"#fff1f2",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #fecdd3"}}>
-                        {pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:80,objectFit:"cover",borderRadius:8,marginBottom:6}}/>}
-                        <div style={{fontSize:13,fontWeight:700,color:"#be123c"}}>{pr.nombre}</div>
-                        <div style={{fontSize:11,color:"#64748b"}}>${pr.precio} · {pr.descripcion}</div>
-                        {pr.motivo_rechazo&&<div style={{background:"#fee2e2",borderRadius:6,padding:"6px 8px",fontSize:11,color:"#be123c",marginTop:6}}>💬 Motivo: {pr.motivo_rechazo}</div>}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {myPromos.filter(pr=>!pr.aprobada&&!pr.motivo_rechazo).length>0&&(
-                  <div style={{marginBottom:12}}>
-                    <div style={{fontSize:11,fontWeight:700,color:"#854d0e",marginBottom:8,letterSpacing:0.5}}>⏳ PENDIENTES</div>
-                    {myPromos.filter(pr=>!pr.aprobada&&!pr.motivo_rechazo).map(pr=>(
-                      <div key={pr.id} style={{background:"#fef9c3",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #fde68a"}}>
-                        {pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:80,objectFit:"cover",borderRadius:8,marginBottom:6}}/>}
-                        <div style={{fontSize:13,fontWeight:700}}>{pr.nombre}</div>
-                        <div style={{fontSize:11,color:"#64748b"}}>${pr.precio} · {pr.descripcion}</div>
-                        <div style={{fontSize:11,color:"#92400e",marginTop:4}}>⏳ En revisión por el admin</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <div style={s.pT}>✅ Promociones activas</div>
+                {myPromos.filter(pr=>pr.aprobada).length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No tienes promociones activas</div>}
                 {myPromos.filter(pr=>pr.aprobada).map(pr=>(
-                  <div key={pr.id} style={{padding:"10px 0",borderBottom:"1px solid #f1f5f9"}}>
-                    {pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:8,marginBottom:6}}/>}
+                  <div key={pr.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
+                    {pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:110,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
                       <div><div style={{fontSize:13,fontWeight:700}}>{pr.nombre}</div><div style={{fontSize:11,color:"#64748b"}}>${pr.precio} · {pr.fecha_inicio} → {pr.fecha_fin}</div><div style={{fontSize:11,color:"#94a3b8"}}>{pr.descripcion}</div></div>
                       <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8,background:"#dcfce7",color:"#15803d",flexShrink:0,marginLeft:8}}>✓ Activa</span>
                     </div>
                     <button onClick={()=>notifyClientes(pr)} style={{marginTop:8,background:"#25d366",color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",width:"100%"}}>📲 Notificar compradores</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* PENDIENTES */}
+            {provTab==="promo_pendientes"&&(
+              <div style={s.pc}>
+                <div style={s.pT}>⏳ Esperando aprobación</div>
+                {myPromos.filter(pr=>!pr.aprobada&&!pr.motivo_rechazo).length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No tienes promociones pendientes</div>}
+                {myPromos.filter(pr=>!pr.aprobada&&!pr.motivo_rechazo).map(pr=>(
+                  <div key={pr.id} style={{background:"#fef9c3",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #fde68a"}}>
+                    {pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:90,objectFit:"cover",borderRadius:8,marginBottom:6}}/>}
+                    <div style={{fontSize:13,fontWeight:700}}>{pr.nombre}</div>
+                    <div style={{fontSize:11,color:"#64748b"}}>${pr.precio} · {pr.descripcion}</div>
+                    <div style={{fontSize:11,color:"#92400e",marginTop:4}}>⏳ El admin está revisando tu promoción</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* RECHAZADAS — con formulario de corrección igual que productos */}
+            {provTab==="promo_rechazadas"&&(
+              <div style={s.pc}>
+                <div style={s.pT}>✗ Promociones rechazadas</div>
+                {myPromos.filter(pr=>pr.motivo_rechazo).length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No tienes promociones rechazadas</div>}
+                {myPromos.filter(pr=>pr.motivo_rechazo).map(pr=>(
+                  <div key={pr.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
+                    <div style={{display:"flex",gap:8,marginBottom:8}}>
+                      {pr.foto_url?<img src={pr.foto_url} alt="" style={{width:50,height:50,borderRadius:8,objectFit:"cover"}}/>:<span style={{fontSize:28,width:50,textAlign:"center"}}>🎁</span>}
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:13,fontWeight:600,color:"#be123c"}}>{pr.nombre}</div>
+                        <div style={{fontSize:11,color:"#64748b"}}>${pr.precio} · {pr.descripcion}</div>
+                      </div>
+                    </div>
+                    <div style={{background:"#fff1f2",borderRadius:8,padding:"8px 10px",fontSize:12,color:"#be123c",marginBottom:10}}>💬 Motivo: {pr.motivo_rechazo}</div>
+                    {editandoHorario&&editandoHorario===pr.id?(
+                      <div style={{background:"#f8fafc",borderRadius:10,padding:12,border:"1px solid #e2e8f0"}}>
+                        <div style={{fontSize:13,fontWeight:600,color:P,marginBottom:8}}>✏️ Corrige tu promoción</div>
+                        <label style={s.lbl}>Nombre *</label>
+                        <input style={s.inp} value={newPromo.nombre} onChange={e=>setNewPromo({...newPromo,nombre:e.target.value})}/>
+                        <label style={s.lbl}>Descripción *</label>
+                        <input style={s.inp} value={newPromo.descripcion} onChange={e=>setNewPromo({...newPromo,descripcion:e.target.value})}/>
+                        <label style={s.lbl}>Precio ($) *</label>
+                        <input style={s.inp} type="number" value={newPromo.precio} onChange={e=>setNewPromo({...newPromo,precio:e.target.value})}/>
+                        <div style={{display:"flex",gap:10}}><div style={{flex:1}}><label style={s.lbl}>Desde *</label><input style={s.inp} type="date" value={newPromo.fecha_inicio} onChange={e=>setNewPromo({...newPromo,fecha_inicio:e.target.value})}/></div><div style={{flex:1}}><label style={s.lbl}>Hasta *</label><input style={s.inp} type="date" value={newPromo.fecha_fin} onChange={e=>setNewPromo({...newPromo,fecha_fin:e.target.value})}/></div></div>
+                        <label style={s.lbl}>📸 Foto (obligatoria)</label>
+                        {(promoFotoPreview||pr.foto_url)&&<img src={promoFotoPreview||pr.foto_url} alt="" style={{width:"100%",height:120,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
+                        <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setPromoFotoFile(f);setPromoFotoPreview(URL.createObjectURL(f));}}}/>
+                        <button style={s.btn} disabled={loading} onClick={async()=>{
+                          if(!newPromo.nombre||!newPromo.precio)return setPmsg("Completa nombre y precio");
+                          setLoading(true);
+                          let foto_url=pr.foto_url;
+                          if(promoFotoFile)foto_url=await upload(promoFotoFile,"productos",`promo_${provData.id}_${Date.now()}`);
+                          await supabase.from("promociones_proveedor").update({
+                            nombre:newPromo.nombre,
+                            descripcion:newPromo.descripcion||null,
+                            precio:parseFloat(newPromo.precio),
+                            fecha_inicio:newPromo.fecha_inicio,
+                            fecha_fin:newPromo.fecha_fin,
+                            foto_url,
+                            aprobada:false,
+                            activa:true,
+                            motivo_rechazo:null,
+                          }).eq("id",pr.id);
+                          setLoading(false);
+                          setEditandoHorario(false);
+                          setPromoFotoFile(null);setPromoFotoPreview(null);
+                          setPmsg("✅ Promoción reenviada para aprobación");
+                          loadMyPromos(provData.id);
+                        }}>{loading?"Enviando...":"📤 Enviar corrección"}</button>
+                        <button style={s.btnG} onClick={()=>{setEditandoHorario(false);setPromoFotoFile(null);setPromoFotoPreview(null);}}>Cancelar</button>
+                      </div>
+                    ):(
+                      <button onClick={()=>{
+                        setEditandoHorario(pr.id);
+                        setNewPromo({nombre:pr.nombre||"",descripcion:pr.descripcion||"",precio:String(pr.precio||""),fecha_inicio:pr.fecha_inicio||"",fecha_fin:pr.fecha_fin||""});
+                        setPromoFotoPreview(null);setPromoFotoFile(null);
+                      }} style={{width:"100%",padding:"8px",borderRadius:10,border:"none",background:"#fef9c3",color:"#854d0e",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                        ✏️ Corregir y reenviar para aprobación
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
