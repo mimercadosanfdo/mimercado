@@ -914,7 +914,7 @@ export default function App() {
             )}
           </>)}
 
-          {provTab==="promos"&&(<>
+          {(provTab==="promos"||provTab==="promo_nueva"||provTab==="promo_activas"||provTab==="promo_pendientes"||provTab==="promo_rechazadas")&&(<>
             {/* SUB-TABS PROMOS */}
             <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}}>
               {[
@@ -928,7 +928,7 @@ export default function App() {
             </div>
 
             {/* NUEVA PROMO */}
-            {(provTab==="promos"||provTab==="promo_nueva")&&(
+            {(provTab==="promo_nueva")&&(
             <div style={s.pc}>
               <div style={s.pT}>🎉 Nueva promoción</div>
               <label style={s.lbl}>Nombre *</label>
