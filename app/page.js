@@ -807,14 +807,44 @@ export default function App() {
                         onBlur={async e=>{const v=parseInt(e.target.value);if(!isNaN(v)&&v>=0){await supabase.from("productos_proveedor").update({stock:v,disponible:v>0}).eq("id",p.id);loadMyProds(provData.id);loadAll();}e.target.value="";}}
                         onKeyDown={async e=>{if(e.key==="Enter"){const v=parseInt(e.target.value);if(!isNaN(v)&&v>=0){await supabase.from("productos_proveedor").update({stock:v,disponible:v>0}).eq("id",p.id);loadMyProds(provData.id);loadAll();}e.target.value="";}}}/>
                     </div>
-                    <div style={{display:"flex",gap:6}}>
-                      <button onClick={()=>toggleDisp(p.id,p.disponible)} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:p.disponible?"#fff7ed":"#f0fdf4",color:p.disponible?"#c2410c":"#15803d"}}>
-                        {p.disponible?"⏸️ Pausar":"▶️ Activar"}
-                      </button>
-                      <button onClick={async()=>{if(window.confirm("¿Eliminar este producto?"))await supabase.from("productos_proveedor").delete().eq("id",p.id);loadMyProds(provData.id);loadAll();}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fee2e2",color:"#be123c"}}>
-                        🗑️ Eliminar
-                      </button>
+                    {editingProdId===`mod_${p.id}`?(
+                      <div style={{background:"#f8fafc",borderRadius:10,padding:12,border:"1px solid #e2e8f0",marginBottom:8}}>
+                        <div style={{fontSize:12,fontWeight:700,color:P,marginBottom:8}}>✏️ Modificar producto</div>
+                        <label style={s.lbl}>Nombre *</label>
+                        <input style={s.inp} value={newProd.nombre} onChange={e=>setNewProd({...newProd,nombre:e.target.value})}/>
+                        <label style={s.lbl}>Marca</label>
+                        <input style={s.inp} value={newProd.marca} onChange={e=>setNewProd({...newProd,marca:e.target.value})}/>
+                        <label style={s.lbl}>Presentación</label>
+                        <input style={s.inp} value={newProd.presentacion} onChange={e=>setNewProd({...newProd,presentacion:e.target.value})}/>
+                        <label style={s.lbl}>Descripción</label>
+                        <input style={s.inp} value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
+                        <label style={s.lbl}>Precio ($) *</label>
+                        <input style={s.inp} type="number" value={newProd.precio} onChange={e=>setNewProd({...newProd,precio:e.target.value})}/>
+                        <label style={s.lbl}>Unidad</label>
+                        <input style={s.inp} value={newProd.unidad} onChange={e=>setNewProd({...newProd,unidad:e.target.value})}/>
+                        <div style={{...s.ib,background:"#fef9c3"}}><div style={{fontSize:12,color:"#854d0e"}}>ℹ️ Al guardar va a revisión del admin antes de publicarse.</div></div>
+                        <button style={s.btn} disabled={loading} onClick={async()=>{
+                          if(!newProd.nombre||!newProd.precio)return setPmsg("Completa nombre y precio");
+                          setLoading(true);
+                          await supabase.from("productos_proveedor").update({
+                            nombre:newProd.nombre,marca:newProd.marca||null,
+                            presentacion:newProd.presentacion||null,descripcion:newProd.descripcion||null,
+                            precio:parseFloat(newProd.precio),unidad:newProd.unidad,
+                            aprobado:false,rechazado:false,motivo_rechazo:null,
+                          }).eq("id",p.id);
+                          setLoading(false);setEditingProdId(null);
+                          setPmsg("✅ Enviado a revisión del admin");
+                          loadMyProds(provData.id);loadAll();
+                        }}>{loading?"Guardando...":"📤 Guardar y enviar a revisión"}</button>
+                        <button style={s.btnG} onClick={()=>setEditingProdId(null)}>Cancelar</button>
+                      </div>
+                    ):(
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                      <button onClick={()=>{setEditingProdId(`mod_${p.id}`);setNewProd({nombre:p.nombre||"",marca:p.marca||"",presentacion:p.presentacion||"",descripcion:p.descripcion||"",precio:String(p.precio||""),unidad:p.unidad||"porción",categoria:p.categoria||"Comida preparada",stock:p.stock||1,hi:p.horario_inicio||"08:00",hf:p.horario_fin||"18:00",permanente:p.permanente||false});}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#eff6ff",color:"#1d4ed8"}}>✏️ Modificar</button>
+                      <button onClick={()=>toggleDisp(p.id,p.disponible)} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:p.disponible?"#fff7ed":"#f0fdf4",color:p.disponible?"#c2410c":"#15803d"}}>{p.disponible?"⏸️ Pausar":"▶️ Activar"}</button>
+                      <button onClick={async()=>{if(window.confirm("¿Eliminar este producto?"))await supabase.from("productos_proveedor").delete().eq("id",p.id);loadMyProds(provData.id);loadAll();}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fee2e2",color:"#be123c"}}>🗑️ Eliminar</button>
                     </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -959,11 +989,48 @@ export default function App() {
                 {myPromos.filter(pr=>pr.aprobada).map(pr=>(
                   <div key={pr.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
                     {pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:110,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-                      <div><div style={{fontSize:13,fontWeight:700}}>{pr.nombre}</div><div style={{fontSize:11,color:"#64748b"}}>${pr.precio} · {pr.fecha_inicio} → {pr.fecha_fin}</div><div style={{fontSize:11,color:"#94a3b8"}}>{pr.descripcion}</div></div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+                      <div>
+                        <div style={{fontSize:13,fontWeight:700}}>{pr.nombre}</div>
+                        <div style={{fontSize:11,color:"#64748b"}}>${pr.precio} · {pr.fecha_inicio} → {pr.fecha_fin}</div>
+                        <div style={{fontSize:11,color:"#94a3b8"}}>{pr.descripcion}</div>
+                      </div>
                       <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8,background:"#dcfce7",color:"#15803d",flexShrink:0,marginLeft:8}}>✓ Activa</span>
                     </div>
-                    <button onClick={()=>notifyClientes(pr)} style={{marginTop:8,background:"#25d366",color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",width:"100%"}}>📲 Notificar compradores</button>
+                    {/* Modificar inline */}
+                    {editandoHorario===`edit_promo_${pr.id}`?(
+                      <div style={{background:"#f8fafc",borderRadius:10,padding:12,border:"1px solid #e2e8f0",marginBottom:8}}>
+                        <div style={{fontSize:12,fontWeight:700,color:P,marginBottom:8}}>✏️ Modificar promoción</div>
+                        <label style={s.lbl}>Nombre *</label>
+                        <input style={s.inp} value={newPromo.nombre} onChange={e=>setNewPromo({...newPromo,nombre:e.target.value})}/>
+                        <label style={s.lbl}>Descripción</label>
+                        <input style={s.inp} value={newPromo.descripcion} onChange={e=>setNewPromo({...newPromo,descripcion:e.target.value})}/>
+                        <label style={s.lbl}>Precio ($) *</label>
+                        <input style={s.inp} type="number" value={newPromo.precio} onChange={e=>setNewPromo({...newPromo,precio:e.target.value})}/>
+                        <div style={{display:"flex",gap:10}}><div style={{flex:1}}><label style={s.lbl}>Desde</label><input style={s.inp} type="date" value={newPromo.fecha_inicio} onChange={e=>setNewPromo({...newPromo,fecha_inicio:e.target.value})}/></div><div style={{flex:1}}><label style={s.lbl}>Hasta</label><input style={s.inp} type="date" value={newPromo.fecha_fin} onChange={e=>setNewPromo({...newPromo,fecha_fin:e.target.value})}/></div></div>
+                        <div style={{...s.ib,background:"#fef9c3"}}><div style={{fontSize:12,color:"#854d0e"}}>ℹ️ Al guardar va a revisión del admin antes de publicarse.</div></div>
+                        <button style={s.btn} disabled={loading} onClick={async()=>{
+                          if(!newPromo.nombre||!newPromo.precio)return setPmsg("Completa nombre y precio");
+                          setLoading(true);
+                          await supabase.from("promociones_proveedor").update({
+                            nombre:newPromo.nombre,descripcion:newPromo.descripcion||null,
+                            precio:parseFloat(newPromo.precio),fecha_inicio:newPromo.fecha_inicio,
+                            fecha_fin:newPromo.fecha_fin,aprobada:false,motivo_rechazo:null,
+                          }).eq("id",pr.id);
+                          setLoading(false);setEditandoHorario(false);
+                          setPmsg("✅ Enviado a revisión del admin");
+                          loadMyPromos(provData.id);
+                        }}>{loading?"Guardando...":"📤 Guardar y enviar a revisión"}</button>
+                        <button style={s.btnG} onClick={()=>setEditandoHorario(false)}>Cancelar</button>
+                      </div>
+                    ):(
+                      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>
+                        <button onClick={()=>{setEditandoHorario(`edit_promo_${pr.id}`);setNewPromo({nombre:pr.nombre||"",descripcion:pr.descripcion||"",precio:String(pr.precio||""),fecha_inicio:pr.fecha_inicio||"",fecha_fin:pr.fecha_fin||""});}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#eff6ff",color:"#1d4ed8"}}>✏️ Modificar</button>
+                        <button onClick={async()=>{await supabase.from("promociones_proveedor").update({activa:false,aprobada:false}).eq("id",pr.id);loadMyPromos(provData.id);loadAll();}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fff7ed",color:"#c2410c"}}>⏸️ Pausar</button>
+                        <button onClick={async()=>{if(!window.confirm("¿Eliminar esta promoción?"))return;await supabase.from("promociones_proveedor").delete().eq("id",pr.id);loadMyPromos(provData.id);loadAll();}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fee2e2",color:"#be123c"}}>🗑️ Eliminar</button>
+                      </div>
+                    )}
+                    <button onClick={()=>notifyClientes(pr)} style={{background:"#25d366",color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",width:"100%"}}>📲 Notificar compradores</button>
                   </div>
                 ))}
               </div>
