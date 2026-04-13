@@ -1161,11 +1161,25 @@ export default function App() {
                     <div style={{fontSize:11,color:"#64748b",margin:"2px 0"}}>{p.proveedores?.negocio} · ${p.precio}</div>
                     <div style={{fontSize:11,color:"#94a3b8",marginBottom:4}}>{p.descripcion}</div>
                     <div style={{fontSize:11,color:"#64748b",marginBottom:10}}>📅 {p.fecha_inicio} → {p.fecha_fin}</div>
-                    <button onClick={async()=>{await supabase.from("promociones_proveedor").update({aprobada:true,activa:true,motivo_rechazo:null}).eq("id",p.id);await loadAdmin();loadAll();}} style={{...s.btnGreen,width:"100%",marginBottom:10,borderRadius:10,padding:"9px",fontSize:13}}>✓ Aprobar promoción</button>
+                    <button onClick={async()=>{
+                      setPendPromos(prev=>prev.filter(x=>x.id!==p.id));
+                      const{error}=await supabase.from("promociones_proveedor").update({aprobada:true,activa:true,motivo_rechazo:null}).eq("id",p.id);
+                      if(error){alert("Error al aprobar: "+error.message);await loadAdmin();return;}
+                      loadAll();
+                      await loadAdmin();
+                    }} style={{...s.btnGreen,width:"100%",marginBottom:10,borderRadius:10,padding:"9px",fontSize:13}}>✓ Aprobar promoción</button>
                     <label style={s.lbl}>Motivo del rechazo * (obligatorio para rechazar)</label>
                     <div style={{display:"flex",gap:6}}>
                       <input style={{...s.inp,marginBottom:0,flex:1,fontSize:12,padding:"8px 10px"}} placeholder="Ej: Falta foto, descripción incompleta..." value={rejectMotivo[`promo_${p.id}`]||""} onChange={e=>setRejectMotivo({...rejectMotivo,[`promo_${p.id}`]:e.target.value})}/>
-                      <button onClick={async()=>{const motivo=rejectMotivo[`promo_${p.id}`]||"";if(!motivo.trim())return alert("Escribe el motivo del rechazo antes de continuar");await supabase.from("promociones_proveedor").update({aprobada:false,activa:false,motivo_rechazo:motivo}).eq("id",p.id);setRejectMotivo(prev=>({...prev,[`promo_${p.id}`]:""}));await loadAdmin();}} style={{...s.btnRed,fontSize:11,flexShrink:0}}>✗ Rechazar</button>
+                      <button onClick={async()=>{
+                        const motivo=rejectMotivo[`promo_${p.id}`]||"";
+                        if(!motivo.trim())return alert("Escribe el motivo del rechazo antes de continuar");
+                        setPendPromos(prev=>prev.filter(x=>x.id!==p.id));
+                        setRejectMotivo(prev=>({...prev,[`promo_${p.id}`]:""}));
+                        const{error}=await supabase.from("promociones_proveedor").update({aprobada:false,activa:false,motivo_rechazo:motivo}).eq("id",p.id);
+                        if(error)alert("Error al rechazar: "+error.message);
+                        await loadAdmin();
+                      }} style={{...s.btnRed,fontSize:11,flexShrink:0}}>✗ Rechazar</button>
                     </div>
                   </div>
                 ))}
