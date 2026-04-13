@@ -707,7 +707,12 @@ export default function App() {
           </div>
 
           <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}}>
-            {["estado","productos","promos","ventas"].map(t=>(<button key={t} onClick={()=>setProvTab(t==="promos"?"promo_nueva":t)} style={{flexShrink:0,padding:"8px 12px",borderRadius:10,border:"none",background:provTab===t?P:"#f1f5f9",color:provTab===t?"#fff":"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t==="estado"?"📊 Stats":t==="productos"?"📦 Productos":t==="promos"?(myPromos.filter(pr=>pr.motivo_rechazo).length>0?`🎉 Promos ⚠️${myPromos.filter(pr=>pr.motivo_rechazo).length}`:"🎉 Promos"):"💰 Ventas"}</button>))}
+            {["estado","productos","promos","ventas"].map(t=>{
+              const isPromoTab=t==="promos"&&(provTab==="promo_nueva"||provTab==="promo_activas"||provTab==="promo_pendientes"||provTab==="promo_rechazadas");
+              const isProdTab=t==="productos"&&(provTab==="productos"||provTab==="prod_nuevo"||provTab==="prod_aprobados"||provTab==="prod_pendientes"||provTab==="prod_rechazados");
+              const isActive=provTab===t||isPromoTab||isProdTab;
+              return(<button key={t} onClick={()=>setProvTab(t==="promos"?"promo_nueva":t==="productos"?"prod_aprobados":t)} style={{flexShrink:0,padding:"8px 12px",borderRadius:10,border:"none",background:isActive?P:"#f1f5f9",color:isActive?"#fff":"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t==="estado"?"📊 Stats":t==="productos"?"📦 Productos":t==="promos"?(myPromos.filter(pr=>pr.motivo_rechazo).length>0?`🎉 Promos ⚠️${myPromos.filter(pr=>pr.motivo_rechazo).length}`:"🎉 Promos"):"💰 Ventas"}</button>);
+            })}
           </div>
           {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
 
