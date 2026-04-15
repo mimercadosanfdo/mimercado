@@ -15,11 +15,20 @@ const ADMIN_PASS = "mimercado2024";
 const P = "#0f172a";
 const A = "#f59e0b";
 
-const MAIN_TABS = ["Inicio","Productos","Servicios","Proveedores"];
+const MAIN_TABS = ["Inicio","Productos","Remates","Clasificados","Servicios","Proveedores"];
 const SUPER_CATS = ["🥩 Proteínas","🌾 Granos y cereales","🛢️ Aceites y condimentos","🥛 Lácteos","🧴 Aseo personal","🧹 Limpieza del hogar","🥦 Frutas y verduras","🧃 Bebidas"];
 const PROV_CATS = ["Comida preparada","Postres","Jugos y bebidas","Pan y repostería"];
 const ALL_CATS = ["Todo","Supermercado",...PROV_CATS];
 const PAGOS = ["Pago Móvil","Zelle","Efectivo al recibir","Binance/USDT"];
+
+const CLASIF_TIPOS = ["Vehículos","Motos","Inmuebles"];
+const VEHICULO_MARCAS = ["Toyota","Ford","Chevrolet","Hyundai","Kia","Nissan","Mitsubishi","Honda","Mazda","Jeep","Dodge","RAM","Otro"];
+const MOTO_MARCAS = ["Honda","Yamaha","Suzuki","Kawasaki","TVS","AKT","Otro"];
+const TRANSMISION = ["Manual","Automático"];
+const COMBUSTIBLE = ["Gasolina","Diesel","Eléctrico","Híbrido"];
+const TIPO_OPERACION = ["Venta","Alquiler"];
+const REMATE_CATS = ["Electrodomésticos","Ropa y calzado","Muebles","Electrónica","Repuestos","Motos y vehículos","Herramientas","Hogar","Juguetes","Otros"];
+const SERVICIO_CATS = ["Plomería","Electricidad","Mecánica","Belleza y estética","Costura y modistería","Clases y tutorías","Limpieza","Construcción","Transporte","Salud","Otros"];
 
 const SVCS = [
   {id:"s1",name:"Mototaxi",emoji:"🛵",desc:"Te llevamos a donde necesites",price:"Desde $1.00",bg:"#fef3c7",tc:"#92400e"},
@@ -125,6 +134,33 @@ export default function App() {
   const [provProds,setProvProds]=useState([]);
   const [provPromos,setProvPromos]=useState([]);
   const [combos,setCombos]=useState([]);
+  const [remates,setRemates]=useState([]);
+  const [clasificados,setClasificados]=useState([]);
+  const [clasificadoTipo,setClasificadoTipo]=useState("Todos");
+  const [clasificadoSeleccionado,setClasificadoSeleccionado]=useState(null);
+  const [showPublicarClasificado,setShowPublicarClasificado]=useState(false);
+  const [pendClasificados,setPendClasificados]=useState([]);
+  const [newClasificado,setNewClasificado]=useState({
+    tipo:"Vehículos",titulo:"",descripcion:"",precio:"",negociable:false,categoria:"Vehículos",
+    marca:"",modelo:"",anio:"",kilometraje:"",color:"",transmision:"Manual",combustible:"Gasolina",
+    tipo_operacion:"Venta",habitaciones:"",banos:"",metros2:"",sector:"",
+    vendedor_nombre:"",vendedor_telefono:""
+  });
+  const [clasifFotos,setClasifFotos]=useState([null,null,null,null]);
+  const [clasifFotosPrev,setClasifFotosPrev]=useState([null,null,null,null]);
+  const [serviciosCom,setServiciosCom]=useState([]);
+  const [remateCat,setRemateCat]=useState("Todos");
+  const [remateSearch,setRemateSearch]=useState("");
+  const [showPublicarRemate,setShowPublicarRemate]=useState(false);
+  const [showPublicarServicio,setShowPublicarServicio]=useState(false);
+  const [newRemate,setNewRemate]=useState({titulo:"",descripcion:"",precio:"",categoria:REMATE_CATS[0],vendedor_nombre:"",vendedor_telefono:""});
+  const [newServicioCom,setNewServicioCom]=useState({nombre_servicio:"",descripcion:"",categoria:SERVICIO_CATS[0],precio_referencial:"",zona:"",proveedor_nombre:"",proveedor_telefono:""});
+  const [remateFoto,setRemateFoto]=useState(null);
+  const [remateFotoPreview,setRemateFotoPreview]=useState(null);
+  const [servComFoto,setServComFoto]=useState(null);
+  const [servComFotoPreview,setServComFotoPreview]=useState(null);
+  const [pendRemates,setPendRemates]=useState([]);
+  const [pendServiciosCom,setPendServiciosCom]=useState([]);
   const [resenaSheet,setResenaSheet]=useState(null);
   const [resena,setResena]=useState({estrellas:0,comentario:"",nombre:"",telefono:""});
   const [resenaMsj,setResenaMsj]=useState("");
@@ -176,14 +212,14 @@ export default function App() {
   const [notaTemp,setNotaTemp]=useState("");
   const [prodResenas,setProdResenas]=useState({});
 
-  useEffect(()=>{loadAll();},[]);
+  useEffect(()=>{loadAll();loadRemates();loadServiciosCom();loadClasificados();},[]);
 
   useEffect(()=>{
     const interval=setInterval(()=>{
-      loadAll();
+      loadAll();loadRemates();loadServiciosCom();loadClasificados();
       if(provData){loadMyProds(provData.id);loadMyPromos(provData.id);}
       if(provMode==="admin"){loadAdmin();loadPedidos();}
-    },30000);
+    },15000);
     return ()=>clearInterval(interval);
   },[provData,provMode]);
 
@@ -201,6 +237,80 @@ export default function App() {
     if(pp.data)setProvProds(pp.data.filter(p=>!p.proveedores?.en_pausa&&p.proveedores?.activo!==false&&(p.permanente||(p.fecha===hoy&&p.stock>0))));
     if(pr.data)setProvPromos(pr.data.filter(p=>!p.proveedores?.en_pausa&&p.proveedores?.activo!==false));
     if(cb.data)setCombos(cb.data);
+  };
+
+  const loadClasificados=async()=>{
+    const{data}=await supabase.from("clasificados").select("*").eq("aprobado",true).eq("vendido",false).order("created_at",{ascending:false});
+    if(data)setClasificados(data);
+  };
+
+  const publishClasificado=async()=>{
+    const c=newClasificado;
+    if(!c.titulo||!c.precio||!c.vendedor_nombre||!c.vendedor_telefono)return setPmsg("Completa los campos obligatorios");
+    setLoading(true);
+    const fotos=[];
+    for(let i=0;i<4;i++){
+      if(clasifFotos[i]){
+        const url=await upload(clasifFotos[i],"productos",`clasif_${Date.now()}_${i}`);
+        fotos.push(url);
+      } else fotos.push(null);
+    }
+    const{error}=await supabase.from("clasificados").insert({
+      tipo:c.tipo,titulo:c.titulo,descripcion:c.descripcion||null,
+      precio:parseFloat(c.precio),negociable:c.negociable,categoria:c.tipo,
+      marca:c.marca||null,modelo:c.modelo||null,
+      anio:c.anio?parseInt(c.anio):null,kilometraje:c.kilometraje||null,
+      color:c.color||null,transmision:c.transmision||null,combustible:c.combustible||null,
+      tipo_operacion:c.tipo_operacion||null,habitaciones:c.habitaciones?parseInt(c.habitaciones):null,
+      banos:c.banos?parseInt(c.banos):null,metros2:c.metros2||null,sector:c.sector||null,
+      foto1_url:fotos[0],foto2_url:fotos[1],foto3_url:fotos[2],foto4_url:fotos[3],
+      vendedor_nombre:c.vendedor_nombre,vendedor_telefono:c.vendedor_telefono,
+      aprobado:false,vendido:false,
+    });
+    setLoading(false);
+    if(error){setPmsg("Error: "+error.message);return;}
+    setPmsg("✅ Tu publicación fue enviada. El admin la revisará antes de publicarla.");
+    setNewClasificado({tipo:"Vehículos",titulo:"",descripcion:"",precio:"",negociable:false,categoria:"Vehículos",marca:"",modelo:"",anio:"",kilometraje:"",color:"",transmision:"Manual",combustible:"Gasolina",tipo_operacion:"Venta",habitaciones:"",banos:"",metros2:"",sector:"",vendedor_nombre:"",vendedor_telefono:""});
+    setClasifFotos([null,null,null,null]);setClasifFotosPrev([null,null,null,null]);
+    setShowPublicarClasificado(false);
+  };
+
+  const loadRemates=async()=>{
+    const{data}=await supabase.from("remates").select("*").eq("aprobado",true).eq("vendido",false).order("created_at",{ascending:false});
+    if(data)setRemates(data);
+  };
+
+  const loadServiciosCom=async()=>{
+    const{data}=await supabase.from("servicios_comunidad").select("*").eq("aprobado",true).eq("activo",true).order("created_at",{ascending:false});
+    if(data)setServiciosCom(data);
+  };
+
+  const publishRemate=async()=>{
+    if(!newRemate.titulo||!newRemate.precio||!newRemate.vendedor_nombre||!newRemate.vendedor_telefono)return setPmsg("Completa todos los campos obligatorios");
+    setLoading(true);
+    let foto_url=null;
+    if(remateFoto)foto_url=await upload(remateFoto,"productos",`remate_${Date.now()}`);
+    const{error}=await supabase.from("remates").insert({...newRemate,precio:parseFloat(newRemate.precio),foto_url,aprobado:false,vendido:false,vendedor_whatsapp:newRemate.vendedor_telefono});
+    setLoading(false);
+    if(error){setPmsg("Error: "+error.message);return;}
+    setPmsg("✅ Tu artículo fue enviado. El admin lo revisará antes de publicarlo.");
+    setNewRemate({titulo:"",descripcion:"",precio:"",categoria:REMATE_CATS[0],vendedor_nombre:"",vendedor_telefono:""});
+    setRemateFoto(null);setRemateFotoPreview(null);
+    setShowPublicarRemate(false);
+  };
+
+  const publishServicioCom=async()=>{
+    if(!newServicioCom.nombre_servicio||!newServicioCom.descripcion||!newServicioCom.proveedor_nombre||!newServicioCom.proveedor_telefono)return setPmsg("Completa todos los campos obligatorios");
+    setLoading(true);
+    let foto_url=null;
+    if(servComFoto)foto_url=await upload(servComFoto,"productos",`serv_${Date.now()}`);
+    const{error}=await supabase.from("servicios_comunidad").insert({...newServicioCom,foto_url,aprobado:false,activo:true});
+    setLoading(false);
+    if(error){setPmsg("Error: "+error.message);return;}
+    setPmsg("✅ Tu servicio fue enviado. El admin lo revisará antes de publicarlo.");
+    setNewServicioCom({nombre_servicio:"",descripcion:"",categoria:SERVICIO_CATS[0],precio_referencial:"",zona:"",proveedor_nombre:"",proveedor_telefono:""});
+    setServComFoto(null);setServComFotoPreview(null);
+    setShowPublicarServicio(false);
   };
 
   // ── FUNCIONES DE PEDIDOS (NUEVO) ─────────────────────────
@@ -379,7 +489,7 @@ export default function App() {
   const loadMyVentas=async(pid)=>{const{data}=await supabase.from("ventas").select("*").eq("proveedor_id",pid).order("fecha",{ascending:false}).limit(50);if(data)setMyVentas(data);};
 
   const loadAdmin=async()=>{
-    const[pr,re,zo,av,todos,cb,ped,promo]=await Promise.all([
+    const[pr,re,zo,av,todos,cb,ped,promo,remPend,svcPend,clasifPend]=await Promise.all([
       supabase.from("productos_proveedor").select("*,proveedores(negocio,id)").eq("aprobado",false).eq("rechazado",false),
       supabase.from("resenas").select("*").eq("aprobada",false),
       supabase.from("zonas_delivery").select("*").order("municipio"),
@@ -388,6 +498,9 @@ export default function App() {
       supabase.from("combos").select("*").order("created_at",{ascending:false}),
       supabase.from("pedidos").select("*").order("created_at",{ascending:false}).limit(200),
       supabase.from("promociones_proveedor").select("*,proveedores(negocio)").eq("aprobada",false).eq("activa",true),
+      supabase.from("remates").select("*").eq("aprobado",false).eq("vendido",false).order("created_at",{ascending:false}),
+      supabase.from("servicios_comunidad").select("*").eq("aprobado",false).order("created_at",{ascending:false}),
+      supabase.from("clasificados").select("*").eq("aprobado",false).eq("vendido",false).order("created_at",{ascending:false}),
     ]);
     if(pr.data)setPendProds(pr.data);
     if(re.data)setPendResenas(re.data);
@@ -397,6 +510,9 @@ export default function App() {
     if(cb.data)setCombosAdmin(cb.data);
     if(ped.data)setPedidos(ped.data);
     if(promo.data)setPendPromos(promo.data);
+    if(remPend.data)setPendRemates(remPend.data);
+    if(svcPend.data)setPendServiciosCom(svcPend.data);
+    if(clasifPend.data)setPendClasificados(clasifPend.data);
   };
 
   const loadResenas=async(prodId)=>{
@@ -594,6 +710,27 @@ export default function App() {
         <div style={s.banner}><p style={s.bT}>Bienvenido a {APP_NAME} {CITY} 👋</p><p style={s.bS}>Todo lo que necesitas sin salir de casa</p><span style={s.bdg("#22c55e","#fff")}>✓ Delivery desde $1</span><span style={s.bdg(A,P)}>Gratis desde $10</span></div>
         <div style={s.promoCard}><div style={{fontSize:18,fontWeight:700,marginBottom:4}}>{horario.label}</div><div style={{fontSize:13,color:"rgba(255,255,255,0.8)"}}>{horario.sub}</div><button onClick={()=>{setTab("Productos");setCat("Comida preparada");}} style={{marginTop:10,background:"rgba(255,255,255,0.2)",border:"none",borderRadius:10,padding:"7px 14px",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>Ver opciones →</button></div>
         {combos.length>0&&(<div style={{padding:"0 16px"}}><div style={s.sT}>🎁 Combos especiales</div>{combos.map(c=>(<div key={c.id} style={s.comboCard}>{c.imagen_url&&<img src={c.imagen_url} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:8,marginBottom:8}}/>}<div style={{fontSize:14,fontWeight:700,color:P}}>{c.nombre}</div><div style={{fontSize:12,color:"#64748b",margin:"2px 0 6px"}}>{c.descripcion}</div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:16,fontWeight:700,color:P}}>${parseFloat(c.precio).toFixed(2)}</span>{c.temporada&&<span style={{fontSize:11,background:"#fef3c7",color:"#92400e",padding:"2px 8px",borderRadius:8,fontWeight:600}}>{c.temporada}</span>}</div></div>))}</div>)}
+        {/* REMATES RECIENTES EN INICIO */}
+        {remates.length>0&&(
+          <div style={{padding:"0 16px 4px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 8px"}}>
+              <div style={s.sT}>🏷️ Remates y usados</div>
+              <button onClick={()=>setTab("Remates")} style={{fontSize:11,color:P,background:"none",border:"none",cursor:"pointer",fontWeight:600}}>Ver todo →</button>
+            </div>
+            <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:4}}>
+              {remates.slice(0,6).map(r=>(
+                <div key={r.id} onClick={()=>setTab("Remates")} style={{flexShrink:0,width:140,background:"#fff",borderRadius:12,border:"1px solid #e2e8f0",overflow:"hidden",cursor:"pointer"}}>
+                  {r.foto_url?<img src={r.foto_url} alt={r.titulo} style={{width:"100%",height:75,objectFit:"cover"}}/>:<div style={{height:75,background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>🏷️</div>}
+                  <div style={{padding:"6px 8px"}}>
+                    <div style={{fontSize:11,color:"#92400e",fontWeight:600,marginBottom:1}}>{r.categoria}</div>
+                    <div style={{fontSize:12,fontWeight:600,color:P,lineHeight:1.2}}>{r.titulo}</div>
+                    <div style={{fontSize:13,fontWeight:700,color:P,marginTop:3}}>${parseFloat(r.precio).toFixed(2)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {provPromos.length>0&&(
           <div style={{padding:"0 16px 4px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 8px"}}>
@@ -631,10 +768,395 @@ export default function App() {
         </div>
       </>)}
 
+      {/* REMATES */}
+      {tab==="Remates"&&(<>
+        <div style={s.banner}>
+          <p style={s.bT}>Remates y Usados 🏷️</p>
+          <p style={s.bS}>Compra y vende en San Fernando · Contacto directo</p>
+          <span style={s.bdg("#22c55e","#fff")}>✓ Gratis publicar</span>
+          <span style={s.bdg(A,P)}>Contacto directo al vendedor</span>
+        </div>
+
+        {/* BOTÓN PUBLICAR */}
+        <div style={{padding:"12px 16px 0"}}>
+          <button onClick={()=>setShowPublicarRemate(!showPublicarRemate)} style={{...s.btn,marginTop:0,background:showPublicarRemate?"#64748b":A,color:showPublicarRemate?"#fff":P}}>
+            {showPublicarRemate?"✕ Cancelar":"➕ Publicar mi artículo gratis"}
+          </button>
+        </div>
+
+        {/* FORMULARIO PUBLICAR REMATE */}
+        {showPublicarRemate&&(
+          <div style={{...s.sec,paddingTop:12}}>
+            {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
+            <div style={s.pc}>
+              <div style={s.pT}>📦 Publicar artículo</div>
+              <div style={{...s.ib,background:"#f0fdf4",marginBottom:12}}><div style={{fontSize:12,color:"#15803d"}}>✓ Gratis · El admin revisa antes de publicar · Tu WhatsApp va directo al comprador</div></div>
+              <label style={s.lbl}>Título del artículo *</label>
+              <input style={s.inp} placeholder="Televisor Samsung 32 pulgadas" value={newRemate.titulo} onChange={e=>setNewRemate({...newRemate,titulo:e.target.value})}/>
+              <label style={s.lbl}>Categoría *</label>
+              <select style={{...s.inp,background:"#fff"}} value={newRemate.categoria} onChange={e=>setNewRemate({...newRemate,categoria:e.target.value})}>{REMATE_CATS.map(c=><option key={c}>{c}</option>)}</select>
+              <label style={s.lbl}>Descripción (estado, detalles)</label>
+              <input style={s.inp} placeholder="Buen estado, funciona perfectamente, 2 años de uso..." value={newRemate.descripcion} onChange={e=>setNewRemate({...newRemate,descripcion:e.target.value})}/>
+              <label style={s.lbl}>Precio ($) *</label>
+              <input style={s.inp} type="number" placeholder="25.00" value={newRemate.precio} onChange={e=>setNewRemate({...newRemate,precio:e.target.value})}/>
+              <label style={s.lbl}>Tu nombre *</label>
+              <input style={s.inp} placeholder="Juan Pérez" value={newRemate.vendedor_nombre} onChange={e=>setNewRemate({...newRemate,vendedor_nombre:e.target.value})}/>
+              <label style={s.lbl}>Tu WhatsApp * (compradores te escribirán aquí)</label>
+              <input style={s.inp} placeholder="+58 424-000-0000" value={newRemate.vendedor_telefono} onChange={e=>setNewRemate({...newRemate,vendedor_telefono:e.target.value})}/>
+              <label style={s.lbl}>📸 Foto del artículo (muy recomendada)</label>
+              {remateFotoPreview&&<img src={remateFotoPreview} alt="" style={{width:"100%",height:160,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
+              <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setRemateFoto(f);setRemateFotoPreview(URL.createObjectURL(f));}}}/>
+              <button style={s.btn} onClick={publishRemate} disabled={loading}>{loading?"Enviando...":"📤 Enviar para publicación"}</button>
+            </div>
+          </div>
+        )}
+
+        {/* FILTROS */}
+        {!showPublicarRemate&&(
+          <div style={s.cs}>
+            {["Todos",...REMATE_CATS].map(c=>(
+              <button key={c} style={s.cb(remateCat===c)} onClick={()=>setRemateCat(c)}>{c}</button>
+            ))}
+          </div>
+        )}
+
+        {/* BUSCADOR */}
+        {!showPublicarRemate&&(
+          <div style={s.sw}>
+            <input style={s.si} placeholder="🔍  Buscar artículo..." value={remateSearch} onChange={e=>setRemateSearch(e.target.value)}/>
+          </div>
+        )}
+
+        {/* LISTA DE REMATES */}
+        {!showPublicarRemate&&(
+          <div style={{...s.sec,paddingTop:12}}>
+            {remates.filter(r=>(remateCat==="Todos"||r.categoria===remateCat)&&(!remateSearch||r.titulo.toLowerCase().includes(remateSearch.toLowerCase())||r.descripcion?.toLowerCase().includes(remateSearch.toLowerCase()))).length===0&&(
+              <div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}>
+                <div style={{fontSize:40}}>🔍</div>
+                <p>No hay artículos en esta categoría</p>
+                <button onClick={()=>setShowPublicarRemate(true)} style={{...s.btn,maxWidth:260,margin:"12px auto 0"}}>Sé el primero en publicar</button>
+              </div>
+            )}
+            <div style={s.grid}>
+              {remates.filter(r=>(remateCat==="Todos"||r.categoria===remateCat)&&(!remateSearch||r.titulo.toLowerCase().includes(remateSearch.toLowerCase())||r.descripcion?.toLowerCase().includes(remateSearch.toLowerCase()))).map(r=>(
+                <div key={r.id} style={{...s.card,position:"relative"}}>
+                  {r.foto_url?<img src={r.foto_url} alt={r.titulo} style={s.cImg}/>:<div style={{...s.cEm,background:"#f1f5f9",borderRadius:8,padding:"16px 0"}}>🏷️</div>}
+                  <div style={{fontSize:10,fontWeight:600,background:"#fef3c7",color:"#92400e",padding:"2px 7px",borderRadius:8,alignSelf:"flex-start"}}>{r.categoria}</div>
+                  <div style={s.cNm}>{r.titulo}</div>
+                  {r.descripcion&&<div style={{fontSize:10,color:"#94a3b8",lineHeight:1.3}}>{r.descripcion}</div>}
+                  <div style={s.cBt}>
+                    <div><div style={s.cPr}>${parseFloat(r.precio).toFixed(2)}</div><div style={{fontSize:10,color:"#94a3b8"}}>{r.vendedor_nombre}</div></div>
+                  </div>
+                  <button onClick={()=>window.open(`https://wa.me/${r.vendedor_whatsapp?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${r.vendedor_nombre}, vi tu artículo *${r.titulo}* en MiMercado y me interesa. ¿Sigue disponible?`)}`)} style={{...s.btnWa,marginTop:6,padding:"8px",fontSize:12}}>
+                    📲 Contactar vendedor
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </>)}
+
+      {/* CLASIFICADOS */}
+      {tab==="Clasificados"&&(<>
+        <div style={s.banner}>
+          <p style={s.bT}>Clasificados San Fernando 🚗🏠🏍️</p>
+          <p style={s.bS}>Vehículos · Motos · Inmuebles</p>
+          <span style={s.bdg("#22c55e","#fff")}>✓ Gratis publicar</span>
+          <span style={s.bdg(A,P)}>Hasta 4 fotos</span>
+        </div>
+
+        {/* BOTÓN PUBLICAR */}
+        <div style={{padding:"12px 16px 0"}}>
+          <button onClick={()=>{setShowPublicarClasificado(!showPublicarClasificado);setClasificadoSeleccionado(null);}} style={{...s.btn,marginTop:0,background:showPublicarClasificado?"#64748b":P}}>
+            {showPublicarClasificado?"✕ Cancelar publicación":"➕ Publicar mi anuncio gratis"}
+          </button>
+        </div>
+
+        {/* FORMULARIO PUBLICAR */}
+        {showPublicarClasificado&&(
+          <div style={{...s.sec,paddingTop:12}}>
+            {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
+            <div style={s.pc}>
+              <div style={s.pT}>📋 Nuevo anuncio</div>
+              <div style={{...s.ib,background:"#f0fdf4",marginBottom:12}}><div style={{fontSize:12,color:"#15803d"}}>✓ Gratis · Revisión del admin · Contacto directo por WhatsApp</div></div>
+
+              {/* TIPO */}
+              <label style={s.lbl}>Tipo de anuncio *</label>
+              <div style={{display:"flex",gap:8,marginBottom:10}}>
+                {CLASIF_TIPOS.map(t=>(
+                  <button key={t} onClick={()=>setNewClasificado({...newClasificado,tipo:t,categoria:t})} style={{flex:1,padding:"10px 4px",borderRadius:10,border:newClasificado.tipo===t?`2px solid ${P}`:"1px solid #e2e8f0",background:newClasificado.tipo===t?"#0f172a":"#fff",color:newClasificado.tipo===t?"#fff":"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                    {t==="Vehículos"?"🚗":t==="Motos"?"🏍️":"🏠"} {t}
+                  </button>
+                ))}
+              </div>
+
+              {/* TÍTULO */}
+              <label style={s.lbl}>Título del anuncio *</label>
+              <input style={s.inp} placeholder={newClasificado.tipo==="Vehículos"?"Toyota Corolla 2018 en venta":newClasificado.tipo==="Motos"?"Honda CB 190 2020":"Casa en venta Sector Norte"} value={newClasificado.titulo} onChange={e=>setNewClasificado({...newClasificado,titulo:e.target.value})}/>
+
+              {/* CAMPOS VEHÍCULOS */}
+              {newClasificado.tipo==="Vehículos"&&(<>
+                <div style={{display:"flex",gap:8}}>
+                  <div style={{flex:1}}><label style={s.lbl}>Marca *</label><select style={{...s.inp,background:"#fff"}} value={newClasificado.marca} onChange={e=>setNewClasificado({...newClasificado,marca:e.target.value})}><option value="">Seleccionar...</option>{VEHICULO_MARCAS.map(m=><option key={m}>{m}</option>)}</select></div>
+                  <div style={{flex:1}}><label style={s.lbl}>Modelo</label><input style={s.inp} placeholder="Corolla, Hilux..." value={newClasificado.modelo} onChange={e=>setNewClasificado({...newClasificado,modelo:e.target.value})}/></div>
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  <div style={{flex:1}}><label style={s.lbl}>Año</label><input style={s.inp} type="number" placeholder="2018" value={newClasificado.anio} onChange={e=>setNewClasificado({...newClasificado,anio:e.target.value})}/></div>
+                  <div style={{flex:1}}><label style={s.lbl}>Kilometraje</label><input style={s.inp} placeholder="85.000 km" value={newClasificado.kilometraje} onChange={e=>setNewClasificado({...newClasificado,kilometraje:e.target.value})}/></div>
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  <div style={{flex:1}}><label style={s.lbl}>Color</label><input style={s.inp} placeholder="Blanco" value={newClasificado.color} onChange={e=>setNewClasificado({...newClasificado,color:e.target.value})}/></div>
+                  <div style={{flex:1}}><label style={s.lbl}>Transmisión</label><select style={{...s.inp,background:"#fff"}} value={newClasificado.transmision} onChange={e=>setNewClasificado({...newClasificado,transmision:e.target.value})}>{TRANSMISION.map(t=><option key={t}>{t}</option>)}</select></div>
+                </div>
+                <label style={s.lbl}>Combustible</label>
+                <select style={{...s.inp,background:"#fff"}} value={newClasificado.combustible} onChange={e=>setNewClasificado({...newClasificado,combustible:e.target.value})}>{COMBUSTIBLE.map(c=><option key={c}>{c}</option>)}</select>
+              </>)}
+
+              {/* CAMPOS MOTOS */}
+              {newClasificado.tipo==="Motos"&&(<>
+                <div style={{display:"flex",gap:8}}>
+                  <div style={{flex:1}}><label style={s.lbl}>Marca *</label><select style={{...s.inp,background:"#fff"}} value={newClasificado.marca} onChange={e=>setNewClasificado({...newClasificado,marca:e.target.value})}><option value="">Seleccionar...</option>{MOTO_MARCAS.map(m=><option key={m}>{m}</option>)}</select></div>
+                  <div style={{flex:1}}><label style={s.lbl}>Modelo</label><input style={s.inp} placeholder="CB 190, Titan..." value={newClasificado.modelo} onChange={e=>setNewClasificado({...newClasificado,modelo:e.target.value})}/></div>
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  <div style={{flex:1}}><label style={s.lbl}>Año</label><input style={s.inp} type="number" placeholder="2020" value={newClasificado.anio} onChange={e=>setNewClasificado({...newClasificado,anio:e.target.value})}/></div>
+                  <div style={{flex:1}}><label style={s.lbl}>Kilometraje</label><input style={s.inp} placeholder="15.000 km" value={newClasificado.kilometraje} onChange={e=>setNewClasificado({...newClasificado,kilometraje:e.target.value})}/></div>
+                </div>
+                <label style={s.lbl}>Color</label>
+                <input style={s.inp} placeholder="Rojo, Negro..." value={newClasificado.color} onChange={e=>setNewClasificado({...newClasificado,color:e.target.value})}/>
+              </>)}
+
+              {/* CAMPOS INMUEBLES */}
+              {newClasificado.tipo==="Inmuebles"&&(<>
+                <label style={s.lbl}>Tipo de operación *</label>
+                <div style={{display:"flex",gap:8,marginBottom:10}}>{TIPO_OPERACION.map(t=>(<button key={t} onClick={()=>setNewClasificado({...newClasificado,tipo_operacion:t})} style={{flex:1,padding:"9px",borderRadius:10,border:newClasificado.tipo_operacion===t?`2px solid ${P}`:"1px solid #e2e8f0",background:newClasificado.tipo_operacion===t?P:"#fff",color:newClasificado.tipo_operacion===t?"#fff":"#64748b",fontSize:13,fontWeight:600,cursor:"pointer"}}>{t==="Venta"?"🏷️ Venta":"🔑 Alquiler"}</button>))}</div>
+                <label style={s.lbl}>Sector / Urbanización</label>
+                <input style={s.inp} placeholder="Sector Norte, Barrio El Carmen..." value={newClasificado.sector} onChange={e=>setNewClasificado({...newClasificado,sector:e.target.value})}/>
+                <div style={{display:"flex",gap:8}}>
+                  <div style={{flex:1}}><label style={s.lbl}>Habitaciones</label><input style={s.inp} type="number" placeholder="3" value={newClasificado.habitaciones} onChange={e=>setNewClasificado({...newClasificado,habitaciones:e.target.value})}/></div>
+                  <div style={{flex:1}}><label style={s.lbl}>Baños</label><input style={s.inp} type="number" placeholder="2" value={newClasificado.banos} onChange={e=>setNewClasificado({...newClasificado,banos:e.target.value})}/></div>
+                </div>
+                <label style={s.lbl}>Metros cuadrados</label>
+                <input style={s.inp} placeholder="120 m²" value={newClasificado.metros2} onChange={e=>setNewClasificado({...newClasificado,metros2:e.target.value})}/>
+              </>)}
+
+              {/* DESCRIPCIÓN */}
+              <label style={s.lbl}>Descripción (detalles adicionales)</label>
+              <input style={s.inp} placeholder="Estado, equipamiento, motivo de venta..." value={newClasificado.descripcion} onChange={e=>setNewClasificado({...newClasificado,descripcion:e.target.value})}/>
+
+              {/* PRECIO */}
+              <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
+                <div style={{flex:1}}><label style={s.lbl}>Precio ($) *</label><input style={s.inp} type="number" placeholder="5000" value={newClasificado.precio} onChange={e=>setNewClasificado({...newClasificado,precio:e.target.value})}/></div>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10,background:"#f1f5f9",padding:"11px 12px",borderRadius:10,flexShrink:0}}>
+                  <input type="checkbox" id="negoc" checked={newClasificado.negociable} onChange={e=>setNewClasificado({...newClasificado,negociable:e.target.checked})} style={{width:16,height:16}}/>
+                  <label htmlFor="negoc" style={{fontSize:12,cursor:"pointer",whiteSpace:"nowrap"}}>Negociable</label>
+                </div>
+              </div>
+
+              {/* FOTOS */}
+              <label style={s.lbl}>📸 Fotos (hasta 4 fotos)</label>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+                {[0,1,2,3].map(i=>(
+                  <div key={i} style={{position:"relative"}}>
+                    {clasifFotosPrev[i]?(
+                      <div style={{position:"relative"}}>
+                        <img src={clasifFotosPrev[i]} alt="" style={{width:"100%",height:90,objectFit:"cover",borderRadius:8}}/>
+                        <button onClick={()=>{const f=[...clasifFotos];const p=[...clasifFotosPrev];f[i]=null;p[i]=null;setClasifFotos(f);setClasifFotosPrev(p);}} style={{position:"absolute",top:4,right:4,background:"#ef4444",color:"#fff",border:"none",borderRadius:"50%",width:22,height:22,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                      </div>
+                    ):(
+                      <label style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:90,background:"#f8fafc",borderRadius:8,border:"2px dashed #e2e8f0",cursor:"pointer",gap:4}}>
+                        <span style={{fontSize:22}}>📷</span>
+                        <span style={{fontSize:10,color:"#94a3b8"}}>Foto {i+1}</span>
+                        <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){const arr=[...clasifFotos];const prev=[...clasifFotosPrev];arr[i]=f;prev[i]=URL.createObjectURL(f);setClasifFotos(arr);setClasifFotosPrev(prev);}}}/>
+                      </label>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* CONTACTO */}
+              <label style={s.lbl}>Tu nombre *</label>
+              <input style={s.inp} placeholder="Juan Pérez" value={newClasificado.vendedor_nombre} onChange={e=>setNewClasificado({...newClasificado,vendedor_nombre:e.target.value})}/>
+              <label style={s.lbl}>Tu WhatsApp * (compradores te contactarán aquí)</label>
+              <input style={s.inp} placeholder="+58 424-000-0000" value={newClasificado.vendedor_telefono} onChange={e=>setNewClasificado({...newClasificado,vendedor_telefono:e.target.value})}/>
+
+              <button style={s.btn} onClick={publishClasificado} disabled={loading}>{loading?"Subiendo fotos...":"📤 Publicar anuncio"}</button>
+            </div>
+          </div>
+        )}
+
+        {/* FILTROS TIPO */}
+        {!showPublicarClasificado&&!clasificadoSeleccionado&&(
+          <div style={s.cs}>
+            {["Todos","Vehículos","Motos","Inmuebles"].map(t=>(
+              <button key={t} style={s.cb(clasificadoTipo===t)} onClick={()=>setClasificadoTipo(t)}>
+                {t==="Todos"?"🔍 Todos":t==="Vehículos"?"🚗 Vehículos":t==="Motos"?"🏍️ Motos":"🏠 Inmuebles"}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* DETALLE DE UN CLASIFICADO */}
+        {clasificadoSeleccionado&&(
+          <div style={{...s.sec,paddingTop:12}}>
+            <button onClick={()=>setClasificadoSeleccionado(null)} style={{...s.btnG,marginTop:0,marginBottom:12}}>← Volver a la lista</button>
+            {/* GALERÍA DE FOTOS */}
+            {[clasificadoSeleccionado.foto1_url,clasificadoSeleccionado.foto2_url,clasificadoSeleccionado.foto3_url,clasificadoSeleccionado.foto4_url].filter(Boolean).length>0&&(
+              <div style={{display:"grid",gridTemplateColumns:[clasificadoSeleccionado.foto1_url,clasificadoSeleccionado.foto2_url,clasificadoSeleccionado.foto3_url,clasificadoSeleccionado.foto4_url].filter(Boolean).length===1?"1fr":"1fr 1fr",gap:6,marginBottom:12}}>
+                {[clasificadoSeleccionado.foto1_url,clasificadoSeleccionado.foto2_url,clasificadoSeleccionado.foto3_url,clasificadoSeleccionado.foto4_url].filter(Boolean).map((f,i)=>(
+                  <img key={i} src={f} alt="" style={{width:"100%",height:i===0&&[clasificadoSeleccionado.foto1_url,clasificadoSeleccionado.foto2_url,clasificadoSeleccionado.foto3_url,clasificadoSeleccionado.foto4_url].filter(Boolean).length===1?200:130,objectFit:"cover",borderRadius:10}}/>
+                ))}
+              </div>
+            )}
+            <div style={s.pc}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+                <div>
+                  <div style={{fontSize:11,color:"#7e22ce",fontWeight:700,marginBottom:2}}>{clasificadoSeleccionado.tipo==="Vehículos"?"🚗":clasificadoSeleccionado.tipo==="Motos"?"🏍️":"🏠"} {clasificadoSeleccionado.tipo}</div>
+                  <div style={{fontSize:17,fontWeight:700,color:P}}>{clasificadoSeleccionado.titulo}</div>
+                </div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontSize:20,fontWeight:700,color:"#22c55e"}}>${parseFloat(clasificadoSeleccionado.precio).toLocaleString()}</div>
+                  {clasificadoSeleccionado.negociable&&<div style={{fontSize:11,color:"#f59e0b",fontWeight:600}}>Negociable</div>}
+                </div>
+              </div>
+              {/* SPECS */}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:10}}>
+                {clasificadoSeleccionado.marca&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Marca</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.marca}</div></div>}
+                {clasificadoSeleccionado.modelo&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Modelo</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.modelo}</div></div>}
+                {clasificadoSeleccionado.anio&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Año</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.anio}</div></div>}
+                {clasificadoSeleccionado.kilometraje&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Kilometraje</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.kilometraje}</div></div>}
+                {clasificadoSeleccionado.transmision&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Transmisión</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.transmision}</div></div>}
+                {clasificadoSeleccionado.combustible&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Combustible</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.combustible}</div></div>}
+                {clasificadoSeleccionado.color&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Color</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.color}</div></div>}
+                {clasificadoSeleccionado.tipo_operacion&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Operación</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.tipo_operacion}</div></div>}
+                {clasificadoSeleccionado.habitaciones&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Habitaciones</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.habitaciones}</div></div>}
+                {clasificadoSeleccionado.banos&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Baños</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.banos}</div></div>}
+                {clasificadoSeleccionado.metros2&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Metros²</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.metros2}</div></div>}
+                {clasificadoSeleccionado.sector&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Sector</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.sector}</div></div>}
+              </div>
+              {clasificadoSeleccionado.descripcion&&<div style={{fontSize:13,color:"#64748b",marginBottom:12,lineHeight:1.6}}>{clasificadoSeleccionado.descripcion}</div>}
+              <div style={{fontSize:12,color:"#64748b",marginBottom:12}}>👤 {clasificadoSeleccionado.vendedor_nombre}</div>
+              <button onClick={()=>window.open(`https://wa.me/${clasificadoSeleccionado.vendedor_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${clasificadoSeleccionado.vendedor_nombre}, vi tu anuncio *${clasificadoSeleccionado.titulo}* en MiMercado. ¿Sigue disponible?`)}`)} style={s.btnWa}>
+                📲 Contactar por WhatsApp
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* LISTA DE CLASIFICADOS */}
+        {!showPublicarClasificado&&!clasificadoSeleccionado&&(
+          <div style={{...s.sec,paddingTop:8}}>
+            {clasificados.filter(c=>clasificadoTipo==="Todos"||c.tipo===clasificadoTipo).length===0&&(
+              <div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}>
+                <div style={{fontSize:40}}>{clasificadoTipo==="Motos"?"🏍️":clasificadoTipo==="Inmuebles"?"🏠":"🚗"}</div>
+                <p>No hay anuncios en esta categoría</p>
+                <button onClick={()=>setShowPublicarClasificado(true)} style={{...s.btn,maxWidth:260,margin:"12px auto 0"}}>Publicar el primero</button>
+              </div>
+            )}
+            {clasificados.filter(c=>clasificadoTipo==="Todos"||c.tipo===clasificadoTipo).map(c=>(
+              <div key={c.id} onClick={()=>setClasificadoSeleccionado(c)} style={{background:"#fff",borderRadius:14,marginBottom:12,border:"1px solid #f1f5f9",overflow:"hidden",cursor:"pointer"}}>
+                {/* FOTO PRINCIPAL */}
+                {c.foto1_url?<img src={c.foto1_url} alt={c.titulo} style={{width:"100%",height:160,objectFit:"cover"}}/>:<div style={{height:100,background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:40}}>{c.tipo==="Motos"?"🏍️":c.tipo==="Inmuebles"?"🏠":"🚗"}</div>}
+                {/* INFO */}
+                <div style={{padding:"10px 12px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
+                    <div style={{fontSize:11,color:"#7e22ce",fontWeight:700}}>{c.tipo==="Vehículos"?"🚗":c.tipo==="Motos"?"🏍️":"🏠"} {c.tipo}{c.tipo_operacion?` · ${c.tipo_operacion}`:""}</div>
+                    {[c.foto1_url,c.foto2_url,c.foto3_url,c.foto4_url].filter(Boolean).length>1&&<div style={{fontSize:10,color:"#94a3b8"}}>📷 {[c.foto1_url,c.foto2_url,c.foto3_url,c.foto4_url].filter(Boolean).length} fotos</div>}
+                  </div>
+                  <div style={{fontSize:15,fontWeight:700,color:P,marginBottom:4}}>{c.titulo}</div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:6}}>
+                    {c.marca&&<span style={{fontSize:11,background:"#f1f5f9",color:"#64748b",padding:"2px 8px",borderRadius:20}}>{c.marca}</span>}
+                    {c.anio&&<span style={{fontSize:11,background:"#f1f5f9",color:"#64748b",padding:"2px 8px",borderRadius:20}}>{c.anio}</span>}
+                    {c.kilometraje&&<span style={{fontSize:11,background:"#f1f5f9",color:"#64748b",padding:"2px 8px",borderRadius:20}}>{c.kilometraje}</span>}
+                    {c.habitaciones&&<span style={{fontSize:11,background:"#f1f5f9",color:"#64748b",padding:"2px 8px",borderRadius:20}}>{c.habitaciones} hab.</span>}
+                    {c.sector&&<span style={{fontSize:11,background:"#f1f5f9",color:"#64748b",padding:"2px 8px",borderRadius:20}}>📍 {c.sector}</span>}
+                  </div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div><span style={{fontSize:18,fontWeight:700,color:"#22c55e"}}>${parseFloat(c.precio).toLocaleString()}</span>{c.negociable&&<span style={{fontSize:11,color:"#f59e0b",fontWeight:600,marginLeft:6}}>Negociable</span>}</div>
+                    <span style={{fontSize:12,color:P,fontWeight:600}}>Ver más →</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </>)}
+
       {/* SERVICIOS */}
       {tab==="Servicios"&&(<>
-        <div style={{...s.banner,paddingBottom:14}}><p style={s.bT}>Servicios en {CITY} ⚡</p><p style={{fontSize:12,color:"rgba(255,255,255,0.7)",margin:0}}>Todo sin salir de casa</p></div>
-        <div style={{...s.sec,marginTop:14}}>{SVCS.map(sv=>(<div key={sv.id} style={{background:"#fff",borderRadius:14,padding:14,border:"1px solid #f1f5f9",display:"flex",gap:12,alignItems:"flex-start",marginBottom:10}}><div style={{fontSize:28,width:44,height:44,background:sv.bg,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{sv.emoji}</div><div style={{flex:1}}><div style={{fontSize:14,fontWeight:700}}>{sv.name}</div><div style={{fontSize:12,color:"#64748b",margin:"2px 0 6px"}}>{sv.desc}</div><span style={{fontSize:11,fontWeight:600,color:sv.tc,background:sv.bg,padding:"2px 8px",borderRadius:8}}>{sv.price}</span></div><button style={{background:P,color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer"}} onClick={()=>{setSelSvc(sv);setSheet("service");}}>Solicitar</button></div>))}</div>
+        <div style={{...s.banner,paddingBottom:14}}>
+          <p style={s.bT}>Servicios en {CITY} ⚡</p>
+          <p style={{fontSize:12,color:"rgba(255,255,255,0.7)",margin:0}}>Servicios propios + comunidad</p>
+        </div>
+
+        {/* SERVICIOS FIJOS */}
+        <div style={{...s.sec,marginTop:14}}>
+          <div style={s.sT}>⚡ Servicios disponibles</div>
+          {SVCS.map(sv=>(<div key={sv.id} style={{background:"#fff",borderRadius:14,padding:14,border:"1px solid #f1f5f9",display:"flex",gap:12,alignItems:"flex-start",marginBottom:10}}><div style={{fontSize:28,width:44,height:44,background:sv.bg,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{sv.emoji}</div><div style={{flex:1}}><div style={{fontSize:14,fontWeight:700}}>{sv.name}</div><div style={{fontSize:12,color:"#64748b",margin:"2px 0 6px"}}>{sv.desc}</div><span style={{fontSize:11,fontWeight:600,color:sv.tc,background:sv.bg,padding:"2px 8px",borderRadius:8}}>{sv.price}</span></div><button style={{background:P,color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer"}} onClick={()=>{setSelSvc(sv);setSheet("service");}}>Solicitar</button></div>))}
+        </div>
+
+        {/* SERVICIOS DE LA COMUNIDAD */}
+        <div style={{...s.sec,paddingTop:0}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 8px"}}>
+            <div style={s.sT}>👥 Servicios de la comunidad</div>
+            <button onClick={()=>setShowPublicarServicio(!showPublicarServicio)} style={{fontSize:11,fontWeight:700,color:showPublicarServicio?"#64748b":P,background:showPublicarServicio?"#f1f5f9":"#fef3c7",border:"none",borderRadius:8,padding:"5px 10px",cursor:"pointer"}}>{showPublicarServicio?"✕ Cancelar":"➕ Ofrecer mi servicio"}</button>
+          </div>
+
+          {/* FORMULARIO SERVICIO COMUNIDAD */}
+          {showPublicarServicio&&(
+            <div style={s.pc}>
+              <div style={s.pT}>🛠️ Registrar mi servicio</div>
+              <div style={{...s.ib,background:"#f0fdf4",marginBottom:12}}><div style={{fontSize:12,color:"#15803d"}}>✓ Gratis · El admin revisa antes de publicar · Los clientes te contactan directo</div></div>
+              {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
+              <label style={s.lbl}>¿Qué servicio ofreces? *</label>
+              <input style={s.inp} placeholder="Plomero, Electricista, Costurera..." value={newServicioCom.nombre_servicio} onChange={e=>setNewServicioCom({...newServicioCom,nombre_servicio:e.target.value})}/>
+              <label style={s.lbl}>Categoría *</label>
+              <select style={{...s.inp,background:"#fff"}} value={newServicioCom.categoria} onChange={e=>setNewServicioCom({...newServicioCom,categoria:e.target.value})}>{SERVICIO_CATS.map(c=><option key={c}>{c}</option>)}</select>
+              <label style={s.lbl}>Descripción * (qué haces, experiencia)</label>
+              <input style={s.inp} placeholder="10 años de experiencia, trabajo en toda la ciudad..." value={newServicioCom.descripcion} onChange={e=>setNewServicioCom({...newServicioCom,descripcion:e.target.value})}/>
+              <label style={s.lbl}>Precio referencial</label>
+              <input style={s.inp} placeholder="Desde $5, Consultar, $10/hora..." value={newServicioCom.precio_referencial} onChange={e=>setNewServicioCom({...newServicioCom,precio_referencial:e.target.value})}/>
+              <label style={s.lbl}>Zona donde trabajas</label>
+              <input style={s.inp} placeholder="Toda la ciudad, Zona Norte, Centro..." value={newServicioCom.zona} onChange={e=>setNewServicioCom({...newServicioCom,zona:e.target.value})}/>
+              <label style={s.lbl}>Tu nombre *</label>
+              <input style={s.inp} placeholder="Juan Pérez" value={newServicioCom.proveedor_nombre} onChange={e=>setNewServicioCom({...newServicioCom,proveedor_nombre:e.target.value})}/>
+              <label style={s.lbl}>Tu WhatsApp * (clientes te escribirán aquí)</label>
+              <input style={s.inp} placeholder="+58 424-000-0000" value={newServicioCom.proveedor_telefono} onChange={e=>setNewServicioCom({...newServicioCom,proveedor_telefono:e.target.value})}/>
+              <label style={s.lbl}>📸 Tu foto o foto de tu trabajo (recomendada)</label>
+              {servComFotoPreview&&<img src={servComFotoPreview} alt="" style={{width:"100%",height:140,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
+              <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setServComFoto(f);setServComFotoPreview(URL.createObjectURL(f));}}}/>
+              <button style={s.btn} onClick={publishServicioCom} disabled={loading}>{loading?"Enviando...":"📤 Enviar para publicación"}</button>
+            </div>
+          )}
+
+          {/* LISTA SERVICIOS COMUNIDAD */}
+          {!showPublicarServicio&&serviciosCom.length===0&&(
+            <div style={{textAlign:"center",padding:"24px 0",color:"#94a3b8"}}>
+              <div style={{fontSize:36}}>🛠️</div>
+              <p style={{fontSize:13,margin:"8px 0"}}>Aún no hay servicios de la comunidad</p>
+              <button onClick={()=>setShowPublicarServicio(true)} style={{...s.btn,maxWidth:240,margin:"8px auto 0",fontSize:13}}>Sé el primero</button>
+            </div>
+          )}
+          {!showPublicarServicio&&serviciosCom.map(sv=>(
+            <div key={sv.id} style={{background:"#fff",borderRadius:14,padding:14,border:"1px solid #f1f5f9",marginBottom:10}}>
+              <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
+                {sv.foto_url?<img src={sv.foto_url} alt="" style={{width:52,height:52,borderRadius:10,objectFit:"cover",flexShrink:0}}/>:<div style={{width:52,height:52,background:"#f1f5f9",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🛠️</div>}
+                <div style={{flex:1}}>
+                  <div style={{fontSize:14,fontWeight:700}}>{sv.nombre_servicio}</div>
+                  <div style={{fontSize:11,color:"#7e22ce",fontWeight:600,marginBottom:2}}>{sv.categoria}</div>
+                  <div style={{fontSize:12,color:"#64748b"}}>{sv.descripcion}</div>
+                  {sv.precio_referencial&&<div style={{fontSize:11,fontWeight:600,color:"#15803d",marginTop:3}}>💰 {sv.precio_referencial}</div>}
+                  {sv.zona&&<div style={{fontSize:11,color:"#94a3b8"}}>📍 {sv.zona}</div>}
+                  <div style={{fontSize:11,color:"#64748b",marginTop:2}}>👤 {sv.proveedor_nombre}</div>
+                </div>
+              </div>
+              <button onClick={()=>window.open(`https://wa.me/${sv.proveedor_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${sv.proveedor_nombre}, vi tu servicio de *${sv.nombre_servicio}* en MiMercado. ¿Podrías ayudarme?`)}`)} style={{...s.btnWa,marginTop:10,padding:"8px",fontSize:12}}>
+                📲 Contactar
+              </button>
+            </div>
+          ))}
+        </div>
       </>)}
 
       {/* PROVEEDORES */}
@@ -708,7 +1230,7 @@ export default function App() {
 
           <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}}>
             {["estado","productos","promos","ventas"].map(t=>{
-              const isPromoTab=t==="promos"&&(provTab==="promo_nueva"||provTab==="promo_activas"||provTab==="promo_pendientes"||provTab==="promo_rechazadas");
+              const isPromoTab=t==="promos"&&(provTab==="promo_nueva"||provTab==="promo_activas"||provTab==="promo_pausadas"||provTab==="promo_pendientes"||provTab==="promo_rechazadas");
               const isProdTab=t==="productos"&&(provTab==="productos"||provTab==="prod_nuevo"||provTab==="prod_aprobados"||provTab==="prod_pendientes"||provTab==="prod_rechazados");
               const isActive=provTab===t||isPromoTab||isProdTab;
               return(<button key={t} onClick={()=>setProvTab(t==="promos"?"promo_nueva":t==="productos"?"prod_aprobados":t)} style={{flexShrink:0,padding:"8px 12px",borderRadius:10,border:"none",background:isActive?P:"#f1f5f9",color:isActive?"#fff":"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t==="estado"?"📊 Stats":t==="productos"?"📦 Productos":t==="promos"?(myPromos.filter(pr=>pr.motivo_rechazo).length>0?`🎉 Promos ⚠️${myPromos.filter(pr=>pr.motivo_rechazo).length}`:"🎉 Promos"):"💰 Ventas"}</button>);
@@ -949,13 +1471,14 @@ export default function App() {
             )}
           </>)}
 
-          {(provTab==="promos"||provTab==="promo_nueva"||provTab==="promo_activas"||provTab==="promo_pendientes"||provTab==="promo_rechazadas")&&(<>
+          {(provTab==="promos"||provTab==="promo_nueva"||provTab==="promo_activas"||provTab==="promo_pausadas"||provTab==="promo_pendientes"||provTab==="promo_rechazadas")&&(<>
             {/* SUB-TABS PROMOS */}
             <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}}>
               {[
                 {k:"promo_nueva",l:"➕ Nueva"},
-                {k:"promo_activas",l:`✅ Activas (${myPromos.filter(pr=>pr.aprobada).length})`},
-                {k:"promo_pendientes",l:`⏳ Pendientes (${myPromos.filter(pr=>!pr.aprobada&&!pr.motivo_rechazo).length})`},
+                {k:"promo_activas",l:`✅ Activas (${myPromos.filter(pr=>pr.aprobada&&pr.activa).length})`},
+                {k:"promo_pausadas",l:`⏸️ Pausadas (${myPromos.filter(pr=>pr.aprobada&&!pr.activa&&!pr.motivo_rechazo).length})`},
+                {k:"promo_pendientes",l:`⏳ Pendientes (${myPromos.filter(pr=>!pr.aprobada&&pr.activa&&!pr.motivo_rechazo).length})`},
                 {k:"promo_rechazadas",l:`✗ Rechazadas (${myPromos.filter(pr=>pr.motivo_rechazo).length})`},
               ].map(t=>(
                 <button key={t.k} onClick={()=>setProvTab(t.k)} style={{flexShrink:0,padding:"7px 11px",borderRadius:10,border:"none",background:provTab===t.k?P:"#f1f5f9",color:provTab===t.k?"#fff":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer"}}>{t.l}</button>
@@ -985,8 +1508,23 @@ export default function App() {
             {provTab==="promo_activas"&&(
               <div style={s.pc}>
                 <div style={s.pT}>✅ Promociones activas</div>
-                {myPromos.filter(pr=>pr.aprobada).length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No tienes promociones activas</div>}
-                {myPromos.filter(pr=>pr.aprobada).map(pr=>(
+                {myPromos.filter(pr=>pr.aprobada&&pr.activa).length===0&&myPromos.filter(pr=>pr.aprobada&&!pr.activa&&!pr.motivo_rechazo).length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No tienes promociones activas</div>}
+                {/* Pausadas */}
+                {myPromos.filter(pr=>pr.aprobada&&!pr.activa&&!pr.motivo_rechazo).map(pr=>(
+                  <div key={`paused_${pr.id}`} style={{background:"#fff7ed",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #fed7aa"}}>
+                    {pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:80,objectFit:"cover",borderRadius:8,marginBottom:6}}/>}
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+                      <div><div style={{fontSize:13,fontWeight:700}}>{pr.nombre}</div><div style={{fontSize:11,color:"#64748b"}}>${pr.precio}</div></div>
+                      <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8,background:"#fed7aa",color:"#c2410c",flexShrink:0,marginLeft:8}}>⏸️ Pausada</span>
+                    </div>
+                    <div style={{display:"flex",gap:6}}>
+                      <button onClick={async()=>{await supabase.from("promociones_proveedor").update({activa:true}).eq("id",pr.id);loadMyPromos(provData.id);loadAll();}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#f0fdf4",color:"#15803d"}}>▶️ Reactivar</button>
+                      <button onClick={async()=>{if(!window.confirm("¿Eliminar esta promoción?"))return;await supabase.from("promociones_proveedor").delete().eq("id",pr.id);loadMyPromos(provData.id);loadAll();}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fee2e2",color:"#be123c"}}>🗑️ Eliminar</button>
+                    </div>
+                  </div>
+                ))}
+                {/* Activas */}
+                {myPromos.filter(pr=>pr.aprobada&&pr.activa).map(pr=>(
                   <div key={pr.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
                     {pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:110,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
@@ -1026,7 +1564,7 @@ export default function App() {
                     ):(
                       <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>
                         <button onClick={()=>{setEditandoHorario(`edit_promo_${pr.id}`);setNewPromo({nombre:pr.nombre||"",descripcion:pr.descripcion||"",precio:String(pr.precio||""),fecha_inicio:pr.fecha_inicio||"",fecha_fin:pr.fecha_fin||""});}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#eff6ff",color:"#1d4ed8"}}>✏️ Modificar</button>
-                        <button onClick={async()=>{await supabase.from("promociones_proveedor").update({activa:false,aprobada:false}).eq("id",pr.id);loadMyPromos(provData.id);loadAll();}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fff7ed",color:"#c2410c"}}>⏸️ Pausar</button>
+                        <button onClick={async()=>{await supabase.from("promociones_proveedor").update({activa:false}).eq("id",pr.id);loadMyPromos(provData.id);loadAll();}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fff7ed",color:"#c2410c"}}>⏸️ Pausar</button>
                         <button onClick={async()=>{if(!window.confirm("¿Eliminar esta promoción?"))return;await supabase.from("promociones_proveedor").delete().eq("id",pr.id);loadMyPromos(provData.id);loadAll();}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fee2e2",color:"#be123c"}}>🗑️ Eliminar</button>
                       </div>
                     )}
@@ -1036,12 +1574,34 @@ export default function App() {
               </div>
             )}
 
+            {/* PAUSADAS */}
+            {provTab==="promo_pausadas"&&(
+              <div style={s.pc}>
+                <div style={s.pT}>⏸️ Promociones pausadas</div>
+                {myPromos.filter(pr=>pr.aprobada&&!pr.activa&&!pr.motivo_rechazo).length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No tienes promociones pausadas</div>}
+                {myPromos.filter(pr=>pr.aprobada&&!pr.activa&&!pr.motivo_rechazo).map(pr=>(
+                  <div key={pr.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
+                    {pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:90,objectFit:"cover",borderRadius:10,marginBottom:8,opacity:0.6}}/>}
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+                      <div>
+                        <div style={{fontSize:13,fontWeight:700,color:"#64748b"}}>{pr.nombre}</div>
+                        <div style={{fontSize:11,color:"#94a3b8"}}>${pr.precio} · {pr.descripcion}</div>
+                      </div>
+                      <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8,background:"#f1f5f9",color:"#64748b",flexShrink:0,marginLeft:8}}>⏸️ Pausada</span>
+                    </div>
+                    <button onClick={async()=>{await supabase.from("promociones_proveedor").update({activa:true}).eq("id",pr.id);loadMyPromos(provData.id);loadAll();}} style={{...s.btnGreen,width:"100%",borderRadius:10,padding:"8px",fontSize:12,marginTop:0}}>▶️ Activar promoción</button>
+                    <button onClick={async()=>{if(!window.confirm("¿Eliminar esta promoción?"))return;await supabase.from("promociones_proveedor").delete().eq("id",pr.id);loadMyPromos(provData.id);loadAll();}} style={{...s.btnRed,width:"100%",borderRadius:10,padding:"8px",fontSize:12,marginTop:6}}>🗑️ Eliminar</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* PENDIENTES */}
             {provTab==="promo_pendientes"&&(
               <div style={s.pc}>
                 <div style={s.pT}>⏳ Esperando aprobación</div>
-                {myPromos.filter(pr=>!pr.aprobada&&!pr.motivo_rechazo).length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No tienes promociones pendientes</div>}
-                {myPromos.filter(pr=>!pr.aprobada&&!pr.motivo_rechazo).map(pr=>(
+                {myPromos.filter(pr=>!pr.aprobada&&pr.activa&&!pr.motivo_rechazo).length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No tienes promociones pendientes</div>}
+                {myPromos.filter(pr=>!pr.aprobada&&pr.activa&&!pr.motivo_rechazo).map(pr=>(
                   <div key={pr.id} style={{background:"#fef9c3",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #fde68a"}}>
                     {pr.foto_url&&<img src={pr.foto_url} alt="" style={{width:"100%",height:90,objectFit:"cover",borderRadius:8,marginBottom:6}}/>}
                     <div style={{fontSize:13,fontWeight:700}}>{pr.nombre}</div>
@@ -1145,6 +1705,9 @@ export default function App() {
               {key:"zonas",label:"🗺️ Zonas de delivery",n:0},
               {key:"combos",label:"🎁 Combos",n:0},
               {key:"super",label:"🛒 Supermercado",n:0},
+              {key:"remates_pend",label:"🏷️ Remates pendientes",n:pendRemates.length},
+              {key:"servicios_pend",label:"🛠️ Servicios pendientes",n:pendServiciosCom.length},
+              {key:"clasificados_pend",label:"🚗 Clasificados pendientes",n:pendClasificados.length},
             ].map(x=>(<button key={x.key} style={s.admRow(adminSec===x.key)} onClick={()=>{setAdminSec(x.key);if(x.key==="pedidos")loadPedidos();}}><span>{x.label}</span>{x.n>0&&<span style={{background:"#ef4444",color:"#fff",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700}}>{x.n}</span>}</button>))}
           </div>
 
@@ -1339,7 +1902,82 @@ export default function App() {
 
           {adminSec==="combos"&&(<div style={{margin:"0 16px"}}><div style={s.pc}><div style={s.pT}>🎁 Combos</div>{combosAdmin.map(c=>(<div key={c.id} style={{padding:"8px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}><div style={{fontWeight:600}}>{c.nombre} — ${c.precio}</div><div style={{color:"#64748b"}}>{c.temporada}</div></div>))}<div style={{marginTop:14}}><input style={s.inp} placeholder="Nombre" value={newCombo.nombre} onChange={e=>setNewCombo({...newCombo,nombre:e.target.value})}/><input style={s.inp} placeholder="Descripción" value={newCombo.descripcion} onChange={e=>setNewCombo({...newCombo,descripcion:e.target.value})}/><input style={s.inp} type="number" placeholder="Precio $" value={newCombo.precio} onChange={e=>setNewCombo({...newCombo,precio:e.target.value})}/><input style={s.inp} placeholder="Temporada" value={newCombo.temporada} onChange={e=>setNewCombo({...newCombo,temporada:e.target.value})}/><div style={{display:"flex",gap:8}}><div style={{flex:1}}><label style={s.lbl}>Desde</label><input style={s.inp} type="date" value={newCombo.fecha_inicio} onChange={e=>setNewCombo({...newCombo,fecha_inicio:e.target.value})}/></div><div style={{flex:1}}><label style={s.lbl}>Hasta</label><input style={s.inp} type="date" value={newCombo.fecha_fin} onChange={e=>setNewCombo({...newCombo,fecha_fin:e.target.value})}/></div></div><button style={s.btn} onClick={addCombo}>Publicar combo</button></div></div></div>)}
 
+          {adminSec==="remates_pend"&&(
+            <div style={{margin:"0 16px"}}>
+              <div style={s.pc}>
+                <div style={s.pT}>🏷️ Remates por aprobar ({pendRemates.length})</div>
+                {pendRemates.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay remates pendientes ✓</div>}
+                {pendRemates.map(r=>(
+                  <div key={r.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
+                    {r.foto_url?<img src={r.foto_url} alt="" style={{width:"100%",height:130,objectFit:"cover",borderRadius:10,marginBottom:8}}/>:<div style={{background:"#f1f5f9",borderRadius:10,height:60,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,marginBottom:8}}>🏷️</div>}
+                    <div style={{fontSize:13,fontWeight:700}}>{r.titulo}</div>
+                    <div style={{fontSize:11,color:"#64748b"}}>{r.categoria} · ${r.precio}</div>
+                    <div style={{fontSize:11,color:"#94a3b8",marginBottom:4}}>{r.descripcion}</div>
+                    <div style={{fontSize:11,color:"#64748b",marginBottom:10}}>👤 {r.vendedor_nombre} · 📱 {r.vendedor_telefono}</div>
+                    <div style={{display:"flex",gap:8}}>
+                      <button onClick={async()=>{setPendRemates(prev=>prev.filter(x=>x.id!==r.id));await supabase.from("remates").update({aprobado:true}).eq("id",r.id);loadRemates();await loadAdmin();}} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Aprobar</button>
+                      <button onClick={async()=>{if(!window.confirm("¿Rechazar este remate?"))return;setPendRemates(prev=>prev.filter(x=>x.id!==r.id));await supabase.from("remates").delete().eq("id",r.id);await loadAdmin();}} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Rechazar</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {adminSec==="servicios_pend"&&(
+            <div style={{margin:"0 16px"}}>
+              <div style={s.pc}>
+                <div style={s.pT}>🛠️ Servicios por aprobar ({pendServiciosCom.length})</div>
+                {pendServiciosCom.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay servicios pendientes ✓</div>}
+                {pendServiciosCom.map(sv=>(
+                  <div key={sv.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
+                    {sv.foto_url&&<img src={sv.foto_url} alt="" style={{width:"100%",height:110,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
+                    <div style={{fontSize:13,fontWeight:700}}>{sv.nombre_servicio}</div>
+                    <div style={{fontSize:11,color:"#7e22ce",fontWeight:600}}>{sv.categoria}</div>
+                    <div style={{fontSize:11,color:"#64748b",margin:"2px 0 4px"}}>{sv.descripcion}</div>
+                    {sv.precio_referencial&&<div style={{fontSize:11,color:"#15803d"}}>💰 {sv.precio_referencial}</div>}
+                    {sv.zona&&<div style={{fontSize:11,color:"#94a3b8"}}>📍 {sv.zona}</div>}
+                    <div style={{fontSize:11,color:"#64748b",marginBottom:10}}>👤 {sv.proveedor_nombre} · 📱 {sv.proveedor_telefono}</div>
+                    <div style={{display:"flex",gap:8}}>
+                      <button onClick={async()=>{setPendServiciosCom(prev=>prev.filter(x=>x.id!==sv.id));await supabase.from("servicios_comunidad").update({aprobado:true}).eq("id",sv.id);loadServiciosCom();await loadAdmin();}} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Aprobar</button>
+                      <button onClick={async()=>{if(!window.confirm("¿Rechazar este servicio?"))return;setPendServiciosCom(prev=>prev.filter(x=>x.id!==sv.id));await supabase.from("servicios_comunidad").delete().eq("id",sv.id);await loadAdmin();}} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Rechazar</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {adminSec==="super"&&(<div style={{margin:"0 16px"}}><div style={s.pc}><div style={s.pT}>🛒 Supermercado ({superProds.length})</div>{superProds.map(p=>(<div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 0",borderBottom:"1px solid #f1f5f9"}}>{p.foto_url?<img src={p.foto_url} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover"}}/>:<span style={{fontSize:20}}>{p.emoji}</span>}<div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{p.nombre}</div><div style={{fontSize:11,color:"#64748b"}}>{p.categoria} · ${p.precio}/{p.unidad}</div></div><button onClick={()=>deleteSuperProd(`sp_${p.id}`)} style={{...s.btnRed,fontSize:11}}>Quitar</button></div>))}<div style={{marginTop:14}}><label style={s.lbl}>Categoría *</label><select style={{...s.inp,background:"#fff"}} value={newSP.categoria} onChange={e=>setNewSP({...newSP,categoria:e.target.value})}>{SUPER_CATS.map(c=><option key={c}>{c}</option>)}</select><div style={{display:"flex",gap:8,marginBottom:8}}><input style={{...s.inp,marginBottom:0,width:50}} placeholder="🛒" value={newSP.emoji} onChange={e=>setNewSP({...newSP,emoji:e.target.value})}/><input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Nombre *" value={newSP.nombre} onChange={e=>setNewSP({...newSP,nombre:e.target.value})}/></div><div style={{display:"flex",gap:8,marginBottom:8}}><input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Marca" value={newSP.marca} onChange={e=>setNewSP({...newSP,marca:e.target.value})}/><input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Presentación" value={newSP.presentacion} onChange={e=>setNewSP({...newSP,presentacion:e.target.value})}/></div><div style={{display:"flex",gap:8,marginBottom:8}}><input style={{...s.inp,marginBottom:0,flex:1}} type="number" placeholder="Precio $" value={newSP.precio} onChange={e=>setNewSP({...newSP,precio:e.target.value})}/><input style={{...s.inp,marginBottom:0,width:80}} placeholder="kg/L" value={newSP.unidad} onChange={e=>setNewSP({...newSP,unidad:e.target.value})}/></div><input style={s.inp} placeholder="Descripción (opcional)" value={newSP.descripcion} onChange={e=>setNewSP({...newSP,descripcion:e.target.value})}/><label style={s.lbl}>Foto</label>{spFotoPreview&&<img src={spFotoPreview} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}<input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setSpFoto(f);setSpFotoPreview(URL.createObjectURL(f));}}}/><button style={s.btn} onClick={addSuperProd} disabled={loading}>{loading?"Guardando...":"Agregar"}</button></div></div></div>)}
+
+          {adminSec==="clasificados_pend"&&(
+            <div style={{margin:"0 16px"}}>
+              <div style={s.pc}>
+                <div style={s.pT}>🚗 Clasificados por aprobar ({pendClasificados.length})</div>
+                {pendClasificados.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>No hay clasificados pendientes ✓</div>}
+                {pendClasificados.map(c=>(
+                  <div key={c.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
+                    {c.foto1_url&&<img src={c.foto1_url} alt="" style={{width:"100%",height:140,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
+                    <div style={{fontSize:11,color:"#7e22ce",fontWeight:700,marginBottom:2}}>{c.tipo}</div>
+                    <div style={{fontSize:13,fontWeight:700}}>{c.titulo}</div>
+                    <div style={{fontSize:12,color:"#22c55e",fontWeight:700}}>${parseFloat(c.precio).toLocaleString()}{c.negociable?" · Negociable":""}</div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:4,margin:"4px 0 6px"}}>
+                      {c.marca&&<span style={{fontSize:11,background:"#f1f5f9",padding:"2px 7px",borderRadius:20}}>{c.marca}</span>}
+                      {c.anio&&<span style={{fontSize:11,background:"#f1f5f9",padding:"2px 7px",borderRadius:20}}>{c.anio}</span>}
+                      {c.kilometraje&&<span style={{fontSize:11,background:"#f1f5f9",padding:"2px 7px",borderRadius:20}}>{c.kilometraje}</span>}
+                      {c.sector&&<span style={{fontSize:11,background:"#f1f5f9",padding:"2px 7px",borderRadius:20}}>📍 {c.sector}</span>}
+                    </div>
+                    {c.descripcion&&<div style={{fontSize:11,color:"#94a3b8",marginBottom:6}}>{c.descripcion}</div>}
+                    <div style={{fontSize:11,color:"#64748b",marginBottom:10}}>👤 {c.vendedor_nombre} · 📱 {c.vendedor_telefono}</div>
+                    <div style={{display:"flex",gap:8}}>
+                      <button onClick={async()=>{setPendClasificados(prev=>prev.filter(x=>x.id!==c.id));await supabase.from("clasificados").update({aprobado:true}).eq("id",c.id);loadClasificados();await loadAdmin();}} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Aprobar</button>
+                      <button onClick={async()=>{if(!window.confirm("¿Rechazar este clasificado?"))return;setPendClasificados(prev=>prev.filter(x=>x.id!==c.id));await supabase.from("clasificados").delete().eq("id",c.id);await loadAdmin();}} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Rechazar</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <button style={{...s.btnG,margin:"8px 16px 16px"}} onClick={()=>{setProvMode("login");setPendProds([]);setPendResenas([]);setAllProveedores([]);setPedidos([]);}}>Cerrar sesión admin</button>
         </>)}
