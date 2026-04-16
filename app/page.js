@@ -125,6 +125,10 @@ export default function App() {
   const [tab,setTab]=useState("Inicio");
   const [cat,setCat]=useState("Todo");
   const [superCat,setSuperCat]=useState("Todas");
+  const [showBulkImport,setShowBulkImport]=useState(false);
+  const [bulkData,setBulkData]=useState([]);
+  const [bulkMsg,setBulkMsg]=useState("");
+  const [bulkLoading,setBulkLoading]=useState(false);
   const [search,setSearch]=useState("");
   const [cart,setCart]=useState({});
   const [cartSuper,setCartSuper]=useState({});
@@ -285,6 +289,66 @@ export default function App() {
     const lineas=restItems.map(i=>`  • ${i.name} x${i.qty} - $${(i.price*i.qty).toFixed(2)}${i.nota?" ("+i.nota+")":""}`).join("\n")
     const hora=new Date().toLocaleTimeString("es-VE",{hour:"2-digit",minute:"2-digit"});
     return `🍽️ *Nuevo pedido - ${APP_NAME}*\n📋 Ref: ${restRef}\n----------------------------\n${lineas}\n----------------------------\nSubtotal: $${restSub.toFixed(2)}\nDelivery: ${restDel===0?"GRATIS":"$"+restDel.toFixed(2)}\n*TOTAL: $${restTotal.toFixed(2)}*\n----------------------------\n👤 ${form.nombre}\n📱 ${form.telefono}\n📍 ${zonaSel?.zona||""}, ${addr.calle}\n⏰ ${hora}`;
+  };
+
+  const parseCsvRow=(row)=>{
+    const cols=[];let cur="",inQ=false;
+    for(let i=0;i<row.length;i++){
+      if(row[i]==='"'){inQ=!inQ;}
+      else if(row[i]===','&&!inQ){cols.push(cur.trim());cur="";}
+      else cur+=row[i];
+    }
+    cols.push(cur.trim());
+    return cols;
+  };
+
+  const processBulkCsv=(text)=>{
+    const lines=text.split('
+').filter(l=>l.trim());
+    if(lines.length<2){setBulkMsg("El archivo está vacío");return;}
+    const header=parseCsvRow(lines[0]).map(h=>h.toLowerCase().replace(/[^a-z]/g,''));
+    const rows=lines.slice(1).map(l=>parseCsvRow(l));
+    const products=rows.map(r=>{
+      const obj={};
+      header.forEach((h,i)=>{obj[h]=r[i]||"";});
+      return{
+        nombre:obj.nombre||obj.name||"",
+        descripcion:obj.descripcion||obj.description||"",
+        precio:parseFloat(obj.precio||obj.price||0),
+        unidad:obj.unidad||obj.unit||"unidad",
+        categoria:obj.categoria||obj.category||"Supermercado",
+        super_cat:obj.supercategoria||obj.supcat||obj.subcategoria||"",
+        marca:obj.marca||obj.brand||"",
+        stock:parseInt(obj.stock||10),
+        foto_url:obj.foto||obj.fotourl||obj.foto_url||null,
+        disponible:true,aprobado:true,rechazado:false,permanente:true,
+        proveedor_id:null,
+        es_super:true,
+      };
+    }).filter(p=>p.nombre&&p.precio>0);
+    setBulkData(products);
+    setBulkMsg(`✅ ${products.length} productos listos para importar`);
+  };
+
+  const importBulkProducts=async()=>{
+    if(bulkData.length===0)return;
+    setBulkLoading(true);
+    let ok=0,err=0;
+    for(const p of bulkData){
+      const{error}=await supabase.from("productos_supermercado").insert({
+        nombre:p.nombre,descripcion:p.descripcion||null,
+        precio:p.precio,unidad:p.unidad,
+        categoria:p.super_cat||p.categoria,
+        marca:p.marca||null,stock:p.stock,
+        disponible:true,
+      });
+      if(error)err++;else ok++;
+    }
+    setBulkLoading(false);
+    setBulkMsg(`✅ ${ok} productos importados${err>0?` · ${err} errores`:""}`);
+    setBulkData([]);
+    setShowBulkImport(false);
+    loadAll();
   };
 
   const loadClasificados=async()=>{
@@ -1179,7 +1243,7 @@ export default function App() {
 
         {/* BOTÓN PUBLICAR */}
         <div style={{padding:"12px 16px 0"}}>
-          <button onClick={()=>{setShowPublicarClasificado(!showPublicarClasificado);setClasificadoSeleccionado(null);}} style={{...s.btn,marginTop:0,background:showPublicarClasificado?"#64748b":P}}>
+          <button onClick={()=>{setShowPublicarClasificado(!showPublicarClasificado);setClasificadoSeleccionado(null);}} style={{...s.btn,marginTop:0,background:showPublicarClasificado?"#64748b":"#16a34a"}}>
             {showPublicarClasificado?"✕ Cancelar publicación":"➕ Publicar mi anuncio gratis"}
           </button>
         </div>
@@ -2310,7 +2374,65 @@ export default function App() {
             </div>
           )}
 
-          {adminSec==="super"&&(<div style={{margin:"0 16px"}}><div style={s.pc}><div style={s.pT}>🛒 Supermercado ({superProds.length})</div>{superProds.map(p=>(<div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 0",borderBottom:"1px solid #f1f5f9"}}>{p.foto_url?<img src={p.foto_url} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover"}}/>:<span style={{fontSize:20}}>{p.emoji}</span>}<div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{p.nombre}</div><div style={{fontSize:11,color:"#64748b"}}>{p.categoria} · ${p.precio}/{p.unidad}</div></div><button onClick={()=>deleteSuperProd(`sp_${p.id}`)} style={{...s.btnRed,fontSize:11}}>Quitar</button></div>))}<div style={{marginTop:14}}><label style={s.lbl}>Categoría *</label><select style={{...s.inp,background:"#fff"}} value={newSP.categoria} onChange={e=>setNewSP({...newSP,categoria:e.target.value})}>{SUPER_CATS.map(c=><option key={c}>{c}</option>)}</select><div style={{display:"flex",gap:8,marginBottom:8}}><input style={{...s.inp,marginBottom:0,width:50}} placeholder="🛒" value={newSP.emoji} onChange={e=>setNewSP({...newSP,emoji:e.target.value})}/><input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Nombre *" value={newSP.nombre} onChange={e=>setNewSP({...newSP,nombre:e.target.value})}/></div><div style={{display:"flex",gap:8,marginBottom:8}}><input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Marca" value={newSP.marca} onChange={e=>setNewSP({...newSP,marca:e.target.value})}/><input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Presentación" value={newSP.presentacion} onChange={e=>setNewSP({...newSP,presentacion:e.target.value})}/></div><div style={{display:"flex",gap:8,marginBottom:8}}><input style={{...s.inp,marginBottom:0,flex:1}} type="number" placeholder="Precio $" value={newSP.precio} onChange={e=>setNewSP({...newSP,precio:e.target.value})}/><input style={{...s.inp,marginBottom:0,width:80}} placeholder="kg/L" value={newSP.unidad} onChange={e=>setNewSP({...newSP,unidad:e.target.value})}/></div><input style={s.inp} placeholder="Descripción (opcional)" value={newSP.descripcion} onChange={e=>setNewSP({...newSP,descripcion:e.target.value})}/><label style={s.lbl}>Foto</label>{spFotoPreview&&<img src={spFotoPreview} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}<input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setSpFoto(f);setSpFotoPreview(URL.createObjectURL(f));}}}/><button style={s.btn} onClick={addSuperProd} disabled={loading}>{loading?"Guardando...":"Agregar"}</button></div></div></div>)}
+          {adminSec==="super"&&(<div style={{margin:"0 16px"}}><div style={s.pc}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                <div style={s.pT}>🛒 Supermercado ({superProds.length})</div>
+                <button onClick={()=>setShowBulkImport(!showBulkImport)} style={{background:"#f59e0b",color:"#fff",border:"none",borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                  {showBulkImport?"✕ Cerrar":"📥 Carga masiva CSV"}
+                </button>
+              </div>
+              {showBulkImport&&(
+                <div style={{background:"#f8fafc",borderRadius:12,padding:14,marginBottom:12,border:"1px solid #e2e8f0"}}>
+                  <div style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:8}}>📥 Importar productos desde CSV</div>
+                  {/* DESCARGAR PLANTILLA */}
+                  <button onClick={()=>{
+                    const headers="nombre,descripcion,precio,unidad,supercategoria,marca,stock,foto_url";
+                    const example=[
+                      "Pollo entero,Fresco del día,8.50,kg,Proteínas,Granja Local,50,",
+                      "Arroz cristal,Arroz blanco premium,2.00,kg,Granos y cereales,Cristal,100,",
+                      "Aceite vegetal,Botella 1 litro,3.50,litro,Aceites y condimentos,Mazeite,80,",
+                    ].join("
+");
+                    const csv=headers+"
+"+example;
+                    const blob=new Blob([csv],{type:"text/csv"});
+                    const url=URL.createObjectURL(blob);
+                    const a=document.createElement("a");
+                    a.href=url;a.download="plantilla_supermercado.csv";a.click();
+                  }} style={{background:"#16a34a",color:"#fff",border:"none",borderRadius:8,padding:"8px 14px",fontSize:12,fontWeight:600,cursor:"pointer",width:"100%",marginBottom:10}}>
+                    ⬇️ Descargar plantilla CSV
+                  </button>
+                  {/* SUBIR CSV */}
+                  <label style={{display:"block",fontSize:12,color:"#64748b",marginBottom:6}}>Selecciona tu archivo CSV:</label>
+                  <input type="file" accept=".csv,.txt" style={{width:"100%",marginBottom:8,fontSize:13}} onChange={e=>{
+                    const file=e.target.files[0];
+                    if(!file)return;
+                    const reader=new FileReader();
+                    reader.onload=ev=>processBulkCsv(ev.target.result);
+                    reader.readAsText(file);
+                  }}/>
+                  {bulkMsg&&<div style={{fontSize:12,color:bulkMsg.includes("✅")?"#15803d":"#be123c",marginBottom:8,fontWeight:600}}>{bulkMsg}</div>}
+                  {/* PREVIEW */}
+                  {bulkData.length>0&&(
+                    <div style={{maxHeight:200,overflowY:"auto",marginBottom:10}}>
+                      <div style={{fontSize:11,color:"#64748b",marginBottom:4}}>Vista previa ({bulkData.length} productos):</div>
+                      {bulkData.slice(0,5).map((p,i)=>(
+                        <div key={i} style={{fontSize:11,padding:"4px 8px",background:"#fff",borderRadius:6,marginBottom:3,border:"1px solid #e2e8f0"}}>
+                          <strong>{p.nombre}</strong> · ${p.precio} · {p.unidad} · {p.super_cat||p.categoria}
+                        </div>
+                      ))}
+                      {bulkData.length>5&&<div style={{fontSize:11,color:"#94a3b8"}}>...y {bulkData.length-5} más</div>}
+                    </div>
+                  )}
+                  {bulkData.length>0&&(
+                    <button onClick={importBulkProducts} disabled={bulkLoading} style={{background:"#16a34a",color:"#fff",border:"none",borderRadius:8,padding:"10px",fontSize:13,fontWeight:700,cursor:"pointer",width:"100%"}}>
+                      {bulkLoading?`Importando...`:`🚀 Importar ${bulkData.length} productos`}
+                    </button>
+                  )}
+                  <div style={{fontSize:10,color:"#94a3b8",marginTop:8,lineHeight:1.4}}>
+                    Columnas requeridas: nombre, precio · Opcionales: descripcion, unidad, supercategoria, marca, stock, foto_url
+                  </div>
+                </div>
+              )}{superProds.map(p=>(<div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 0",borderBottom:"1px solid #f1f5f9"}}>{p.foto_url?<img src={p.foto_url} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover"}}/>:<span style={{fontSize:20}}>{p.emoji}</span>}<div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{p.nombre}</div><div style={{fontSize:11,color:"#64748b"}}>{p.categoria} · ${p.precio}/{p.unidad}</div></div><button onClick={()=>deleteSuperProd(`sp_${p.id}`)} style={{...s.btnRed,fontSize:11}}>Quitar</button></div>))}<div style={{marginTop:14}}><label style={s.lbl}>Categoría *</label><select style={{...s.inp,background:"#fff"}} value={newSP.categoria} onChange={e=>setNewSP({...newSP,categoria:e.target.value})}>{SUPER_CATS.map(c=><option key={c}>{c}</option>)}</select><div style={{display:"flex",gap:8,marginBottom:8}}><input style={{...s.inp,marginBottom:0,width:50}} placeholder="🛒" value={newSP.emoji} onChange={e=>setNewSP({...newSP,emoji:e.target.value})}/><input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Nombre *" value={newSP.nombre} onChange={e=>setNewSP({...newSP,nombre:e.target.value})}/></div><div style={{display:"flex",gap:8,marginBottom:8}}><input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Marca" value={newSP.marca} onChange={e=>setNewSP({...newSP,marca:e.target.value})}/><input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Presentación" value={newSP.presentacion} onChange={e=>setNewSP({...newSP,presentacion:e.target.value})}/></div><div style={{display:"flex",gap:8,marginBottom:8}}><input style={{...s.inp,marginBottom:0,flex:1}} type="number" placeholder="Precio $" value={newSP.precio} onChange={e=>setNewSP({...newSP,precio:e.target.value})}/><input style={{...s.inp,marginBottom:0,width:80}} placeholder="kg/L" value={newSP.unidad} onChange={e=>setNewSP({...newSP,unidad:e.target.value})}/></div><input style={s.inp} placeholder="Descripción (opcional)" value={newSP.descripcion} onChange={e=>setNewSP({...newSP,descripcion:e.target.value})}/><label style={s.lbl}>Foto</label>{spFotoPreview&&<img src={spFotoPreview} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}<input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setSpFoto(f);setSpFotoPreview(URL.createObjectURL(f));}}}/><button style={s.btn} onClick={addSuperProd} disabled={loading}>{loading?"Guardando...":"Agregar"}</button></div></div></div>)}
 
           {adminSec==="clasificados_pend"&&(
             <div style={{margin:"0 16px"}}>
