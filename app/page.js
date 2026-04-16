@@ -15,7 +15,7 @@ const ADMIN_PASS = "mimercado2024";
 const P = "#0f172a";
 const A = "#f59e0b";
 
-const MAIN_TABS = ["Inicio","Productos","Remates","Clasificados","Servicios","Proveedores"];
+const MAIN_TABS = ["Inicio","Supermercado","Restaurantes","Clasificados","Mercadito","Servicios","Proveedores"];
 const SUPER_CATS = ["🥩 Proteínas","🌾 Granos y cereales","🛢️ Aceites y condimentos","🥛 Lácteos","🧴 Aseo personal","🧹 Limpieza del hogar","🥦 Frutas y verduras","🧃 Bebidas"];
 const PROV_CATS = ["Comida preparada","Postres","Jugos y bebidas","Pan y repostería"];
 const ALL_CATS = ["Todo","Supermercado",...PROV_CATS];
@@ -27,7 +27,10 @@ const MOTO_MARCAS = ["Honda","Yamaha","Suzuki","Kawasaki","TVS","AKT","Otro"];
 const TRANSMISION = ["Manual","Automático"];
 const COMBUSTIBLE = ["Gasolina","Diesel","Eléctrico","Híbrido"];
 const TIPO_OPERACION = ["Venta","Alquiler"];
-const REMATE_CATS = ["Electrodomésticos","Ropa y calzado","Muebles","Electrónica","Repuestos","Motos y vehículos","Herramientas","Hogar","Juguetes","Otros"];
+const REMATE_CATS = ["Electrodomésticos","Ropa y calzado","Muebles","Electrónica","Repuestos","Herramientas","Hogar","Juguetes","Otros"];
+const TIPO_NEGOCIO = ["Restaurante/Cocina","Transporte/Taxi","Lavandería","Otro Servicio"];
+const NEGOCIO_CATS_RESTAURANTE = ["Comida criolla","Comida rápida","Pizzería","Mariscos","Panadería/Pastelería","Jugos y bebidas","Postres","Otro"];
+const NEGOCIO_CATS_TRANSPORTE = ["Mototaxi","Taxi","Línea de transporte","Encomiendas"];
 const SERVICIO_CATS = ["Plomería","Electricidad","Mecánica","Belleza y estética","Costura y modistería","Clases y tutorías","Limpieza","Construcción","Transporte","Salud","Otros"];
 
 const SVCS = [
@@ -122,6 +125,14 @@ export default function App() {
   const [superCat,setSuperCat]=useState("Todas");
   const [search,setSearch]=useState("");
   const [cart,setCart]=useState({});
+  const [cartSuper,setCartSuper]=useState({});
+  const [cartRest,setCartRest]=useState({});
+  const [cartRestId,setCartRestId]=useState(null);
+  const [cartRestNombre,setCartRestNombre]=useState("");
+  const [cartRestWa,setCartRestWa]=useState("");
+  const [restauranteActivo,setRestauranteActivo]=useState(null);
+  const [misRestPedidos,setMisRestPedidos]=useState([]);
+  const [suscripciones,setSuscripciones]=useState([]);
   const [sheet,setSheet]=useState(null);
   const [zonas,setZonas]=useState([]);
   const [zonaSelId,setZonaSelId]=useState("");
@@ -172,7 +183,7 @@ export default function App() {
   // ─────────────────────────────────────────────────────────
 
   const [provMode,setProvMode]=useState("login");
-  const [provForm,setProvForm]=useState({usuario:"",nombre:"",negocio:"",telefono:"",email:"",categorias:[],pass:""});
+  const [provForm,setProvForm]=useState({usuario:"",nombre:"",negocio:"",telefono:"",email:"",categorias:[],pass:"",tipo_negocio:"Restaurante/Cocina",descripcion_negocio:"",delivery_propio:false,delivery_costo:0,delivery_gratis_desde:15});
   const [provData,setProvData]=useState(null);
   const [myProds,setMyProds]=useState([]);
   const [myPromos,setMyPromos]=useState([]);
@@ -181,6 +192,7 @@ export default function App() {
   const [pendPromos,setPendPromos]=useState([]);
   const [pendResenas,setPendResenas]=useState([]);
   const [allZonas,setAllZonas]=useState([]);
+  const [allRestaurantes,setAllRestaurantes]=useState([]);
   const [allProveedores,setAllProveedores]=useState([]);
   const [adminVentas,setAdminVentas]=useState([]);
   const [catFilter,setCatFilter]=useState("Todas");
@@ -228,15 +240,62 @@ export default function App() {
     const [z,sp,pp,pr,cb]=await Promise.all([
       supabase.from("zonas_delivery").select("*").eq("activa",true).order("municipio"),
       supabase.from("productos_supermercado").select("*").eq("disponible",true).order("categoria"),
-      supabase.from("productos_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc)").eq("aprobado",true).eq("disponible",true).eq("rechazado",false),
+      supabase.from("productos_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc,whatsapp_negocio,telefono,suscripcion_activa,delivery_propio,delivery_costo,delivery_gratis_desde,tipo_negocio)").eq("aprobado",true).eq("disponible",true).eq("rechazado",false),
       supabase.from("promociones_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc)").eq("aprobada",true).eq("activa",true),
       supabase.from("combos").select("*").eq("activa",true),
     ]);
     if(z.data)setZonas(z.data);
     if(sp.data)setSuperProds(sp.data);
-    if(pp.data)setProvProds(pp.data.filter(p=>!p.proveedores?.en_pausa&&p.proveedores?.activo!==false&&(p.permanente||(p.fecha===hoy&&p.stock>0))));
+    if(pp.data)setProvProds(pp.data.filter(p=>!p.proveedores?.en_pausa&&p.proveedores?.activo!==false&&p.proveedores?.suscripcion_activa!==false&&(p.permanente||(p.fecha===hoy&&p.stock>0))));
     if(pr.data)setProvPromos(pr.data.filter(p=>!p.proveedores?.en_pausa&&p.proveedores?.activo!==false));
     if(cb.data)setCombos(cb.data);
+    // Load restaurantes list
+    const{data:restList}=await supabase.from("proveedores").select("id,negocio,logo_url,activo,en_pausa,horario_desde,horario_hasta,horario_desc,telefono,whatsapp_negocio,suscripcion_activa,tipo_negocio,descripcion_negocio,delivery_propio,delivery_costo,delivery_gratis_desde,categorias").eq("aprobado",true).eq("suscripcion_activa",true).eq("en_pausa",false).order("negocio");
+    if(restList)setAllRestaurantes(restList);
+  };
+
+  const loadMisRestPedidos=async(pid)=>{
+    const{data}=await supabase.from("pedidos_restaurante").select("*").eq("proveedor_id",pid).order("created_at",{ascending:false}).limit(100);
+    if(data)setMisRestPedidos(data);
+  };
+
+  const loadSuscripciones=async()=>{
+    const{data}=await supabase.from("proveedores").select("id,negocio,usuario,telefono,logo_url,suscripcion_activa,suscripcion_vence,suscripcion_pagada,meses_gratis_restantes,activo,en_pausa,tipo_negocio").eq("aprobado",true).order("negocio");
+    if(data)setSuscripciones(data);
+  };
+
+  const guardarPedidoRestaurante=async(restId,restItems,restSub,restDel,restTotal,restRef)=>{
+    await supabase.from("pedidos_restaurante").insert({
+      proveedor_id:restId,
+      ref:restRef,
+      cliente_nombre:form.nombre,
+      cliente_telefono:form.telefono,
+      items:restItems.map(i=>({nombre:i.name,precio:i.price,qty:i.qty,nota:i.nota||null})),
+      subtotal:parseFloat(restSub.toFixed(2)),
+      delivery:parseFloat(restDel.toFixed(2)),
+      total:parseFloat(restTotal.toFixed(2)),
+      estado:"iniciado",
+      completado:false,
+    });
+  };
+
+  const buildRestWaMsg=(restNombre,restItems,restSub,restDel,restTotal,restRef)=>{
+    const lineas=restItems.map(i=>`  • ${i.name} x${i.qty} — $${(i.price*i.qty).toFixed(2)}${i.nota?` (${i.nota})`:""}`).join("
+");
+    const hora=new Date().toLocaleTimeString("es-VE",{hour:"2-digit",minute:"2-digit"});
+    return `🍽️ *Nuevo pedido — ${APP_NAME}*
+📋 Ref: ${restRef}
+${"─".repeat(28)}
+${lineas}
+${"─".repeat(28)}
+Subtotal: $${restSub.toFixed(2)}
+Delivery: ${restDel===0?"GRATIS 🎉":"$"+restDel.toFixed(2)}
+*TOTAL: $${restTotal.toFixed(2)}*
+${"─".repeat(28)}
+👤 ${form.nombre}
+📱 ${form.telefono}
+📍 ${zonaSel?.zona||""}, ${addr.calle}
+⏰ ${hora}`;
   };
 
   const loadClasificados=async()=>{
@@ -378,7 +437,7 @@ export default function App() {
     const matchSuperCat=cat!=="Supermercado"||superCat==="Todas"||p.superCat===superCat;
     return matchCat&&matchSearch&&matchSuperCat;
   });
-  const superGroups=(cat==="Todo"||cat==="Supermercado")?SUPER_CATS.map(sc=>({cat:sc,items:filteredProds.filter(p=>p.cat==="Supermercado"&&p.superCat===sc)})).filter(g=>g.items.length>0):[];
+  const superGroups=SUPER_CATS.filter(sc=>superCat==="Todas"||superCat===sc).map(sc=>({cat:sc,items:allProdsConMargen.filter(p=>p.cat==="Supermercado"&&p.superCat===sc&&p.name.toLowerCase().includes(search.toLowerCase()))})).filter(g=>g.items.length>0);
   const provGroups=PROV_CATS.filter(c=>cat==="Todo"||cat===c).map(c=>({cat:c,items:filteredProds.filter(p=>p.cat===c)})).filter(g=>g.items.length>0);
 
   const add=(p)=>{
@@ -453,7 +512,7 @@ export default function App() {
 
   const handleLogin=async()=>{
     if(!provForm.usuario||!provForm.pass)return setPmsg("Completa usuario y contraseña");
-    if(provForm.usuario===ADMIN_USER&&provForm.pass===ADMIN_PASS){setProvMode("admin");loadAdmin();loadPedidos();return;}
+    if(provForm.usuario===ADMIN_USER&&provForm.pass===ADMIN_PASS){setProvMode("admin");loadAdmin();loadPedidos();loadSuscripciones();return;}
     setLoading(true);
     const{data,error}=await supabase.from("proveedores").select("*").eq("usuario",provForm.usuario).single();
     setLoading(false);
@@ -461,7 +520,7 @@ export default function App() {
     if(data.en_pausa)return setPmsg("Tu cuenta está pausada. Contacta al administrador.");
     if(data.password_plain&&data.password_plain!==provForm.pass)return setPmsg("Contraseña incorrecta");
     setProvData(data);setProvMode("dash");setProvTab("prod_aprobados");setPmsg("");
-    loadMyProds(data.id);loadMyPromos(data.id);loadMyVentas(data.id);
+    loadMyProds(data.id);loadMyPromos(data.id);loadMyVentas(data.id);loadMisRestPedidos(data.id);
   };
 
   const handleRegister=async()=>{
@@ -472,7 +531,10 @@ export default function App() {
     const{error}=await supabase.from("proveedores").insert({
       usuario:provForm.usuario,nombre:provForm.nombre,negocio:provForm.negocio,
       telefono:provForm.telefono,email:provForm.email,categorias:provForm.categorias,
-      logo_url,aprobado:true,activo:false,en_pausa:false,password_plain:provForm.pass
+      logo_url,aprobado:true,activo:false,en_pausa:false,password_plain:provForm.pass,
+      tipo_negocio:provForm.tipo_negocio||"Restaurante/Cocina",
+      suscripcion_activa:true,meses_gratis_restantes:3,
+      suscripcion_vence:new Date(Date.now()+90*24*60*60*1000).toISOString().split("T")[0]
     });
     setLoading(false);
     if(error)return setPmsg(error.message.includes("unique")?"Ese usuario ya existe":"Error al registrarse: "+error.message);
@@ -688,6 +750,29 @@ export default function App() {
     );
   };
 
+  const CardRest=({p})=>{
+    const qtyRest=cartRest[p.id]?.qty||0;
+    return(
+      <div style={s.card}>
+        {p.foto?<img src={p.foto} alt={p.name} style={s.cImg}/>:<div style={s.cEm}>🍽️</div>}
+        {p.tag&&<div style={s.tag}>{p.tag}</div>}
+        <div style={s.cNm}>{p.name}</div>
+        {p.descripcion&&<div style={{fontSize:10,color:"#94a3b8",lineHeight:1.3}}>{p.descripcion}</div>}
+        {p.horario&&<div style={{fontSize:10,color:"#94a3b8"}}>🕐 {p.horario}</div>}
+        <div style={s.cBt}>
+          <div><div style={s.cPr}>${p.price.toFixed(2)}</div><div style={s.cUn}>/{p.unit}</div></div>
+          {qtyRest>0?(
+            <div style={s.qR}>
+              <button style={s.qB} onClick={()=>{const n={...cartRest};n[p.id].qty>1?n[p.id]={...n[p.id],qty:n[p.id].qty-1}:delete n[p.id];setCartRest(n);}}>−</button>
+              <span style={s.qN}>{qtyRest}</span>
+              <button style={s.qB} onClick={()=>{const stockMax=p.stock||999;if(qtyRest>=stockMax){alert("Stock máximo");return;}setCartRest(c=>({...c,[p.id]:{...p,qty:qtyRest+1}}));}}>+</button>
+            </div>
+          ):<button style={s.aBtn} onClick={()=>{const stockMax=p.stock||999;if(qtyRest>=stockMax)return;setCartRest(c=>({...c,[p.id]:{...p,qty:1}}));}}>+</button>}
+        </div>
+      </div>
+    );
+  };
+
   const StatCard=({num,lbl,color})=>(<div style={s.statCard}><div style={{...s.statNum,color:color||P}}>{num}</div><div style={s.statLbl}>{lbl}</div></div>);
   const BarChart=({data,max})=>(<div style={{display:"flex",flexDirection:"column",gap:8}}>{data.map(([name,val],i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:8}}><div style={{fontSize:11,color:"#64748b",width:110,flexShrink:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name}</div><div style={s.barWrap}><div style={s.barFill((val/max)*100,["#6366f1","#f59e0b","#22c55e","#ef4444","#0ea5e9"][i%5])}/></div><div style={{fontSize:12,fontWeight:700,color:P,minWidth:24,textAlign:"right"}}>{val}</div></div>))}</div>);
 
@@ -708,18 +793,37 @@ export default function App() {
       {/* INICIO */}
       {tab==="Inicio"&&(<>
         <div style={s.banner}><p style={s.bT}>Bienvenido a {APP_NAME} {CITY} 👋</p><p style={s.bS}>Todo lo que necesitas sin salir de casa</p><span style={s.bdg("#22c55e","#fff")}>✓ Delivery desde $1</span><span style={s.bdg(A,P)}>Gratis desde $10</span></div>
-        <div style={s.promoCard}><div style={{fontSize:18,fontWeight:700,marginBottom:4}}>{horario.label}</div><div style={{fontSize:13,color:"rgba(255,255,255,0.8)"}}>{horario.sub}</div><button onClick={()=>{setTab("Productos");setCat("Comida preparada");}} style={{marginTop:10,background:"rgba(255,255,255,0.2)",border:"none",borderRadius:10,padding:"7px 14px",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>Ver opciones →</button></div>
+        <div style={s.promoCard}><div style={{fontSize:18,fontWeight:700,marginBottom:4}}>{horario.label}</div><div style={{fontSize:13,color:"rgba(255,255,255,0.8)"}}>{horario.sub}</div><button onClick={()=>{setTab("Supermercado");setCat("Comida preparada");}} style={{marginTop:10,background:"rgba(255,255,255,0.2)",border:"none",borderRadius:10,padding:"7px 14px",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>Ver opciones →</button></div>
         {combos.length>0&&(<div style={{padding:"0 16px"}}><div style={s.sT}>🎁 Combos especiales</div>{combos.map(c=>(<div key={c.id} style={s.comboCard}>{c.imagen_url&&<img src={c.imagen_url} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:8,marginBottom:8}}/>}<div style={{fontSize:14,fontWeight:700,color:P}}>{c.nombre}</div><div style={{fontSize:12,color:"#64748b",margin:"2px 0 6px"}}>{c.descripcion}</div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:16,fontWeight:700,color:P}}>${parseFloat(c.precio).toFixed(2)}</span>{c.temporada&&<span style={{fontSize:11,background:"#fef3c7",color:"#92400e",padding:"2px 8px",borderRadius:8,fontWeight:600}}>{c.temporada}</span>}</div></div>))}</div>)}
+        {/* RESTAURANTES EN INICIO */}
+        {allRestaurantes.filter(r=>r.activo).length>0&&(
+          <div style={{padding:"0 16px 4px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 8px"}}>
+              <div style={s.sT}>🍽️ Restaurantes abiertos</div>
+              <button onClick={()=>setTab("Restaurantes")} style={{fontSize:11,color:P,background:"none",border:"none",cursor:"pointer",fontWeight:600}}>Ver todos →</button>
+            </div>
+            <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:4}}>
+              {allRestaurantes.filter(r=>r.activo).slice(0,6).map(r=>(
+                <div key={r.id} onClick={()=>{setTab("Restaurantes");setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);}} style={{flexShrink:0,width:120,cursor:"pointer",textAlign:"center"}}>
+                  {r.logo_url?<img src={r.logo_url} alt={r.negocio} style={{width:70,height:70,borderRadius:"50%",objectFit:"cover",border:"2px solid #f1f5f9",margin:"0 auto",display:"block"}}/>:<div style={{width:70,height:70,borderRadius:"50%",background:"#fef3c7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,margin:"0 auto"}}>🍽️</div>}
+                  <div style={{fontSize:11,fontWeight:600,color:P,marginTop:4,lineHeight:1.2}}>{r.negocio}</div>
+                  <div style={{fontSize:10,color:"#22c55e",fontWeight:600}}>● Abierto</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* REMATES RECIENTES EN INICIO */}
         {remates.length>0&&(
           <div style={{padding:"0 16px 4px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 8px"}}>
               <div style={s.sT}>🏷️ Remates y usados</div>
-              <button onClick={()=>setTab("Remates")} style={{fontSize:11,color:P,background:"none",border:"none",cursor:"pointer",fontWeight:600}}>Ver todo →</button>
+              <button onClick={()=>setTab("Mercadito")} style={{fontSize:11,color:P,background:"none",border:"none",cursor:"pointer",fontWeight:600}}>Ver todo →</button>
             </div>
             <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:4}}>
               {remates.slice(0,6).map(r=>(
-                <div key={r.id} onClick={()=>setTab("Remates")} style={{flexShrink:0,width:140,background:"#fff",borderRadius:12,border:"1px solid #e2e8f0",overflow:"hidden",cursor:"pointer"}}>
+                <div key={r.id} onClick={()=>setTab("Mercadito")} style={{flexShrink:0,width:140,background:"#fff",borderRadius:12,border:"1px solid #e2e8f0",overflow:"hidden",cursor:"pointer"}}>
                   {r.foto_url?<img src={r.foto_url} alt={r.titulo} style={{width:"100%",height:75,objectFit:"cover"}}/>:<div style={{height:75,background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>🏷️</div>}
                   <div style={{padding:"6px 8px"}}>
                     <div style={{fontSize:11,color:"#92400e",fontWeight:600,marginBottom:1}}>{r.categoria}</div>
@@ -735,11 +839,11 @@ export default function App() {
           <div style={{padding:"0 16px 4px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 8px"}}>
               <div style={s.sT}>🎉 Promociones activas</div>
-              <button onClick={()=>{setTab("Productos");setCat("Comida preparada");}} style={{fontSize:11,color:P,background:"none",border:"none",cursor:"pointer",fontWeight:600}}>Ver todo →</button>
+              <button onClick={()=>{setTab("Supermercado");setCat("Comida preparada");}} style={{fontSize:11,color:P,background:"none",border:"none",cursor:"pointer",fontWeight:600}}>Ver todo →</button>
             </div>
             <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:4}}>
               {provPromos.slice(0,6).map(p=>(
-                <div key={p.id} onClick={()=>{setTab("Productos");setCat("Comida preparada");}} style={{flexShrink:0,width:150,background:"#fff",borderRadius:12,border:"2px solid #f59e0b",overflow:"hidden",cursor:"pointer"}}>
+                <div key={p.id} onClick={()=>{setTab("Supermercado");setCat("Comida preparada");}} style={{flexShrink:0,width:150,background:"#fff",borderRadius:12,border:"2px solid #f59e0b",overflow:"hidden",cursor:"pointer"}}>
                   {p.foto_url?<img src={p.foto_url} alt={p.nombre} style={{width:"100%",height:80,objectFit:"cover"}}/>:<div style={{height:80,background:"#fef3c7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28}}>🎁</div>}
                   <div style={{padding:"6px 8px"}}>
                     <div style={{fontSize:11,color:"#7e22ce",fontWeight:700,marginBottom:2}}>🎉 Promo</div>
@@ -752,26 +856,25 @@ export default function App() {
             </div>
           </div>
         )}
-        <div style={{padding:"0 16px 16px"}}><div style={s.sT}>Explorar</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>{[{e:"🛒",l:"Supermercado",c:"Supermercado"},{e:"🍱",l:"Comida preparada",c:"Comida preparada"},{e:"🍰",l:"Postres",c:"Postres"},{e:"⚡",l:"Servicios",c:null}].map(x=>(<button key={x.l} onClick={()=>{if(x.c){setTab("Productos");setCat(x.c);}else setTab("Servicios");}} style={{background:"#fff",border:"1px solid #f1f5f9",borderRadius:14,padding:"16px 12px",display:"flex",flexDirection:"column",alignItems:"center",gap:6,cursor:"pointer"}}><span style={{fontSize:28}}>{x.e}</span><span style={{fontSize:13,fontWeight:600,color:P}}>{x.l}</span></button>))}</div></div>
+        <div style={{padding:"0 16px 16px"}}><div style={s.sT}>Explorar</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>{[{e:"🛒",l:"Supermercado",c:"Supermercado"},{e:"🍽️",l:"Restaurantes",c:null,tab:"Restaurantes"},{e:"🍰",l:"Postres",c:null,tab:"Restaurantes"},{e:"⚡",l:"Servicios",c:null}].map(x=>(<button key={x.l} onClick={()=>{if(x.tab){setTab(x.tab);}else if(x.c){setTab("Supermercado");}else setTab("Servicios");}} style={{background:"#fff",border:"1px solid #f1f5f9",borderRadius:14,padding:"16px 12px",display:"flex",flexDirection:"column",alignItems:"center",gap:6,cursor:"pointer"}}><span style={{fontSize:28}}>{x.e}</span><span style={{fontSize:13,fontWeight:600,color:P}}>{x.l}</span></button>))}</div></div>
       </>)}
 
       {/* PRODUCTOS */}
-      {tab==="Productos"&&(<>
-        <div style={s.banner}><p style={s.bT}>Tienda {CITY} 🛒</p><p style={s.bS}>Supermercado · Comida · Postres · Más</p><span style={s.bdg("#22c55e","#fff")}>Gratis desde $10 comida · $15 super</span></div>
+      {tab==="Supermercado"&&(<>
+        <div style={s.banner}><p style={s.bT}>Supermercado {CITY} 🛒</p><p style={s.bS}>Productos básicos · Proteínas · Verduras · Más</p><span style={s.bdg("#22c55e","#fff")}>Delivery gratis desde $15</span></div>
         <div style={s.sw}><input style={s.si} placeholder="🔍  Buscar..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
-        <div style={s.cs}>{ALL_CATS.map(c=><button key={c} style={s.cb(cat===c)} onClick={()=>{setCat(c);setSuperCat("Todas");}}>{c}</button>)}</div>
+        <div style={s.cs}><button style={s.cb(superCat==="Todas")} onClick={()=>setSuperCat("Todas")}>Todas</button>{SUPER_CATS.map(c=><button key={c} style={s.cb(superCat===c)} onClick={()=>setSuperCat(c)}>{c}</button>)}</div>
         {cat==="Supermercado"&&(<div style={{padding:"0 16px 8px"}}><div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>{[{l:"Todas",e:"🛒"},...SUPER_CATS.map(sc=>({l:sc,e:sc.split(" ")[0]}))].map(x=>(<button key={x.l} onClick={()=>setSuperCat(x.l==="Todas"?"Todas":x.l)} style={{background:superCat===(x.l==="Todas"?"Todas":x.l)?P:"#fff",border:superCat===(x.l==="Todas"?"Todas":x.l)?"none":"1px solid #f1f5f9",borderRadius:12,padding:"10px 6px",display:"flex",flexDirection:"column",alignItems:"center",gap:4,cursor:"pointer"}}><span style={{fontSize:20}}>{x.e}</span><span style={{fontSize:10,fontWeight:600,color:superCat===(x.l==="Todas"?"Todas":x.l)?"#fff":"#64748b",textAlign:"center",lineHeight:1.2}}>{x.l==="Todas"?"Todas":x.l.replace(/^[^\s]+\s/,"")}</span></button>))}</div></div>)}
         <div style={s.sec}>
-          {(cat==="Todo"||cat==="Supermercado")&&superGroups.map(g=>(<div key={g.cat}><div style={s.sT}>{g.cat}</div><div style={s.grid}>{g.items.map(p=><Card key={p.id} p={p}/>)}</div></div>))}
-          {provGroups.map(g=>(<div key={g.cat}><div style={s.sT}>{g.cat==="Comida preparada"?"🍱":g.cat==="Postres"?"🍰":g.cat==="Jugos y bebidas"?"🥤":"🍞"} {g.cat}</div><div style={s.grid}>{g.items.map(p=><Card key={p.id} p={p}/>)}</div></div>))}
-          {filteredProds.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🔍</div><p>No encontramos ese producto</p></div>}
+          {superGroups.map(g=>(<div key={g.cat}><div style={s.sT}>{g.cat}</div><div style={s.grid}>{g.items.map(p=><Card key={p.id} p={p}/>)}</div></div>))}
+          {superGroups.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🔍</div><p>No encontramos ese producto</p></div>}
         </div>
       </>)}
 
       {/* REMATES */}
-      {tab==="Remates"&&(<>
+      {tab==="Mercadito"&&(<>
         <div style={s.banner}>
-          <p style={s.bT}>Remates y Usados 🏷️</p>
+          <p style={s.bT}>Mercadito San Fernando 🏷️</p>
           <p style={s.bS}>Compra y vende en San Fernando · Contacto directo</p>
           <span style={s.bdg("#22c55e","#fff")}>✓ Gratis publicar</span>
           <span style={s.bdg(A,P)}>Contacto directo al vendedor</span>
@@ -857,8 +960,104 @@ export default function App() {
         )}
       </>)}
 
+      {/* RESTAURANTES */}
+      {tab==="Restaurantes"&&(<>
+        {restauranteActivo?(
+          /* ── MENÚ DEL RESTAURANTE ── */
+          <div>
+            {/* HEADER RESTAURANTE */}
+            <div style={{background:P,padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}>
+              <button onClick={()=>{setRestauranteActivo(null);setCartRest({});setCartRestId(null);setCartRestNombre("");setCartRestWa("");}} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:8,color:"#fff",padding:"6px 10px",fontSize:12,cursor:"pointer"}}>← Volver</button>
+              {restauranteActivo.logo_url&&<img src={restauranteActivo.logo_url} alt="" style={{width:36,height:36,borderRadius:"50%",objectFit:"cover"}}/>}
+              <div style={{flex:1}}>
+                <div style={{color:"#fff",fontWeight:700,fontSize:15}}>{restauranteActivo.negocio}</div>
+                <div style={{color:"rgba(255,255,255,0.7)",fontSize:11}}>{restauranteActivo.horario_desde&&`🕐 ${restauranteActivo.horario_desde}–${restauranteActivo.horario_hasta}`}{restauranteActivo.horario_desc&&` · ${restauranteActivo.horario_desc}`}</div>
+              </div>
+              <span style={{fontSize:11,fontWeight:700,padding:"3px 8px",borderRadius:20,background:restauranteActivo.activo?"#22c55e":"#ef4444",color:"#fff"}}>{restauranteActivo.activo?"● Abierto":"● Cerrado"}</span>
+            </div>
+            {/* DELIVERY INFO */}
+            <div style={{background:"#f0fdf4",padding:"8px 16px",fontSize:12,color:"#15803d",display:"flex",gap:6,alignItems:"center"}}>
+              {restauranteActivo.delivery_propio?<span>🛵 Delivery disponible · ${restauranteActivo.delivery_costo>0?`$${restauranteActivo.delivery_costo}`:"Gratis"}</span>:<span>🏃 Solo para llevar / retiro en local</span>}
+            </div>
+            {/* BUSCADOR */}
+            <div style={s.sw}><input style={s.si} placeholder="🔍  Buscar en el menú..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
+            {/* MENÚ - products of this restaurant */}
+            <div style={s.sec}>
+              {PROV_CATS.map(cat=>{
+                const items=allProdsConMargen.filter(p=>p.cat===cat&&p.kitchen===restauranteActivo.negocio&&p.name.toLowerCase().includes(search.toLowerCase()));
+                if(items.length===0)return null;
+                return(<div key={cat}><div style={s.sT}>{cat==="Comida preparada"?"🍱":cat==="Postres"?"🍰":cat==="Jugos y bebidas"?"🥤":"🍞"} {cat}</div><div style={s.grid}>{items.map(p=><CardRest key={p.id} p={p}/>)}</div></div>);
+              })}
+              {allProdsConMargen.filter(p=>p.kitchen===restauranteActivo.negocio&&p.name.toLowerCase().includes(search.toLowerCase())).length===0&&(
+                <div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🍽️</div><p>No hay platos disponibles ahora</p></div>
+              )}
+            </div>
+            {/* CARRITO RESTAURANTE FLOTANTE */}
+            {Object.values(cartRest).length>0&&(
+              <div style={{position:"fixed",bottom:16,left:"50%",transform:"translateX(-50%)",zIndex:150,width:"calc(100% - 32px)",maxWidth:398}}>
+                <button style={{...s.btn,margin:0,display:"flex",justifyContent:"space-between",alignItems:"center",background:"#22c55e"}} onClick={()=>setSheet("cartRest")}>
+                  <span>🛒 Ver pedido ({Object.values(cartRest).reduce((a,i)=>a+i.qty,0)})</span>
+                  <span>${Object.values(cartRest).reduce((a,i)=>a+i.price*i.qty,0).toFixed(2)}</span>
+                </button>
+              </div>
+            )}
+          </div>
+        ):(
+          /* ── LISTA DE RESTAURANTES ── */
+          <>
+            <div style={s.banner}>
+              <p style={s.bT}>Restaurantes en {CITY} 🍽️</p>
+              <p style={s.bS}>Elige tu restaurante · Pedido directo</p>
+            </div>
+            {/* BÚSQUEDA GLOBAL */}
+            <div style={s.sw}><input style={s.si} placeholder="🔍  Buscar pizza, pollo, hamburguesa..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
+            {/* SI HAY BÚSQUEDA - mostrar platos de todos los restaurantes */}
+            {search.length>1?(
+              <div style={s.sec}>
+                <div style={s.sT}>Resultados para "{search}"</div>
+                <div style={s.grid}>
+                  {allProdsConMargen.filter(p=>p.cat!=="Supermercado"&&p.name.toLowerCase().includes(search.toLowerCase())&&p.abierto).map(p=>(
+                    <div key={p.id} style={s.card}>
+                      {p.foto?<img src={p.foto} alt={p.name} style={s.cImg}/>:<div style={s.cEm}>🍽️</div>}
+                      {p.kitchen&&<div style={s.cKt}>{p.logo&&<img src={p.logo} alt="" style={s.cLogo}/>}<span>{p.kitchen}</span></div>}
+                      <div style={s.cNm}>{p.name}</div>
+                      {p.descripcion&&<div style={{fontSize:10,color:"#94a3b8"}}>{p.descripcion}</div>}
+                      <div style={s.cBt}>
+                        <div><div style={s.cPr}>${p.price.toFixed(2)}</div><div style={s.cUn}>/{p.unit}</div></div>
+                        <button onClick={()=>{const rest=allRestaurantes.find(r=>r.negocio===p.kitchen);if(rest){setRestauranteActivo(rest);setCartRestId(rest.id);setCartRestNombre(rest.negocio);setCartRestWa(rest.whatsapp_negocio||rest.telefono);}}} style={{...s.aBtn,fontSize:12,padding:"4px 10px",width:"auto",borderRadius:8}}>Ver menú</button>
+                      </div>
+                    </div>
+                  ))}
+                  {allProdsConMargen.filter(p=>p.cat!=="Supermercado"&&p.name.toLowerCase().includes(search.toLowerCase())).length===0&&<div style={{textAlign:"center",padding:"30px 0",color:"#94a3b8",gridColumn:"1/-1"}}>No encontramos "{search}"</div>}
+                </div>
+              </div>
+            ):(
+              /* LISTA DE RESTAURANTES */
+              <div style={{...s.sec,paddingTop:12}}>
+                {allRestaurantes.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🍽️</div><p>Próximamente restaurantes aquí</p></div>}
+                {allRestaurantes.map(r=>(
+                  <div key={r.id} onClick={()=>{setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);setSearch("");}} style={{background:"#fff",borderRadius:14,padding:14,border:"1px solid #f1f5f9",display:"flex",gap:12,alignItems:"center",marginBottom:10,cursor:"pointer"}}>
+                    {r.logo_url?<img src={r.logo_url} alt="" style={{width:56,height:56,borderRadius:12,objectFit:"cover",flexShrink:0}}/>:<div style={{width:56,height:56,borderRadius:12,background:"#fef3c7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>🍽️</div>}
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:15,fontWeight:700,color:P}}>{r.negocio}</div>
+                      <div style={{fontSize:11,color:"#64748b",marginTop:1}}>{(r.categorias||[]).join(" · ")}</div>
+                      {r.horario_desde&&<div style={{fontSize:11,color:"#94a3b8"}}>🕐 {r.horario_desde}–{r.horario_hasta}{r.horario_desc&&` · ${r.horario_desc}`}</div>}
+                      <div style={{display:"flex",alignItems:"center",gap:6,marginTop:3}}>
+                        <span style={{fontSize:11,fontWeight:600,color:r.activo?"#15803d":"#94a3b8"}}>{r.activo?"● Abierto":"● Cerrado"}</span>
+                        {r.delivery_propio&&<span style={{fontSize:10,background:"#dcfce7",color:"#15803d",padding:"1px 6px",borderRadius:8}}>🛵 Delivery</span>}
+                      </div>
+                    </div>
+                    <div style={{color:"#94a3b8",fontSize:18}}>›</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </>)}
+
       {/* CLASIFICADOS */}
-      {tab==="Clasificados"&&(<>
+      {tab==="Clasificados"&&(<>&&(<>
         <div style={s.banner}>
           <p style={s.bT}>Clasificados San Fernando 🚗🏠🏍️</p>
           <p style={s.bS}>Vehículos · Motos · Inmuebles</p>
@@ -1172,12 +1371,17 @@ export default function App() {
             <input style={s.inp} placeholder="María González" value={provForm.nombre} onChange={e=>setProvForm({...provForm,nombre:e.target.value})}/>
             <label style={s.lbl}>Nombre del negocio *</label>
             <input style={s.inp} placeholder="Cocina de María" value={provForm.negocio} onChange={e=>setProvForm({...provForm,negocio:e.target.value})}/>
-            <label style={s.lbl}>WhatsApp *</label>
+            <label style={s.lbl}>WhatsApp del negocio * (los pedidos llegarán aquí)</label>
             <input style={s.inp} placeholder="+58 424-000-0000" value={provForm.telefono} onChange={e=>setProvForm({...provForm,telefono:e.target.value})}/>
             <label style={s.lbl}>Correo electrónico (opcional)</label>
             <input style={s.inp} placeholder="correo@ejemplo.com" type="email" value={provForm.email} onChange={e=>setProvForm({...provForm,email:e.target.value})}/>
-            <label style={s.lbl}>Categorías</label>
+            <label style={s.lbl}>Tipo de negocio *</label>
+            <select style={{...s.inp,background:"#fff"}} value={provForm.tipo_negocio} onChange={e=>setProvForm({...provForm,tipo_negocio:e.target.value})}>{TIPO_NEGOCIO.map(t=><option key={t}>{t}</option>)}</select>
+            <label style={s.lbl}>Descripción del negocio</label>
+            <input style={s.inp} placeholder="Comida criolla, a domicilio, horario especial..." value={provForm.descripcion_negocio} onChange={e=>setProvForm({...provForm,descripcion_negocio:e.target.value})}/>
+            <label style={s.lbl}>Categorías (tipo de comida o servicio)</label>
             <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>{PROV_CATS.map(c=>(<button key={c} onClick={()=>setProvForm(f=>({...f,categorias:f.categorias.includes(c)?f.categorias.filter(x=>x!==c):[...f.categorias,c]}))} style={{padding:"5px 10px",borderRadius:20,fontSize:12,cursor:"pointer",background:provForm.categorias.includes(c)?P:"#f1f5f9",color:provForm.categorias.includes(c)?"#fff":"#64748b",border:"none",fontWeight:500}}>{c}</button>))}</div>
+            <div style={{...s.ib,background:"#f0fdf4",marginBottom:8}}><div style={{fontSize:12,color:"#15803d"}}>🎁 Los primeros 3 meses son completamente gratis. Después $8/mes.</div></div>
             <label style={s.lbl}>Logo del negocio</label>
             {logoPreview&&<img src={logoPreview} alt="" style={{width:60,height:60,borderRadius:"50%",objectFit:"cover",marginBottom:8}}/>}
             <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setLogoFile(f);setLogoPreview(URL.createObjectURL(f));}}}/>
@@ -1194,8 +1398,20 @@ export default function App() {
           <div style={{...s.pc,background:"#f0fdf4",borderColor:"#bbf7d0"}}>
             <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
               {provData.logo_url&&<img src={provData.logo_url} alt="" style={{width:48,height:48,borderRadius:"50%",objectFit:"cover"}}/>}
-              <div><div style={{fontSize:14,fontWeight:700,color:"#15803d"}}>{provData.negocio}</div><div style={{fontSize:12,color:"#64748b"}}>@{provData.usuario}</div></div>
+              <div><div style={{fontSize:14,fontWeight:700,color:"#15803d"}}>{provData.negocio}</div><div style={{fontSize:11,color:"#64748b"}}>@{provData.usuario}{provData.tipo_negocio&&<span style={{marginLeft:6,background:"#f0fdf4",padding:"1px 6px",borderRadius:8,color:"#15803d"}}>{provData.tipo_negocio}</span>}</div></div>
             </div>
+            {/* SUSCRIPCIÓN STATUS */}
+            {provData.meses_gratis_restantes>0?(
+              <div style={{background:"#f0fdf4",borderRadius:10,padding:"6px 12px",marginBottom:8,fontSize:12,color:"#15803d",display:"flex",justifyContent:"space-between"}}>
+                <span>🎁 Período gratis activo</span>
+                <span style={{fontWeight:700}}>{provData.meses_gratis_restantes} mes(es) restantes</span>
+              </div>
+            ):(
+              <div style={{background:provData.suscripcion_pagada?"#f0fdf4":"#fff1f2",borderRadius:10,padding:"6px 12px",marginBottom:8,fontSize:12,color:provData.suscripcion_pagada?"#15803d":"#be123c",display:"flex",justifyContent:"space-between"}}>
+                <span>{provData.suscripcion_pagada?"✓ Suscripción activa":"⚠️ Suscripción vencida"}</span>
+                <span style={{fontWeight:700}}>Vence: {provData.suscripcion_vence?.slice(0,10)}</span>
+              </div>
+            )}
             <button style={s.toggleBtn(provData.activo)} onClick={toggleMiEstado}>
               <span style={{fontSize:20}}>{provData.activo?"🟢":"🔴"}</span>
               <div><div style={{fontSize:14,fontWeight:700,color:provData.activo?"#15803d":"#92400e"}}>{provData.activo?"ABIERTO — Recibiendo pedidos":"CERRADO — No recibo pedidos"}</div><div style={{fontSize:11,color:"#64748b"}}>Toca para {provData.activo?"cerrar":"abrir"} tu negocio</div></div>
@@ -1229,11 +1445,11 @@ export default function App() {
           </div>
 
           <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}}>
-            {["estado","productos","promos","ventas"].map(t=>{
+            {["estado","productos","promos","pedidos_rest","ventas"].map(t=>{
               const isPromoTab=t==="promos"&&(provTab==="promo_nueva"||provTab==="promo_activas"||provTab==="promo_pausadas"||provTab==="promo_pendientes"||provTab==="promo_rechazadas");
               const isProdTab=t==="productos"&&(provTab==="productos"||provTab==="prod_nuevo"||provTab==="prod_aprobados"||provTab==="prod_pendientes"||provTab==="prod_rechazados");
               const isActive=provTab===t||isPromoTab||isProdTab;
-              return(<button key={t} onClick={()=>setProvTab(t==="promos"?"promo_nueva":t==="productos"?"prod_aprobados":t)} style={{flexShrink:0,padding:"8px 12px",borderRadius:10,border:"none",background:isActive?P:"#f1f5f9",color:isActive?"#fff":"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t==="estado"?"📊 Stats":t==="productos"?"📦 Productos":t==="promos"?(myPromos.filter(pr=>pr.motivo_rechazo).length>0?`🎉 Promos ⚠️${myPromos.filter(pr=>pr.motivo_rechazo).length}`:"🎉 Promos"):"💰 Ventas"}</button>);
+              return(<button key={t} onClick={()=>setProvTab(t==="promos"?"promo_nueva":t==="productos"?"prod_aprobados":t)} style={{flexShrink:0,padding:"8px 12px",borderRadius:10,border:"none",background:isActive?P:"#f1f5f9",color:isActive?"#fff":"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t==="estado"?"📊 Stats":t==="productos"?"📦 Productos":t==="promos"?(myPromos.filter(pr=>pr.motivo_rechazo).length>0?`🎉 Promos ⚠️${myPromos.filter(pr=>pr.motivo_rechazo).length}`:"🎉 Promos"):t==="pedidos_rest"?`📋 Pedidos (${misRestPedidos.filter(p=>!p.completado).length})`:"💰 Ventas"}</button>);
             })}
           </div>
           {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
@@ -1679,6 +1895,39 @@ export default function App() {
             )}
           </>)}
 
+          {provTab==="pedidos_rest"&&(
+            <div style={s.pc}>
+              <div style={s.pT}>📋 Pedidos recibidos desde MiMercado</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
+                <div style={s.statCard}><div style={{...s.statNum,fontSize:18,color:"#6366f1"}}>{misRestPedidos.length}</div><div style={s.statLbl}>Total iniciados</div></div>
+                <div style={s.statCard}><div style={{...s.statNum,fontSize:18,color:"#22c55e"}}>{misRestPedidos.filter(p=>p.completado).length}</div><div style={s.statLbl}>Completados</div></div>
+                <div style={s.statCard}><div style={{...s.statNum,fontSize:18,color:A}}>${misRestPedidos.filter(p=>p.completado).reduce((a,p)=>a+(p.total||0),0).toFixed(0)}</div><div style={s.statLbl}>Ingreso est.</div></div>
+              </div>
+              {misRestPedidos.length===0&&<div style={{fontSize:13,color:"#94a3b8",textAlign:"center",padding:"20px 0"}}>Aún no tienes pedidos por aquí. ¡Cuando un cliente te pida desde la app aparecerá aquí!</div>}
+              {misRestPedidos.map(ped=>(
+                <div key={ped.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                    <div><div style={{fontSize:13,fontWeight:700,color:P}}>📋 {ped.ref}</div><div style={{fontSize:11,color:"#64748b"}}>{ped.created_at?.slice(0,16).replace("T"," ")}</div></div>
+                    <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8,background:ped.completado?"#dcfce7":"#fef9c3",color:ped.completado?"#15803d":"#854d0e"}}>{ped.completado?"✓ Completado":"⏳ Pendiente"}</span>
+                  </div>
+                  <div style={{background:"#f8fafc",borderRadius:8,padding:"8px 10px",marginBottom:6,fontSize:12}}>
+                    {(ped.items||[]).map((it,i)=><div key={i}>{it.nombre} x{it.qty} — ${((it.precio||0)*(it.qty||1)).toFixed(2)}{it.nota&&<span style={{color:"#7e22ce"}}> 📝{it.nota}</span>}</div>)}
+                  </div>
+                  <div style={{fontSize:12,color:"#64748b",marginBottom:6}}>👤 {ped.cliente_nombre} · 📱 {ped.cliente_telefono}</div>
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:8}}>
+                    <span>Total: <strong style={{color:"#22c55e"}}>${(ped.total||0).toFixed(2)}</strong></span>
+                  </div>
+                  {!ped.completado&&(
+                    <div style={{display:"flex",gap:6}}>
+                      <button onClick={async()=>{await supabase.from("pedidos_restaurante").update({completado:true,estado:"completado"}).eq("id",ped.id);loadMisRestPedidos(provData.id);}} style={{...s.btnGreen,flex:1,borderRadius:10,padding:"8px",fontSize:12}}>✅ Marcar completado</button>
+                      <button onClick={()=>window.open(`https://wa.me/${ped.cliente_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${ped.cliente_nombre} 👋 Tu pedido *${ped.ref}* está listo`)}`)} style={{...s.btnWa,flex:1,marginTop:0,padding:"8px",fontSize:12}}>📲 Escribir</button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           {provTab==="ventas"&&(<div style={s.pc}><div style={s.pT}>💰 Mis ventas recientes</div>{myVentas.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>Aún no tienes ventas registradas</div>}{myVentas.slice(0,20).map(v=>(<div key={v.id} style={{padding:"8px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}><div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontWeight:600}}>{v.producto_nombre}</span><span style={{fontWeight:700,color:"#22c55e"}}>${(v.total_item||0).toFixed(2)}</span></div><div style={{color:"#94a3b8"}}>{v.cliente_nombre} · x{v.cantidad} · {v.fecha?.slice(0,10)}</div></div>))}</div>)}
 
           <button style={{...s.btnG,marginTop:8}} onClick={()=>{setProvMode("login");setProvData(null);setMyProds([]);setMyPromos([]);setMyVentas([]);setPmsg("");}}>Cerrar sesión</button>
@@ -1708,6 +1957,7 @@ export default function App() {
               {key:"remates_pend",label:"🏷️ Remates pendientes",n:pendRemates.length},
               {key:"servicios_pend",label:"🛠️ Servicios pendientes",n:pendServiciosCom.length},
               {key:"clasificados_pend",label:"🚗 Clasificados pendientes",n:pendClasificados.length},
+              {key:"suscripciones",label:"💳 Suscripciones",n:suscripciones.filter(s=>!s.suscripcion_pagada&&s.meses_gratis_restantes===0).length},
             ].map(x=>(<button key={x.key} style={s.admRow(adminSec===x.key)} onClick={()=>{setAdminSec(x.key);if(x.key==="pedidos")loadPedidos();}}><span>{x.label}</span>{x.n>0&&<span style={{background:"#ef4444",color:"#fff",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700}}>{x.n}</span>}</button>))}
           </div>
 
@@ -1979,6 +2229,57 @@ export default function App() {
             </div>
           )}
 
+          {adminSec==="suscripciones"&&(
+            <div style={{margin:"0 16px"}}>
+              <div style={s.pc}>
+                <div style={s.pT}>💳 Gestión de Suscripciones</div>
+                <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+                  <div style={s.statCard}><div style={{...s.statNum,fontSize:18,color:"#22c55e"}}>{suscripciones.filter(s=>s.suscripcion_activa&&s.suscripcion_pagada).length}</div><div style={s.statLbl}>Al día</div></div>
+                  <div style={s.statCard}><div style={{...s.statNum,fontSize:18,color:"#f59e0b"}}>{suscripciones.filter(s=>s.meses_gratis_restantes>0).length}</div><div style={s.statLbl}>En período gratis</div></div>
+                  <div style={s.statCard}><div style={{...s.statNum,fontSize:18,color:"#ef4444"}}>{suscripciones.filter(s=>!s.suscripcion_pagada&&s.meses_gratis_restantes===0).length}</div><div style={s.statLbl}>Vencidas</div></div>
+                </div>
+                <div style={{fontSize:12,color:"#22c55e",fontWeight:600,marginBottom:8}}>💰 Ingreso mensual potencial: ${(suscripciones.filter(s=>s.suscripcion_activa&&s.meses_gratis_restantes===0).length*8).toFixed(0)}/mes</div>
+                {suscripciones.map(s=>(
+                  <div key={s.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                      {s.logo_url?<img src={s.logo_url} alt="" style={{width:36,height:36,borderRadius:"50%",objectFit:"cover"}}/>:<div style={{width:36,height:36,borderRadius:"50%",background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center"}}>🏪</div>}
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:13,fontWeight:700}}>{s.negocio}</div>
+                        <div style={{fontSize:11,color:"#64748b"}}>@{s.usuario} · {s.tipo_negocio||"Restaurante"}</div>
+                      </div>
+                      <span style={{fontSize:11,fontWeight:700,padding:"3px 8px",borderRadius:8,
+                        background:s.meses_gratis_restantes>0?"#fef9c3":s.suscripcion_pagada?"#dcfce7":"#fee2e2",
+                        color:s.meses_gratis_restantes>0?"#854d0e":s.suscripcion_pagada?"#15803d":"#be123c"}}>
+                        {s.meses_gratis_restantes>0?`🎁 ${s.meses_gratis_restantes}m gratis`:s.suscripcion_pagada?"✓ Pagada":"⚠️ Vencida"}
+                      </span>
+                    </div>
+                    <div style={{fontSize:11,color:"#64748b",marginBottom:8}}>
+                      Vence: {s.suscripcion_vence?.slice(0,10)} · Estado: {s.suscripcion_activa?"Activo":"Suspendido"}
+                    </div>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                      {!s.suscripcion_pagada&&s.meses_gratis_restantes===0&&(
+                        <button onClick={async()=>{
+                          const nuevaFecha=new Date();nuevaFecha.setMonth(nuevaFecha.getMonth()+1);
+                          await supabase.from("proveedores").update({suscripcion_pagada:true,suscripcion_activa:true,suscripcion_vence:nuevaFecha.toISOString().split("T")[0]}).eq("id",s.id);
+                          loadSuscripciones();loadAll();
+                        }} style={{...s.btnGreen,fontSize:11,borderRadius:8,padding:"6px 10px"}}>✓ Marcar pagada (+1 mes)</button>
+                      )}
+                      {s.suscripcion_activa&&s.meses_gratis_restantes===0&&s.suscripcion_pagada&&(
+                        <button onClick={async()=>{await supabase.from("proveedores").update({suscripcion_pagada:false,suscripcion_activa:false}).eq("id",s.id);loadSuscripciones();loadAll();}} style={{...s.btnAmber,fontSize:11,borderRadius:8,padding:"6px 10px"}}>⏸️ Suspender</button>
+                      )}
+                      {!s.suscripcion_activa&&(
+                        <button onClick={async()=>{await supabase.from("proveedores").update({suscripcion_activa:true,suscripcion_pagada:true}).eq("id",s.id);loadSuscripciones();loadAll();}} style={{...s.btnGreen,fontSize:11,borderRadius:8,padding:"6px 10px"}}>▶️ Reactivar</button>
+                      )}
+                      {s.meses_gratis_restantes>0&&(
+                        <button onClick={async()=>{await supabase.from("proveedores").update({meses_gratis_restantes:s.meses_gratis_restantes-1,suscripcion_vence:new Date(new Date(s.suscripcion_vence)-30*24*60*60*1000).toISOString().split("T")[0]}).eq("id",s.id);loadSuscripciones();}} style={{...s.btnAmber,fontSize:11,borderRadius:8,padding:"6px 10px"}}>-1 mes gratis</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <button style={{...s.btnG,margin:"8px 16px 16px"}} onClick={()=>{setProvMode("login");setPendProds([]);setPendResenas([]);setAllProveedores([]);setPedidos([]);}}>Cerrar sesión admin</button>
         </>)}
       </div>)}
@@ -1986,8 +2287,51 @@ export default function App() {
       {/* BOTÓN FLOTANTE */}
       {count>0&&!sheet&&tab!=="Proveedores"&&(<div style={{position:"fixed",bottom:16,left:"50%",transform:"translateX(-50%)",zIndex:150,width:"calc(100% - 32px)",maxWidth:398}}><button style={{...s.btn,margin:0,display:"flex",justifyContent:"space-between",alignItems:"center"}} onClick={()=>setSheet("cart")}><span>🛒 Ver pedido ({count})</span><span>${total.toFixed(2)}</span></button></div>)}
 
+      {/* SHEET CARRITO RESTAURANTE */}
+      {sheet==="cartRest"&&(<div style={s.ov} onClick={()=>setSheet(null)}><div style={s.sh} onClick={e=>e.stopPropagation()}>
+        <div style={s.hnd}/>
+        <div style={s.shT}>Pedido — {cartRestNombre}</div>
+        <div style={s.ib}>
+          <label style={s.lbl}>Zona de entrega *</label>
+          <select style={{...s.inp,marginBottom:8,background:"#fff"}} value={zonaSelId} onChange={e=>{setZonaSelId(e.target.value);setZonaSel(zonas.find(z=>z.id===e.target.value)||null);}}>
+            <option value="">Selecciona tu zona...</option>
+            {zonas.map(z=><option key={z.id} value={z.id}>{z.municipio} — {z.zona}</option>)}
+          </select>
+          <label style={s.lbl}>Calle y referencia</label>
+          <input style={{...s.inp,marginBottom:0}} placeholder="Calle Principal #47, casa azul..." value={addr.calle} onChange={e=>setAddr({...addr,calle:e.target.value})}/>
+        </div>
+        {Object.values(cartRest).map(i=>(<div key={i.id} style={s.ci}><span style={{fontSize:22,width:32,textAlign:"center"}}>🍽️</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{i.name}</div></div><div style={s.qR}><button style={s.qB} onClick={()=>{const n={...cartRest};n[i.id].qty>1?n[i.id]={...n[i.id],qty:n[i.id].qty-1}:delete n[i.id];setCartRest(n);}}>−</button><span style={s.qN}>{i.qty}</span><button style={s.qB} onClick={()=>setCartRest(c=>({...c,[i.id]:{...c[i.id],qty:c[i.id].qty+1}}))}>+</button></div><div style={{fontSize:13,fontWeight:700,color:P,marginLeft:8}}>${(i.price*i.qty).toFixed(2)}</div></div>))}
+        {(()=>{
+          const restItems=Object.values(cartRest);
+          const restSub=restItems.reduce((a,i)=>a+i.price*i.qty,0);
+          const restDel=restauranteActivo?.delivery_propio?(restSub>=(restauranteActivo?.delivery_gratis_desde||15)?0:(restauranteActivo?.delivery_costo||0)):0;
+          const restTotal=restSub+restDel;
+          const restRef=`REST-${Date.now().toString().slice(-5)}`;
+          return(<>
+            <div style={{marginTop:10}}>
+              <div style={s.sr}><span style={s.sL}>Subtotal</span><span style={s.sV}>${restSub.toFixed(2)}</span></div>
+              <div style={s.sr}><span style={s.sL}>Delivery</span>{restDel===0?<span style={s.fT}>{restauranteActivo?.delivery_propio?"GRATIS":"No aplica"}</span>:<span style={s.sV}>${restDel.toFixed(2)}</span>}</div>
+              <div style={s.tR}><span style={{fontWeight:700}}>Total</span><span style={{fontWeight:700,fontSize:17}}>${restTotal.toFixed(2)}</span></div>
+            </div>
+            <label style={{...s.lbl,marginTop:10}}>Tu nombre *</label>
+            <input style={s.inp} placeholder="Juan Pérez" value={form.nombre} onChange={e=>setForm({...form,nombre:e.target.value})}/>
+            <label style={s.lbl}>Tu WhatsApp *</label>
+            <input style={s.inp} placeholder="+58 424-000-0000" value={form.telefono} onChange={e=>setForm({...form,telefono:e.target.value})}/>
+            <div style={{...s.ib,background:"#fffbeb"}}><div style={{fontSize:12,color:"#92400e"}}>⚡ Tu pedido irá directo al WhatsApp de {cartRestNombre}</div></div>
+            <button style={s.btnWa} onClick={async()=>{
+              if(!form.nombre||!form.telefono||!zonaSelId)return alert("Completa nombre, teléfono y zona");
+              await guardarPedidoRestaurante(cartRestId,restItems,restSub,restDel,restTotal,restRef);
+              window.open(`https://wa.me/${cartRestWa?.replace(/\D/g,"")}?text=${encodeURIComponent(buildRestWaMsg(cartRestNombre,restItems,restSub,restDel,restTotal,restRef))}`);
+              setCartRest({});setSheet(null);
+              alert(`✅ Pedido ${restRef} enviado a ${cartRestNombre}`);
+            }}>📲 Enviar pedido a {cartRestNombre}</button>
+            <button style={s.btnG} onClick={()=>setSheet(null)}>← Seguir viendo</button>
+          </>);
+        })()}
+      </div></div>)}
+
       {/* SHEET CARRITO */}
-      {sheet==="cart"&&(<div style={s.ov} onClick={()=>setSheet(null)}><div style={s.sh} onClick={e=>e.stopPropagation()}><div style={s.hnd}/><div style={s.shT}>Tu pedido</div><div style={s.ib}><label style={s.lbl}>Zona de entrega *</label><select style={{...s.inp,marginBottom:8,background:"#fff"}} value={zonaSelId} onChange={e=>{setZonaSelId(e.target.value);setZonaSel(zonas.find(z=>z.id===e.target.value)||null);}}><option value="">Selecciona tu zona...</option>{zonas.map(z=><option key={z.id} value={z.id}>{z.municipio} — {z.zona} (${z.costo_delivery})</option>)}</select><label style={s.lbl}>Calle y número</label><input style={{...s.inp,marginBottom:8}} placeholder="Calle Principal #47" value={addr.calle} onChange={e=>setAddr({...addr,calle:e.target.value})}/><label style={s.lbl}>Referencia</label><input style={{...s.inp,marginBottom:0}} placeholder="Casa azul, frente al parque..." value={addr.referencia} onChange={e=>setAddr({...addr,referencia:e.target.value})}/></div>{items.map(i=>(<div key={i.id} style={s.ci}><span style={{fontSize:22,width:32,textAlign:"center"}}>{i.emoji}</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{i.name}</div>{i.kitchen&&<div style={{fontSize:10,color:"#94a3b8"}}>{i.kitchen}</div>}</div><div style={s.qR}><button style={s.qB} onClick={()=>rem(i.id)}>−</button><span style={s.qN}>{i.qty}</span><button style={s.qB} onClick={()=>add(i)}>+</button></div><div style={{fontSize:13,fontWeight:700,color:P,marginLeft:8,minWidth:50,textAlign:"right"}}>${(i.price*i.qty).toFixed(2)}</div></div>))}
+      {sheet==="cart"&&(<>(<div style={s.ov} onClick={()=>setSheet(null)}><div style={s.sh} onClick={e=>e.stopPropagation()}><div style={s.hnd}/><div style={s.shT}>Tu pedido</div><div style={s.ib}><label style={s.lbl}>Zona de entrega *</label><select style={{...s.inp,marginBottom:8,background:"#fff"}} value={zonaSelId} onChange={e=>{setZonaSelId(e.target.value);setZonaSel(zonas.find(z=>z.id===e.target.value)||null);}}><option value="">Selecciona tu zona...</option>{zonas.map(z=><option key={z.id} value={z.id}>{z.municipio} — {z.zona} (${z.costo_delivery})</option>)}</select><label style={s.lbl}>Calle y número</label><input style={{...s.inp,marginBottom:8}} placeholder="Calle Principal #47" value={addr.calle} onChange={e=>setAddr({...addr,calle:e.target.value})}/><label style={s.lbl}>Referencia</label><input style={{...s.inp,marginBottom:0}} placeholder="Casa azul, frente al parque..." value={addr.referencia} onChange={e=>setAddr({...addr,referencia:e.target.value})}/></div>{items.map(i=>(<div key={i.id} style={s.ci}><span style={{fontSize:22,width:32,textAlign:"center"}}>{i.emoji}</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{i.name}</div>{i.kitchen&&<div style={{fontSize:10,color:"#94a3b8"}}>{i.kitchen}</div>}</div><div style={s.qR}><button style={s.qB} onClick={()=>rem(i.id)}>−</button><span style={s.qN}>{i.qty}</span><button style={s.qB} onClick={()=>add(i)}>+</button></div><div style={{fontSize:13,fontWeight:700,color:P,marginLeft:8,minWidth:50,textAlign:"right"}}>${(i.price*i.qty).toFixed(2)}</div></div>))}
         {zonaSel&&(superItems.length>0&&superSub<freeMinSuper||foodItems.length>0&&foodSub<freeMinFood)&&(
           <div style={s.pw}>
             {superItems.length>0&&superSub<freeMinSuper&&(<div style={{fontSize:12,color:"#64748b",marginBottom:4}}>🛒 Supermercado: te faltan <strong style={{color:P}}>${(freeMinSuper-superSub).toFixed(2)}</strong> para delivery gratis</div>)}
