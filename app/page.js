@@ -303,8 +303,7 @@ export default function App() {
   };
 
   const processBulkCsv=(text)=>{
-    const lines=text.split('
-').filter(l=>l.trim());
+    const lines=text.split("\n").filter(l=>l.trim());
     if(lines.length<2){setBulkMsg("El archivo está vacío");return;}
     const header=parseCsvRow(lines[0]).map(h=>h.toLowerCase().replace(/[^a-z]/g,''));
     const rows=lines.slice(1).map(l=>parseCsvRow(l));
