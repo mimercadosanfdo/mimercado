@@ -775,7 +775,14 @@ export default function App() {
     <div style={s.app}>
       <div style={s.hdr}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <div style={{width:36,height:36,background:"#f59e0b",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,boxShadow:"0 2px 8px rgba(245,158,11,0.4)"}}>🛍️</div>
+          <div style={{width:38,height:38,background:"#000",borderRadius:10,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.4)"}}>
+              <svg width="26" height="28" viewBox="0 0 26 28" fill="none">
+                <path d="M13 0 C6 0 1 5 1 11 C1 19 13 28 13 28 C13 28 25 19 25 11 C25 5 20 0 13 0Z" fill="white"/>
+                <circle cx="13" cy="11" r="7" fill="#000"/>
+                <text x="13" y="15" textAnchor="middle" fill="white" fontSize="9" fontWeight="800" fontFamily="system-ui">A</text>
+                <path d="M4 30 Q13 34 22 30" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round"/>
+              </svg>
+            </div>
           <div><div style={{...s.logo,lineHeight:1.1}}>{APP_NAME}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.7)"}}>📍 {CITY}</div></div></div>
         {count>0&&<button style={s.cBtn} onClick={()=>setSheet("cart")}>🛒 <span style={s.cN}>{count}</span><span style={{fontSize:12}}>${total.toFixed(2)}</span></button>}
       </div>
@@ -890,9 +897,50 @@ export default function App() {
       </>)}
 
       {tab==="Supermercado"&&(<>
-        <div style={s.banner}><p style={s.bT}>Supermercado {CITY} 🛒</p><p style={s.bS}>Productos básicos · Proteínas · Verduras · Más</p><span style={s.bdg("#22c55e","#fff")}>Delivery gratis desde $15</span></div>
+        <div style={{background:"linear-gradient(135deg,#1e293b,#334155)",padding:"14px 16px",color:"#fff"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+            <div style={{width:44,height:44,background:"#f59e0b",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🛒</div>
+            <div>
+              <div style={{fontSize:16,fontWeight:800,color:"#fff"}}>Supermercado</div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.65)"}}>Productos frescos · Delivery a domicilio</div>
+            </div>
+          </div>
+          <div style={{background:"rgba(245,158,11,0.15)",borderRadius:10,padding:"7px 12px",display:"flex",alignItems:"center",gap:8,border:"1px solid rgba(245,158,11,0.3)"}}>
+            <span style={{fontSize:14}}>🚚</span>
+            <span style={{fontSize:12,color:"#fde68a",fontWeight:600}}>Delivery GRATIS en pedidos mayores a $15</span>
+          </div>
+        </div>
         <div style={s.sw}><input style={s.si} placeholder="🔍  Buscar..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
-        <div style={s.cs}><button style={s.cb(superCat==="Todas")} onClick={()=>setSuperCat("Todas")}>Todas</button>{SUPER_CATS.map(c=><button key={c} style={s.cb(superCat===c)} onClick={()=>setSuperCat(c)}>{c}</button>)}</div>
+        {superCat==="Todas"?(
+          <div style={{padding:"12px 16px 8px"}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+              {[
+                {cat:"Proteínas",emoji:"🥩",color:"#fee2e2",tc:"#be123c"},
+                {cat:"Granos y cereales",emoji:"🌾",color:"#fef9c3",tc:"#854d0e"},
+                {cat:"Aceites y condimentos",emoji:"🫙",color:"#fef3c7",tc:"#92400e"},
+                {cat:"Lácteos",emoji:"🥛",color:"#e0f2fe",tc:"#0369a1"},
+                {cat:"Aseo personal",emoji:"🧴",color:"#f0fdf4",tc:"#15803d"},
+                {cat:"Limpieza del hogar",emoji:"🧹",color:"#ede9fe",tc:"#7c3aed"},
+                {cat:"Frutas y verduras",emoji:"🥦",color:"#dcfce7",tc:"#15803d"},
+                {cat:"Bebidas",emoji:"🥤",color:"#dbeafe",tc:"#1d4ed8"},
+                {cat:"Panadería",emoji:"🍞",color:"#fef3c7",tc:"#92400e"},
+                {cat:"Enlatados",emoji:"🥫",color:"#f1f5f9",tc:"#475569"},
+                {cat:"Snacks",emoji:"🍿",color:"#fff7ed",tc:"#c2410c"},
+                {cat:"Ver todo",emoji:"🛒",color:"#f0fdf4",tc:"#15803d"},
+              ].map(x=>(
+                <button key={x.cat} onClick={()=>setSuperCat(x.cat==="Ver todo"?"Todas":x.cat)} style={{background:x.color,border:`1px solid ${x.color}`,borderRadius:14,padding:"10px 4px",display:"flex",flexDirection:"column",alignItems:"center",gap:4,cursor:"pointer",minHeight:72}}>
+                  <span style={{fontSize:26}}>{x.emoji}</span>
+                  <span style={{fontSize:9,fontWeight:600,color:x.tc,textAlign:"center",lineHeight:1.2}}>{x.cat==="Ver todo"?"Ver todo":x.cat.split(" ").slice(0,2).join(" ")}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ):(
+          <div style={{padding:"8px 16px 4px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div style={{fontSize:13,fontWeight:600,color:"#1e293b"}}>{superCat}</div>
+            <button onClick={()=>setSuperCat("Todas")} style={{fontSize:12,color:P,background:"none",border:"none",cursor:"pointer",fontWeight:600}}>← Todas</button>
+          </div>
+        )}
         <div style={s.sec}>
           {superGroups.map(g=>(<div key={g.cat}><div style={s.sT}>{g.cat}</div><div style={s.grid}>{g.items.map(p=><Card key={p.id} p={p}/>)}</div></div>))}
           {superGroups.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🔍</div><p>No encontramos ese producto</p></div>}
@@ -910,7 +958,7 @@ export default function App() {
 
         {/* BOTÓN PUBLICAR */}
         <div style={{padding:"12px 16px 0"}}>
-          <button onClick={()=>setShowPublicarRemate(!showPublicarRemate)} style={{...s.btn,marginTop:0,background:showPublicarRemate?"#64748b":A,color:showPublicarRemate?"#fff":P}}>
+          <button onClick={()=>setShowPublicarRemate(!showPublicarRemate)} style={{...s.btn,marginTop:0,background:showPublicarRemate?"#64748b":"#f59e0b",color:"#fff",boxShadow:"0 2px 8px rgba(245,158,11,0.3)"}}>
             {showPublicarRemate?"✕ Cancelar":"➕ Publicar mi artículo gratis"}
           </button>
         </div>
