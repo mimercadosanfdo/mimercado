@@ -177,10 +177,10 @@ export default function App() {
   const [resenaMsj,setResenaMsj]=useState("");
   const [pedidoRef,setPedidoRef]=useState("");
 
-  // ── PEDIDOS (NUEVO) ──────────────────────────────────────
+  // -- PEDIDOS (NUEVO) --------------------------------------
   const [pedidos,setPedidos]=useState([]);
   const [pedidoFiltro,setPedidoFiltro]=useState("todos");
-  // ─────────────────────────────────────────────────────────
+  // ---------------------------------------------------------
 
   const [provMode,setProvMode]=useState("login");
   const [provForm,setProvForm]=useState({usuario:"",nombre:"",negocio:"",telefono:"",email:"",categorias:[],pass:"",tipo_negocio:"Restaurante/Cocina",descripcion_negocio:"",delivery_propio:false,delivery_costo:0,delivery_gratis_desde:15});
@@ -280,22 +280,9 @@ export default function App() {
   };
 
   const buildRestWaMsg=(restNombre,restItems,restSub,restDel,restTotal,restRef)=>{
-    const lineas=restItems.map(i=>`  • ${i.name} x${i.qty} — $${(i.price*i.qty).toFixed(2)}${i.nota?` (${i.nota})`:""}`).join("
-");
+    const lineas=restItems.map(i=>`  • ${i.name} x${i.qty} - $${(i.price*i.qty).toFixed(2)}${i.nota?" ("+i.nota+")":""}`).join("\n")
     const hora=new Date().toLocaleTimeString("es-VE",{hour:"2-digit",minute:"2-digit"});
-    return `🍽️ *Nuevo pedido — ${APP_NAME}*
-📋 Ref: ${restRef}
-${"─".repeat(28)}
-${lineas}
-${"─".repeat(28)}
-Subtotal: $${restSub.toFixed(2)}
-Delivery: ${restDel===0?"GRATIS 🎉":"$"+restDel.toFixed(2)}
-*TOTAL: $${restTotal.toFixed(2)}*
-${"─".repeat(28)}
-👤 ${form.nombre}
-📱 ${form.telefono}
-📍 ${zonaSel?.zona||""}, ${addr.calle}
-⏰ ${hora}`;
+    return `🍽️ *Nuevo pedido - ${APP_NAME}*\n📋 Ref: ${restRef}\n----------------------------\n${lineas}\n----------------------------\nSubtotal: $${restSub.toFixed(2)}\nDelivery: ${restDel===0?"GRATIS":"$"+restDel.toFixed(2)}\n*TOTAL: $${restTotal.toFixed(2)}*\n----------------------------\n👤 ${form.nombre}\n📱 ${form.telefono}\n📍 ${zonaSel?.zona||""}, ${addr.calle}\n⏰ ${hora}`;
   };
 
   const loadClasificados=async()=>{
@@ -372,7 +359,7 @@ ${"─".repeat(28)}
     setShowPublicarServicio(false);
   };
 
-  // ── FUNCIONES DE PEDIDOS (NUEVO) ─────────────────────────
+  // -- FUNCIONES DE PEDIDOS (NUEVO) -------------------------
   const loadPedidos=async()=>{
     const{data}=await supabase
       .from("pedidos")
@@ -421,7 +408,7 @@ ${"─".repeat(28)}
     });
     if(error)console.error("Error guardando pedido:",error.message);
   };
-  // ─────────────────────────────────────────────────────────
+  // ---------------------------------------------------------
 
   const allProds=[
     ...superProds.map(p=>({id:`sp_${p.id}`,name:p.nombre,cat:"Supermercado",superCat:p.categoria,price:p.precio,unit:p.unidad,emoji:p.emoji||"🛒",margin:0.10,foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,abierto:true})),
@@ -497,11 +484,11 @@ ${"─".repeat(28)}
   };
 
   const buildWaMsg=()=>{
-    const lineas=items.map(i=>`  • ${i.name} x${i.qty} — ${(i.price*i.qty).toFixed(2)}`).join("\n");
+    const lineas=items.map(i=>`  • ${i.name} x${i.qty} - ${(i.price*i.qty).toFixed(2)}`).join("\n");
     const dir=`${zonaSel?.zona||""}, ${addr.calle}${addr.referencia?`, ${addr.referencia}`:""}`;
     const hora=new Date().toLocaleTimeString("es-VE",{hour:"2-digit",minute:"2-digit"});
     const delDetalle=del===0?"GRATIS 🎉":`${del.toFixed(2)}${delSuper>0&&delFood>0?` (super ${delSuper.toFixed(2)} + comida ${delFood.toFixed(2)})`:""}`;
-    return `🛒 *Nuevo pedido ${APP_NAME} ${CITY}*\n📋 Ref: ${pedidoRef}\n${"─".repeat(28)}\n${lineas}\n${"─".repeat(28)}\nSubtotal: ${sub.toFixed(2)}\nDelivery: ${delDetalle}\n*TOTAL: ${total.toFixed(2)}*\n${"─".repeat(28)}\n👤 ${form.nombre}\n📱 ${form.telefono}\n📍 ${zonaSel?.zona||""}\n🏠 ${dir}\n💳 ${form.pago}\n⏰ ${hora}`;
+    return `🛒 *Nuevo pedido ${APP_NAME} ${CITY}*\n📋 Ref: ${pedidoRef}\n----------------------------\n${lineas}\n----------------------------\nSubtotal: ${sub.toFixed(2)}\nDelivery: ${delDetalle}\n*TOTAL: ${total.toFixed(2)}*\n----------------------------\n👤 ${form.nombre}\n📱 ${form.telefono}\n📍 ${zonaSel?.zona||""}\n🏠 ${dir}\n💳 ${form.pago}\n⏰ ${hora}`;
   };
 
   const sendWa=()=>{window.open(`https://wa.me/${WA}?text=${encodeURIComponent(buildWaMsg())}`);};
@@ -963,7 +950,7 @@ ${"─".repeat(28)}
       {/* RESTAURANTES */}
       {tab==="Restaurantes"&&(<>
         {restauranteActivo?(
-          /* ── MENÚ DEL RESTAURANTE ── */
+          /* -- MENÚ DEL RESTAURANTE -- */
           <div>
             {/* HEADER RESTAURANTE */}
             <div style={{background:P,padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}>
@@ -1003,7 +990,7 @@ ${"─".repeat(28)}
             )}
           </div>
         ):(
-          /* ── LISTA DE RESTAURANTES ── */
+          /* -- LISTA DE RESTAURANTES -- */
           <>
             <div style={s.banner}>
               <p style={s.bT}>Restaurantes en {CITY} 🍽️</p>
@@ -2356,7 +2343,7 @@ ${"─".repeat(28)}
         <div style={{margin:"10px 0"}}><div style={s.sr}><span style={s.sL}>Subtotal</span><span style={s.sV}>${sub.toFixed(2)}</span></div><div style={s.sr}><span style={s.sL}>Delivery</span>{del===0?<span style={s.fT}>GRATIS</span>:<span style={s.sV}>${del.toFixed(2)}</span>}</div><div style={s.tR}><span style={{fontWeight:700}}>TOTAL</span><span style={{fontWeight:700,fontSize:18,color:"#22c55e"}}>${total.toFixed(2)}</span></div></div>
         <div style={{...s.ib,marginTop:8}}><div style={s.sr}><span style={s.sL}>👤</span><span style={s.sV}>{form.nombre}</span></div><div style={s.sr}><span style={s.sL}>📱</span><span style={s.sV}>{form.telefono}</span></div><div style={s.sr}><span style={s.sL}>📍</span><span style={s.sV}>{zonaSel?.zona}</span></div><div style={s.sr}><span style={s.sL}>🏠</span><span style={s.sV}>{addr.calle}</span></div><div style={s.sr}><span style={s.sL}>💳</span><span style={s.sV}>{form.pago}</span></div></div>
         <div style={{background:"#fffbeb",borderRadius:12,padding:"10px 14px",marginBottom:4,fontSize:12,color:"#92400e"}}>⚡ Al tocar el botón se abrirá WhatsApp con tu pedido listo. Solo toca <strong>Enviar</strong>.</div>
-        {/* ── BOTÓN CORREGIDO: guarda en DB antes de abrir WhatsApp ── */}
+        {/* -- BOTÓN CORREGIDO: guarda en DB antes de abrir WhatsApp -- */}
         <button style={s.btnWa} onClick={async()=>{
           await guardarPedidoEnDB();
           sendWa();
@@ -2391,3 +2378,4 @@ ${"─".repeat(28)}
       <div style={{height:80}}/>
     </div>
   );
+}
