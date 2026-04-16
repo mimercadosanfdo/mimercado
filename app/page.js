@@ -2384,15 +2384,7 @@ export default function App() {
                   <div style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:8}}>📥 Importar productos desde CSV</div>
                   {/* DESCARGAR PLANTILLA */}
                   <button onClick={()=>{
-                    const headers="nombre,descripcion,precio,unidad,supercategoria,marca,stock,foto_url";
-                    const example=[
-                      "Pollo entero,Fresco del día,8.50,kg,Proteínas,Granja Local,50,",
-                      "Arroz cristal,Arroz blanco premium,2.00,kg,Granos y cereales,Cristal,100,",
-                      "Aceite vegetal,Botella 1 litro,3.50,litro,Aceites y condimentos,Mazeite,80,",
-                    ].join("
-");
-                    const csv=headers+"
-"+example;
+                    const h="nombre,descripcion,precio,unidad,supercategoria,marca,stock,foto_url";const ex=["Pollo entero,Fresco del dia,8.50,kg,Proteinas,Granja Local,50,","Arroz cristal,Arroz blanco,2.00,kg,Granos y cereales,Cristal,100,","Aceite vegetal,Botella 1 litro,3.50,litro,Aceites y condimentos,Mazeite,80,"].join("\n");const csv=h+"\n"+ex;
                     const blob=new Blob([csv],{type:"text/csv"});
                     const url=URL.createObjectURL(blob);
                     const a=document.createElement("a");
