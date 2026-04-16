@@ -1109,6 +1109,41 @@ export default function App() {
               </div>
             ):(
               /* LISTA DE RESTAURANTES */
+              <>
+              {/* BANNER PROMOS PREMIUM */}
+              {provPromos.length>0&&(
+                <div style={{padding:"12px 16px 0"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                    <div style={{fontSize:13,fontWeight:700,color:"#1e293b"}}>🔥 Ofertas destacadas</div>
+                    <span style={{fontSize:10,background:"#f59e0b",color:"#fff",padding:"2px 8px",borderRadius:20,fontWeight:700}}>HOT</span>
+                  </div>
+                  <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:8}}>
+                    {provPromos.slice(0,5).map(p=>(
+                      <div key={p.id} style={{flexShrink:0,width:200,borderRadius:14,overflow:"hidden",cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.1)",position:"relative"}}
+                        onClick={()=>{const r=allRestaurantes.find(x=>x.negocio===p.proveedores?.negocio);if(r){setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);}}}>
+                        {p.foto_url
+                          ?<img src={p.foto_url} alt={p.nombre} style={{width:"100%",height:110,objectFit:"cover"}}/>
+                          :<div style={{height:110,background:"linear-gradient(135deg,#f59e0b,#d97706)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36}}>🎁</div>
+                        }
+                        {/* Badge precio */}
+                        <div style={{position:"absolute",top:8,right:8,background:"#ef4444",color:"#fff",borderRadius:20,padding:"3px 10px",fontSize:12,fontWeight:700}}>${parseFloat(p.precio||0).toFixed(2)}</div>
+                        {/* Info */}
+                        <div style={{padding:"8px 10px",background:"#fff"}}>
+                          <div style={{fontSize:12,fontWeight:700,color:"#1e293b",lineHeight:1.3}}>{p.nombre}</div>
+                          <div style={{display:"flex",alignItems:"center",gap:4,marginTop:3}}>
+                            {p.proveedores?.logo_url&&<img src={p.proveedores.logo_url} alt="" style={{width:16,height:16,borderRadius:"50%",objectFit:"cover"}}/>}
+                            <span style={{fontSize:10,color:"#64748b"}}>{p.proveedores?.negocio}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Espacio premium label */}
+                  <div style={{textAlign:"center",marginBottom:4}}>
+                    <span style={{fontSize:9,color:"#94a3b8",letterSpacing:0.5}}>ESPACIO PATROCINADO · ¿Quieres aparecer aquí? Contáctanos</span>
+                  </div>
+                </div>
+              )}
               <div style={{...s.sec,paddingTop:12}}>
                 {allRestaurantes.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🍽️</div><p>Próximamente restaurantes aquí</p></div>}
                 {allRestaurantes.map(r=>(
@@ -1127,6 +1162,7 @@ export default function App() {
                   </div>
                 ))}
               </div>
+              </>
             )}
           </>
         )}
