@@ -889,7 +889,7 @@ export default function App() {
         <div style={{height:20}}/>
       </>)}
 
-      tab==="Supermercado"&&(<>
+      {tab==="Supermercado"&&(<>
         <div style={s.banner}><p style={s.bT}>Supermercado {CITY} 🛒</p><p style={s.bS}>Productos básicos · Proteínas · Verduras · Más</p><span style={s.bdg("#22c55e","#fff")}>Delivery gratis desde $15</span></div>
         <div style={s.sw}><input style={s.si} placeholder="🔍  Buscar..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
         <div style={s.cs}><button style={s.cb(superCat==="Todas")} onClick={()=>setSuperCat("Todas")}>Todas</button>{SUPER_CATS.map(c=><button key={c} style={s.cb(superCat===c)} onClick={()=>setSuperCat(c)}>{c}</button>)}</div>
