@@ -856,7 +856,6 @@ export default function App() {
     );
   };
 
-;
 
   const CardNegocio=({p})=>{
     const qtyNeg=cartNegocio[p.id]?.qty||0;
