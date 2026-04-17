@@ -97,11 +97,11 @@ const s = {
   cEm:{fontSize:32,textAlign:"center",padding:"4px 0"},
   cImg:{width:"100%",height:90,objectFit:"cover",borderRadius:8,marginBottom:4},
   cLogo:{width:24,height:24,borderRadius:"50%",objectFit:"cover",border:"2px solid #f1f5f9"},
-  cNm:{fontSize:13,fontWeight:600,color:"#1e293b",lineHeight:1.3},
+  cNm:{fontSize:12,fontWeight:600,color:"#334155",lineHeight:1.3},
   cMeta:{fontSize:10,color:"#94a3b8"},
   cKt:{fontSize:10,color:"#94a3b8",display:"flex",alignItems:"center",gap:4},
   cBt:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"auto"},
-  cPr:{fontSize:15,fontWeight:800,color:P},
+  cPr:{fontSize:18,fontWeight:900,color:P,letterSpacing:-0.3},
   cUn:{fontSize:10,color:"#94a3b8"},
   aBtn:{background:P,color:"#fff",border:"none",borderRadius:20,width:32,height:32,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:"0 2px 6px rgba(22,163,74,0.3)"},
   tag:{fontSize:10,fontWeight:600,background:"#fef3c7",color:"#92400e",padding:"2px 7px",borderRadius:8,alignSelf:"flex-start"},
@@ -1063,26 +1063,42 @@ export default function App() {
       </>)}
 
       {tab==="Supermercado"&&(<>
-        <div style={{background:"linear-gradient(135deg,#1e293b,#334155)",padding:"14px 16px",color:"#fff"}}>
-          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
-            <div style={{width:44,height:44,background:"#f59e0b",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🛒</div>
+        <div style={{background:"linear-gradient(160deg,#0f172a 0%,#1e293b 60%,#334155 100%)",padding:"16px 16px 14px",color:"#fff"}}>
+          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+            <div style={{width:48,height:48,background:"#f59e0b",borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0,boxShadow:"0 2px 8px rgba(245,158,11,0.4)"}}>🛒</div>
             <div>
-              <div style={{fontSize:16,fontWeight:800,color:"#fff"}}>Supermercado</div>
-              <div style={{fontSize:11,color:"rgba(255,255,255,0.65)"}}>Productos frescos · Delivery a domicilio</div>
+              <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:-0.5}}>Supermercado</div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.55)",marginTop:1}}>Productos frescos · Delivery a domicilio</div>
             </div>
           </div>
-          <div style={{background:"rgba(245,158,11,0.15)",borderRadius:10,padding:"7px 12px",display:"flex",alignItems:"center",gap:8,border:"1px solid rgba(245,158,11,0.3)"}}>
-            <span style={{fontSize:14}}>🚚</span>
-            <span style={{fontSize:12,color:"#fde68a",fontWeight:600}}>Delivery GRATIS en pedidos mayores a $15</span>
+          <div style={{background:"rgba(245,158,11,0.18)",borderRadius:12,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,border:"1px solid rgba(245,158,11,0.4)"}}>
+            <span style={{fontSize:20}}>🚚</span>
+            <div>
+              <div style={{fontSize:15,color:"#fbbf24",fontWeight:900,letterSpacing:-0.3}}>DELIVERY GRATIS</div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.65)",marginTop:1}}>En pedidos mayores a $15</div>
+            </div>
           </div>
         </div>
-        <div style={s.sw}><input style={s.si} placeholder="🔍  Buscar..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
+        <div style={{padding:"12px 16px 0"}}><input style={{width:"100%",padding:"13px 16px",borderRadius:14,border:"2px solid #e2e8f0",fontSize:14,background:"#fff",boxSizing:"border-box",outline:"none",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}} placeholder="🔍  Buscar productos del supermercado…" value={search} onChange={e=>setSearch(e.target.value)}/></div>
         {superCat==="Todas"?(
           <div style={{padding:"12px 16px 8px"}}>
+            {/* CATEGORÍAS DESTACADAS */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+              {[
+                {cat:"Snacks",emoji:"🍿",color:"#fff7ed",tc:"#c2410c",border:"#fed7aa"},
+                {cat:"Granos y cereales",emoji:"🌾",color:"#fef9c3",tc:"#854d0e",border:"#fde68a"},
+              ].map(x=>(
+                <button key={x.cat} onClick={()=>setSuperCat(x.cat)} style={{background:x.color,border:`2px solid ${x.border}`,borderRadius:16,padding:"14px 8px",display:"flex",flexDirection:"column",alignItems:"center",gap:6,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.07)"}}>
+                  <span style={{fontSize:32}}>{x.emoji}</span>
+                  <span style={{fontSize:11,fontWeight:800,color:x.tc,textAlign:"center",lineHeight:1.2}}>{x.cat}</span>
+                  <span style={{fontSize:9,color:x.tc,opacity:0.7,fontWeight:500}}>Compra rápida ⚡</span>
+                </button>
+              ))}
+            </div>
+            {/* RESTO DE CATEGORÍAS */}
             <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
               {[
                 {cat:"Proteínas",emoji:"🥩",color:"#fee2e2",tc:"#be123c"},
-                {cat:"Granos y cereales",emoji:"🌾",color:"#fef9c3",tc:"#854d0e"},
                 {cat:"Aceites y condimentos",emoji:"🫙",color:"#fef3c7",tc:"#92400e"},
                 {cat:"Lácteos",emoji:"🥛",color:"#e0f2fe",tc:"#0369a1"},
                 {cat:"Aseo personal",emoji:"🧴",color:"#f0fdf4",tc:"#15803d"},
@@ -1091,7 +1107,6 @@ export default function App() {
                 {cat:"Bebidas",emoji:"🥤",color:"#dbeafe",tc:"#1d4ed8"},
                 {cat:"Panadería",emoji:"🍞",color:"#fef3c7",tc:"#92400e"},
                 {cat:"Enlatados",emoji:"🥫",color:"#f1f5f9",tc:"#475569"},
-                {cat:"Snacks",emoji:"🍿",color:"#fff7ed",tc:"#c2410c"},
                 {cat:"Ver todo",emoji:"🛒",color:"#f0fdf4",tc:"#15803d"},
               ].map(x=>(
                 <button key={x.cat} onClick={()=>setSuperCat(x.cat==="Ver todo"?"Todas":x.cat)} style={{background:x.color,border:`1px solid ${x.color}`,borderRadius:14,padding:"10px 4px",display:"flex",flexDirection:"column",alignItems:"center",gap:4,cursor:"pointer",minHeight:72}}>
