@@ -919,17 +919,13 @@ export default function App() {
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <div style={{display:"flex",alignItems:"center"}}>
               <svg width="130" height="50" viewBox="0 0 260 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Texto Apure - verde oscuro */}
-                <text x="0" y="42" fontFamily="'Poppins',Arial,sans-serif" fontWeight="800" fontSize="42" fill="#1a5c2a">Apure</text>
-                {/* Mapa abierto */}
+                <text x="0" y="42" fontFamily="Poppins,Arial,sans-serif" fontWeight="800" fontSize="42" fill="#1a5c2a">Apure</text>
                 <path d="M172 8 L156 16 L140 8 L140 60 L156 52 L172 60 L188 52 L188 8 L172 8Z" fill="none" stroke="#25D366" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round"/>
                 <line x1="156" y1="16" x2="156" y2="52" stroke="#25D366" strokeWidth="4" strokeLinecap="round"/>
                 <line x1="172" y1="8" x2="172" y2="20" stroke="#25D366" strokeWidth="4" strokeLinecap="round"/>
-                {/* Pin de localización */}
                 <path d="M172 0 C165 0 160 5 160 12 C160 21 172 30 172 30 C172 30 184 21 184 12 C184 5 179 0 172 0Z" fill="#25D366"/>
                 <circle cx="172" cy="12" r="5" fill="#fff"/>
-                {/* Texto Market - verde brillante */}
-                <text x="0" y="88" fontFamily="'Poppins',Arial,sans-serif" fontWeight="800" fontSize="42" fill="#25D366">Market</text>
+                <text x="0" y="88" fontFamily="Poppins,Arial,sans-serif" fontWeight="800" fontSize="42" fill="#25D366">Market</text>
               </svg>
             </div>
         <div style={{display:"flex",alignItems:"center",gap:6}}>
