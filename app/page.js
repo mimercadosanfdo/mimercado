@@ -1,3 +1,4 @@
+// BUILD:1776395781
 "use client"; // Apure Market v1776307949
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
@@ -1198,108 +1199,6 @@ export default function App() {
       </>)}
 
       {/* NEGOCIOS LOCALES */}
-      {tab==="Negocios Locales"&&(<>
-        {negocioActivo?(
-          /* ── CATÁLOGO DEL NEGOCIO ── */
-          <div>
-            {/* HEADER NEGOCIO */}
-            <div style={{background:DARK,padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}>
-              <button onClick={()=>{setNegocioActivo(null);setCartNegocio({});setCartNegocioId(null);}} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:8,color:"#fff",padding:"6px 10px",fontSize:12,cursor:"pointer"}}>← Volver</button>
-              {negocioActivo.logo_url&&<img src={negocioActivo.logo_url} alt="" style={{width:36,height:36,borderRadius:"50%",objectFit:"cover"}}/>}
-              <div style={{flex:1}}>
-                <div style={{color:"#fff",fontWeight:700,fontSize:15}}>{negocioActivo.negocio}</div>
-                {negocioActivo.direccion&&<div style={{color:"rgba(255,255,255,0.65)",fontSize:11}}>📍 {negocioActivo.direccion}</div>}
-                {negocioActivo.horario_desde&&<div style={{color:"rgba(255,255,255,0.65)",fontSize:11}}>🕐 {negocioActivo.horario_desde}–{negocioActivo.horario_hasta}</div>}
-              </div>
-              <span style={{fontSize:11,fontWeight:700,padding:"3px 8px",borderRadius:20,background:negocioActivo.activo?"#22c55e":"#ef4444",color:"#fff"}}>{negocioActivo.activo?"● Abierto":"● Cerrado"}</span>
-            </div>
-            {/* DELIVERY INFO */}
-            <div style={{background:"#f0fdf4",padding:"8px 16px",fontSize:12,color:"#15803d",display:"flex",gap:6,alignItems:"center"}}>
-              {negocioActivo.delivery_propio
-                ?<span>🚚 Delivery disponible{negocioActivo.delivery_gratis_desde?` · Gratis desde $${negocioActivo.delivery_gratis_desde}`:negocioActivo.delivery_costo>0?` · $${negocioActivo.delivery_costo}`:""}</span>
-                :<span>🏃 Retiro en local · {negocioActivo.direccion||"Consultar dirección"}</span>
-              }
-            </div>
-            {/* BUSCADOR */}
-            <div style={s.sw}><input style={s.si} placeholder="🔍  Buscar en el catálogo..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
-            {/* PRODUCTOS */}
-            <div style={s.sec}>
-              {allProdsConMargen.filter(p=>p.kitchen===negocioActivo.negocio&&p.name.toLowerCase().includes(search.toLowerCase())).length===0&&(
-                <div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🛍️</div><p>No hay productos disponibles</p></div>
-              )}
-              <div style={s.grid}>
-                {allProdsConMargen.filter(p=>p.kitchen===negocioActivo.negocio&&p.name.toLowerCase().includes(search.toLowerCase())).map(p=><CardNegocio key={p.id} p={p}/>)}
-              </div>
-            </div>
-            {/* CARRITO FLOTANTE */}
-            {Object.values(cartNegocio).length>0&&(
-              <div style={{position:"fixed",bottom:16,left:"50%",transform:"translateX(-50%)",zIndex:150,width:"calc(100% - 32px)",maxWidth:398}}>
-                <button style={{...s.btn,margin:0,display:"flex",justifyContent:"space-between",alignItems:"center",background:P}} onClick={()=>setSheet("cartNeg")}>
-                  <span>🛒 Ver pedido ({Object.values(cartNegocio).reduce((a,i)=>a+i.qty,0)})</span>
-                  <span>${Object.values(cartNegocio).reduce((a,i)=>a+i.price*i.qty,0).toFixed(2)}</span>
-                </button>
-              </div>
-            )}
-          </div>
-        ):(
-          /* ── LISTA NEGOCIOS ── */
-          <>
-            <div style={{...s.banner,borderRadius:"0 0 16px 16px"}}>
-              <p style={s.bT}>Negocios Locales 🏪</p>
-              <p style={s.bS}>Tiendas · Farmacias · Ropa · Más</p>
-            </div>
-            {/* CATEGORÍAS */}
-            {!negocioCatFiltro?(
-              <div style={{padding:"12px 16px"}}>
-                <div style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:10}}>¿Qué estás buscando?</div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
-                  <button onClick={()=>setNegocioCatSel("Todos")} style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:14,padding:"12px 4px",display:"flex",flexDirection:"column",alignItems:"center",gap:4,cursor:"pointer"}}>
-                    <span style={{fontSize:26}}>🏪</span>
-                    <span style={{fontSize:10,fontWeight:600,color:P,textAlign:"center"}}>Ver todos</span>
-                  </button>
-                  {NEGOCIO_CATS.map(x=>(
-                    <button key={x.cat} onClick={()=>setNegocioCatSel(x.cat)} style={{background:x.color,border:`1px solid ${x.color}`,borderRadius:14,padding:"12px 4px",display:"flex",flexDirection:"column",alignItems:"center",gap:4,cursor:"pointer"}}>
-                      <span style={{fontSize:26}}>{x.emoji}</span>
-                      <span style={{fontSize:9,fontWeight:600,color:x.tc,textAlign:"center",lineHeight:1.2}}>{x.cat.split(" ").slice(0,2).join(" ")}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ):(
-              <div style={{padding:"8px 16px 4px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                <div style={{fontSize:14,fontWeight:700,color:"#1e293b"}}>{negocioCatFiltro==="Todos"?"Todos los negocios":negocioCatFiltro}</div>
-                <button onClick={()=>setNegocioCatSel(null)} style={{fontSize:12,color:P,background:"none",border:"none",cursor:"pointer",fontWeight:600}}>← Categorías</button>
-              </div>
-            )}
-            {/* LISTA DE NEGOCIOS */}
-            {negocioCatFiltro&&(
-              <div style={{...s.sec,paddingTop:8}}>
-                {allNegocios.filter(n=>negocioCatFiltro==="Todos"||(n.categorias||[]).includes(negocioCatFiltro)).length===0&&(
-                  <div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🏪</div><p>No hay negocios en esta categoría aún</p></div>
-                )}
-                {allNegocios.filter(n=>negocioCatFiltro==="Todos"||(n.categorias||[]).includes(negocioCatFiltro)).map(n=>(
-                  <div key={n.id} onClick={()=>{setNegocioActivo(n);setCartNegocioId(n.id);setCartNegocioNombre(n.negocio);setCartNegocioWa(n.whatsapp_negocio||n.telefono);setSearch("");}} style={{background:"#fff",borderRadius:14,padding:14,border:"1px solid #e7f3ee",display:"flex",gap:12,alignItems:"center",marginBottom:10,cursor:"pointer",boxShadow:"0 1px 4px rgba(22,163,74,0.06)"}}>
-                    {n.logo_url?<img src={n.logo_url} alt="" style={{width:56,height:56,borderRadius:12,objectFit:"cover",flexShrink:0}}/>:<div style={{width:56,height:56,borderRadius:12,background:"#f0fdf4",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>🏪</div>}
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:15,fontWeight:700,color:"#1e293b"}}>{n.negocio}</div>
-                      <div style={{fontSize:11,color:"#64748b",marginTop:1}}>{(n.categorias||[]).slice(0,3).join(" · ")}</div>
-                      {n.descripcion_negocio&&<div style={{fontSize:11,color:"#94a3b8"}}>{n.descripcion_negocio}</div>}
-                      {n.direccion&&<div style={{fontSize:11,color:"#94a3b8"}}>📍 {n.direccion}</div>}
-                      <div style={{display:"flex",alignItems:"center",gap:6,marginTop:3}}>
-                        <span style={{fontSize:11,fontWeight:600,color:n.activo?"#15803d":"#94a3b8"}}>{n.activo?"● Abierto":"● Cerrado"}</span>
-                        {n.delivery_propio&&<span style={{fontSize:10,background:"#dcfce7",color:"#15803d",padding:"1px 6px",borderRadius:8}}>🚚 Delivery</span>}
-                      </div>
-                    </div>
-                    <div style={{color:"#94a3b8",fontSize:18}}>›</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </>)}
-
-      {/* RESTAURANTES */}
       {tab==="Negocios Locales"&&(<>
         {negocioActivo?(
           <div>
@@ -2812,51 +2711,6 @@ export default function App() {
           </button>
         </div>
       )}
-
-      {/* SHEET CARRITO NEGOCIO LOCAL */}
-      {sheet==="cartNegocio"&&(<div style={s.ov} onClick={()=>setSheet(null)}><div style={s.sh} onClick={e=>e.stopPropagation()}>
-        <div style={s.hnd}/>
-        <div style={s.shT}>🛍️ Pedido — {cartNegocioNombre}</div>
-        <div style={s.ib}>
-          <label style={s.lbl}>Zona de entrega *</label>
-          <select style={{...s.inp,marginBottom:8,background:"#fff"}} value={zonaSelId} onChange={e=>{setZonaSelId(e.target.value);setZonaSel(zonas.find(z=>z.id===e.target.value)||null);}}>
-            <option value="">Selecciona tu zona...</option>
-            {zonas.map(z=><option key={z.id} value={z.id}>{z.municipio} — {z.zona}</option>)}
-          </select>
-          <label style={s.lbl}>Calle y referencia</label>
-          <input style={{...s.inp,marginBottom:0}} placeholder="Calle Principal #47, casa azul..." value={addr.calle} onChange={e=>setAddr({...addr,calle:e.target.value})}/>
-        </div>
-        {Object.values(cartNegocio).map(i=>(<div key={i.id} style={s.ci}><span style={{fontSize:22,width:32,textAlign:"center"}}>{i.foto?<img src={i.foto} style={{width:32,height:32,borderRadius:6,objectFit:"cover"}}/>:"🛍️"}</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{i.name}</div></div><div style={s.qR}><button style={s.qB} onClick={()=>{const n={...cartNegocio};n[i.id].qty>1?n[i.id]={...n[i.id],qty:n[i.id].qty-1}:delete n[i.id];setCartNegocio(n);}}>−</button><span style={s.qN}>{i.qty}</span><button style={s.qB} onClick={()=>setCartNegocio(c=>({...c,[i.id]:{...c[i.id],qty:c[i.id].qty+1}}))}>+</button></div><div style={{fontSize:13,fontWeight:700,color:P,marginLeft:8}}>${(i.price*i.qty).toFixed(2)}</div></div>))}
-        {(()=>{
-          const negItems=Object.values(cartNegocio);
-          const negSub=negItems.reduce((a,i)=>a+i.price*i.qty,0);
-          const negDelConfig=negocioActivo||allNegocios.find(n=>n.id===cartNegocioId);
-          const negDel=negDelConfig?.delivery_propio?(negSub>=(negDelConfig?.delivery_gratis_desde||15)?0:(negDelConfig?.delivery_costo||0)):0;
-          const negTotal=negSub+negDel;
-          const negRef=`NEG-${Date.now().toString().slice(-5)}`;
-          return(<>
-            <div style={{marginTop:10}}>
-              <div style={s.sr}><span style={s.sL}>Subtotal</span><span style={s.sV}>${negSub.toFixed(2)}</span></div>
-              <div style={s.sr}><span style={s.sL}>Delivery</span>{negDel===0?<span style={s.fT}>{negDelConfig?.delivery_propio?"GRATIS":"No aplica"}</span>:<span style={s.sV}>${negDel.toFixed(2)}</span>}</div>
-              <div style={s.tR}><span style={{fontWeight:700}}>Total</span><span style={{fontWeight:700,fontSize:17}}>${negTotal.toFixed(2)}</span></div>
-            </div>
-            <label style={{...s.lbl,marginTop:10}}>Tu nombre *</label>
-            <input style={s.inp} placeholder="Juan Pérez" value={form.nombre} onChange={e=>setForm({...form,nombre:e.target.value})}/>
-            <label style={s.lbl}>Tu WhatsApp *</label>
-            <input style={s.inp} placeholder="+58 424-000-0000" value={form.telefono} onChange={e=>setForm({...form,telefono:e.target.value})}/>
-            <div style={{...s.ib,background:"#fffbeb"}}><div style={{fontSize:12,color:"#92400e"}}>⚡ Tu pedido irá directo a {cartNegocioNombre}</div></div>
-            <button style={s.btnWa} onClick={async()=>{
-              if(!form.nombre||!form.telefono||!zonaSelId)return alert("Completa nombre, teléfono y zona");
-              const waNum=(cartNegocioWa||"").replace(/\D/g,"");
-              await supabase.from("pedidos_restaurante").insert({proveedor_id:cartNegocioId,ref:negRef,cliente_nombre:form.nombre,cliente_telefono:form.telefono,items:negItems.map(i=>({nombre:i.name,precio:i.price,qty:i.qty})),subtotal:parseFloat(negSub.toFixed(2)),delivery:parseFloat(negDel.toFixed(2)),total:parseFloat(negTotal.toFixed(2)),estado:"iniciado",completado:false});
-              window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(buildNegocioWaMsg(cartNegocioNombre,negItems,negSub,negDel,negTotal,negRef))}`);
-              setCartNegocio({});setSheet(null);
-              alert(`✅ Pedido ${negRef} enviado a ${cartNegocioNombre}`);
-            }}>📲 Enviar pedido a {cartNegocioNombre}</button>
-            <button style={s.btnG} onClick={()=>setSheet(null)}>← Seguir viendo</button>
-          </>);
-        })()}
-      </div></div>)}
 
       {/* SHEET CARRITO NEGOCIO LOCAL */}
       {sheet==="cartNegocio"&&(<div style={s.ov} onClick={()=>setSheet(null)}><div style={s.sh} onClick={e=>e.stopPropagation()}>
