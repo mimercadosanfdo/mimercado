@@ -172,13 +172,6 @@ export default function App() {
   const [cartRestNombre,setCartRestNombre]=useState("");
   const [cartRestWa,setCartRestWa]=useState("");
   const [restauranteActivo,setRestauranteActivo]=useState(null);
-  const [negocioActivo,setNegocioActivo]=useState(null);
-  const [negocioCatSel,setNegocioCatSel]=useState(null);
-  const [allNegocios,setAllNegocios]=useState([]);
-  const [cartNegocio,setCartNegocio]=useState({});
-  const [cartNegocioId,setCartNegocioId]=useState(null);
-  const [cartNegocioNombre,setCartNegocioNombre]=useState("");
-  const [cartNegocioWa,setCartNegocioWa]=useState("");
   const [secTab,setSecTab]=useState(null);
   const [misRestPedidos,setMisRestPedidos]=useState([]);
   const [suscripciones,setSuscripciones]=useState([]);
@@ -862,27 +855,7 @@ export default function App() {
     );
   };
 
-  const CardNegocio=({p})=>{
-    const qty=cartNegocio[p.id]?.qty||0;
-    return(
-      <div style={s.card}>
-        {p.foto?<img src={p.foto} alt={p.name} style={s.cImg}/>:<div style={s.cEm}>🛍️</div>}
-        {p.tag&&<div style={s.tag}>{p.tag}</div>}
-        <div style={s.cNm}>{p.name}</div>
-        {p.descripcion&&<div style={{fontSize:10,color:"#94a3b8",lineHeight:1.3}}>{p.descripcion}</div>}
-        <div style={s.cBt}>
-          <div><div style={s.cPr}>${p.price.toFixed(2)}</div><div style={s.cUn}>/{p.unit}</div></div>
-          {qty>0?(
-            <div style={s.qR}>
-              <button style={s.qB} onClick={()=>{const n={...cartNegocio};n[p.id].qty>1?n[p.id]={...n[p.id],qty:n[p.id].qty-1}:delete n[p.id];setCartNegocio(n);}}>-</button>
-              <span style={s.qN}>{qty}</span>
-              <button style={s.qB} onClick={()=>setCartNegocio(c=>({...c,[p.id]:{...p,qty:qty+1}}))}>+</button>
-            </div>
-          ):<button style={s.aBtn} onClick={()=>setCartNegocio(c=>({...c,[p.id]:{...p,qty:1}}))}>+</button>}
-        </div>
-      </div>
-    );
-  };
+;
 
   const CardNegocio=({p})=>{
     const qtyNeg=cartNegocio[p.id]?.qty||0;
@@ -1272,7 +1245,7 @@ export default function App() {
               <p style={s.bS}>Tiendas · Farmacias · Ropa · Más</p>
             </div>
             {/* CATEGORÍAS */}
-            {!negocioCatSel?(
+            {!negocioCatFiltro?(
               <div style={{padding:"12px 16px"}}>
                 <div style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:10}}>¿Qué estás buscando?</div>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
@@ -1290,17 +1263,17 @@ export default function App() {
               </div>
             ):(
               <div style={{padding:"8px 16px 4px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                <div style={{fontSize:14,fontWeight:700,color:"#1e293b"}}>{negocioCatSel==="Todos"?"Todos los negocios":negocioCatSel}</div>
+                <div style={{fontSize:14,fontWeight:700,color:"#1e293b"}}>{negocioCatFiltro==="Todos"?"Todos los negocios":negocioCatFiltro}</div>
                 <button onClick={()=>setNegocioCatSel(null)} style={{fontSize:12,color:P,background:"none",border:"none",cursor:"pointer",fontWeight:600}}>← Categorías</button>
               </div>
             )}
             {/* LISTA DE NEGOCIOS */}
-            {negocioCatSel&&(
+            {negocioCatFiltro&&(
               <div style={{...s.sec,paddingTop:8}}>
-                {allNegocios.filter(n=>negocioCatSel==="Todos"||(n.categorias||[]).includes(negocioCatSel)).length===0&&(
+                {allNegocios.filter(n=>negocioCatFiltro==="Todos"||(n.categorias||[]).includes(negocioCatFiltro)).length===0&&(
                   <div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🏪</div><p>No hay negocios en esta categoría aún</p></div>
                 )}
-                {allNegocios.filter(n=>negocioCatSel==="Todos"||(n.categorias||[]).includes(negocioCatSel)).map(n=>(
+                {allNegocios.filter(n=>negocioCatFiltro==="Todos"||(n.categorias||[]).includes(negocioCatFiltro)).map(n=>(
                   <div key={n.id} onClick={()=>{setNegocioActivo(n);setCartNegocioId(n.id);setCartNegocioNombre(n.negocio);setCartNegocioWa(n.whatsapp_negocio||n.telefono);setSearch("");}} style={{background:"#fff",borderRadius:14,padding:14,border:"1px solid #e7f3ee",display:"flex",gap:12,alignItems:"center",marginBottom:10,cursor:"pointer",boxShadow:"0 1px 4px rgba(22,163,74,0.06)"}}>
                     {n.logo_url?<img src={n.logo_url} alt="" style={{width:56,height:56,borderRadius:12,objectFit:"cover",flexShrink:0}}/>:<div style={{width:56,height:56,borderRadius:12,background:"#f0fdf4",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>🏪</div>}
                     <div style={{flex:1}}>
