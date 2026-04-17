@@ -917,15 +917,17 @@ export default function App() {
     <div style={s.app}>
       <div style={s.hdr}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <div style={{display:"flex",alignItems:"center"}}>
-              <svg width="130" height="50" viewBox="0 0 260 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <text x="0" y="42" fontFamily="Poppins,Arial,sans-serif" fontWeight="800" fontSize="42" fill="#1a5c2a">Apure</text>
-                <path d="M172 8 L156 16 L140 8 L140 60 L156 52 L172 60 L188 52 L188 8 L172 8Z" fill="none" stroke="#25D366" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round"/>
-                <line x1="156" y1="16" x2="156" y2="52" stroke="#25D366" strokeWidth="4" strokeLinecap="round"/>
-                <line x1="172" y1="8" x2="172" y2="20" stroke="#25D366" strokeWidth="4" strokeLinecap="round"/>
-                <path d="M172 0 C165 0 160 5 160 12 C160 21 172 30 172 30 C172 30 184 21 184 12 C184 5 179 0 172 0Z" fill="#25D366"/>
-                <circle cx="172" cy="12" r="5" fill="#fff"/>
-                <text x="0" y="88" fontFamily="Poppins,Arial,sans-serif" fontWeight="800" fontSize="42" fill="#25D366">Market</text>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+              <div style={{display:"flex",flexDirection:"column",lineHeight:1}}>
+                <span style={{fontFamily:"Poppins,system-ui,sans-serif",fontWeight:800,fontSize:18,color:"#1a5c2a",letterSpacing:-0.5}}>Apure</span>
+                <span style={{fontFamily:"Poppins,system-ui,sans-serif",fontWeight:800,fontSize:18,color:"#25D366",letterSpacing:-0.5}}>Market</span>
+              </div>
+              <svg width="32" height="38" viewBox="0 0 32 38" fill="none">
+                <path d="M20 2 L12 6 L4 2 L4 28 L12 24 L20 28 L28 24 L28 2 L20 2Z" fill="none" stroke="#25D366" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>
+                <line x1="12" y1="6" x2="12" y2="24" stroke="#25D366" strokeWidth="2" strokeLinecap="round"/>
+                <line x1="20" y1="2" x2="20" y2="12" stroke="#25D366" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M20 0 C16 0 13 3 13 7 C13 12 20 18 20 18 C20 18 27 12 27 7 C27 3 24 0 20 0Z" fill="#25D366"/>
+                <circle cx="20" cy="7" r="3" fill="#fff"/>
               </svg>
             </div>
         <div style={{display:"flex",alignItems:"center",gap:6}}>
