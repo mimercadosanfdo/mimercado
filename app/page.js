@@ -12,10 +12,11 @@ const APP_NAME = "Apure Market";
 const WA = "584243232671";
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "mimercado2024";
-const P = "#16a34a";
-const A = "#15803d";
-const DARK = "#1e293b";
-const LIGHT = "#f0fdf4";
+const P = "#25D366";
+const A = "#FB8C00";
+const DARK = "#2E2E2E";
+const LIGHT = "#F6F6F6";
+const P2 = "#1aab52";
 
 const MAIN_TABS = ["Inicio","Supermercado","Negocios Locales","Feria de Comida","Servicios"];
 const SEC_TABS = ["Clasificados","Mercadito"];
@@ -72,15 +73,15 @@ const SVCS = [
 ];
 
 const s = {
-  app:{fontFamily:"'Segoe UI',system-ui,sans-serif",background:"#f8fafc",minHeight:"100vh",maxWidth:430,margin:"0 auto",paddingBottom:20},
-  hdr:{background:"#15803d",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,boxShadow:"0 2px 12px rgba(21,128,61,0.3)"},
-  logo:{color:"#fff",fontWeight:800,fontSize:20,letterSpacing:-0.5},
-  city:{background:"rgba(255,255,255,0.2)",color:"#fff",fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,marginLeft:6},
-  cBtn:{background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:20,padding:"6px 12px",color:"#fff",display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13},
-  cN:{background:"#f59e0b",color:"#fff",borderRadius:"50%",width:18,height:18,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700},
-  tabs:{display:"flex",background:"#fff",borderBottom:"2px solid #f0fdf4",position:"sticky",top:54,zIndex:99,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",overflowX:"auto"},
-  tab:(a)=>({flexShrink:0,padding:"8px 10px 6px",border:"none",background:"transparent",color:a?P:"#94a3b8",fontWeight:a?700:400,fontSize:9,cursor:"pointer",borderBottom:a?`2px solid ${P}`:"2px solid transparent",display:"flex",flexDirection:"column",alignItems:"center",gap:1,minWidth:60}),
-  banner:{background:"linear-gradient(135deg,#16a34a,#15803d)",padding:"16px",color:"#fff"},
+  app:{fontFamily:"'Poppins','Segoe UI',system-ui,sans-serif",background:"#f8fafc",minHeight:"100vh",maxWidth:430,margin:"0 auto",paddingBottom:20},
+  hdr:{background:"#fff",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,boxShadow:"0 2px 8px rgba(0,0,0,0.08)",borderBottom:"1px solid #f0f0f0"},
+  logo:{color:DARK,fontWeight:800,fontSize:20,letterSpacing:-0.5},
+  city:{background:"#f0fdf4",color:P,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,marginLeft:6},
+  cBtn:{background:"#f6f6f6",border:"1px solid #e0e0e0",borderRadius:20,padding:"6px 12px",color:DARK,display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13},
+  cN:{background:A,color:"#fff",borderRadius:"50%",width:18,height:18,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700},
+  tabs:{display:"flex",background:"#fff",borderBottom:"2px solid #f0f0f0",position:"sticky",top:54,zIndex:99,boxShadow:"0 1px 4px rgba(0,0,0,0.05)",overflowX:"auto",justifyContent:"space-around"},
+  tab:(a)=>({flex:1,padding:"8px 6px 6px",border:"none",background:a?"#f0fdf4":"transparent",color:a?P:"#94a3b8",fontWeight:a?700:400,fontSize:9,cursor:"pointer",borderBottom:a?`2px solid ${P}`:"2px solid transparent",display:"flex",flexDirection:"column",alignItems:"center",gap:1,minWidth:0,transition:"all 0.15s"}),
+  banner:{background:"linear-gradient(135deg,#25D366,#1aab52)",padding:"16px",color:"#fff"},
   bT:{fontSize:19,fontWeight:700,margin:"0 0 2px"},
   bS:{fontSize:12,color:"rgba(255,255,255,0.7)",margin:"0 0 10px"},
   bdg:(bg,c)=>({fontSize:10,fontWeight:600,background:bg,color:c,padding:"3px 9px",borderRadius:12,display:"inline-block",marginRight:6,marginBottom:4}),
@@ -916,28 +917,34 @@ export default function App() {
     <div style={s.app}>
       <div style={s.hdr}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <div style={{width:38,height:38,background:"#000",borderRadius:10,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.4)"}}>
-              <svg width="26" height="28" viewBox="0 0 26 28" fill="none">
-                <path d="M13 0 C6 0 1 5 1 11 C1 19 13 28 13 28 C13 28 25 19 25 11 C25 5 20 0 13 0Z" fill="white"/>
-                <circle cx="13" cy="11" r="7" fill="#000"/>
-                <text x="13" y="15" textAnchor="middle" fill="white" fontSize="9" fontWeight="800" fontFamily="system-ui">A</text>
-                <path d="M4 30 Q13 34 22 30" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round"/>
+          <div style={{display:"flex",alignItems:"center"}}>
+              <svg width="130" height="50" viewBox="0 0 260 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Texto Apure - verde oscuro */}
+                <text x="0" y="42" fontFamily="'Poppins',Arial,sans-serif" fontWeight="800" fontSize="42" fill="#1a5c2a">Apure</text>
+                {/* Mapa abierto */}
+                <path d="M172 8 L156 16 L140 8 L140 60 L156 52 L172 60 L188 52 L188 8 L172 8Z" fill="none" stroke="#25D366" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round"/>
+                <line x1="156" y1="16" x2="156" y2="52" stroke="#25D366" strokeWidth="4" strokeLinecap="round"/>
+                <line x1="172" y1="8" x2="172" y2="20" stroke="#25D366" strokeWidth="4" strokeLinecap="round"/>
+                {/* Pin de localización */}
+                <path d="M172 0 C165 0 160 5 160 12 C160 21 172 30 172 30 C172 30 184 21 184 12 C184 5 179 0 172 0Z" fill="#25D366"/>
+                <circle cx="172" cy="12" r="5" fill="#fff"/>
+                {/* Texto Market - verde brillante */}
+                <text x="0" y="88" fontFamily="'Poppins',Arial,sans-serif" fontWeight="800" fontSize="42" fill="#25D366">Market</text>
               </svg>
             </div>
-          <div><div style={{...s.logo,lineHeight:1.1}}>{APP_NAME}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.7)"}}>📍 {CITY}</div></div></div>
         <div style={{display:"flex",alignItems:"center",gap:6}}>
           {(count>0||Object.values(cartNegocio).length>0)&&<button style={s.cBtn} onClick={()=>Object.values(cartNegocio).length>0?setSheet("cartNegocio"):setSheet("cart")}>🛒 {Object.values(cartNegocio).length>0&&<span style={s.cN}>{Object.values(cartNegocio).reduce((a,i)=>a+i.qty,0)}</span>}{count>0&&Object.values(cartNegocio).length===0&&<span style={s.cN}>{count}</span>}</button>}
-          <button onClick={()=>setTab("Proveedores")} style={{background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:"50%",width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:16,flexShrink:0}}>👤</button>
+          <button onClick={()=>setTab("Proveedores")} style={{background:"#f6f6f6",border:"1px solid #e0e0e0",borderRadius:"50%",width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:16,flexShrink:0}}>👤</button>
         </div>
       </div>
       <div style={s.tabs}>
         {MAIN_TABS.map(t=>{
           const icons={"Inicio":"🏠","Supermercado":"🛒","Negocios Locales":"🏪","Feria de Comida":"🍽️","Servicios":"⚡"};
-          const labels={"Inicio":"Inicio","Supermercado":"Super","Negocios Locales":"Negocios Locales","Feria de Comida":"Feria","Servicios":"Servicios"};
+          const labels={"Inicio":"Inicio","Supermercado":"Super","Negocios Locales":"Negocios","Feria de Comida":"Feria","Servicios":"Servicios"};
           const isActive=tab===t||(t==="Negocios"&&tab==="MiCuenta"===false);
           return(<button key={t} style={s.tab(tab===t)} onClick={()=>setTab(t)}>
-            <span style={{fontSize:tab===t?20:17,transition:"all 0.15s"}}>{icons[t]}</span>
-            <span>{labels[t]}</span>
+            <span style={{fontSize:tab===t?22:18,transition:"all 0.15s",filter:tab===t?"none":"grayscale(30%)"}}>{icons[t]}</span>
+            <span style={{fontSize:9,lineHeight:1.2,textAlign:"center"}}>{labels[t]}</span>
           </button>);
         })}
       </div>
@@ -955,7 +962,7 @@ export default function App() {
       {/* INICIO */}
       {tab==="Inicio"&&(<>
         {/* BANNER PRINCIPAL */}
-        <div style={{background:"linear-gradient(135deg,#15803d,#16a34a)",padding:"16px",color:"#fff",borderRadius:"0 0 20px 20px"}}>
+        <div style={{background:"linear-gradient(135deg,#25D366,#1aab52)",padding:"16px",color:"#fff",borderRadius:"0 0 20px 20px"}}>
           <div style={{fontSize:15,fontWeight:700,marginBottom:2}}>¡Hola, bienvenido! 👋</div>
           <div style={{fontSize:12,color:"rgba(255,255,255,0.8)",marginBottom:12}}>¿Qué necesitas hoy?</div>
           <div style={{background:"rgba(255,255,255,0.15)",borderRadius:12,padding:"10px 14px",display:"flex",alignItems:"center",gap:8}} onClick={()=>{setTab("Supermercado");document.querySelector("input")?.focus();}}>
