@@ -972,14 +972,14 @@ export default function App() {
 
         {/* DELIVERY BADGE */}
         <div style={{padding:"10px 16px 0"}}>
-          <div style={{background:"#f0fdf4",borderRadius:12,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,border:"1px solid #bbf7d0"}}>
-            <span style={{fontSize:22}}>🛒</span>
+          <div style={{background:"#f0fdf4",borderRadius:14,padding:"12px 14px",display:"flex",alignItems:"center",gap:12,border:"1px solid #bbf7d0"}}>
+            <span style={{fontSize:26}}>🚚</span>
             <div>
-              <div style={{fontSize:12,color:"#15803d",fontWeight:600}}>Delivery en el Supermercado</div>
-              <div style={{display:"flex",alignItems:"baseline",gap:5}}>
-                <span style={{fontSize:18,fontWeight:900,color:"#16a34a",letterSpacing:-0.5}}>GRATIS</span>
-                <span style={{fontSize:11,color:"#64748b"}}>en pedidos mayores a $15</span>
+              <div style={{display:"flex",alignItems:"baseline",gap:6}}>
+                <span style={{fontSize:22,fontWeight:900,color:"#15803d",letterSpacing:-0.5}}>DELIVERY GRATIS</span>
               </div>
+              <div style={{fontSize:12,color:"#166534",fontWeight:600,marginTop:1}}>En el Supermercado</div>
+              <div style={{fontSize:11,color:"#64748b",marginTop:1}}>Pedidos mayores a $15 · San Fernando</div>
             </div>
           </div>
         </div>
@@ -988,8 +988,8 @@ export default function App() {
         {allRestaurantes.filter(r=>r.activo).length>0&&(
           <div style={{padding:"0 16px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 10px"}}>
-              <div style={{fontSize:14,fontWeight:700,color:"#1e293b"}}>🍽️ Restaurantes abiertos</div>
-              <button onClick={()=>setTab("Feria de comidas")} style={{fontSize:12,color:P,background:"none",border:"none",cursor:"pointer",fontWeight:600}}>Ver todos →</button>
+              <div style={{fontSize:16,fontWeight:800,color:"#0f172a"}}>🍽️ Restaurantes abiertos</div>
+              <button onClick={()=>setTab("Feria de comidas")} style={{fontSize:11,color:"#94a3b8",background:"none",border:"none",cursor:"pointer",fontWeight:400}}>Ver todos →</button>
             </div>
             <div style={{display:"flex",gap:12,overflowX:"auto",paddingBottom:8}}>
               {allRestaurantes.filter(r=>r.activo).slice(0,6).map(r=>(
@@ -1007,17 +1007,17 @@ export default function App() {
         {provPromos.length>0&&(
           <div style={{padding:"0 16px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 10px"}}>
-              <div style={{fontSize:14,fontWeight:700,color:"#1e293b"}}>🎉 Promociones activas</div>
-              <button onClick={()=>{setTab("Feria de comidas");}} style={{fontSize:12,color:P,background:"none",border:"none",cursor:"pointer",fontWeight:600}}>Ver todo →</button>
+              <div style={{fontSize:16,fontWeight:800,color:"#0f172a"}}>🔥 Promociones activas</div>
+              <button onClick={()=>{setTab("Feria de comidas");}} style={{fontSize:11,color:"#94a3b8",background:"none",border:"none",cursor:"pointer",fontWeight:400}}>Ver todo →</button>
             </div>
             <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:8}}>
               {provPromos.slice(0,6).map(p=>(
                 <div key={p.id} onClick={()=>setTab("Feria de comidas")} style={{flexShrink:0,width:140,background:"#fff",borderRadius:12,border:"1px solid #fde68a",overflow:"hidden",cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
                   {p.foto_url?<img src={p.foto_url} alt={p.nombre} style={{width:"100%",height:75,objectFit:"cover"}}/>:<div style={{height:75,background:"#fef9c3",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>🎁</div>}
                   <div style={{padding:"6px 8px"}}>
-                    <div style={{fontSize:10,color:"#d97706",fontWeight:700}}>🎉 Promo</div>
-                    <div style={{fontSize:11,fontWeight:600,color:"#1e293b",lineHeight:1.2}}>{p.nombre}</div>
-                    <div style={{fontSize:12,fontWeight:700,color:P,marginTop:2}}>${parseFloat(p.precio||0).toFixed(2)}</div>
+                    <div style={{fontSize:11,color:"#ea580c",fontWeight:800,letterSpacing:0.2}}>🏷️ PROMO</div>
+                    <div style={{fontSize:11,fontWeight:600,color:"#1e293b",lineHeight:1.2,marginTop:1}}>{p.nombre}</div>
+                    <div style={{fontSize:14,fontWeight:900,color:"#16a34a",marginTop:3}}>${parseFloat(p.precio||0).toFixed(2)}</div>
                   </div>
                 </div>
               ))}
@@ -1029,17 +1029,17 @@ export default function App() {
         {clasificados.length>0&&(
           <div style={{padding:"0 16px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 10px"}}>
-              <div style={{fontSize:14,fontWeight:700,color:"#1e293b"}}>🚗 Clasificados recientes</div>
-              <button onClick={()=>setTab("Clasificados")} style={{fontSize:12,color:P,background:"none",border:"none",cursor:"pointer",fontWeight:600}}>Ver todo →</button>
+              <div style={{fontSize:16,fontWeight:800,color:"#0f172a"}}>🚗 Lo último en clasificados</div>
+              <button onClick={()=>setTab("Clasificados")} style={{fontSize:11,color:"#94a3b8",background:"none",border:"none",cursor:"pointer",fontWeight:400}}>Ver todo →</button>
             </div>
             <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:8}}>
               {clasificados.slice(0,4).map(c=>(
                 <div key={c.id} onClick={()=>{setTab("Clasificados");setClasificadoSeleccionado(c);}} style={{flexShrink:0,width:150,background:"#fff",borderRadius:12,border:"1px solid #e2e8f0",overflow:"hidden",cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
                   {c.foto1_url?<img src={c.foto1_url} alt={c.titulo} style={{width:"100%",height:90,objectFit:"cover"}}/>:<div style={{height:90,background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:30}}>{c.tipo==="Motos"?"🏍️":c.tipo==="Inmuebles"?"🏠":"🚗"}</div>}
                   <div style={{padding:"6px 8px"}}>
-                    <div style={{fontSize:10,color:"#7e22ce",fontWeight:600}}>{c.tipo}</div>
-                    <div style={{fontSize:11,fontWeight:600,color:"#1e293b",lineHeight:1.2}}>{c.titulo}</div>
-                    <div style={{fontSize:12,fontWeight:700,color:"#22c55e",marginTop:2}}>${parseFloat(c.precio).toLocaleString()}</div>
+                    <div style={{fontSize:10,color:"#7e22ce",fontWeight:700}}>{c.tipo}</div>
+                    <div style={{fontSize:11,fontWeight:600,color:"#1e293b",lineHeight:1.2,marginTop:1}}>{c.titulo}</div>
+                    <div style={{fontSize:15,fontWeight:900,color:"#16a34a",marginTop:3}}>${parseFloat(c.precio).toLocaleString()}</div>
                   </div>
                 </div>
               ))}
