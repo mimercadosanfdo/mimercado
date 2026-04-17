@@ -19,8 +19,8 @@ const DARK = "#2E2E2E";
 const LIGHT = "#F6F6F6";
 const P2 = "#1aab52";
 
-const MAIN_TABS = ["Inicio","Supermercado","Negocios Locales","Feria de Comida","Servicios"];
-const SEC_TABS = ["Clasificados","Mercadito"];
+const MAIN_TABS = ["Inicio","Supermercado","Negocios locales","Feria de comidas","Servicios"];
+const SEC_TABS = ["Clasificados","Mercadito local"];
 const NEGOCIO_CATS = [
   {cat:"Ropa y calzado",emoji:"👗",color:"#fdf2f8",tc:"#9d174d"},
   {cat:"Accesorios y joyería",emoji:"💍",color:"#fefce8",tc:"#854d0e"},
@@ -81,7 +81,7 @@ const s = {
   cBtn:{background:"#f6f6f6",border:"1px solid #e0e0e0",borderRadius:20,padding:"6px 12px",color:DARK,display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13},
   cN:{background:A,color:"#fff",borderRadius:"50%",width:18,height:18,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700},
   tabs:{display:"flex",background:"#fff",borderBottom:"2px solid #f0f0f0",position:"sticky",top:54,zIndex:99,boxShadow:"0 1px 4px rgba(0,0,0,0.05)",overflowX:"auto",justifyContent:"space-around"},
-  tab:(a)=>({flex:1,padding:"8px 6px 6px",border:"none",background:a?"#f0fdf4":"transparent",color:a?P:"#94a3b8",fontWeight:a?700:400,fontSize:9,cursor:"pointer",borderBottom:a?`2px solid ${P}`:"2px solid transparent",display:"flex",flexDirection:"column",alignItems:"center",gap:1,minWidth:0,transition:"all 0.15s"}),
+  tab:(a)=>({flex:1,padding:"8px 4px 6px",border:"none",background:a?"#f0fdf4":"transparent",color:a?"#1a5c2a":"#94a3b8",fontWeight:a?700:400,fontSize:8,cursor:"pointer",borderBottom:a?`3px solid #1a5c2a`:"3px solid transparent",display:"flex",flexDirection:"column",alignItems:"center",gap:1,minWidth:0,transition:"all 0.15s"}),
   banner:{background:"linear-gradient(135deg,#25D366,#1aab52)",padding:"16px",color:"#fff"},
   bT:{fontSize:19,fontWeight:700,margin:"0 0 2px"},
   bS:{fontSize:12,color:"rgba(255,255,255,0.7)",margin:"0 0 10px"},
@@ -938,11 +938,11 @@ export default function App() {
       </div>
       <div style={s.tabs}>
         {MAIN_TABS.map(t=>{
-          const icons={"Inicio":"🏠","Supermercado":"🛒","Negocios Locales":"🏪","Feria de Comida":"🍽️","Servicios":"⚡"};
-          const labels={"Inicio":"Inicio","Supermercado":"Super","Negocios Locales":"Negocios","Feria de Comida":"Feria","Servicios":"Servicios"};
+          const icons={"Inicio":"🏠","Supermercado":"🛒","Negocios locales":"🛍️","Feria de comidas":"🍔","Servicios":"🛠️"};
+          const labels={"Inicio":"Inicio","Supermercado":"Supermercado","Negocios locales":"Negocios locales","Feria de comidas":"Feria de comidas","Servicios":"Servicios"};
           const isActive=tab===t||(t==="Negocios"&&tab==="MiCuenta"===false);
           return(<button key={t} style={s.tab(tab===t)} onClick={()=>setTab(t)}>
-            <span style={{fontSize:tab===t?22:18,transition:"all 0.15s",filter:tab===t?"none":"grayscale(30%)"}}>{icons[t]}</span>
+            <span style={{fontSize:tab===t?24:19,transition:"all 0.2s",filter:tab===t?"none":"grayscale(40%)",display:"block"}}>{icons[t]}</span>
             <span style={{fontSize:9,lineHeight:1.2,textAlign:"center"}}>{labels[t]}</span>
           </button>);
         })}
@@ -962,8 +962,8 @@ export default function App() {
       {tab==="Inicio"&&(<>
         {/* BANNER PRINCIPAL */}
         <div style={{background:"linear-gradient(135deg,#25D366,#1aab52)",padding:"16px",color:"#fff",borderRadius:"0 0 20px 20px"}}>
-          <div style={{fontSize:15,fontWeight:700,marginBottom:2}}>¡Hola, bienvenido! 👋</div>
-          <div style={{fontSize:12,color:"rgba(255,255,255,0.8)",marginBottom:12}}>¿Qué necesitas hoy?</div>
+          <div style={{fontSize:18,fontWeight:800,marginBottom:2,letterSpacing:-0.3}}>¡Hola! 👋</div>
+          <div style={{fontSize:14,color:"rgba(255,255,255,0.9)",marginBottom:12,fontWeight:500}}>¿Qué necesitas hoy en Apure?</div>
           <div style={{background:"rgba(255,255,255,0.15)",borderRadius:12,padding:"10px 14px",display:"flex",alignItems:"center",gap:8}} onClick={()=>{setTab("Supermercado");document.querySelector("input")?.focus();}}>
             <span style={{fontSize:16}}>🔍</span>
             <span style={{fontSize:13,color:"rgba(255,255,255,0.8)"}}>Buscar productos, platos, servicios...</span>
@@ -975,8 +975,11 @@ export default function App() {
           <div style={{background:"#f0fdf4",borderRadius:12,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,border:"1px solid #bbf7d0"}}>
             <span style={{fontSize:22}}>🛒</span>
             <div>
-              <div style={{fontSize:13,fontWeight:700,color:"#15803d"}}>Delivery GRATIS en el Supermercado</div>
-              <div style={{fontSize:11,color:"#64748b"}}>En pedidos mayores a $15 en San Fernando</div>
+              <div style={{fontSize:12,color:"#15803d",fontWeight:600}}>Delivery en el Supermercado</div>
+              <div style={{display:"flex",alignItems:"baseline",gap:5}}>
+                <span style={{fontSize:18,fontWeight:900,color:"#16a34a",letterSpacing:-0.5}}>GRATIS</span>
+                <span style={{fontSize:11,color:"#64748b"}}>en pedidos mayores a $15</span>
+              </div>
             </div>
           </div>
         </div>
@@ -986,11 +989,11 @@ export default function App() {
           <div style={{padding:"0 16px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 10px"}}>
               <div style={{fontSize:14,fontWeight:700,color:"#1e293b"}}>🍽️ Restaurantes abiertos</div>
-              <button onClick={()=>setTab("Feria")} style={{fontSize:12,color:P,background:"none",border:"none",cursor:"pointer",fontWeight:600}}>Ver todos →</button>
+              <button onClick={()=>setTab("Feria de comidas")} style={{fontSize:12,color:P,background:"none",border:"none",cursor:"pointer",fontWeight:600}}>Ver todos →</button>
             </div>
             <div style={{display:"flex",gap:12,overflowX:"auto",paddingBottom:8}}>
               {allRestaurantes.filter(r=>r.activo).slice(0,6).map(r=>(
-                <div key={r.id} onClick={()=>{setTab("Feria");setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);}} style={{flexShrink:0,textAlign:"center",cursor:"pointer",width:72}}>
+                <div key={r.id} onClick={()=>{setTab("Feria de comidas");setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);}} style={{flexShrink:0,textAlign:"center",cursor:"pointer",width:72}}>
                   {r.logo_url?<img src={r.logo_url} alt={r.negocio} style={{width:60,height:60,borderRadius:"50%",objectFit:"cover",border:"3px solid #dcfce7",display:"block",margin:"0 auto"}}/>:<div style={{width:60,height:60,borderRadius:"50%",background:"#fef3c7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,margin:"0 auto",border:"3px solid #fde68a"}}>🍽️</div>}
                   <div style={{fontSize:10,fontWeight:600,color:"#1e293b",marginTop:4,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:72}}>{r.negocio}</div>
                   <div style={{fontSize:9,color:"#22c55e",fontWeight:600}}>● Abierto</div>
@@ -1005,11 +1008,11 @@ export default function App() {
           <div style={{padding:"0 16px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 10px"}}>
               <div style={{fontSize:14,fontWeight:700,color:"#1e293b"}}>🎉 Promociones activas</div>
-              <button onClick={()=>{setTab("Feria");}} style={{fontSize:12,color:P,background:"none",border:"none",cursor:"pointer",fontWeight:600}}>Ver todo →</button>
+              <button onClick={()=>{setTab("Feria de comidas");}} style={{fontSize:12,color:P,background:"none",border:"none",cursor:"pointer",fontWeight:600}}>Ver todo →</button>
             </div>
             <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:8}}>
               {provPromos.slice(0,6).map(p=>(
-                <div key={p.id} onClick={()=>setTab("Feria")} style={{flexShrink:0,width:140,background:"#fff",borderRadius:12,border:"1px solid #fde68a",overflow:"hidden",cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
+                <div key={p.id} onClick={()=>setTab("Feria de comidas")} style={{flexShrink:0,width:140,background:"#fff",borderRadius:12,border:"1px solid #fde68a",overflow:"hidden",cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
                   {p.foto_url?<img src={p.foto_url} alt={p.nombre} style={{width:"100%",height:75,objectFit:"cover"}}/>:<div style={{height:75,background:"#fef9c3",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>🎁</div>}
                   <div style={{padding:"6px 8px"}}>
                     <div style={{fontSize:10,color:"#d97706",fontWeight:700}}>🎉 Promo</div>
@@ -1046,7 +1049,7 @@ export default function App() {
 
         {/* CTA MERCADITO */}
         <div style={{padding:"14px 16px"}}>
-          <div onClick={()=>setTab("Mercadito")} style={{background:"linear-gradient(135deg,#f59e0b,#d97706)",borderRadius:16,padding:"14px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
+          <div onClick={()=>setTab("Mercadito local")} style={{background:"linear-gradient(135deg,#f59e0b,#d97706)",borderRadius:16,padding:"14px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
             <span style={{fontSize:32}}>🏷️</span>
             <div style={{flex:1}}>
               <div style={{fontSize:14,fontWeight:700,color:"#fff"}}>¿Tienes algo que vender?</div>
@@ -1111,7 +1114,7 @@ export default function App() {
       </>)}
 
       {/* REMATES */}
-      {tab==="Mercadito"&&(<>
+      {(tab==="Mercadito local"||tab==="Mercadito")&&(<>
         <div style={s.banner}>
           <p style={s.bT}>Mercadito San Fernando 🏷️</p>
           <p style={s.bS}>Compra y vende en San Fernando · Contacto directo</p>
@@ -1200,7 +1203,7 @@ export default function App() {
       </>)}
 
       {/* NEGOCIOS LOCALES */}
-      {tab==="Negocios Locales"&&(<>
+      {tab==="Negocios locales"&&(<>
         {negocioActivo?(
           <div>
             <div style={{background:P,padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}>
@@ -1287,7 +1290,7 @@ export default function App() {
         )}
       </>)}
 
-      {tab==="Feria de Comida"&&(<>
+      {tab==="Feria de comidas"&&(<>
         {restauranteActivo?(
           /* -- MENÚ DEL RESTAURANTE -- */
           <div>
