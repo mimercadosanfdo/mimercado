@@ -17,7 +17,7 @@ const A = "#15803d";
 const DARK = "#1e293b";
 const LIGHT = "#f0fdf4";
 
-const MAIN_TABS = ["Inicio","Supermercado","Negocios Locales","Feria de Comida","Servicios","Clasificados","Mercadito"];
+const MAIN_TABS = ["Inicio","Supermercado","Negocios Locales","Feria de Comida","Servicios"];
 const SEC_TABS = ["Clasificados","Mercadito"];
 const NEGOCIO_CATS = [
   {cat:"Ropa y calzado",emoji:"👗",color:"#fdf2f8",tc:"#9d174d"},
@@ -932,8 +932,8 @@ export default function App() {
       </div>
       <div style={s.tabs}>
         {MAIN_TABS.map(t=>{
-          const icons={"Inicio":"🏠","Supermercado":"🛒","Negocios Locales":"🏪","Feria de Comida":"🍽️","Servicios":"⚡","Clasificados":"🚗","Mercadito":"🏷️","Proveedores":"👤"};
-          const labels={"Inicio":"Inicio","Supermercado":"Super","Negocios Locales":"Negocios","Feria de Comida":"Feria","Servicios":"Servicios","Clasificados":"Clasific.","Mercadito":"Mercadito","Proveedores":"Cuenta"};
+          const icons={"Inicio":"🏠","Supermercado":"🛒","Negocios Locales":"🏪","Feria de Comida":"🍽️","Servicios":"⚡"};
+          const labels={"Inicio":"Inicio","Supermercado":"Super","Negocios Locales":"Negocios Locales","Feria de Comida":"Feria","Servicios":"Servicios"};
           const isActive=tab===t||(t==="Negocios"&&tab==="MiCuenta"===false);
           return(<button key={t} style={s.tab(tab===t)} onClick={()=>setTab(t)}>
             <span style={{fontSize:tab===t?20:17,transition:"all 0.15s"}}>{icons[t]}</span>
@@ -944,7 +944,7 @@ export default function App() {
       {/* SECONDARY TABS */}
       <div style={{display:"flex",background:"#f0fdf4",borderBottom:"1px solid #dcfce7",position:"sticky",top:102,zIndex:98}}>
         {SEC_TABS.map(t=>(
-          <button key={t} onClick={()=>setSecTab(secTab===t?null:t)} style={{flex:1,padding:"6px 0",border:"none",background:"transparent",color:secTab===t?P:"#64748b",fontWeight:secTab===t?700:400,fontSize:10,cursor:"pointer",borderBottom:secTab===t?`2px solid ${P}`:"2px solid transparent",display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
+          <button key={t} onClick={()=>setTab(t)} style={{flex:1,padding:"6px 0",border:"none",background:"transparent",color:tab===t?P:"#64748b",fontWeight:tab===t?700:400,fontSize:10,cursor:"pointer",borderBottom:tab===t?`2px solid ${P}`:"2px solid transparent",display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
             <span style={{fontSize:14}}>{t==="Clasificados"?"🚗":"🏷️"}</span>
             <span>{t}</span>
           </button>
@@ -1105,7 +1105,7 @@ export default function App() {
       </>)}
 
       {/* REMATES */}
-      {(tab==="Mercadito"||secTab==="Mercadito")&&(<>
+      {tab==="Mercadito"&&(<>
         <div style={s.banner}>
           <p style={s.bT}>Mercadito San Fernando 🏷️</p>
           <p style={s.bS}>Compra y vende en San Fernando · Contacto directo</p>
@@ -1515,7 +1515,7 @@ export default function App() {
       </>)}
 
       {/* CLASIFICADOS */}
-      {(tab==="Clasificados"||secTab==="Clasificados")&&(<>
+      {tab==="Clasificados"&&(<>
         <div style={s.banner}>
           <p style={s.bT}>Clasificados San Fernando 🚗🏠🏍️</p>
           <p style={s.bS}>Vehículos · Motos · Inmuebles</p>
