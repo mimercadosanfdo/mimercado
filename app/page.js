@@ -1122,10 +1122,45 @@ export default function App() {
             <button onClick={()=>setSuperCat("Todas")} style={{fontSize:12,color:P,background:"none",border:"none",cursor:"pointer",fontWeight:600}}>← Todas</button>
           </div>
         )}
-        <div style={s.sec}>
-          {superGroups.map(g=>(<div key={g.cat}><div style={s.sT}>{g.cat}</div><div style={s.grid}>{g.items.map(p=><Card key={p.id} p={p}/>)}</div></div>))}
-          {superGroups.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🔍</div><p>No encontramos ese producto</p></div>}
-        </div>
+        {/* OFERTAS DEL SUPERMERCADO */}
+        {superCat==="Todas"&&!search&&(
+          <div style={{padding:"12px 16px 8px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+              <div style={{fontSize:17,fontWeight:900,color:"#0f172a",letterSpacing:-0.3}}>🔥 Ofertas del Supermercado</div>
+              <button onClick={()=>setSuperCat("Ver todo")} style={{fontSize:11,color:"#94a3b8",background:"none",border:"none",cursor:"pointer",fontWeight:400}}>Ver más →</button>
+            </div>
+            {superProds.slice(0,6).length>0?(
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                {superProds.slice(0,6).map(p=>(
+                  <div key={p.id} style={{background:"#fff",borderRadius:16,overflow:"hidden",border:"1px solid #e2e8f0",boxShadow:"0 2px 8px rgba(0,0,0,0.06)",cursor:"pointer"}} onClick={()=>setSuperCat(p.categoria||"Todas")}>
+                    {p.foto_url
+                      ?<img src={p.foto_url} alt={p.nombre} style={{width:"100%",height:110,objectFit:"cover"}}/>
+                      :<div style={{height:110,background:"#f8fafc",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36}}>{p.emoji||"🛒"}</div>
+                    }
+                    <div style={{padding:"8px 10px 10px"}}>
+                      <div style={{fontSize:10,color:"#fff",fontWeight:800,background:"#ea580c",padding:"2px 7px",borderRadius:6,display:"inline-block",marginBottom:4}}>🏷️ OFERTA</div>
+                      <div style={{fontSize:12,fontWeight:600,color:"#334155",lineHeight:1.3,marginBottom:4}}>{p.nombre}</div>
+                      <div style={{fontSize:17,fontWeight:900,color:"#15803d",letterSpacing:-0.3}}>${parseFloat(p.precio||0).toFixed(2)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ):(
+              <div style={{textAlign:"center",padding:"28px 0",color:"#94a3b8",background:"#f8fafc",borderRadius:16,border:"1px dashed #e2e8f0"}}>
+                <div style={{fontSize:36,marginBottom:8}}>🏷️</div>
+                <div style={{fontSize:13,fontWeight:600,color:"#64748b"}}>Próximamente ofertas aquí</div>
+                <div style={{fontSize:11,color:"#94a3b8",marginTop:4}}>Usa el buscador o las categorías para ver todos los productos</div>
+              </div>
+            )}
+          </div>
+        )}
+        {/* RESULTADOS DE BÚSQUEDA O CATEGORÍA SELECCIONADA */}
+        {(search||superCat!=="Todas")&&(
+          <div style={s.sec}>
+            {superGroups.map(g=>(<div key={g.cat}><div style={s.sT}>{g.cat}</div><div style={s.grid}>{g.items.map(p=><Card key={p.id} p={p}/>)}</div></div>))}
+            {superGroups.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🔍</div><p>No encontramos ese producto</p></div>}
+          </div>
+        )}
       </>)}
 
       {/* REMATES */}
