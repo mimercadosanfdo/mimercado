@@ -81,7 +81,7 @@ const s = {
   cBtn:{background:"#f6f6f6",border:"1px solid #e0e0e0",borderRadius:20,padding:"6px 12px",color:DARK,display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13},
   cN:{background:A,color:"#fff",borderRadius:"50%",width:18,height:18,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700},
   tabs:{display:"flex",background:"#fff",borderBottom:"2px solid #f0f0f0",position:"sticky",top:54,zIndex:99,boxShadow:"0 1px 4px rgba(0,0,0,0.05)",overflowX:"auto",justifyContent:"space-around"},
-  tab:(a)=>({flex:1,padding:"8px 4px 6px",border:"none",background:a?"#f0fdf4":"transparent",color:a?"#1a5c2a":"#94a3b8",fontWeight:a?700:400,fontSize:8,cursor:"pointer",borderBottom:a?`3px solid #1a5c2a`:"3px solid transparent",display:"flex",flexDirection:"column",alignItems:"center",gap:1,minWidth:0,transition:"all 0.15s"}),
+  tab:(a)=>({flex:1,padding:"8px 4px 6px",border:"none",background:a?"#dcfce7":"transparent",color:a?"#14532d":"#94a3b8",fontWeight:a?800:400,fontSize:8,cursor:"pointer",borderBottom:a?`4px solid #14532d`:"4px solid transparent",display:"flex",flexDirection:"column",alignItems:"center",gap:1,minWidth:0,transition:"all 0.15s"}),
   banner:{background:"linear-gradient(135deg,#25D366,#1aab52)",padding:"16px",color:"#fff"},
   bT:{fontSize:19,fontWeight:700,margin:"0 0 2px"},
   bS:{fontSize:12,color:"rgba(255,255,255,0.7)",margin:"0 0 10px"},
@@ -942,7 +942,7 @@ export default function App() {
           const labels={"Inicio":"Inicio","Supermercado":"Supermercado","Negocios locales":"Negocios locales","Feria de comidas":"Feria de comidas","Servicios":"Servicios"};
           const isActive=tab===t||(t==="Negocios"&&tab==="MiCuenta"===false);
           return(<button key={t} style={s.tab(tab===t)} onClick={()=>setTab(t)}>
-            <span style={{fontSize:tab===t?24:19,transition:"all 0.2s",filter:tab===t?"none":"grayscale(40%)",display:"block"}}>{icons[t]}</span>
+            <span style={{fontSize:tab===t?26:19,transition:"all 0.2s",filter:tab===t?"none":"grayscale(50%)",display:"block"}}>{icons[t]}</span>
             <span style={{fontSize:9,lineHeight:1.2,textAlign:"center"}}>{labels[t]}</span>
           </button>);
         })}
@@ -961,24 +961,24 @@ export default function App() {
       {/* INICIO */}
       {tab==="Inicio"&&(<>
         {/* BANNER PRINCIPAL */}
-        <div style={{background:"linear-gradient(135deg,#25D366,#1aab52)",padding:"16px",color:"#fff",borderRadius:"0 0 20px 20px"}}>
-          <div style={{fontSize:18,fontWeight:800,marginBottom:2,letterSpacing:-0.3}}>¡Hola! 👋</div>
-          <div style={{fontSize:14,color:"rgba(255,255,255,0.9)",marginBottom:12,fontWeight:500}}>¿Qué necesitas hoy en Apure?</div>
-          <div style={{background:"rgba(255,255,255,0.15)",borderRadius:12,padding:"10px 14px",display:"flex",alignItems:"center",gap:8}} onClick={()=>{setTab("Supermercado");document.querySelector("input")?.focus();}}>
-            <span style={{fontSize:16}}>🔍</span>
-            <span style={{fontSize:13,color:"rgba(255,255,255,0.8)"}}>Buscar productos, platos, servicios...</span>
+        <div style={{background:"linear-gradient(180deg,#166534 0%,#16a34a 60%,#22c55e 100%)",padding:"20px 16px 18px",color:"#fff",borderRadius:"0 0 24px 24px"}}>
+          <div style={{fontSize:22,fontWeight:900,marginBottom:3,letterSpacing:-0.5}}>¡Hola! 👋</div>
+          <div style={{fontSize:13,color:"rgba(255,255,255,0.82)",marginBottom:14,fontWeight:400}}>¿Qué necesitas hoy en Apure?</div>
+          <div style={{background:"rgba(255,255,255,0.18)",borderRadius:14,padding:"12px 16px",display:"flex",alignItems:"center",gap:10,border:"1px solid rgba(255,255,255,0.25)"}} onClick={()=>{setTab("Supermercado");document.querySelector("input")?.focus();}}>
+            <span style={{fontSize:18,opacity:0.9}}>🔍</span>
+            <span style={{fontSize:14,color:"rgba(255,255,255,0.9)",fontWeight:500}}>Buscar comida, productos o servicios cerca de ti</span>
           </div>
         </div>
 
         {/* DELIVERY BADGE */}
         <div style={{padding:"10px 16px 0"}}>
-          <div style={{background:"#f0fdf4",borderRadius:14,padding:"12px 14px",display:"flex",alignItems:"center",gap:12,border:"1px solid #bbf7d0"}}>
-            <span style={{fontSize:26}}>🚚</span>
+          <div style={{background:"#f0fdf4",borderRadius:14,padding:"13px 15px",display:"flex",alignItems:"center",gap:13,border:"2px solid #86efac"}}>
+            <span style={{fontSize:30}}>🚚</span>
             <div>
               <div style={{display:"flex",alignItems:"baseline",gap:6}}>
-                <span style={{fontSize:22,fontWeight:900,color:"#15803d",letterSpacing:-0.5}}>DELIVERY GRATIS</span>
+                <span style={{fontSize:24,fontWeight:900,color:"#14532d",letterSpacing:-0.5}}>DELIVERY GRATIS</span>
               </div>
-              <div style={{fontSize:12,color:"#166534",fontWeight:600,marginTop:1}}>En el Supermercado</div>
+              <div style={{fontSize:13,color:"#166534",fontWeight:700,marginTop:2}}>En el Supermercado</div>
               <div style={{fontSize:11,color:"#64748b",marginTop:1}}>Pedidos mayores a $15 · San Fernando</div>
             </div>
           </div>
@@ -988,7 +988,7 @@ export default function App() {
         {allRestaurantes.filter(r=>r.activo).length>0&&(
           <div style={{padding:"0 16px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 10px"}}>
-              <div style={{fontSize:16,fontWeight:800,color:"#0f172a"}}>🍽️ Restaurantes abiertos</div>
+              <div style={{fontSize:17,fontWeight:900,color:"#0f172a",letterSpacing:-0.3}}>🍽️ Restaurantes abiertos</div>
               <button onClick={()=>setTab("Feria de comidas")} style={{fontSize:11,color:"#94a3b8",background:"none",border:"none",cursor:"pointer",fontWeight:400}}>Ver todos →</button>
             </div>
             <div style={{display:"flex",gap:12,overflowX:"auto",paddingBottom:8}}>
@@ -1007,7 +1007,7 @@ export default function App() {
         {provPromos.length>0&&(
           <div style={{padding:"0 16px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 10px"}}>
-              <div style={{fontSize:16,fontWeight:800,color:"#0f172a"}}>🔥 Promociones activas</div>
+              <div style={{fontSize:17,fontWeight:900,color:"#0f172a",letterSpacing:-0.3}}>🔥 Promociones activas</div>
               <button onClick={()=>{setTab("Feria de comidas");}} style={{fontSize:11,color:"#94a3b8",background:"none",border:"none",cursor:"pointer",fontWeight:400}}>Ver todo →</button>
             </div>
             <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:8}}>
@@ -1015,9 +1015,9 @@ export default function App() {
                 <div key={p.id} onClick={()=>setTab("Feria de comidas")} style={{flexShrink:0,width:140,background:"#fff",borderRadius:12,border:"1px solid #fde68a",overflow:"hidden",cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
                   {p.foto_url?<img src={p.foto_url} alt={p.nombre} style={{width:"100%",height:75,objectFit:"cover"}}/>:<div style={{height:75,background:"#fef9c3",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>🎁</div>}
                   <div style={{padding:"6px 8px"}}>
-                    <div style={{fontSize:11,color:"#ea580c",fontWeight:800,letterSpacing:0.2}}>🏷️ PROMO</div>
-                    <div style={{fontSize:11,fontWeight:600,color:"#1e293b",lineHeight:1.2,marginTop:1}}>{p.nombre}</div>
-                    <div style={{fontSize:14,fontWeight:900,color:"#16a34a",marginTop:3}}>${parseFloat(p.precio||0).toFixed(2)}</div>
+                    <div style={{fontSize:11,color:"#fff",fontWeight:800,background:"#ea580c",padding:"2px 6px",borderRadius:6,display:"inline-block",letterSpacing:0.3}}>🏷️ PROMO</div>
+                    <div style={{fontSize:11,fontWeight:600,color:"#1e293b",lineHeight:1.2,marginTop:3}}>{p.nombre}</div>
+                    <div style={{fontSize:15,fontWeight:900,color:"#15803d",marginTop:3}}>${parseFloat(p.precio||0).toFixed(2)}</div>
                   </div>
                 </div>
               ))}
@@ -1029,7 +1029,7 @@ export default function App() {
         {clasificados.length>0&&(
           <div style={{padding:"0 16px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 10px"}}>
-              <div style={{fontSize:16,fontWeight:800,color:"#0f172a"}}>🚗 Lo último en clasificados</div>
+              <div style={{fontSize:17,fontWeight:900,color:"#0f172a",letterSpacing:-0.3}}>🚗 Lo último en clasificados</div>
               <button onClick={()=>setTab("Clasificados")} style={{fontSize:11,color:"#94a3b8",background:"none",border:"none",cursor:"pointer",fontWeight:400}}>Ver todo →</button>
             </div>
             <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:8}}>
@@ -1052,8 +1052,8 @@ export default function App() {
           <div onClick={()=>setTab("Mercadito local")} style={{background:"linear-gradient(135deg,#f59e0b,#d97706)",borderRadius:16,padding:"14px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
             <span style={{fontSize:32}}>🏷️</span>
             <div style={{flex:1}}>
-              <div style={{fontSize:14,fontWeight:700,color:"#fff"}}>¿Tienes algo que vender?</div>
-              <div style={{fontSize:12,color:"rgba(255,255,255,0.85)"}}>Publícalo gratis en el Mercadito</div>
+              <div style={{fontSize:15,fontWeight:900,color:"#fff",letterSpacing:-0.3}}>¿Tienes algo que vender?</div>
+              <div style={{fontSize:12,color:"rgba(255,255,255,0.9)",fontWeight:600,marginTop:2}}>Publícalo <span style={{textDecoration:"underline"}}>GRATIS</span> en el Mercadito local</div>
             </div>
             <span style={{color:"#fff",fontSize:20}}>→</span>
           </div>
