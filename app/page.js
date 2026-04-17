@@ -938,7 +938,7 @@ export default function App() {
       </div>
       <div style={s.tabs}>
         {MAIN_TABS.map(t=>{
-          const icons={"Inicio":"🏠","Supermercado":"🛒","Negocios locales":"🛍️","Feria de comidas":"🍔","Servicios":"🛠️"};
+          const icons={"Inicio":"🏠","Supermercado":"🛒","Negocios locales":"🏪","Feria de comidas":"🍽️","Servicios":"⚡"};
           const labels={"Inicio":"Inicio","Supermercado":"Supermercado","Negocios locales":"Negocios locales","Feria de comidas":"Feria de comidas","Servicios":"Servicios"};
           const isActive=tab===t||(t==="Negocios"&&tab==="MiCuenta"===false);
           return(<button key={t} style={s.tab(tab===t)} onClick={()=>setTab(t)}>
