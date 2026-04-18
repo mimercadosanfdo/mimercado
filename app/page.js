@@ -1321,8 +1321,16 @@ export default function App() {
           </div>
         ):(
           <>
-            <div style={s.banner}><p style={s.bT}>Negocios Locales 🏪</p><p style={s.bS}>Tiendas de San Fernando</p></div>
-            <div style={s.sw}><input style={s.si} placeholder="🔍  Buscar tienda..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
+            <div style={{background:"linear-gradient(160deg,#0f172a 0%,#1e293b 65%,#1e3a5f 100%)",padding:"18px 16px 16px",color:"#fff"}}>
+              <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
+                <div style={{width:48,height:48,background:"#3b82f6",borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0,boxShadow:"0 2px 8px rgba(59,130,246,0.4)"}}>🏪</div>
+                <div>
+                  <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:-0.5}}>Negocios locales</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.6)",marginTop:1}}>Descubre y apoya las tiendas de San Fernando</div>
+                </div>
+              </div>
+            </div>
+            <div style={{padding:"12px 16px 0"}}><input style={{width:"100%",padding:"12px 16px",borderRadius:14,border:"2px solid #e2e8f0",fontSize:14,background:"#fff",boxSizing:"border-box",outline:"none",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}} placeholder="🔍  Buscar tiendas o negocios…" value={search} onChange={e=>setSearch(e.target.value)}/></div>
             {!negocioCatFiltro&&search.length<2?(
               <>
                 <div style={{padding:"12px 16px 4px"}}>
@@ -1337,23 +1345,41 @@ export default function App() {
                   </div>
                 </div>
                 <div style={{...s.sec,paddingTop:8}}>
-                  <div style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:10}}>Todas las tiendas ({allNegocios.length})</div>
-                  {allNegocios.length===0&&<div style={{textAlign:"center",padding:"30px 0",color:"#94a3b8"}}><div style={{fontSize:36}}>🏪</div><p>Próximamente negocios aquí</p></div>}
+                  <div style={{fontSize:14,fontWeight:800,color:"#0f172a",marginBottom:12,letterSpacing:-0.2}}>{allNegocios.length>0?`${allNegocios.length} tienda${allNegocios.length===1?"":"s"} disponible${allNegocios.length===1?"":"s"}`:"Tiendas del centro comercial virtual"}</div>
+                  {allNegocios.length===0&&(
+                    <div style={{textAlign:"center",padding:"28px 16px",color:"#94a3b8",background:"#f8fafc",borderRadius:16,border:"1px dashed #e2e8f0",marginBottom:16}}>
+                      <div style={{fontSize:40,marginBottom:8}}>🏪</div>
+                      <div style={{fontSize:13,fontWeight:600,color:"#475569",marginBottom:4}}>Muy pronto podrás explorar los negocios de tu ciudad</div>
+                      <div style={{fontSize:11,color:"#94a3b8"}}>Los negocios locales estarán disponibles aquí</div>
+                    </div>
+                  )}
                   {allNegocios.map(n=>(
-                    <div key={n.id} onClick={()=>{setNegocioActivo(n);setCartNegocioId(n.id);setCartNegocioNombre(n.negocio);setCartNegocioWa(n.whatsapp_negocio||n.telefono);setSearch("");}} style={{background:"#fff",borderRadius:14,padding:14,border:"1px solid #f1f5f9",display:"flex",gap:12,alignItems:"center",marginBottom:10,cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
-                      {n.logo_url?<img src={n.logo_url} alt="" style={{width:52,height:52,borderRadius:12,objectFit:"cover",flexShrink:0}}/>:<div style={{width:52,height:52,borderRadius:12,background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🏪</div>}
-                      <div style={{flex:1}}>
-                        <div style={{fontSize:14,fontWeight:700,color:P}}>{n.negocio}</div>
-                        <div style={{fontSize:11,color:"#64748b"}}>{(n.categorias||[]).join(" · ")}</div>
-                        {n.direccion_fisica&&<div style={{fontSize:10,color:"#94a3b8"}}>📍 {n.direccion_fisica}</div>}
-                        <div style={{display:"flex",gap:6,marginTop:2}}>
-                          <span style={{fontSize:10,fontWeight:600,color:n.activo?"#15803d":"#94a3b8"}}>{n.activo?"● Abierto":"● Cerrado"}</span>
-                          {n.delivery_propio&&<span style={{fontSize:10,background:"#dcfce7",color:"#15803d",padding:"1px 6px",borderRadius:8}}>🛵 Delivery</span>}
+                    <div key={n.id} onClick={()=>{setNegocioActivo(n);setCartNegocioId(n.id);setCartNegocioNombre(n.negocio);setCartNegocioWa(n.whatsapp_negocio||n.telefono);setSearch("");}} style={{background:"#fff",borderRadius:16,padding:14,border:"1px solid #e2e8f0",display:"flex",gap:12,alignItems:"center",marginBottom:10,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+                      {n.logo_url
+                        ?<img src={n.logo_url} alt="" style={{width:58,height:58,borderRadius:14,objectFit:"cover",flexShrink:0,border:"2px solid #f1f5f9"}}/>
+                        :<div style={{width:58,height:58,borderRadius:14,background:"linear-gradient(135deg,#dbeafe,#bfdbfe)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>🏪</div>
+                      }
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:15,fontWeight:800,color:"#0f172a",letterSpacing:-0.2}}>{n.negocio}</div>
+                        <div style={{fontSize:11,color:"#64748b",marginTop:1}}>{(n.categorias||[]).join(" · ")} · San Fernando</div>
+                        {n.descripcion&&<div style={{fontSize:10,color:"#94a3b8",marginTop:2,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{n.descripcion}</div>}
+                        <div style={{display:"flex",gap:6,marginTop:4,flexWrap:"wrap"}}>
+                          <span style={{fontSize:10,fontWeight:600,color:n.activo?"#15803d":"#94a3b8",background:n.activo?"#dcfce7":"#f1f5f9",padding:"2px 7px",borderRadius:8}}>{n.activo?"● Abierto":"● Cerrado"}</span>
+                          {n.delivery_propio&&<span style={{fontSize:10,background:"#dbeafe",color:"#1d4ed8",padding:"2px 7px",borderRadius:8,fontWeight:600}}>🛵 Delivery</span>}
                         </div>
                       </div>
-                      <div style={{color:"#94a3b8",fontSize:18}}>›</div>
+                      <div style={{color:"#3b82f6",fontSize:20,fontWeight:300}}>›</div>
                     </div>
                   ))}
+                </div>
+                {/* CTA PROVEEDOR */}
+                <div onClick={()=>setTab("Proveedores")} style={{background:"linear-gradient(135deg,#1e3a5f,#1d4ed8)",borderRadius:16,padding:"14px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:12,marginTop:4}}>
+                  <span style={{fontSize:30}}>🏬</span>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:800,color:"#fff",letterSpacing:-0.2}}>¿Tienes un negocio en San Fernando?</div>
+                    <div style={{fontSize:11,color:"rgba(255,255,255,0.75)",marginTop:2}}>Abre tu tienda en Apure Market y muestra tus productos</div>
+                  </div>
+                  <div style={{background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"6px 10px",fontSize:11,color:"#fff",fontWeight:700,whiteSpace:"nowrap"}}>Abrir tienda →</div>
                 </div>
               </>
             ):(
@@ -1369,7 +1395,7 @@ export default function App() {
                     <div style={{color:"#94a3b8",fontSize:18}}>›</div>
                   </div>
                 ))}
-                {allNegocios.filter(n=>negocioCatFiltro?(n.categorias||[]).includes(negocioCatFiltro):n.negocio.toLowerCase().includes(search.toLowerCase())).length===0&&<div style={{textAlign:"center",padding:"30px 0",color:"#94a3b8"}}>No encontramos tiendas</div>}
+                {allNegocios.filter(n=>negocioCatFiltro?(n.categorias||[]).includes(negocioCatFiltro):n.negocio.toLowerCase().includes(search.toLowerCase())).length===0&&<div style={{textAlign:"center",padding:"30px 0",color:"#94a3b8"}}><div style={{fontSize:36,marginBottom:8}}>🔍</div><div style={{fontSize:13,fontWeight:600,color:"#64748b"}}>No encontramos tiendas en esta categoría</div><div style={{fontSize:11,marginTop:4}}>Los negocios locales estarán disponibles muy pronto</div></div>}
               </div>
             )}
           </>
