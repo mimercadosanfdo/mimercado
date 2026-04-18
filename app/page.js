@@ -1133,23 +1133,37 @@ export default function App() {
               <>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
                 {superProds.slice(0,6).map((p,idx)=>{
-                  const microTexts=["Oferta del día","Precio especial","Combo ahorro","Oferta del día","Precio especial","Combo ahorro"];
-                  const micro=microTexts[idx%3];
+                  const isCombo=p.nombre&&(p.nombre.toLowerCase().includes("combo")||p.nombre.toLowerCase().includes("familiar")||p.nombre.toLowerCase().includes("pack")||p.nombre.toLowerCase().includes("kit"));
+                  const microLabel=isCombo?"Combo ahorro":"Oferta del día";
+                  const microColor=isCombo?"#7c3aed":"#0369a1";
+                  const microBg=isCombo?"#ede9fe":"#dbeafe";
                   return(
                   <div key={p.id} style={{background:"#fff",borderRadius:16,overflow:"hidden",border:"1px solid #e2e8f0",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-                    {p.foto_url
-                      ?<img src={p.foto_url} alt={p.nombre} style={{width:"100%",height:115,objectFit:"cover"}}/>
-                      :<div style={{height:115,background:"#f8fafc",display:"flex",alignItems:"center",justifyContent:"center",fontSize:38}}>{p.emoji||"🛒"}</div>
-                    }
+                    {/* IMAGEN */}
+                    <div style={{position:"relative"}}>
+                      {p.foto_url
+                        ?<img src={p.foto_url} alt={p.nombre} style={{width:"100%",height:120,objectFit:"cover",display:"block"}}/>
+                        :<div style={{height:120,background:"#f8fafc",display:"flex",alignItems:"center",justifyContent:"center",fontSize:42}}>{p.emoji||"🛒"}</div>
+                      }
+                      {/* BADGE OFERTA — encima de imagen */}
+                      <div style={{position:"absolute",top:8,left:8,background:"#ea580c",color:"#fff",fontSize:10,fontWeight:800,padding:"3px 8px",borderRadius:8,boxShadow:"0 1px 4px rgba(0,0,0,0.2)"}}>🏷️ OFERTA</div>
+                    </div>
                     <div style={{padding:"8px 10px 10px"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:4,flexWrap:"wrap"}}>
-                        <div style={{fontSize:10,color:"#fff",fontWeight:800,background:"#ea580c",padding:"2px 7px",borderRadius:6,display:"inline-block"}}>🏷️ OFERTA</div>
-                        <div style={{fontSize:9,color:"#64748b",fontWeight:500}}>{micro}</div>
-                      </div>
-                      <div style={{fontSize:11,fontWeight:600,color:"#334155",lineHeight:1.3,marginBottom:6}}>{p.nombre}</div>
+                      {/* TIPO DE OFERTA */}
+                      <div style={{display:"inline-block",fontSize:9,fontWeight:700,color:microColor,background:microBg,padding:"2px 7px",borderRadius:6,marginBottom:5}}>{microLabel}</div>
+                      {/* PRECIO — protagonista */}
+                      <div style={{fontSize:20,fontWeight:900,color:"#15803d",letterSpacing:-0.5,marginBottom:3,lineHeight:1}}>${parseFloat(p.precio||0).toFixed(2)}</div>
+                      {/* NOMBRE — secundario */}
+                      <div style={{fontSize:11,fontWeight:500,color:"#64748b",lineHeight:1.3,marginBottom:8}}>{p.nombre}</div>
+                      {/* FILA CTA */}
                       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                        <div style={{fontSize:18,fontWeight:900,color:"#15803d",letterSpacing:-0.3}}>${parseFloat(p.precio||0).toFixed(2)}</div>
-                        <button onClick={(e)=>{e.stopPropagation();add({id:`sp_${p.id}`,name:p.nombre,price:parseFloat(p.precio),emoji:p.emoji||"🛒",cat:"Supermercado",unit:p.unidad||""});}} style={{background:"#15803d",color:"#fff",border:"none",borderRadius:10,width:30,height:30,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,flexShrink:0}}>+</button>
+                        <span style={{fontSize:9,color:"#94a3b8",fontWeight:500}}>✓ Disponible hoy</span>
+                        <button
+                          onClick={(e)=>{e.stopPropagation();add({id:`sp_${p.id}`,name:p.nombre,price:parseFloat(p.precio),emoji:p.emoji||"🛒",cat:"Supermercado",unit:p.unidad||""});}}
+                          style={{background:"#15803d",color:"#fff",border:"none",borderRadius:10,padding:"6px 12px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
+                          <span style={{fontSize:16,lineHeight:1}}>+</span>
+                          <span>Agregar</span>
+                        </button>
                       </div>
                     </div>
                   </div>
