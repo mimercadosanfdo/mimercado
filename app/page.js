@@ -1133,11 +1133,12 @@ export default function App() {
               <>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
                 {superProds.slice(0,6).map((p,idx)=>{
-                  const isCombo=p.nombre&&(p.nombre.toLowerCase().includes("combo")||p.nombre.toLowerCase().includes("familiar")||p.nombre.toLowerCase().includes("pack")||p.nombre.toLowerCase().includes("kit"));
-                  const microLabel=isCombo?"🎁 Combo ahorro":"⭐ Oferta del día";
-                  const microColor=isCombo?"#6d28d9":"#1d4ed8";
-                  const microBg=isCombo?"#ede9fe":"#dbeafe";
-                  const confianza=isCombo?"Ahorra más comprando junto":"✓ Disponible hoy";
+                  const isCombo=p.nombre&&(p.nombre.toLowerCase().includes("combo")||p.nombre.toLowerCase().includes("familiar")||p.nombre.toLowerCase().includes("pack")||p.nombre.toLowerCase().includes("kit")||p.nombre.toLowerCase().includes("x2")||p.nombre.toLowerCase().includes("duo")||p.descripcion?.toLowerCase().includes("combo"));
+                  const microLabel=isCombo?"Combo ahorro":"Oferta del día";
+                  const microIcon=isCombo?"🎁":"🏷️";
+                  const microColor=isCombo?"#6d28d9":"#b45309";
+                  const microBg=isCombo?"#ede9fe":"#fef3c7";
+                  const confianza=isCombo?"Más valor por tu dinero":"Precio especial hoy";
                   return(
                   <div key={p.id} style={{background:"#fff",borderRadius:18,overflow:"hidden",border:"1px solid #e2e8f0",boxShadow:"0 3px 12px rgba(0,0,0,0.07)"}}>
                     {/* IMAGEN */}
@@ -1151,7 +1152,7 @@ export default function App() {
                     </div>
                     <div style={{padding:"10px 11px 12px"}}>
                       {/* TIPO: combo vs producto */}
-                      <div style={{display:"inline-block",fontSize:9,fontWeight:700,color:microColor,background:microBg,padding:"3px 8px",borderRadius:20,marginBottom:6,letterSpacing:0.2}}>{microLabel}</div>
+                      <div style={{display:"inline-flex",alignItems:"center",gap:3,fontSize:9,fontWeight:700,color:microColor,background:microBg,padding:"3px 9px",borderRadius:20,marginBottom:6,letterSpacing:0.2}}><span>{microIcon}</span><span>{microLabel}</span></div>
                       {/* PRECIO — protagonista absoluto */}
                       <div style={{fontSize:22,fontWeight:900,color:"#15803d",letterSpacing:-0.5,lineHeight:1,marginBottom:4}}>${parseFloat(p.precio||0).toFixed(2)}</div>
                       {/* NOMBRE — apoyo visual */}
