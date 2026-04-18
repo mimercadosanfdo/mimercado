@@ -246,6 +246,8 @@ export default function App() {
 
   const [newProd,setNewProd]=useState({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"",stock:1,hi:"08:00",hf:"18:00",permanente:false,es_oferta:false});
   const [editandoHorario,setEditandoHorario]=useState(false);
+  const [editandoDelivery,setEditandoDelivery]=useState(false);
+  const [deliveryConfig,setDeliveryConfig]=useState({delivery_propio:false,delivery_costo:0,delivery_gratis_desde:15});
   const [horarioNegocio,setHorarioNegocio]=useState({desde:"08:00",hasta:"20:00",descripcion:""});
   const [editingProdId,setEditingProdId]=useState(null);
   const [newPromo,setNewPromo]=useState({nombre:"",descripcion:"",precio:"",fecha_inicio:"",fecha_fin:""});
@@ -1934,6 +1936,47 @@ export default function App() {
             )}
           </div>
 
+          {/* CONFIGURACIÓN DELIVERY */}
+          <div style={{margin:"0 0 12px"}}>
+            {!editandoDelivery?(
+              <div style={{background:"#f8fafc",borderRadius:12,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:11,fontWeight:700,color:"#64748b",marginBottom:2}}>🛵 Configuración de delivery</div>
+                  {provData.delivery_propio
+                    ?<div style={{fontSize:12,color:"#15803d",fontWeight:600}}>Delivery activo · ${provData.delivery_costo||0} · Gratis desde ${provData.delivery_gratis_desde||15}</div>
+                    :<div style={{fontSize:12,color:"#94a3b8"}}>Sin delivery — solo retiro en tienda</div>
+                  }
+                </div>
+                <button onClick={()=>{setDeliveryConfig({delivery_propio:provData.delivery_propio||false,delivery_costo:provData.delivery_costo||0,delivery_gratis_desde:provData.delivery_gratis_desde||15});setEditandoDelivery(true);}} style={{background:P,color:"#fff",border:"none",borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:600,cursor:"pointer",flexShrink:0,marginLeft:8}}>✏️ Editar</button>
+              </div>
+            ):(
+              <div style={{background:"#f0fdf4",borderRadius:12,padding:"12px 14px",border:"1px solid #bbf7d0"}}>
+                <div style={{fontSize:12,fontWeight:700,color:"#15803d",marginBottom:10}}>🛵 Configura tu delivery</div>
+                <div onClick={()=>setDeliveryConfig({...deliveryConfig,delivery_propio:!deliveryConfig.delivery_propio})} style={{display:"flex",alignItems:"center",gap:10,background:deliveryConfig.delivery_propio?"#dcfce7":"#f1f5f9",border:`1px solid ${deliveryConfig.delivery_propio?"#86efac":"#e2e8f0"}`,borderRadius:10,padding:"10px 12px",cursor:"pointer",marginBottom:10}}>
+                  <div style={{width:22,height:22,borderRadius:"50%",background:deliveryConfig.delivery_propio?"#15803d":"#cbd5e1",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    {deliveryConfig.delivery_propio&&<span style={{color:"#fff",fontSize:14,fontWeight:900}}>✓</span>}
+                  </div>
+                  <div style={{fontSize:13,fontWeight:700,color:deliveryConfig.delivery_propio?"#15803d":"#64748b"}}>{deliveryConfig.delivery_propio?"✅ Ofrezco delivery a domicilio":"❌ Solo retiro en tienda"}</div>
+                </div>
+                {deliveryConfig.delivery_propio&&(
+                  <>
+                    <label style={s.lbl}>Costo del delivery ($)</label>
+                    <input style={s.inp} type="number" placeholder="1.50" value={deliveryConfig.delivery_costo} onChange={e=>setDeliveryConfig({...deliveryConfig,delivery_costo:parseFloat(e.target.value)||0})}/>
+                    <label style={s.lbl}>Delivery gratis desde ($)</label>
+                    <input style={s.inp} type="number" placeholder="15" value={deliveryConfig.delivery_gratis_desde} onChange={e=>setDeliveryConfig({...deliveryConfig,delivery_gratis_desde:parseFloat(e.target.value)||15})}/>
+                    <div style={{fontSize:11,color:"#64748b",marginBottom:8,background:"#f0fdf4",padding:"8px 10px",borderRadius:8}}>
+                      💡 Si el pedido llega a ${deliveryConfig.delivery_gratis_desde}, el delivery será GRATIS. Si no, se cobra ${deliveryConfig.delivery_costo}.
+                    </div>
+                  </>
+                )}
+                <div style={{display:"flex",gap:8}}>
+                  <button onClick={async()=>{await supabase.from("proveedores").update({delivery_propio:deliveryConfig.delivery_propio,delivery_costo:deliveryConfig.delivery_costo,delivery_gratis_desde:deliveryConfig.delivery_gratis_desde}).eq("id",provData.id);setProvData({...provData,...deliveryConfig});setEditandoDelivery(false);setPmsg("✅ Delivery actualizado");loadAll();}} style={{...s.btnGreen,flex:1,borderRadius:10,padding:"9px",fontSize:12}}>Guardar</button>
+                  <button onClick={()=>setEditandoDelivery(false)} style={{...s.btnG,flex:1,marginTop:0,borderRadius:10,padding:"9px",fontSize:12}}>Cancelar</button>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}}>
             {["estado","productos","promos","pedidos_rest","ventas"].map(t=>{
               const isPromoTab=t==="promos"&&(provTab==="promo_nueva"||provTab==="promo_activas"||provTab==="promo_pausadas"||provTab==="promo_pendientes"||provTab==="promo_rechazadas");
@@ -2919,13 +2962,32 @@ export default function App() {
         {(()=>{
           const negItems=Object.values(cartNegocio);
           const negSub=negItems.reduce((a,i)=>a+i.price*i.qty,0);
-          const negDel=negocioActivo?.delivery_propio?(negSub>=(negocioActivo?.delivery_gratis_desde||15)?0:(negocioActivo?.delivery_costo||0)):0;
+          const negTieneDelivery=negocioActivo?.delivery_propio;
+          const negCostoDelivery=parseFloat(negocioActivo?.delivery_costo||0);
+          const negGratisDesde=parseFloat(negocioActivo?.delivery_gratis_desde||15);
+          const negDelGratis=negSub>=negGratisDesde;
+          const negDel=negTieneDelivery?(negDelGratis?0:negCostoDelivery):0;
+          const negFaltaParaGratis=negTieneDelivery&&!negDelGratis?(negGratisDesde-negSub):0;
           const negTotal=negSub+negDel;
           const negRef=`NEG-${Date.now().toString().slice(-5)}`;
+          const negWaNum=(cartNegocioWa||"").replace(/\D/g,"");
           return(<>
             <div style={{marginTop:10}}>
               <div style={s.sr}><span style={s.sL}>Subtotal</span><span style={s.sV}>${negSub.toFixed(2)}</span></div>
-              <div style={s.sr}><span style={s.sL}>Delivery</span>{negDel===0?<span style={s.fT}>{negocioActivo?.delivery_propio?"GRATIS":"No aplica"}</span>:<span style={s.sV}>${negDel.toFixed(2)}</span>}</div>
+              <div style={s.sr}>
+                <span style={s.sL}>Delivery</span>
+                {!negTieneDelivery
+                  ?<span style={{fontSize:12,color:"#64748b"}}>🏃 Solo retiro</span>
+                  :negDelGratis
+                  ?<span style={{fontSize:13,fontWeight:800,color:"#15803d"}}>🚚 GRATIS</span>
+                  :<span style={s.sV}>${negDel.toFixed(2)}</span>
+                }
+              </div>
+              {negFaltaParaGratis>0&&(
+                <div style={{background:"#f0fdf4",borderRadius:8,padding:"6px 10px",fontSize:11,color:"#15803d",fontWeight:600,marginTop:4}}>
+                  🎁 Agrega <strong>${negFaltaParaGratis.toFixed(2)}</strong> más y el delivery es GRATIS
+                </div>
+              )}
               <div style={s.tR}><span style={{fontWeight:700}}>Total</span><span style={{fontWeight:700,fontSize:17}}>${negTotal.toFixed(2)}</span></div>
             </div>
             <label style={{...s.lbl,marginTop:10}}>Tu nombre *</label>
@@ -2935,9 +2997,23 @@ export default function App() {
             <div style={{...s.ib,background:"#fffbeb"}}><div style={{fontSize:12,color:"#92400e"}}>⚡ Tu pedido irá directo al WhatsApp de {cartNegocioNombre}</div></div>
             <button style={s.btnWa} onClick={async()=>{
               if(!form.nombre||!form.telefono)return alert("Completa nombre y teléfono");
-              const msg=`🏪 *Nuevo pedido - Apure Market*\n📋 Ref: ${negRef}\n---\n${negItems.map(i=>`• ${i.name} x${i.qty} - $${(i.price*i.qty).toFixed(2)}`).join("\n")}\n---\nSubtotal: $${negSub.toFixed(2)}\nDelivery: ${negDel===0?"GRATIS":"$"+negDel.toFixed(2)}\n*TOTAL: $${negTotal.toFixed(2)}*\n---\n👤 ${form.nombre}\n📱 ${form.telefono}\n📍 ${zonaSel?.zona||""}, ${addr.calle}`;
+              if(!negWaNum)return alert("Este negocio no tiene WhatsApp configurado. Contacta al administrador.");
+              const deliveryTexto=!negTieneDelivery?"Solo retiro en tienda":negDelGratis?"GRATIS 🎉":"$"+negDel.toFixed(2);
+              const msg=`🏪 *Nuevo pedido - ${APP_NAME}*
+📋 Ref: ${negRef}
+----------------------------
+${negItems.map(i=>`• ${i.name} x${i.qty} — $${(i.price*i.qty).toFixed(2)}`).join("
+")}
+----------------------------
+Subtotal: $${negSub.toFixed(2)}
+Delivery: ${deliveryTexto}
+*TOTAL: $${negTotal.toFixed(2)}*
+----------------------------
+👤 ${form.nombre}
+📱 ${form.telefono}
+📍 ${zonaSel?.zona||"San Fernando"}, ${addr.calle||"(sin dirección)"}`;
               await guardarPedidoRestaurante(cartNegocioId,negItems,negSub,negDel,negTotal,negRef);
-              window.open(`https://wa.me/${cartNegocioWa?.replace(/\D/g,"")}?text=${encodeURIComponent(msg)}`);
+              window.open(`https://wa.me/${negWaNum}?text=${encodeURIComponent(msg)}`);
               setCartNegocio({});setSheet(null);
               alert(`✅ Pedido ${negRef} enviado a ${cartNegocioNombre}`);
             }}>📲 Enviar pedido a {cartNegocioNombre}</button>
