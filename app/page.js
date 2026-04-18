@@ -227,7 +227,7 @@ export default function App() {
   // ---------------------------------------------------------
 
   const [provMode,setProvMode]=useState("login");
-  const [provForm,setProvForm]=useState({email:"",nombre:"",negocio:"",telefono_principal:"",whatsapp_negocio:"",instagram:"",categorias:[],pass:"",tipo_negocio:"Restaurante/Cocina",descripcion_negocio:"",delivery_propio:false,delivery_costo:0,delivery_gratis_desde:15,direccion_fisica:"",horario_desde:"08:00",horario_hasta:"18:00",horario_desc:""});
+  const [provForm,setProvForm]=useState({email:"",nombre:"",negocio:"",whatsapp_negocio:"",telefono_principal:"",instagram:"",categorias:[],pass:"",tipo_negocio:"Restaurante/Cocina",descripcion_negocio:"",delivery_propio:false,delivery_costo:0,delivery_gratis_desde:15,direccion_fisica:"",horario_desde:"08:00",horario_hasta:"18:00",horario_desc:""});
   const [provData,setProvData]=useState(null);
   const [myProds,setMyProds]=useState([]);
   const [myPromos,setMyPromos]=useState([]);
@@ -661,7 +661,7 @@ export default function App() {
       suscripcion_vence:new Date(Date.now()+90*24*60*60*1000).toISOString().split("T")[0]
     });
     setLoading(false);
-    if(error)return setPmsg(error.message.includes("unique")?"Ese usuario ya existe":"Error al registrarse: "+error.message);
+    if(error)return setPmsg(error.message.includes("unique")?"Ese correo ya está registrado":"Error al registrarse: "+error.message);
     setPmsg("✅ Registro exitoso. Ya puedes iniciar sesión y abrir tu negocio.");
     setProvMode("login");
   };
@@ -1901,7 +1901,7 @@ export default function App() {
           <div style={s.pT}>{provMode==="login"?"🏪 Acceso proveedores":"📝 Registro de proveedor"}</div>
           {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
           {provMode==="register"&&(<>
-            <div style={{background:"#eff6ff",borderRadius:10,padding:"8px 12px",marginBottom:10,fontSize:11,color:"#1d4ed8"}}>📧 Tu correo será tu usuario de acceso</div>
+            <div style={{background:"#eff6ff",borderRadius:10,padding:"8px 12px",marginBottom:10,fontSize:11,color:"#1d4ed8",fontWeight:600}}>📧 Tu correo será tu usuario de acceso</div>
             <label style={s.lbl}>Correo electrónico * (acceso)</label>
             <input style={s.inp} placeholder="correo@ejemplo.com" type="email" value={provForm.email} onChange={e=>setProvForm({...provForm,email:e.target.value})}/>
             <label style={s.lbl}>Nombre completo *</label>
@@ -1918,10 +1918,8 @@ export default function App() {
             <input style={s.inp} placeholder="@cosmeticosdorcas" value={provForm.instagram||""} onChange={e=>setProvForm({...provForm,instagram:e.target.value})}/>
             <label style={s.lbl}>Tipo de negocio *</label>
             <select style={{...s.inp,background:"#fff"}} value={provForm.tipo_negocio} onChange={e=>setProvForm({...provForm,tipo_negocio:e.target.value,categorias:[]})}>{TIPO_NEGOCIO.map(t=><option key={t}>{t}</option>)}</select>
-            <label style={s.lbl}>Dirección física</label>
-            <input style={s.inp} placeholder="Calle Comercio #47, Local 3..." value={provForm.direccion_fisica||""} onChange={e=>setProvForm({...provForm,direccion_fisica:e.target.value})}/>
             <label style={s.lbl}>Horario de atención</label>
-            <div style={{display:"flex",gap:8,marginBottom:8}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
               <div style={{flex:1}}><label style={{...s.lbl,marginBottom:2}}>Abre</label><input style={s.inp} type="time" value={provForm.horario_desde} onChange={e=>setProvForm({...provForm,horario_desde:e.target.value})}/></div>
               <div style={{flex:1}}><label style={{...s.lbl,marginBottom:2}}>Cierra</label><input style={s.inp} type="time" value={provForm.horario_hasta} onChange={e=>setProvForm({...provForm,horario_hasta:e.target.value})}/></div>
             </div>
@@ -1937,7 +1935,8 @@ export default function App() {
                 <div style={{flex:1}}><label style={s.lbl}>Gratis desde $</label><input style={s.inp} type="number" placeholder="15" value={provForm.delivery_gratis_desde} onChange={e=>setProvForm({...provForm,delivery_gratis_desde:parseFloat(e.target.value)||15})}/></div>
               </div>
             )}
-
+            <label style={s.lbl}>Dirección física</label>
+            <input style={s.inp} placeholder="Calle Comercio #47, Local 3..." value={provForm.direccion_fisica||""} onChange={e=>setProvForm({...provForm,direccion_fisica:e.target.value})}/>
             <label style={s.lbl}>Categorías (tipo de comida o servicio)</label>
             {(()=>{
   const regCats=provForm.tipo_negocio==="Restaurante/Cocina"?NEGOCIO_CATS_RESTAURANTE:
