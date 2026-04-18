@@ -34,7 +34,7 @@ const NEGOCIO_CATS = [
   {cat:"Mascotas",emoji:"🐾",color:"#fff7ed",tc:"#c2410c"},
   {cat:"Otros",emoji:"📦",color:"#f8fafc",tc:"#475569"},
 ];
-const SUPER_CATS = ["🥩 Proteínas","🌾 Granos y cereales","🛢️ Aceites y condimentos","🥛 Lácteos","🧴 Aseo personal","🧹 Limpieza del hogar","🥦 Frutas y verduras","🧃 Bebidas"];
+const SUPER_CATS = ["Snacks","Granos y cereales","Bebidas","Lácteos","Panadería","Aceites y condimentos","Enlatados","Limpieza del hogar","Aseo personal","Proteínas","Frutas y verduras"];
 const PROV_CATS = ["Comida preparada","Postres","Jugos y bebidas","Pan y repostería"];
 const ALL_CATS = ["Todo","Supermercado",...PROV_CATS];
 const PAGOS = ["Pago Móvil","Zelle","Efectivo al recibir","Binance/USDT"];
