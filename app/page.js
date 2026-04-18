@@ -2999,19 +2999,7 @@ export default function App() {
               if(!form.nombre||!form.telefono)return alert("Completa nombre y teléfono");
               if(!negWaNum)return alert("Este negocio no tiene WhatsApp configurado. Contacta al administrador.");
               const deliveryTexto=!negTieneDelivery?"Solo retiro en tienda":negDelGratis?"GRATIS 🎉":"$"+negDel.toFixed(2);
-              const msg=`🏪 *Nuevo pedido - ${APP_NAME}*
-📋 Ref: ${negRef}
-----------------------------
-${negItems.map(i=>`• ${i.name} x${i.qty} — $${(i.price*i.qty).toFixed(2)}`).join("
-")}
-----------------------------
-Subtotal: $${negSub.toFixed(2)}
-Delivery: ${deliveryTexto}
-*TOTAL: $${negTotal.toFixed(2)}*
-----------------------------
-👤 ${form.nombre}
-📱 ${form.telefono}
-📍 ${zonaSel?.zona||"San Fernando"}, ${addr.calle||"(sin dirección)"}`;
+              const msg=`🏪 *Nuevo pedido - ${APP_NAME}*\n📋 Ref: ${negRef}\n----------------------------\n${negItems.map(i=>`• ${i.name} x${i.qty} — $${(i.price*i.qty).toFixed(2)}`).join("\n")}\n----------------------------\nSubtotal: $${negSub.toFixed(2)}\nDelivery: ${deliveryTexto}\n*TOTAL: $${negTotal.toFixed(2)}*\n----------------------------\n👤 ${form.nombre}\n📱 ${form.telefono}\n📍 ${zonaSel?.zona||"San Fernando"}, ${addr.calle||"(sin dirección)"}`;
               await guardarPedidoRestaurante(cartNegocioId,negItems,negSub,negDel,negTotal,negRef);
               window.open(`https://wa.me/${negWaNum}?text=${encodeURIComponent(msg)}`);
               setCartNegocio({});setSheet(null);
