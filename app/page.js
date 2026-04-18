@@ -725,7 +725,7 @@ export default function App() {
     setLoading(false);
     if(error){setPmsg("Error: "+error.message);return;}
     setPmsg(auto?"✅ Producto publicado directamente":"✅ Enviado al admin para aprobación");
-    setNewProd({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false},es_oferta:false};
+    setNewProd({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false,es_oferta:false});
     setFotoFile(null);setFotoPreview(null);
     loadMyProds(provData.id);loadAll();
   };
