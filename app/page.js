@@ -244,7 +244,7 @@ export default function App() {
   const [rejectMotivo,setRejectMotivo]=useState({});
   const [resetPass,setResetPass]=useState({});
 
-  const [newProd,setNewProd]=useState({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false,es_oferta:false});
+  const [newProd,setNewProd]=useState({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"",stock:1,hi:"08:00",hf:"18:00",permanente:false,es_oferta:false});
   const [editandoHorario,setEditandoHorario]=useState(false);
   const [horarioNegocio,setHorarioNegocio]=useState({desde:"08:00",hasta:"20:00",descripcion:""});
   const [editingProdId,setEditingProdId]=useState(null);
@@ -1862,7 +1862,15 @@ export default function App() {
             <label style={s.lbl}>Dirección física (opcional)</label>
             <input style={s.inp} placeholder="Calle Comercio #47, Local 3..." value={provForm.direccion_fisica||""} onChange={e=>setProvForm({...provForm,direccion_fisica:e.target.value})}/>
             <label style={s.lbl}>Categorías (tipo de comida o servicio)</label>
-            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>{PROV_CATS.map(c=>(<button key={c} onClick={()=>setProvForm(f=>({...f,categorias:f.categorias.includes(c)?f.categorias.filter(x=>x!==c):[...f.categorias,c]}))} style={{padding:"5px 10px",borderRadius:20,fontSize:12,cursor:"pointer",background:provForm.categorias.includes(c)?P:"#f1f5f9",color:provForm.categorias.includes(c)?"#fff":"#64748b",border:"none",fontWeight:500}}>{c}</button>))}</div>
+            {(()=>{
+  const regCats=provForm.tipo_negocio==="Restaurante/Cocina"?NEGOCIO_CATS_RESTAURANTE:
+    provForm.tipo_negocio==="Transporte/Taxi"||provForm.tipo_negocio==="Lavandería"?NEGOCIO_CATS_TRANSPORTE:
+    provForm.tipo_negocio==="Negocio Local"?NEGOCIO_CATS.map(c=>c.cat):
+    [...NEGOCIO_CATS.map(c=>c.cat),...NEGOCIO_CATS_RESTAURANTE];
+  return(<div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
+    {regCats.map(c=>(<button key={c} onClick={()=>setProvForm(f=>({...f,categorias:f.categorias.includes(c)?f.categorias.filter(x=>x!==c):[...f.categorias,c]}))} style={{padding:"5px 10px",borderRadius:20,fontSize:12,cursor:"pointer",background:provForm.categorias.includes(c)?P:"#f1f5f9",color:provForm.categorias.includes(c)?"#fff":"#64748b",border:"none",fontWeight:500}}>{c}</button>))}
+  </div>);
+})()}
             <div style={{...s.ib,background:"#f0fdf4",marginBottom:8}}><div style={{fontSize:12,color:"#15803d"}}>🎁 Los primeros 3 meses son completamente gratis. Después $8/mes.</div></div>
             <label style={s.lbl}>Logo del negocio</label>
             {logoPreview&&<img src={logoPreview} alt="" style={{width:60,height:60,borderRadius:"50%",objectFit:"cover",marginBottom:8}}/>}
@@ -1978,7 +1986,14 @@ export default function App() {
                 <label style={s.lbl}>Descripción (opcional)</label>
                 <input style={s.inp} placeholder="Ingredientes, sabor..." value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
                 <label style={s.lbl}>Categoría *</label>
-                <select style={{...s.inp,background:"#fff"}} value={newProd.categoria} onChange={e=>setNewProd({...newProd,categoria:e.target.value})}>{(provData.categorias?.length>0?provData.categorias:PROV_CATS).map(c=><option key={c}>{c}</option>)}</select>
+                {(()=>{
+                  const prodCats=provData.tipo_negocio==="Negocio Local"
+                    ?(provData.categorias?.length>0?provData.categorias:NEGOCIO_CATS.map(c=>c.cat))
+                    :provData.tipo_negocio==="Restaurante/Cocina"
+                    ?(provData.categorias?.length>0?provData.categorias:NEGOCIO_CATS_RESTAURANTE)
+                    :(provData.categorias?.length>0?provData.categorias:PROV_CATS);
+                  return(<select style={{...s.inp,background:"#fff"}} value={newProd.categoria} onChange={e=>setNewProd({...newProd,categoria:e.target.value})}>{prodCats.map(c=><option key={c}>{c}</option>)}</select>);
+                })()}
                 <label style={s.lbl}>Precio ($) *</label>
                 <input style={s.inp} type="number" placeholder="3.50" value={newProd.precio} onChange={e=>setNewProd({...newProd,precio:e.target.value})}/>
                 <label style={s.lbl}>Unidad *</label>
@@ -2113,7 +2128,14 @@ export default function App() {
                         <label style={s.lbl}>Descripción (opcional)</label>
                         <input style={s.inp} placeholder="Ingredientes, sabor..." value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
                         <label style={s.lbl}>Categoría *</label>
-                        <select style={{...s.inp,background:"#fff"}} value={newProd.categoria} onChange={e=>setNewProd({...newProd,categoria:e.target.value})}>{(provData.categorias?.length>0?provData.categorias:PROV_CATS).map(c=><option key={c}>{c}</option>)}</select>
+                        {(()=>{
+                          const editCats=provData.tipo_negocio==="Negocio Local"
+                            ?(provData.categorias?.length>0?provData.categorias:NEGOCIO_CATS.map(c=>c.cat))
+                            :provData.tipo_negocio==="Restaurante/Cocina"
+                            ?(provData.categorias?.length>0?provData.categorias:NEGOCIO_CATS_RESTAURANTE)
+                            :(provData.categorias?.length>0?provData.categorias:PROV_CATS);
+                          return(<select style={{...s.inp,background:"#fff"}} value={newProd.categoria} onChange={e=>setNewProd({...newProd,categoria:e.target.value})}>{editCats.map(c=><option key={c}>{c}</option>)}</select>);
+                        })()}
                         <label style={s.lbl}>Precio ($) *</label>
                         <input style={s.inp} type="number" placeholder="3.50" value={newProd.precio} onChange={e=>setNewProd({...newProd,precio:e.target.value})}/>
                         <label style={s.lbl}>Unidad *</label>
