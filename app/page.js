@@ -244,7 +244,7 @@ export default function App() {
   const [rejectMotivo,setRejectMotivo]=useState({});
   const [resetPass,setResetPass]=useState({});
 
-  const [newProd,setNewProd]=useState({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false});
+  const [newProd,setNewProd]=useState({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false,es_oferta:false});
   const [editandoHorario,setEditandoHorario]=useState(false);
   const [horarioNegocio,setHorarioNegocio]=useState({desde:"08:00",hasta:"20:00",descripcion:""});
   const [editingProdId,setEditingProdId]=useState(null);
@@ -259,7 +259,7 @@ export default function App() {
   const [pmsg,setPmsg]=useState("");
   const [provTab,setProvTab]=useState("estado");
   const [adminSec,setAdminSec]=useState("dashboard");
-  const [newSP,setNewSP]=useState({nombre:"",marca:"",presentacion:"",descripcion:"",precio:"",unidad:"kg",emoji:"🛒",categoria:SUPER_CATS[0]});
+  const [newSP,setNewSP]=useState({nombre:"",marca:"",presentacion:"",descripcion:"",precio:"",unidad:"kg",emoji:"🛒",categoria:SUPER_CATS[0],es_oferta:false});
   const [spFoto,setSpFoto]=useState(null);
   const [spFotoPreview,setSpFotoPreview]=useState(null);
   const [newZona,setNewZona]=useState({municipio:"San Fernando",zona:"",tipo:"barrio",costo_delivery:1.50,delivery_gratis_super:18.00,delivery_gratis_comida:12.00});
@@ -717,6 +717,7 @@ export default function App() {
       aprobado:auto,
       disponible:true,
       permanente:newProd.permanente,
+      es_oferta:newProd.es_oferta||false,
       primera_aprobacion:auto,
       rechazado:false,
       fecha:new Date().toISOString().split("T")[0],
@@ -724,7 +725,7 @@ export default function App() {
     setLoading(false);
     if(error){setPmsg("Error: "+error.message);return;}
     setPmsg(auto?"✅ Producto publicado directamente":"✅ Enviado al admin para aprobación");
-    setNewProd({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false});
+    setNewProd({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false},es_oferta:false};
     setFotoFile(null);setFotoPreview(null);
     loadMyProds(provData.id);loadAll();
   };
@@ -761,9 +762,9 @@ export default function App() {
     setLoading(true);
     let foto_url=null;
     if(spFoto)foto_url=await upload(spFoto,"productos",`super_${Date.now()}`);
-    await supabase.from("productos_supermercado").insert({nombre:newSP.nombre,categoria:newSP.categoria,marca:newSP.marca||null,presentacion:newSP.presentacion||null,descripcion:newSP.descripcion||null,precio:parseFloat(newSP.precio),unidad:newSP.unidad,emoji:newSP.emoji,foto_url,disponible:true});
+    await supabase.from("productos_supermercado").insert({nombre:newSP.nombre,categoria:newSP.categoria,marca:newSP.marca||null,presentacion:newSP.presentacion||null,descripcion:newSP.descripcion||null,precio:parseFloat(newSP.precio),unidad:newSP.unidad,emoji:newSP.emoji,foto_url,disponible:true,es_oferta:newSP.es_oferta||false});
     setLoading(false);
-    setNewSP({nombre:"",marca:"",presentacion:"",descripcion:"",precio:"",unidad:"kg",emoji:"🛒",categoria:SUPER_CATS[0]});
+    setNewSP({nombre:"",marca:"",presentacion:"",descripcion:"",precio:"",unidad:"kg",emoji:"🛒",categoria:SUPER_CATS[0],es_oferta:false});
     setSpFoto(null);setSpFotoPreview(null);
     loadAll();
   };
@@ -1129,10 +1130,10 @@ export default function App() {
               <div style={{fontSize:17,fontWeight:900,color:"#0f172a",letterSpacing:-0.3}}>🔥 Ofertas del Supermercado</div>
               <button onClick={()=>setSuperCat("Ver todo")} style={{fontSize:11,color:"#94a3b8",background:"none",border:"none",cursor:"pointer",fontWeight:400}}>Ver más →</button>
             </div>
-            {superProds.slice(0,6).length>0?(
+            {superProds.filter(p=>p.es_oferta).slice(0,6).length>0?(
               <>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-                {superProds.slice(0,6).map((p,idx)=>{
+                {superProds.filter(p=>p.es_oferta).slice(0,6).map((p,idx)=>{
                   const isCombo=p.nombre&&(p.nombre.toLowerCase().includes("combo")||p.nombre.toLowerCase().includes("familiar")||p.nombre.toLowerCase().includes("pack")||p.nombre.toLowerCase().includes("kit")||p.nombre.toLowerCase().includes("x2")||p.nombre.toLowerCase().includes("duo")||p.descripcion?.toLowerCase().includes("combo"));
                   const microLabel=isCombo?"Combo ahorro":"Oferta del día";
                   const microIcon=isCombo?"🎁":"🏷️";
@@ -1991,7 +1992,7 @@ export default function App() {
                 {fotoPreview&&<img src={fotoPreview} alt="" style={{width:"100%",height:110,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
                 <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setFotoFile(f);setFotoPreview(URL.createObjectURL(f));}}}/>
                 <div style={{...s.ib,background:"#fef9c3"}}><div style={{fontSize:12,color:"#854d0e"}}>ℹ️ Primera publicación requiere aprobación del admin.</div></div>
-                <button style={s.btn} onClick={publishProd} disabled={loading}>{loading?"Subiendo...":"Publicar producto"}</button>
+                <div onClick={()=>setNewProd({...newProd,es_oferta:!newProd.es_oferta})} style={{display:"flex",alignItems:"center",gap:10,background:newProd.es_oferta?"#fff7ed":"#f8fafc",border:`1px solid ${newProd.es_oferta?"#fed7aa":"#e2e8f0"}`,borderRadius:12,padding:"10px 14px",marginBottom:10,cursor:"pointer"}}><span style={{fontSize:20}}>{newProd.es_oferta?"🏷️":"⬜"}</span><div><div style={{fontSize:13,fontWeight:700,color:newProd.es_oferta?"#c2410c":"#64748b"}}>Destacar como oferta en Inicio</div><div style={{fontSize:11,color:"#94a3b8",marginTop:1}}>Aparecerá en Promociones activas de la home</div></div></div><button style={s.btn} onClick={publishProd} disabled={loading}>{loading?"Subiendo...":"Publicar producto"}</button>
               </div>
             )}
 
@@ -2727,7 +2728,7 @@ export default function App() {
                     Columnas requeridas: nombre, precio · Opcionales: descripcion, unidad, supercategoria, marca, stock, foto_url
                   </div>
                 </div>
-              )}{superProds.map(p=>(<div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 0",borderBottom:"1px solid #f1f5f9"}}>{p.foto_url?<img src={p.foto_url} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover"}}/>:<span style={{fontSize:20}}>{p.emoji}</span>}<div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{p.nombre}</div><div style={{fontSize:11,color:"#64748b"}}>{p.categoria} · ${p.precio}/{p.unidad}</div></div><button onClick={()=>deleteSuperProd(`sp_${p.id}`)} style={{...s.btnRed,fontSize:11}}>Quitar</button></div>))}<div style={{marginTop:14}}><label style={s.lbl}>Categoría *</label><select style={{...s.inp,background:"#fff"}} value={newSP.categoria} onChange={e=>setNewSP({...newSP,categoria:e.target.value})}>{SUPER_CATS.map(c=><option key={c}>{c}</option>)}</select><div style={{display:"flex",gap:8,marginBottom:8}}><input style={{...s.inp,marginBottom:0,width:50}} placeholder="🛒" value={newSP.emoji} onChange={e=>setNewSP({...newSP,emoji:e.target.value})}/><input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Nombre *" value={newSP.nombre} onChange={e=>setNewSP({...newSP,nombre:e.target.value})}/></div><div style={{display:"flex",gap:8,marginBottom:8}}><input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Marca" value={newSP.marca} onChange={e=>setNewSP({...newSP,marca:e.target.value})}/><input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Presentación" value={newSP.presentacion} onChange={e=>setNewSP({...newSP,presentacion:e.target.value})}/></div><div style={{display:"flex",gap:8,marginBottom:8}}><input style={{...s.inp,marginBottom:0,flex:1}} type="number" placeholder="Precio $" value={newSP.precio} onChange={e=>setNewSP({...newSP,precio:e.target.value})}/><input style={{...s.inp,marginBottom:0,width:80}} placeholder="kg/L" value={newSP.unidad} onChange={e=>setNewSP({...newSP,unidad:e.target.value})}/></div><input style={s.inp} placeholder="Descripción (opcional)" value={newSP.descripcion} onChange={e=>setNewSP({...newSP,descripcion:e.target.value})}/><label style={s.lbl}>Foto</label>{spFotoPreview&&<img src={spFotoPreview} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}<input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setSpFoto(f);setSpFotoPreview(URL.createObjectURL(f));}}}/><button style={s.btn} onClick={addSuperProd} disabled={loading}>{loading?"Guardando...":"Agregar"}</button></div></div></div>)}
+              )}{superProds.map(p=>(<div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 0",borderBottom:"1px solid #f1f5f9"}}>{p.foto_url?<img src={p.foto_url} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover"}}/>:<span style={{fontSize:20}}>{p.emoji}</span>}<div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{p.nombre}</div><div style={{fontSize:11,color:"#64748b"}}>{p.categoria} · ${p.precio}/{p.unidad}</div></div><button onClick={()=>deleteSuperProd(`sp_${p.id}`)} style={{...s.btnRed,fontSize:11}}>Quitar</button></div>))}<div style={{marginTop:14}}><label style={s.lbl}>Categoría *</label><select style={{...s.inp,background:"#fff"}} value={newSP.categoria} onChange={e=>setNewSP({...newSP,categoria:e.target.value})}>{SUPER_CATS.map(c=><option key={c}>{c}</option>)}</select><div style={{display:"flex",gap:8,marginBottom:8}}><input style={{...s.inp,marginBottom:0,width:50}} placeholder="🛒" value={newSP.emoji} onChange={e=>setNewSP({...newSP,emoji:e.target.value})}/><input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Nombre *" value={newSP.nombre} onChange={e=>setNewSP({...newSP,nombre:e.target.value})}/></div><div style={{display:"flex",gap:8,marginBottom:8}}><input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Marca" value={newSP.marca} onChange={e=>setNewSP({...newSP,marca:e.target.value})}/><input style={{...s.inp,marginBottom:0,flex:1}} placeholder="Presentación" value={newSP.presentacion} onChange={e=>setNewSP({...newSP,presentacion:e.target.value})}/></div><div style={{display:"flex",gap:8,marginBottom:8}}><input style={{...s.inp,marginBottom:0,flex:1}} type="number" placeholder="Precio $" value={newSP.precio} onChange={e=>setNewSP({...newSP,precio:e.target.value})}/><input style={{...s.inp,marginBottom:0,width:80}} placeholder="kg/L" value={newSP.unidad} onChange={e=>setNewSP({...newSP,unidad:e.target.value})}/></div><input style={s.inp} placeholder="Descripción (opcional)" value={newSP.descripcion} onChange={e=>setNewSP({...newSP,descripcion:e.target.value})}/><label style={s.lbl}>Foto</label>{spFotoPreview&&<img src={spFotoPreview} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}<input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setSpFoto(f);setSpFotoPreview(URL.createObjectURL(f));}}}/><div onClick={()=>setNewSP({...newSP,es_oferta:!newSP.es_oferta})} style={{display:"flex",alignItems:"center",gap:10,background:newSP.es_oferta?"#fff7ed":"#f8fafc",border:`1px solid ${newSP.es_oferta?"#fed7aa":"#e2e8f0"}`,borderRadius:12,padding:"10px 14px",marginBottom:10,cursor:"pointer"}}><span style={{fontSize:20}}>{newSP.es_oferta?"🏷️":"⬜"}</span><div><div style={{fontSize:13,fontWeight:700,color:newSP.es_oferta?"#c2410c":"#64748b"}}>Mostrar en Ofertas del Supermercado</div><div style={{fontSize:11,color:"#94a3b8",marginTop:1}}>Solo actívalo si es una oferta o producto destacado</div></div></div><button style={s.btn} onClick={addSuperProd} disabled={loading}>{loading?"Guardando...":"Agregar"}</button></div></div></div>)}
 
           {adminSec==="clasificados_pend"&&(
             <div style={{margin:"0 16px"}}>
