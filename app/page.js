@@ -2970,7 +2970,7 @@ export default function App() {
           const negFaltaParaGratis=negTieneDelivery&&!negDelGratis?(negGratisDesde-negSub):0;
           const negTotal=negSub+negDel;
           const negRef=`NEG-${Date.now().toString().slice(-5)}`;
-          const negWaNum=(cartNegocioWa||"").replace(/\D/g,"");
+          const negWaRaw=(cartNegocioWa||"").replace(/\D/g,"");const negWaNum=negWaRaw.startsWith("0")?"58"+negWaRaw.slice(1):negWaRaw.startsWith("58")?negWaRaw:"58"+negWaRaw;
           return(<>
             <div style={{marginTop:10}}>
               <div style={s.sr}><span style={s.sL}>Subtotal</span><span style={s.sV}>${negSub.toFixed(2)}</span></div>
