@@ -274,7 +274,7 @@ export default function App() {
     const interval=setInterval(()=>{
       loadAll();loadRemates();loadServiciosCom();loadClasificados();
       if(provData){loadMyProds(provData.id);loadMyPromos(provData.id);}
-      if(provMode==="admin"){loadAdmin();loadPedidos();}
+      if(provMode==="admin"){loadAdmin();loadPedidos();setTab("Proveedores");}
     },15000);
     return ()=>clearInterval(interval);
   },[provData,provMode]);
@@ -618,7 +618,7 @@ export default function App() {
 
   const handleLogin=async()=>{
     if(!provForm.usuario||!provForm.pass)return setPmsg("Completa usuario y contraseña");
-    if(provForm.usuario===ADMIN_USER&&provForm.pass===ADMIN_PASS){setProvMode("admin");loadAdmin();loadPedidos();loadSuscripciones();return;}
+    if(provForm.usuario===ADMIN_USER&&provForm.pass===ADMIN_PASS){setProvMode("admin");setTab("Proveedores");setAdminSec("dashboard");loadAdmin();loadPedidos();loadSuscripciones();return;}
     setLoading(true);
     const{data,error}=await supabase.from("proveedores").select("*").eq("usuario",provForm.usuario).single();
     setLoading(false);
