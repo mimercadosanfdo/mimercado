@@ -1085,28 +1085,28 @@ export default function App() {
             {/* CATEGORÍAS DESTACADAS */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
               {[
-                {cat:"Snacks",emoji:"🍿",color:"#fff7ed",tc:"#c2410c",border:"#fed7aa"},
-                {cat:"Granos y cereales",emoji:"🌾",color:"#fef9c3",tc:"#854d0e",border:"#fde68a"},
+                {cat:"Snacks",emoji:"🍿",color:"#fff7ed",tc:"#c2410c",border:"#fed7aa",micro:"Compra rápida ⚡"},
+                {cat:"Granos y cereales",emoji:"🌾",color:"#fef9c3",tc:"#854d0e",border:"#fde68a",micro:"Para la despensa 🏠"},
               ].map(x=>(
-                <button key={x.cat} onClick={()=>setSuperCat(x.cat)} style={{background:x.color,border:`2px solid ${x.border}`,borderRadius:16,padding:"14px 8px",display:"flex",flexDirection:"column",alignItems:"center",gap:6,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.07)"}}>
-                  <span style={{fontSize:32}}>{x.emoji}</span>
-                  <span style={{fontSize:11,fontWeight:800,color:x.tc,textAlign:"center",lineHeight:1.2}}>{x.cat}</span>
-                  <span style={{fontSize:9,color:x.tc,opacity:0.7,fontWeight:500}}>Compra rápida ⚡</span>
+                <button key={x.cat} onClick={()=>setSuperCat(x.cat)} style={{background:x.color,border:`2px solid ${x.border}`,borderRadius:16,padding:"14px 8px",display:"flex",flexDirection:"column",alignItems:"center",gap:5,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",width:"100%"}}>
+                  <span style={{fontSize:34}}>{x.emoji}</span>
+                  <span style={{fontSize:12,fontWeight:800,color:x.tc,textAlign:"center",lineHeight:1.2}}>{x.cat}</span>
+                  <span style={{fontSize:9,color:x.tc,opacity:0.75,fontWeight:600,marginTop:1}}>{x.micro}</span>
                 </button>
               ))}
             </div>
-            {/* RESTO DE CATEGORÍAS */}
+            {/* RESTO DE CATEGORÍAS — orden por frecuencia online */}
             <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
               {[
-                {cat:"Proteínas",emoji:"🥩",color:"#fee2e2",tc:"#be123c"},
-                {cat:"Aceites y condimentos",emoji:"🫙",color:"#fef3c7",tc:"#92400e"},
-                {cat:"Lácteos",emoji:"🥛",color:"#e0f2fe",tc:"#0369a1"},
-                {cat:"Aseo personal",emoji:"🧴",color:"#f0fdf4",tc:"#15803d"},
-                {cat:"Limpieza del hogar",emoji:"🧹",color:"#ede9fe",tc:"#7c3aed"},
-                {cat:"Frutas y verduras",emoji:"🥦",color:"#dcfce7",tc:"#15803d"},
                 {cat:"Bebidas",emoji:"🥤",color:"#dbeafe",tc:"#1d4ed8"},
+                {cat:"Lácteos",emoji:"🥛",color:"#e0f2fe",tc:"#0369a1"},
                 {cat:"Panadería",emoji:"🍞",color:"#fef3c7",tc:"#92400e"},
+                {cat:"Aceites y condimentos",emoji:"🫙",color:"#fef3c7",tc:"#b45309"},
                 {cat:"Enlatados",emoji:"🥫",color:"#f1f5f9",tc:"#475569"},
+                {cat:"Limpieza del hogar",emoji:"🧹",color:"#ede9fe",tc:"#7c3aed"},
+                {cat:"Aseo personal",emoji:"🧴",color:"#f0fdf4",tc:"#15803d"},
+                {cat:"Proteínas",emoji:"🥩",color:"#fee2e2",tc:"#be123c"},
+                {cat:"Frutas y verduras",emoji:"🥦",color:"#dcfce7",tc:"#166534"},
                 {cat:"Ver todo",emoji:"🛒",color:"#f0fdf4",tc:"#15803d"},
               ].map(x=>(
                 <button key={x.cat} onClick={()=>setSuperCat(x.cat==="Ver todo"?"Todas":x.cat)} style={{background:x.color,border:`1px solid ${x.color}`,borderRadius:14,padding:"10px 4px",display:"flex",flexDirection:"column",alignItems:"center",gap:4,cursor:"pointer",minHeight:72}}>
@@ -1130,21 +1130,38 @@ export default function App() {
               <button onClick={()=>setSuperCat("Ver todo")} style={{fontSize:11,color:"#94a3b8",background:"none",border:"none",cursor:"pointer",fontWeight:400}}>Ver más →</button>
             </div>
             {superProds.slice(0,6).length>0?(
+              <>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-                {superProds.slice(0,6).map(p=>(
-                  <div key={p.id} style={{background:"#fff",borderRadius:16,overflow:"hidden",border:"1px solid #e2e8f0",boxShadow:"0 2px 8px rgba(0,0,0,0.06)",cursor:"pointer"}} onClick={()=>setSuperCat(p.categoria||"Todas")}>
+                {superProds.slice(0,6).map((p,idx)=>{
+                  const microTexts=["Oferta del día","Precio especial","Combo ahorro","Oferta del día","Precio especial","Combo ahorro"];
+                  const micro=microTexts[idx%3];
+                  return(
+                  <div key={p.id} style={{background:"#fff",borderRadius:16,overflow:"hidden",border:"1px solid #e2e8f0",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
                     {p.foto_url
-                      ?<img src={p.foto_url} alt={p.nombre} style={{width:"100%",height:110,objectFit:"cover"}}/>
-                      :<div style={{height:110,background:"#f8fafc",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36}}>{p.emoji||"🛒"}</div>
+                      ?<img src={p.foto_url} alt={p.nombre} style={{width:"100%",height:115,objectFit:"cover"}}/>
+                      :<div style={{height:115,background:"#f8fafc",display:"flex",alignItems:"center",justifyContent:"center",fontSize:38}}>{p.emoji||"🛒"}</div>
                     }
                     <div style={{padding:"8px 10px 10px"}}>
-                      <div style={{fontSize:10,color:"#fff",fontWeight:800,background:"#ea580c",padding:"2px 7px",borderRadius:6,display:"inline-block",marginBottom:4}}>🏷️ OFERTA</div>
-                      <div style={{fontSize:12,fontWeight:600,color:"#334155",lineHeight:1.3,marginBottom:4}}>{p.nombre}</div>
-                      <div style={{fontSize:17,fontWeight:900,color:"#15803d",letterSpacing:-0.3}}>${parseFloat(p.precio||0).toFixed(2)}</div>
+                      <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:4,flexWrap:"wrap"}}>
+                        <div style={{fontSize:10,color:"#fff",fontWeight:800,background:"#ea580c",padding:"2px 7px",borderRadius:6,display:"inline-block"}}>🏷️ OFERTA</div>
+                        <div style={{fontSize:9,color:"#64748b",fontWeight:500}}>{micro}</div>
+                      </div>
+                      <div style={{fontSize:11,fontWeight:600,color:"#334155",lineHeight:1.3,marginBottom:6}}>{p.nombre}</div>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                        <div style={{fontSize:18,fontWeight:900,color:"#15803d",letterSpacing:-0.3}}>${parseFloat(p.precio||0).toFixed(2)}</div>
+                        <button onClick={(e)=>{e.stopPropagation();add({id:`sp_${p.id}`,name:p.nombre,price:parseFloat(p.precio),emoji:p.emoji||"🛒",cat:"Supermercado",unit:p.unidad||""});}} style={{background:"#15803d",color:"#fff",border:"none",borderRadius:10,width:30,height:30,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,flexShrink:0}}>+</button>
+                      </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
+              {/* CIERRE DE FLUJO */}
+              <div style={{marginTop:16,padding:"12px 16px",background:"#f0fdf4",borderRadius:14,border:"1px solid #bbf7d0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <span style={{fontSize:12,color:"#166534",fontWeight:500}}>¿Buscas algo más? Explora las categorías</span>
+                <button onClick={()=>window.scrollTo({top:0,behavior:"smooth"})} style={{fontSize:11,color:"#15803d",background:"none",border:"1px solid #86efac",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontWeight:600,whiteSpace:"nowrap"}}>↑ Ver categorías</button>
+              </div>
+              </>
             ):(
               <div style={{textAlign:"center",padding:"28px 0",color:"#94a3b8",background:"#f8fafc",borderRadius:16,border:"1px dashed #e2e8f0"}}>
                 <div style={{fontSize:36,marginBottom:8}}>🏷️</div>
