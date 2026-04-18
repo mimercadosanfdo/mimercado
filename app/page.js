@@ -227,7 +227,7 @@ export default function App() {
   // ---------------------------------------------------------
 
   const [provMode,setProvMode]=useState("login");
-  const [provForm,setProvForm]=useState({usuario:"",nombre:"",negocio:"",telefono:"",email:"",categorias:[],pass:"",tipo_negocio:"Restaurante/Cocina",descripcion_negocio:"",delivery_propio:false,delivery_costo:0,delivery_gratis_desde:15,direccion:""});
+  const [provForm,setProvForm]=useState({email:"",nombre:"",negocio:"",telefono_principal:"",whatsapp_negocio:"",instagram:"",categorias:[],pass:"",tipo_negocio:"Restaurante/Cocina",descripcion_negocio:"",delivery_propio:false,delivery_costo:0,delivery_gratis_desde:15,direccion_fisica:"",horario_desde:"08:00",horario_hasta:"18:00",horario_desc:""});
   const [provData,setProvData]=useState(null);
   const [myProds,setMyProds]=useState([]);
   const [myPromos,setMyPromos]=useState([]);
@@ -621,10 +621,10 @@ export default function App() {
   const upload=async(file,bucket,path)=>{await supabase.storage.from(bucket).upload(path,file,{upsert:true});return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;};
 
   const handleLogin=async()=>{
-    if(!provForm.usuario||!provForm.pass)return setPmsg("Completa usuario y contraseña");
-    if(provForm.usuario===ADMIN_USER&&provForm.pass===ADMIN_PASS){setProvMode("admin");setTab("Proveedores");setAdminSec("dashboard");loadAdmin();loadPedidos();loadSuscripciones();return;}
+    if(!provForm.email||!provForm.pass)return setPmsg("Completa correo y contraseña");
+    if(provForm.email===ADMIN_USER&&provForm.pass===ADMIN_PASS){setProvMode("admin");setTab("Proveedores");setAdminSec("dashboard");loadAdmin();loadPedidos();loadSuscripciones();return;}
     setLoading(true);
-    const{data,error}=await supabase.from("proveedores").select("*").eq("usuario",provForm.usuario).single();
+    const{data,error}=await supabase.from("proveedores").select("*").eq("email",provForm.email).single();
     setLoading(false);
     if(error||!data)return setPmsg("Usuario no encontrado");
     if(data.en_pausa)return setPmsg("Tu cuenta está pausada. Contacta al administrador.");
@@ -634,15 +634,28 @@ export default function App() {
   };
 
   const handleRegister=async()=>{
-    if(!provForm.usuario||!provForm.nombre||!provForm.negocio||!provForm.telefono||!provForm.pass)return setPmsg("Completa todos los campos obligatorios");
+    if(!provForm.email||!provForm.nombre||!provForm.negocio||!provForm.whatsapp_negocio||!provForm.pass)return setPmsg("Completa todos los campos obligatorios (*)");
     setLoading(true);
+    const{data:existing}=await supabase.from("proveedores").select("id").eq("email",provForm.email).single();
+    if(existing){setLoading(false);return setPmsg("Ya existe una cuenta con ese correo");}
     let logo_url=null;
-    if(logoFile)logo_url=await upload(logoFile,"logos",`${provForm.usuario}_logo`);
+    if(logoFile)logo_url=await upload(logoFile,"logos",`${provForm.email.split("@")[0]}_logo`);
     const{error}=await supabase.from("proveedores").insert({
-      usuario:provForm.usuario,nombre:provForm.nombre,negocio:provForm.negocio,
-      telefono:provForm.telefono,email:provForm.email,categorias:provForm.categorias,
+      usuario:provForm.email.split("@")[0],nombre:provForm.nombre,negocio:provForm.negocio,
+      telefono:provForm.whatsapp_negocio,email:provForm.email,
+      whatsapp_negocio:provForm.whatsapp_negocio,
+      telefono_principal:provForm.telefono_principal||null,
+      instagram:provForm.instagram||null,
+      categorias:provForm.categorias,
       logo_url,aprobado:true,activo:false,en_pausa:false,password_plain:provForm.pass,
       tipo_negocio:provForm.tipo_negocio||"Restaurante/Cocina",
+      descripcion_negocio:provForm.descripcion_negocio||null,
+      horario_desde:provForm.horario_desde||null,
+      horario_hasta:provForm.horario_hasta||null,
+      horario_desc:provForm.horario_desc||null,
+      delivery_propio:provForm.delivery_propio||false,
+      delivery_costo:provForm.delivery_costo||0,
+      delivery_gratis_desde:provForm.delivery_gratis_desde||15,
       direccion_fisica:provForm.direccion_fisica||null,
       suscripcion_activa:true,meses_gratis_restantes:3,
       suscripcion_vence:new Date(Date.now()+90*24*60*60*1000).toISOString().split("T")[0]
@@ -1888,22 +1901,43 @@ export default function App() {
           <div style={s.pT}>{provMode==="login"?"🏪 Acceso proveedores":"📝 Registro de proveedor"}</div>
           {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
           {provMode==="register"&&(<>
-            <label style={s.lbl}>Usuario * (sin espacios)</label>
-            <input style={s.inp} placeholder="cocina_maria" value={provForm.usuario} onChange={e=>setProvForm({...provForm,usuario:e.target.value.toLowerCase().replace(/\s/g,"")})}/>
+            <div style={{background:"#eff6ff",borderRadius:10,padding:"8px 12px",marginBottom:10,fontSize:11,color:"#1d4ed8"}}>📧 Tu correo será tu usuario de acceso</div>
+            <label style={s.lbl}>Correo electrónico * (acceso)</label>
+            <input style={s.inp} placeholder="correo@ejemplo.com" type="email" value={provForm.email} onChange={e=>setProvForm({...provForm,email:e.target.value})}/>
             <label style={s.lbl}>Nombre completo *</label>
             <input style={s.inp} placeholder="María González" value={provForm.nombre} onChange={e=>setProvForm({...provForm,nombre:e.target.value})}/>
             <label style={s.lbl}>Nombre del negocio *</label>
-            <input style={s.inp} placeholder="Cocina de María" value={provForm.negocio} onChange={e=>setProvForm({...provForm,negocio:e.target.value})}/>
-            <label style={s.lbl}>WhatsApp del negocio * (los pedidos llegarán aquí)</label>
-            <input style={s.inp} placeholder="+58 424-000-0000" value={provForm.telefono} onChange={e=>setProvForm({...provForm,telefono:e.target.value})}/>
-            <label style={s.lbl}>Correo electrónico (opcional)</label>
-            <input style={s.inp} placeholder="correo@ejemplo.com" type="email" value={provForm.email} onChange={e=>setProvForm({...provForm,email:e.target.value})}/>
+            <input style={s.inp} placeholder="Cosméticos DORCAS" value={provForm.negocio} onChange={e=>setProvForm({...provForm,negocio:e.target.value})}/>
+            <label style={s.lbl}>Descripción corta del negocio *</label>
+            <input style={s.inp} placeholder="Cuidado capilar y belleza natural" value={provForm.descripcion_negocio} onChange={e=>setProvForm({...provForm,descripcion_negocio:e.target.value})}/>
+            <label style={s.lbl}>WhatsApp del negocio * (aquí llegarán los pedidos)</label>
+            <input style={s.inp} placeholder="04243232671" value={provForm.whatsapp_negocio} onChange={e=>setProvForm({...provForm,whatsapp_negocio:e.target.value})}/>
+            <label style={s.lbl}>Teléfono principal (para cobros y contacto administrativo)</label>
+            <input style={s.inp} placeholder="04143232671" value={provForm.telefono_principal} onChange={e=>setProvForm({...provForm,telefono_principal:e.target.value})}/>
+            <label style={s.lbl}>Instagram (opcional)</label>
+            <input style={s.inp} placeholder="@cosmeticosdorcas" value={provForm.instagram||""} onChange={e=>setProvForm({...provForm,instagram:e.target.value})}/>
             <label style={s.lbl}>Tipo de negocio *</label>
-            <select style={{...s.inp,background:"#fff"}} value={provForm.tipo_negocio} onChange={e=>setProvForm({...provForm,tipo_negocio:e.target.value})}>{TIPO_NEGOCIO.map(t=><option key={t}>{t}</option>)}</select>
-            <label style={s.lbl}>Descripción del negocio</label>
-            <input style={s.inp} placeholder="Comida criolla, a domicilio, horario especial..." value={provForm.descripcion_negocio} onChange={e=>setProvForm({...provForm,descripcion_negocio:e.target.value})}/>
-            <label style={s.lbl}>Dirección física (opcional)</label>
+            <select style={{...s.inp,background:"#fff"}} value={provForm.tipo_negocio} onChange={e=>setProvForm({...provForm,tipo_negocio:e.target.value,categorias:[]})}>{TIPO_NEGOCIO.map(t=><option key={t}>{t}</option>)}</select>
+            <label style={s.lbl}>Dirección física</label>
             <input style={s.inp} placeholder="Calle Comercio #47, Local 3..." value={provForm.direccion_fisica||""} onChange={e=>setProvForm({...provForm,direccion_fisica:e.target.value})}/>
+            <label style={s.lbl}>Horario de atención</label>
+            <div style={{display:"flex",gap:8,marginBottom:8}}>
+              <div style={{flex:1}}><label style={{...s.lbl,marginBottom:2}}>Abre</label><input style={s.inp} type="time" value={provForm.horario_desde} onChange={e=>setProvForm({...provForm,horario_desde:e.target.value})}/></div>
+              <div style={{flex:1}}><label style={{...s.lbl,marginBottom:2}}>Cierra</label><input style={s.inp} type="time" value={provForm.horario_hasta} onChange={e=>setProvForm({...provForm,horario_hasta:e.target.value})}/></div>
+            </div>
+            <input style={s.inp} placeholder="Ej: Solo fines de semana, Lun-Vie..." value={provForm.horario_desc} onChange={e=>setProvForm({...provForm,horario_desc:e.target.value})}/>
+            <label style={s.lbl}>¿Ofreces delivery?</label>
+            <div onClick={()=>setProvForm({...provForm,delivery_propio:!provForm.delivery_propio})} style={{display:"flex",alignItems:"center",gap:10,background:provForm.delivery_propio?"#f0fdf4":"#f8fafc",border:`1px solid ${provForm.delivery_propio?"#86efac":"#e2e8f0"}`,borderRadius:10,padding:"10px 12px",cursor:"pointer",marginBottom:8}}>
+              <div style={{width:20,height:20,borderRadius:"50%",background:provForm.delivery_propio?"#15803d":"#cbd5e1",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{provForm.delivery_propio&&<span style={{color:"#fff",fontSize:12}}>✓</span>}</div>
+              <span style={{fontSize:13,fontWeight:600,color:provForm.delivery_propio?"#15803d":"#64748b"}}>{provForm.delivery_propio?"✅ Sí ofrezco delivery":"❌ Solo retiro en tienda"}</span>
+            </div>
+            {provForm.delivery_propio&&(
+              <div style={{display:"flex",gap:8,marginBottom:8}}>
+                <div style={{flex:1}}><label style={s.lbl}>Costo delivery $</label><input style={s.inp} type="number" placeholder="1.50" value={provForm.delivery_costo} onChange={e=>setProvForm({...provForm,delivery_costo:parseFloat(e.target.value)||0})}/></div>
+                <div style={{flex:1}}><label style={s.lbl}>Gratis desde $</label><input style={s.inp} type="number" placeholder="15" value={provForm.delivery_gratis_desde} onChange={e=>setProvForm({...provForm,delivery_gratis_desde:parseFloat(e.target.value)||15})}/></div>
+              </div>
+            )}
+
             <label style={s.lbl}>Categorías (tipo de comida o servicio)</label>
             {(()=>{
   const regCats=provForm.tipo_negocio==="Restaurante/Cocina"?NEGOCIO_CATS_RESTAURANTE:
@@ -1919,7 +1953,7 @@ export default function App() {
             {logoPreview&&<img src={logoPreview} alt="" style={{width:60,height:60,borderRadius:"50%",objectFit:"cover",marginBottom:8}}/>}
             <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setLogoFile(f);setLogoPreview(URL.createObjectURL(f));}}}/>
           </>)}
-          {provMode==="login"&&<><label style={s.lbl}>Usuario</label><input style={s.inp} placeholder="tu_usuario" value={provForm.usuario} onChange={e=>setProvForm({...provForm,usuario:e.target.value})}/></>}
+          {provMode==="login"&&<><label style={s.lbl}>Correo electrónico</label><input style={s.inp} placeholder="correo@ejemplo.com" type="email" value={provForm.email} onChange={e=>setProvForm({...provForm,email:e.target.value})}/></>}
           <label style={s.lbl}>Contraseña *</label>
           <input style={s.inp} type="password" placeholder="••••••••" value={provForm.pass} onChange={e=>setProvForm({...provForm,pass:e.target.value})}/>
           <button style={s.btn} onClick={provMode==="login"?handleLogin:handleRegister} disabled={loading}>{loading?"Procesando...":(provMode==="login"?"Entrar":"Registrarme")}</button>
@@ -1931,7 +1965,7 @@ export default function App() {
           <div style={{...s.pc,background:"#f0fdf4",borderColor:"#bbf7d0"}}>
             <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
               {provData.logo_url&&<img src={provData.logo_url} alt="" style={{width:48,height:48,borderRadius:"50%",objectFit:"cover"}}/>}
-              <div><div style={{fontSize:14,fontWeight:700,color:"#15803d"}}>{provData.negocio}</div><div style={{fontSize:11,color:"#64748b"}}>@{provData.usuario}{provData.tipo_negocio&&<span style={{marginLeft:6,background:"#f0fdf4",padding:"1px 6px",borderRadius:8,color:"#15803d"}}>{provData.tipo_negocio}</span>}</div></div>
+              <div><div style={{fontSize:14,fontWeight:700,color:"#15803d"}}>{provData.negocio}</div><div style={{fontSize:11,color:"#64748b"}}>{provData.email}{provData.tipo_negocio&&<span style={{marginLeft:6,background:"#f0fdf4",padding:"1px 6px",borderRadius:8,color:"#15803d"}}>{provData.tipo_negocio}</span>}</div>{provData.instagram&&<div style={{fontSize:11,color:"#6366f1",marginTop:2}}>📷 {provData.instagram}</div>}</div>
             </div>
             {/* SUSCRIPCIÓN STATUS */}
             {provData.meses_gratis_restantes>0?(
