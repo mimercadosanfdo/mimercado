@@ -1693,34 +1693,39 @@ export default function App() {
               <div style={{...s.sec,paddingTop:12}}>
                 {allRestaurantes.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🍽️</div><p>Próximamente restaurantes aquí</p></div>}
                 {allRestaurantes.map(r=>{
-                  const tipoLabel=r.tipo_operacion_gastro?TIPO_GASTRO_LABEL[r.tipo_operacion_gastro]:"";
+                  const opTexto=r.tipo_operacion_gastro==="cocina_oscura"?"🚚 Pedidos solo por delivery":
+                    r.tipo_operacion_gastro==="restaurante"?`🍽️ Atención en local${r.delivery_propio?" · 🚚 Delivery disponible":""}`:
+                    r.tipo_operacion_gastro==="comida_casera"?"🏠 Comida casera · Delivery":
+                    r.tipo_operacion_gastro==="comida_rapida"?"⚡ Comida rápida":
+                    r.tipo_operacion_gastro==="panaderia"?"🍞 Panadería y repostería":
+                    r.delivery_propio?"🚚 Delivery disponible":"🏃 Solo retiro en local";
+                  const catPrincipal=(r.categorias||[])[0]||"";
                   return(
-                  <div key={r.id} onClick={()=>{setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);setSearch("");}} style={{background:"#fff",borderRadius:16,border:"1px solid #e2e8f0",marginBottom:10,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.05)",padding:"12px 14px",display:"flex",gap:12,alignItems:"flex-start"}}>
-                    {/* AVATAR LOGO */}
-                    <div style={{width:54,height:54,borderRadius:12,background:"#f8fafc",border:"1px solid #e2e8f0",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",padding:3}}>
+                  <div key={r.id} onClick={()=>{setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);setSearch("");}} style={{background:"#fff",borderRadius:16,border:"1px solid #f1f5f9",marginBottom:10,cursor:"pointer",boxShadow:"0 1px 6px rgba(0,0,0,0.06)",padding:"14px 14px",display:"flex",gap:14,alignItems:"center"}}>
+                    {/* AVATAR LOGO — respira, sin borde */}
+                    <div style={{width:56,height:56,borderRadius:14,background:"#f8fafc",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",padding:6}}>
                       {r.logo_url
                         ?<img src={r.logo_url} alt="" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
-                        :<span style={{fontSize:26}}>🍽️</span>
+                        :<span style={{fontSize:28}}>🍽️</span>
                       }
                     </div>
-                    {/* INFO */}
+                    {/* CONTENIDO */}
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:6,marginBottom:2}}>
-                        <div style={{fontSize:15,fontWeight:800,color:"#0f172a",letterSpacing:-0.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.negocio}</div>
-                        <span style={{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:20,background:r.activo?"#dcfce7":"#fee2e2",color:r.activo?"#15803d":"#dc2626",flexShrink:0}}>{r.activo?"● Abierto":"● Cerrado"}</span>
+                      {/* FILA 1: nombre + estado */}
+                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
+                        <div style={{fontSize:15,fontWeight:800,color:"#0f172a",letterSpacing:-0.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{r.negocio}</div>
+                        <span style={{fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,background:r.activo?"#dcfce7":"#fee2e2",color:r.activo?"#15803d":"#dc2626",flexShrink:0,whiteSpace:"nowrap"}}>{r.activo?"● Abierto":"● Cerrado"}</span>
                       </div>
-                      {tipoLabel&&<div style={{fontSize:11,color:"#ea580c",fontWeight:600,marginBottom:3}}>{tipoLabel}</div>}
-                      {r.descripcion_negocio&&<div style={{fontSize:11,color:"#64748b",marginBottom:4,lineHeight:1.3}}>{r.descripcion_negocio}</div>}
-                      <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
-                        {r.horario_desde&&<span style={{fontSize:10,color:"#94a3b8"}}>🕐 {r.horario_desde}–{r.horario_hasta}</span>}
-                        {r.delivery_propio
-                          ?<span style={{fontSize:10,background:"#dcfce7",color:"#15803d",padding:"2px 7px",borderRadius:20,fontWeight:600}}>🛵 Delivery</span>
-                          :<span style={{fontSize:10,background:"#f1f5f9",color:"#64748b",padding:"2px 7px",borderRadius:20}}>🏃 Solo retiro</span>
-                        }
-                        {(r.categorias||[]).slice(0,2).map(c=>(<span key={c} style={{fontSize:10,color:"#94a3b8",background:"#f8fafc",padding:"2px 7px",borderRadius:20,border:"1px solid #e2e8f0"}}>{c}</span>))}
+                      {/* FILA 2: descripción */}
+                      {r.descripcion_negocio&&<div style={{fontSize:11,color:"#64748b",marginBottom:5,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.descripcion_negocio}</div>}
+                      {/* FILA 3: tipo operación + max 1 categoría */}
+                      <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                        <span style={{fontSize:10,color:"#ea580c",fontWeight:600}}>{opTexto}</span>
+                        {catPrincipal&&<span style={{fontSize:10,color:"#94a3b8",background:"#f8fafc",padding:"2px 7px",borderRadius:20,border:"1px solid #f1f5f9"}}>{catPrincipal}</span>}
+                        {r.horario_desde&&<span style={{fontSize:10,color:"#94a3b8"}}>· 🕐 {r.horario_desde}–{r.horario_hasta}</span>}
                       </div>
                     </div>
-                    <div style={{color:"#cbd5e1",fontSize:18,alignSelf:"center"}}>›</div>
+                    <div style={{color:"#e2e8f0",fontSize:20,flexShrink:0}}>›</div>
                   </div>
                   );
                 })}
