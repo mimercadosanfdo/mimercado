@@ -292,7 +292,7 @@ export default function App() {
     const [z,sp,pp,pr,cb]=await Promise.all([
       supabase.from("zonas_delivery").select("*").eq("activa",true).order("municipio"),
       supabase.from("productos_supermercado").select("*").eq("disponible",true).order("categoria"),
-      supabase.from("productos_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc,whatsapp_negocio,telefono,suscripcion_activa,delivery_propio,delivery_costo,delivery_gratis_desde,tipo_negocio)").eq("aprobado",true).eq("disponible",true).eq("rechazado",false),
+      supabase.from("productos_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc,whatsapp_negocio,telefono,suscripcion_activa,delivery_propio,delivery_costo,delivery_gratis_desde,tipo_negocio,instagram,descripcion_negocio)").eq("aprobado",true).eq("disponible",true).eq("rechazado",false),
       supabase.from("promociones_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc)").eq("aprobada",true).eq("activa",true),
       supabase.from("combos").select("*").eq("activa",true),
     ]);
@@ -1360,11 +1360,21 @@ export default function App() {
                 </button>
               )}
             </div>
+            {/* BANNER CERRADO */}
+            {!negocioActivo.activo&&(
+              <div style={{background:"#fff7ed",borderLeft:"4px solid #f97316",padding:"10px 16px",display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:16}}>🔴</span>
+                <div>
+                  <div style={{fontSize:13,fontWeight:700,color:"#c2410c"}}>Esta tienda está cerrada ahora</div>
+                  <div style={{fontSize:11,color:"#92400e"}}>Puedes ver el catálogo y hacer tu pedido — será atendido cuando abran</div>
+                </div>
+              </div>
+            )}
             {/* BUSCADOR INTERNO */}
             <div style={{padding:"12px 16px 0"}}><input style={{width:"100%",padding:"11px 16px",borderRadius:12,border:"2px solid #e2e8f0",fontSize:13,background:"#fff",boxSizing:"border-box",outline:"none"}} placeholder="🔍  Buscar productos de esta tienda…" value={search} onChange={e=>setSearch(e.target.value)}/></div>
             <div style={{...s.sec,paddingTop:8}}>
               <div style={s.grid}>
-                {allProdsConMargen.filter(p=>p.kitchen===negocioActivo.negocio&&p.name.toLowerCase().includes(search.toLowerCase())).map(p=><CardNegocio key={p.id} p={p}/>)}
+                {allProdsConMargen.filter(p=>p.kitchen===negocioActivo.negocio&&!p.proveedores?.en_pausa&&p.name.toLowerCase().includes(search.toLowerCase())).map(p=><CardNegocio key={p.id} p={p}/>)}
               </div>
               {allProdsConMargen.filter(p=>p.kitchen===negocioActivo.negocio).length===0&&<div style={{textAlign:"center",padding:"30px 0",color:"#94a3b8"}}><div style={{fontSize:36}}>🛍️</div><p style={{fontSize:13,fontWeight:600,color:"#64748b"}}>Esta tienda aún no tiene productos publicados</p><p style={{fontSize:11,marginTop:4}}>Vuelve pronto o consulta por WhatsApp</p></div>}
               {allProdsConMargen.filter(p=>p.kitchen===negocioActivo.negocio).length>0&&(
@@ -3143,6 +3153,12 @@ export default function App() {
             <input style={s.inp} placeholder="Juan Pérez" value={form.nombre} onChange={e=>setForm({...form,nombre:e.target.value})}/>
             <label style={s.lbl}>Tu WhatsApp *</label>
             <input style={s.inp} placeholder="+58 424-000-0000" value={form.telefono} onChange={e=>setForm({...form,telefono:e.target.value})}/>
+            {negocioActivo&&!negocioActivo.activo&&(
+              <div style={{background:"#fff7ed",border:"1px solid #fed7aa",borderRadius:10,padding:"8px 12px",marginBottom:8}}>
+                <div style={{fontSize:12,fontWeight:700,color:"#c2410c"}}>🔴 Esta tienda está cerrada ahora</div>
+                <div style={{fontSize:11,color:"#92400e",marginTop:2}}>Tu pedido será enviado y atendido cuando abran. ¡Gracias por tu preferencia!</div>
+              </div>
+            )}
             <div style={{...s.ib,background:"#fffbeb"}}><div style={{fontSize:12,color:"#92400e"}}>⚡ Tu pedido irá directo al WhatsApp de {cartNegocioNombre}</div></div>
             <button style={s.btnWa} onClick={async()=>{
               if(!form.nombre||!form.telefono)return alert("Completa nombre y teléfono");
