@@ -1515,16 +1515,69 @@ export default function App() {
                 <input style={{width:"100%",padding:"10px 14px",borderRadius:12,border:"none",fontSize:13,background:"rgba(255,255,255,0.15)",color:"#fff",boxSizing:"border-box",outline:"none"}} placeholder="🔍  Buscar en el menú…" value={search} onChange={e=>setSearch(e.target.value)}/>
               </div>
             </div>
-            {/* MENÚ - products of this restaurant */}
+            {/* INFO RESTAURANTE VS COCINA OSCURA */}
+            {(restauranteActivo.direccion_fisica||restauranteActivo.delivery_propio)&&(
+              <div style={{background:"#fff7ed",borderLeft:"4px solid #ea580c",padding:"8px 16px",fontSize:11,display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+                {restauranteActivo.direccion_fisica&&<span style={{color:"#92400e"}}>📍 {restauranteActivo.direccion_fisica}</span>}
+                {restauranteActivo.direccion_fisica&&!restauranteActivo.delivery_propio&&<span style={{color:"#15803d",fontWeight:600}}>· 🏃 Retiro disponible</span>}
+                {!restauranteActivo.direccion_fisica&&restauranteActivo.delivery_propio&&<span style={{color:"#c2410c",fontWeight:600}}>🚚 Solo delivery · Pedido online</span>}
+              </div>
+            )}
+            {/* CTA PRINCIPAL */}
+            {Object.values(cartRest).length===0&&(
+              <div style={{padding:"12px 16px 4px"}}>
+                <button onClick={()=>{const num=((restauranteActivo.whatsapp_negocio||restauranteActivo.telefono)||"").replace(/\D/g,"");const n=num.startsWith("0")?"58"+num.slice(1):num.startsWith("58")?num:"58"+num;window.open(`https://wa.me/${n}?text=${encodeURIComponent(`Hola ${restauranteActivo.negocio}, quiero hacer un pedido`)}`);}} style={{width:"100%",background:"linear-gradient(135deg,#ea580c,#c2410c)",color:"#fff",border:"none",borderRadius:14,padding:"13px",fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 4px 12px rgba(234,88,12,0.35)"}}>
+                  🍽️ Pedir por WhatsApp
+                </button>
+              </div>
+            )}
+            {/* MENÚ ESTRUCTURADO */}
             <div style={s.sec}>
-              {PROV_CATS.map(cat=>{
-                const items=allProdsConMargen.filter(p=>p.cat===cat&&p.kitchen===restauranteActivo.negocio&&p.name.toLowerCase().includes(search.toLowerCase()));
-                if(items.length===0)return null;
-                return(<div key={cat}><div style={s.sT}>{cat==="Comida preparada"?"🍱":cat==="Postres"?"🍰":cat==="Jugos y bebidas"?"🥤":"🍞"} {cat}</div><div style={s.grid}>{items.map(p=><CardRest key={p.id} p={p}/>)}</div></div>);
-              })}
-              {allProdsConMargen.filter(p=>p.kitchen===restauranteActivo.negocio&&p.name.toLowerCase().includes(search.toLowerCase())).length===0&&(
-                <div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🍽️</div><p>No hay platos disponibles ahora</p></div>
-              )}
+              {(()=>{
+                const todosProds=allProdsConMargen.filter(p=>p.kitchen===restauranteActivo.negocio&&p.name.toLowerCase().includes(search.toLowerCase()));
+                const combos=todosProds.filter(p=>p.name?.toLowerCase().includes("combo")||p.isPromo);
+                const resto=todosProds.filter(p=>!p.name?.toLowerCase().includes("combo")&&!p.isPromo);
+                const secciones=[
+                  {key:"combos",label:"🔥 Combos recomendados",items:combos,highlight:true},
+                  ...PROV_CATS.map(cat=>({
+                    key:cat,
+                    label:cat==="Comida preparada"?"🍱 Platos":cat==="Postres"?"🍰 Postres":cat==="Jugos y bebidas"?"🥤 Bebidas":"🍞 Pan y repostería",
+                    items:resto.filter(p=>p.cat===cat),
+                    highlight:false
+                  }))
+                ].filter(s=>s.items.length>0);
+                if(secciones.length===0)return <div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🍽️</div><p>No hay platos disponibles ahora</p></div>;
+                return secciones.map(sec=>(
+                  <div key={sec.key} style={{marginBottom:16}}>
+                    <div style={{fontSize:13,fontWeight:800,color:sec.highlight?"#c2410c":"#0f172a",letterSpacing:-0.2,margin:"14px 0 10px",paddingBottom:6,borderBottom:`2px solid ${sec.highlight?"#fed7aa":"#f1f5f9"}`}}>{sec.label}</div>
+                    {sec.highlight?(
+                      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                        {sec.items.map(p=>{
+                          const qtyRest=cartRest[p.id]?.qty||0;
+                          return(
+                          <div key={p.id} style={{background:"#fff",borderRadius:14,overflow:"hidden",border:"2px solid #fed7aa",display:"flex",gap:0,boxShadow:"0 2px 8px rgba(234,88,12,0.1)"}}>
+                            {p.foto?<img src={p.foto} alt={p.name} style={{width:100,height:90,objectFit:"cover",flexShrink:0}}/>:<div style={{width:100,height:90,background:"linear-gradient(135deg,#fef3c7,#fde68a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,flexShrink:0}}>🎁</div>}
+                            <div style={{flex:1,padding:"8px 10px",display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
+                              <div>
+                                <div style={{fontSize:12,fontWeight:800,color:"#0f172a",lineHeight:1.3}}>{p.name}</div>
+                                {p.descripcion&&<div style={{fontSize:10,color:"#64748b",lineHeight:1.3,marginTop:2}}>{p.descripcion.length>60?p.descripcion.slice(0,60)+"…":p.descripcion}</div>}
+                              </div>
+                              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:6}}>
+                                <div style={{fontSize:16,fontWeight:900,color:"#ef4444"}}>${p.price.toFixed(2)}</div>
+                                {qtyRest>0?(<div style={s.qR}><button style={s.qB} onClick={()=>{const n={...cartRest};n[p.id].qty>1?n[p.id]={...n[p.id],qty:n[p.id].qty-1}:delete n[p.id];setCartRest(n);}}>−</button><span style={s.qN}>{qtyRest}</span><button style={s.qB} onClick={()=>setCartRest(c=>({...c,[p.id]:{...p,qty:qtyRest+1}}))}>+</button></div>)
+                                :<button style={{background:"#ef4444",color:"#fff",border:"none",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,cursor:"pointer"}} onClick={()=>setCartRest(c=>({...c,[p.id]:{...p,qty:1}}))}>+ Agregar</button>}
+                              </div>
+                            </div>
+                          </div>
+                          );
+                        })}
+                      </div>
+                    ):(
+                      <div style={s.grid}>{sec.items.map(p=><CardRest key={p.id} p={p}/>)}</div>
+                    )}
+                  </div>
+                ));
+              })()}
             </div>
             {/* CARRITO RESTAURANTE FLOTANTE */}
             {Object.values(cartRest).length>0&&(
