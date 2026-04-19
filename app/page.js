@@ -953,29 +953,45 @@ export default function App() {
 
   const CardRest=({p})=>{
     const qtyRest=cartRest[p.id]?.qty||0;
-    const isCombo=p.name?.toLowerCase().includes("combo")||p.tag==="🎉 Promo";
+    // Badge permitido: solo basado en tag del producto, filtrado
+    const BADGES_OK={"⭐ Más vendido":{bg:"#f59e0b",txt:"⭐ Más vendido"},"🔥 Recomendado":{bg:"#ef4444",txt:"🔥 Recomendado"},"🌶️ Picante":{bg:"#dc2626",txt:"🌶️ Picante"},"👶 Infantil":{bg:"#06b6d4",txt:"👶 Infantil"},"⏱️ Listo rápido":{bg:"#8b5cf6",txt:"⏱️ Listo rápido"},"🔥 COMBO":{bg:"#ef4444",txt:"🔥 Combo"}};
+    const isCombo=p.name?.toLowerCase().includes("combo")||p.isPromo;
+    const badgeKey=isCombo?"🔥 COMBO":p.tag;
+    const badge=BADGES_OK[badgeKey]||null;
     return(
-      <div style={{...s.card,padding:"0 0 10px",overflow:"hidden",cursor:"pointer"}} onClick={()=>setPlatoDetalle(p)}>
-        <div style={{position:"relative",marginBottom:6}}>
+      <div style={{...s.card,padding:"0 0 10px",overflow:"hidden",cursor:"pointer",borderRadius:14,boxShadow:"0 2px 8px rgba(0,0,0,0.07)"}} onClick={()=>setPlatoDetalle(p)}>
+        {/* 1. IMAGEN — elemento dominante */}
+        <div style={{position:"relative",marginBottom:8}}>
           {p.foto
-            ?<img src={p.foto} alt={p.name} style={{width:"100%",height:115,objectFit:"cover",display:"block",borderRadius:"12px 12px 0 0"}}/>
-            :<div style={{height:115,background:"linear-gradient(135deg,#fef3c7,#fde68a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:40,borderRadius:"12px 12px 0 0"}}>🍽️</div>
+            ?<img src={p.foto} alt={p.name} style={{width:"100%",height:120,objectFit:"cover",display:"block",borderRadius:"14px 14px 0 0"}}/>
+            :<div style={{height:120,background:"linear-gradient(135deg,#fef3c7,#fde68a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:44,borderRadius:"14px 14px 0 0"}}>🍽️</div>
           }
-          {isCombo&&<div style={{position:"absolute",top:6,left:6,background:"#ef4444",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 8px",borderRadius:8}}>🔥 COMBO</div>}
-          {p.tag&&!isCombo&&<div style={{position:"absolute",top:6,left:6,background:"#f59e0b",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 8px",borderRadius:8}}>{p.tag}</div>}
+          {/* 2. BADGE — máximo 1, esquina sup izquierda */}
+          {badge&&(
+            <div style={{position:"absolute",top:7,left:7,background:badge.bg,color:"#fff",fontSize:9,fontWeight:800,padding:"3px 8px",borderRadius:20,letterSpacing:0.2,boxShadow:"0 1px 4px rgba(0,0,0,0.2)"}}>
+              {badge.txt}
+            </div>
+          )}
         </div>
         <div style={{padding:"0 10px"}}>
-          <div style={{fontSize:12,fontWeight:700,color:"#0f172a",lineHeight:1.3,marginBottom:3}}>{p.name}</div>
-          {p.descripcion&&<div style={{fontSize:10,color:"#64748b",lineHeight:1.3,marginBottom:5}}>{p.descripcion.length>50?p.descripcion.slice(0,50)+"…":p.descripcion}</div>}
-          <div style={s.cBt}>
-            <div style={{fontSize:17,fontWeight:900,color:"#ef4444",letterSpacing:-0.3}}>${p.price.toFixed(2)}</div>
+          {/* 3. NOMBRE — 1 línea, claro */}
+          <div style={{fontSize:12,fontWeight:700,color:"#0f172a",lineHeight:1.3,marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</div>
+          {/* 4. DESCRIPCIÓN — 1 línea, ingredientes clave */}
+          {p.descripcion&&<div style={{fontSize:10,color:"#94a3b8",lineHeight:1.3,marginBottom:6,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.descripcion}</div>}
+          {/* 5. PRECIO + 6. CTA */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:p.descripcion?0:4}}>
+            <div style={{fontSize:18,fontWeight:900,color:"#ef4444",letterSpacing:-0.4}}>${p.price.toFixed(2)}</div>
             {qtyRest>0?(
               <div style={s.qR}>
                 <button style={s.qB} onClick={e=>{e.stopPropagation();const n={...cartRest};n[p.id].qty>1?n[p.id]={...n[p.id],qty:n[p.id].qty-1}:delete n[p.id];setCartRest(n);}}>−</button>
                 <span style={s.qN}>{qtyRest}</span>
                 <button style={s.qB} onClick={e=>{e.stopPropagation();const stockMax=p.stock||999;if(qtyRest>=stockMax){alert("Stock máximo");return;}setCartRest(c=>({...c,[p.id]:{...p,qty:qtyRest+1}}))}}>+</button>
               </div>
-            ):<button style={{...s.aBtn,borderRadius:8,width:"auto",padding:"5px 10px",fontSize:11,fontWeight:700,background:"#ef4444"}} onClick={e=>{e.stopPropagation();const stockMax=p.stock||999;if(qtyRest>=stockMax)return;setCartRest(c=>({...c,[p.id]:{...p,qty:1}}))}}>+ Agregar</button>}
+            ):(
+              <button style={{background:"#ef4444",color:"#fff",border:"none",borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:800,cursor:"pointer",flexShrink:0}} onClick={e=>{e.stopPropagation();const stockMax=p.stock||999;if(qtyRest>=stockMax)return;setCartRest(c=>({...c,[p.id]:{...p,qty:1}}))}}>
+                + Agregar
+              </button>
+            )}
           </div>
         </div>
       </div>
