@@ -62,10 +62,10 @@ const NEGOCIO_LOCAL_CATS = [
 ];
 const NEGOCIO_CATS_RESTAURANTE = ["Comida criolla","Comida rápida","Pizzería","Mariscos","Panadería/Pastelería","Jugos y bebidas","Postres","Otro"];
 const TIPOS_OPERACION_GASTRO = [
-  {value:"restaurante",label:"Restaurante (local abierto al público)"},
-  {value:"cocina_oscura",label:"Cocina de delivery (solo delivery)"},
-  {value:"comida_casera",label:"Comida casera"},
-  {value:"comida_rapida",label:"Comida rápida"},
+  {value:"restaurante",label:"🏠 Restaurante — Local físico abierto al público",desc:"Tiene local, atiende en sitio y puede hacer delivery"},
+  {value:"cocina_oscura",label:"🍱 Cocina preparada en casa — Solo delivery",desc:"Prepara desde casa, solo entrega a domicilio, sin local físico"},
+  {value:"panaderia",label:"🍞 Panadería / Pastelería / Repostería",desc:"Panadería, tortas, dulces, postres y repostería"},
+  {value:"comida_rapida",label:"⚡ Comida rápida — Puesto ambulante o local",desc:"Perros, hamburguesas, empanadas, pepitos, comida de calle"},
 ];
 const TIPOS_COMIDA = [
   "Parrilla","Carne asada","Pollo a la brasa","Costillas","BBQ / Ahumados",
@@ -81,10 +81,10 @@ const TIPOS_COMIDA = [
   "Combos","Menú del día","Especiales","Otros",
 ];
 const TIPO_GASTRO_LABEL = {
-  restaurante:"🍽️ Atención en local",
-  cocina_oscura:"🚚 Pedidos solo por delivery",
-  comida_casera:"🏠 Comida casera · Delivery",
-  comida_rapida:"⚡ Comida rápida · Delivery disponible",
+  restaurante:"🍽️ Restaurante · Atención en local",
+  cocina_oscura:"🚚 Cocina de delivery · Solo a domicilio",
+  panaderia:"🍞 Panadería · Postres y repostería",
+  comida_rapida:"⚡ Comida rápida",
 };
 const NEGOCIO_CATS_TRANSPORTE = ["Mototaxi","Taxi","Línea de transporte","Encomiendas"];
 const SERVICIO_CATS = ["Plomería","Electricidad","Mecánica","Belleza y estética","Costura y modistería","Clases y tutorías","Limpieza","Construcción","Transporte","Salud","Otros"];
@@ -2053,7 +2053,23 @@ export default function App() {
             <label style={s.lbl}>Instagram (opcional)</label>
             <input style={s.inp} placeholder="@cosmeticosdorcas" value={provForm.instagram||""} onChange={e=>setProvForm({...provForm,instagram:e.target.value})}/>
             <label style={s.lbl}>Tipo de negocio *</label>
-            <select style={{...s.inp,background:"#fff"}} value={provForm.tipo_negocio} onChange={e=>setProvForm({...provForm,tipo_negocio:e.target.value,categorias:[]})}>{TIPO_NEGOCIO.map(t=><option key={t}>{t}</option>)}</select>
+            <select style={{...s.inp,background:"#fff"}} value={provForm.tipo_negocio} onChange={e=>setProvForm({...provForm,tipo_negocio:e.target.value,categorias:[],tipo_operacion_gastro:""})}>{TIPO_NEGOCIO.map(t=><option key={t}>{t}</option>)}</select>
+            {provForm.tipo_negocio==="Restaurante / Cocina / Comida"&&(
+              <div style={{background:"#f8fafc",borderRadius:14,padding:"12px",marginBottom:4,border:"1px solid #e2e8f0"}}>
+                <div style={{fontSize:12,fontWeight:700,color:"#374151",marginBottom:8}}>¿Cómo funciona tu negocio? *</div>
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {TIPOS_OPERACION_GASTRO.map(t=>(
+                    <div key={t.value} onClick={()=>setProvForm(f=>({...f,tipo_operacion_gastro:t.value}))} style={{display:"flex",alignItems:"flex-start",gap:10,background:provForm.tipo_operacion_gastro===t.value?"#eff6ff":"#fff",border:`2px solid ${provForm.tipo_operacion_gastro===t.value?"#3b82f6":"#e2e8f0"}`,borderRadius:10,padding:"10px 12px",cursor:"pointer"}}>
+                      <div style={{width:20,height:20,borderRadius:"50%",background:provForm.tipo_operacion_gastro===t.value?"#3b82f6":"#e2e8f0",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",marginTop:1}}>{provForm.tipo_operacion_gastro===t.value&&<span style={{color:"#fff",fontSize:12,fontWeight:900}}>✓</span>}</div>
+                      <div>
+                        <div style={{fontSize:13,fontWeight:700,color:provForm.tipo_operacion_gastro===t.value?"#1d4ed8":"#374151"}}>{t.label}</div>
+                        <div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>{t.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <label style={s.lbl}>Horario de atención</label>
             <div style={{display:"flex",gap:8,marginBottom:6}}>
               <div style={{flex:1}}><label style={{...s.lbl,marginBottom:2}}>Abre</label><input style={s.inp} type="time" value={provForm.horario_desde} onChange={e=>setProvForm({...provForm,horario_desde:e.target.value})}/></div>
@@ -2084,19 +2100,7 @@ export default function App() {
     provForm.tipo_negocio==="Transporte y encomiendas"||provForm.tipo_negocio==="Lavandería"?"Tipo de servicio":
     "Categorías";
   return(<>
-    {esComida&&(
-      <>
-        <label style={s.lbl}>¿Cómo funciona tu negocio? *</label>
-        <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
-          {TIPOS_OPERACION_GASTRO.map(t=>(
-            <div key={t.value} onClick={()=>setProvForm(f=>({...f,tipo_operacion_gastro:t.value}))} style={{display:"flex",alignItems:"center",gap:10,background:provForm.tipo_operacion_gastro===t.value?"#f0fdf4":"#f8fafc",border:`2px solid ${provForm.tipo_operacion_gastro===t.value?"#15803d":"#e2e8f0"}`,borderRadius:10,padding:"10px 12px",cursor:"pointer"}}>
-              <div style={{width:18,height:18,borderRadius:"50%",background:provForm.tipo_operacion_gastro===t.value?"#15803d":"#cbd5e1",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>{provForm.tipo_operacion_gastro===t.value&&<span style={{color:"#fff",fontSize:11}}>✓</span>}</div>
-              <span style={{fontSize:13,fontWeight:600,color:provForm.tipo_operacion_gastro===t.value?"#15803d":"#374151"}}>{t.label}</span>
-            </div>
-          ))}
-        </div>
-      </>
-    )}
+
     <label style={s.lbl}>{catLabel} {provForm.categorias.length>0&&<span style={{color:P,fontWeight:700}}>({provForm.categorias.length} seleccionadas)</span>}</label>
     <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
       {regCats.map(c=>(<button key={c} onClick={()=>setProvForm(f=>({...f,categorias:f.categorias.includes(c)?f.categorias.filter(x=>x!==c):[...f.categorias,c]}))} style={{padding:"6px 12px",borderRadius:20,fontSize:12,cursor:"pointer",background:provForm.categorias.includes(c)?P:"#f1f5f9",color:provForm.categorias.includes(c)?"#fff":"#64748b",border:provForm.categorias.includes(c)?`2px solid ${P}`:"2px solid transparent",fontWeight:provForm.categorias.includes(c)?700:500,transition:"all 0.15s"}}>{c}</button>))}
