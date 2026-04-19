@@ -2085,14 +2085,28 @@ export default function App() {
             </div>
             <input style={s.inp} placeholder="Ej: Solo fines de semana, Lun-Vie..." value={provForm.horario_desc} onChange={e=>setProvForm({...provForm,horario_desc:e.target.value})}/>
             <label style={s.lbl}>¿Ofreces delivery?</label>
-            <div onClick={()=>setProvForm({...provForm,delivery_propio:!provForm.delivery_propio})} style={{display:"flex",alignItems:"center",gap:10,background:provForm.delivery_propio?"#f0fdf4":"#f8fafc",border:`1px solid ${provForm.delivery_propio?"#86efac":"#e2e8f0"}`,borderRadius:10,padding:"10px 12px",cursor:"pointer",marginBottom:8}}>
-              <div style={{width:20,height:20,borderRadius:"50%",background:provForm.delivery_propio?"#15803d":"#cbd5e1",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{provForm.delivery_propio&&<span style={{color:"#fff",fontSize:12}}>✓</span>}</div>
-              <span style={{fontSize:13,fontWeight:600,color:provForm.delivery_propio?"#15803d":"#64748b"}}>{provForm.delivery_propio?"✅ Sí ofrezco delivery":"❌ Solo retiro en tienda"}</span>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+              <button type="button" onClick={()=>setProvForm({...provForm,delivery_propio:true})} style={{padding:"12px 8px",borderRadius:12,border:`2px solid ${provForm.delivery_propio?"#15803d":"#e2e8f0"}`,background:provForm.delivery_propio?"#f0fdf4":"#fff",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                <span style={{fontSize:22}}>🛵</span>
+                <span style={{fontSize:12,fontWeight:700,color:provForm.delivery_propio?"#15803d":"#374151"}}>Sí, hago delivery</span>
+                <span style={{fontSize:10,color:provForm.delivery_propio?"#15803d":"#94a3b8"}}>Entrego a domicilio</span>
+                {provForm.delivery_propio&&<span style={{fontSize:10,fontWeight:800,color:"#15803d"}}>✓ Seleccionado</span>}
+              </button>
+              <button type="button" onClick={()=>setProvForm({...provForm,delivery_propio:false})} style={{padding:"12px 8px",borderRadius:12,border:`2px solid ${!provForm.delivery_propio?"#94a3b8":"#e2e8f0"}`,background:!provForm.delivery_propio?"#f8fafc":"#fff",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                <span style={{fontSize:22}}>🏪</span>
+                <span style={{fontSize:12,fontWeight:700,color:!provForm.delivery_propio?"#374151":"#94a3b8"}}>Solo retiro</span>
+                <span style={{fontSize:10,color:"#94a3b8"}}>El cliente recoge en local</span>
+                {!provForm.delivery_propio&&<span style={{fontSize:10,fontWeight:800,color:"#374151"}}>✓ Seleccionado</span>}
+              </button>
             </div>
             {provForm.delivery_propio&&(
-              <div style={{display:"flex",gap:8,marginBottom:8}}>
-                <div style={{flex:1}}><label style={s.lbl}>Costo delivery $</label><input style={s.inp} type="number" placeholder="1.50" value={provForm.delivery_costo} onChange={e=>setProvForm({...provForm,delivery_costo:parseFloat(e.target.value)||0})}/></div>
-                <div style={{flex:1}}><label style={s.lbl}>Gratis desde $</label><input style={s.inp} type="number" placeholder="15" value={provForm.delivery_gratis_desde} onChange={e=>setProvForm({...provForm,delivery_gratis_desde:parseFloat(e.target.value)||15})}/></div>
+              <div style={{background:"#f0fdf4",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #bbf7d0"}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#15803d",marginBottom:8}}>Configura tu delivery</div>
+                <div style={{display:"flex",gap:8}}>
+                  <div style={{flex:1}}><label style={s.lbl}>Costo del delivery $</label><input style={s.inp} type="number" placeholder="1.50" value={provForm.delivery_costo} onChange={e=>setProvForm({...provForm,delivery_costo:parseFloat(e.target.value)||0})}/></div>
+                  <div style={{flex:1}}><label style={s.lbl}>Delivery gratis desde $</label><input style={s.inp} type="number" placeholder="15" value={provForm.delivery_gratis_desde} onChange={e=>setProvForm({...provForm,delivery_gratis_desde:parseFloat(e.target.value)||15})}/></div>
+                </div>
+                <div style={{fontSize:10,color:"#15803d",marginTop:4}}>💡 Pedidos mayores a ${provForm.delivery_gratis_desde||15} tendrán delivery gratis</div>
               </div>
             )}
             <label style={s.lbl}>Dirección física</label>
@@ -2202,11 +2216,9 @@ export default function App() {
             ):(
               <div style={{background:"#f0fdf4",borderRadius:12,padding:"12px 14px",border:"1px solid #bbf7d0"}}>
                 <div style={{fontSize:12,fontWeight:700,color:"#15803d",marginBottom:10}}>🛵 Configura tu delivery</div>
-                <div onClick={()=>setDeliveryConfig({...deliveryConfig,delivery_propio:!deliveryConfig.delivery_propio})} style={{display:"flex",alignItems:"center",gap:10,background:deliveryConfig.delivery_propio?"#dcfce7":"#f1f5f9",border:`1px solid ${deliveryConfig.delivery_propio?"#86efac":"#e2e8f0"}`,borderRadius:10,padding:"10px 12px",cursor:"pointer",marginBottom:10}}>
-                  <div style={{width:22,height:22,borderRadius:"50%",background:deliveryConfig.delivery_propio?"#15803d":"#cbd5e1",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                    {deliveryConfig.delivery_propio&&<span style={{color:"#fff",fontSize:14,fontWeight:900}}>✓</span>}
-                  </div>
-                  <div style={{fontSize:13,fontWeight:700,color:deliveryConfig.delivery_propio?"#15803d":"#64748b"}}>{deliveryConfig.delivery_propio?"✅ Ofrezco delivery a domicilio":"❌ Solo retiro en tienda"}</div>
+                <div style={{display:"flex",gap:8,marginBottom:10}}>
+                  <button onClick={()=>setDeliveryConfig({...deliveryConfig,delivery_propio:true})} style={{flex:1,padding:"10px 8px",borderRadius:10,border:`2px solid ${deliveryConfig.delivery_propio?"#15803d":"#e2e8f0"}`,background:deliveryConfig.delivery_propio?"#f0fdf4":"#fff",color:deliveryConfig.delivery_propio?"#15803d":"#64748b",fontSize:12,fontWeight:700,cursor:"pointer"}}>🛵 Sí, hago delivery</button>
+                  <button onClick={()=>setDeliveryConfig({...deliveryConfig,delivery_propio:false})} style={{flex:1,padding:"10px 8px",borderRadius:10,border:`2px solid ${!deliveryConfig.delivery_propio?"#64748b":"#e2e8f0"}`,background:!deliveryConfig.delivery_propio?"#f1f5f9":"#fff",color:!deliveryConfig.delivery_propio?"#374151":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>🏃 Solo retiro en local</button>
                 </div>
                 {deliveryConfig.delivery_propio&&(
                   <>
@@ -2767,14 +2779,34 @@ export default function App() {
               </div>
               <input style={s.inp} placeholder="Ej: Solo fines de semana..." value={perfilData.horario_desc||""} onChange={e=>setPerfilData({...perfilData,horario_desc:e.target.value})}/>
               <label style={s.lbl}>¿Ofreces delivery?</label>
-              <div onClick={()=>setPerfilData(pd=>({...pd,delivery_propio:!pd.delivery_propio}))} style={{display:"flex",alignItems:"center",gap:10,background:perfilData.delivery_propio?"#f0fdf4":"#f8fafc",border:`1px solid ${perfilData.delivery_propio?"#86efac":"#e2e8f0"}`,borderRadius:10,padding:"10px 12px",cursor:"pointer",marginBottom:8}}>
-                <div style={{width:20,height:20,borderRadius:"50%",background:perfilData.delivery_propio?"#15803d":"#cbd5e1",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{perfilData.delivery_propio&&<span style={{color:"#fff",fontSize:12}}>✓</span>}</div>
-                <span style={{fontSize:13,fontWeight:600,color:perfilData.delivery_propio?"#15803d":"#64748b"}}>{perfilData.delivery_propio?"✅ Sí ofrezco delivery":"❌ Solo retiro en tienda"}</span>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+                <button type="button" onClick={()=>setPerfilData(pd=>({...pd,delivery_propio:true}))} style={{padding:"12px 8px",borderRadius:12,border:`2px solid ${perfilData.delivery_propio?"#15803d":"#e2e8f0"}`,background:perfilData.delivery_propio?"#f0fdf4":"#fff",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                  <span style={{fontSize:22}}>🛵</span>
+                  <span style={{fontSize:12,fontWeight:700,color:perfilData.delivery_propio?"#15803d":"#374151"}}>Sí, hago delivery</span>
+                  <span style={{fontSize:10,color:perfilData.delivery_propio?"#15803d":"#94a3b8"}}>Entrego a domicilio</span>
+                  {perfilData.delivery_propio&&<span style={{fontSize:10,fontWeight:800,color:"#15803d"}}>✓ Seleccionado</span>}
+                </button>
+                <button type="button" onClick={()=>setPerfilData(pd=>({...pd,delivery_propio:false}))} style={{padding:"12px 8px",borderRadius:12,border:`2px solid ${!perfilData.delivery_propio?"#94a3b8":"#e2e8f0"}`,background:!perfilData.delivery_propio?"#f8fafc":"#fff",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                  <span style={{fontSize:22}}>🏪</span>
+                  <span style={{fontSize:12,fontWeight:700,color:!perfilData.delivery_propio?"#374151":"#94a3b8"}}>Solo retiro</span>
+                  <span style={{fontSize:10,color:"#94a3b8"}}>El cliente recoge en local</span>
+                  {!perfilData.delivery_propio&&<span style={{fontSize:10,fontWeight:800,color:"#374151"}}>✓ Seleccionado</span>}
+                </button>
               </div>
               {perfilData.delivery_propio&&(
-                <div style={{display:"flex",gap:8,marginBottom:8}}>
-                  <div style={{flex:1}}><label style={s.lbl}>Costo $</label><input style={s.inp} type="number" value={perfilData.delivery_costo||0} onChange={e=>setPerfilData({...perfilData,delivery_costo:parseFloat(e.target.value)||0})}/></div>
-                  <div style={{flex:1}}><label style={s.lbl}>Gratis desde $</label><input style={s.inp} type="number" value={perfilData.delivery_gratis_desde||15} onChange={e=>setPerfilData({...perfilData,delivery_gratis_desde:parseFloat(e.target.value)||15})}/></div>
+                <div style={{background:"#f0fdf4",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #bbf7d0"}}>
+                  <div style={{fontSize:11,fontWeight:700,color:"#15803d",marginBottom:8}}>Configura tu delivery</div>
+                  <div style={{display:"flex",gap:8}}>
+                    <div style={{flex:1}}>
+                      <label style={s.lbl}>Costo del delivery $</label>
+                      <input style={s.inp} type="number" placeholder="1.50" value={perfilData.delivery_costo||0} onChange={e=>setPerfilData({...perfilData,delivery_costo:parseFloat(e.target.value)||0})}/>
+                    </div>
+                    <div style={{flex:1}}>
+                      <label style={s.lbl}>Delivery gratis desde $</label>
+                      <input style={s.inp} type="number" placeholder="15" value={perfilData.delivery_gratis_desde||15} onChange={e=>setPerfilData({...perfilData,delivery_gratis_desde:parseFloat(e.target.value)||15})}/>
+                    </div>
+                  </div>
+                  <div style={{fontSize:10,color:"#15803d",marginTop:4}}>💡 Pedidos mayores a ${perfilData.delivery_gratis_desde||15} tendrán delivery gratis</div>
                 </div>
               )}
               <label style={s.lbl}>Categorías</label>
