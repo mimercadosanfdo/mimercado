@@ -1696,10 +1696,13 @@ export default function App() {
                   const tipoLabel=r.tipo_operacion_gastro?TIPO_GASTRO_LABEL[r.tipo_operacion_gastro]||"🍽️ Cocina":"🍽️ Restaurante";
                   return(
                   <div key={r.id} onClick={()=>{setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);setSearch("");}} style={{background:"#fff",borderRadius:16,overflow:"hidden",border:"1px solid #f1f5f9",marginBottom:12,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-                    {/* IMAGEN BANNER */}
-                    <div style={{position:"relative",height:110,background:"linear-gradient(135deg,#fef3c7,#fde68a)",overflow:"hidden"}}>
-                      {r.logo_url?<img src={r.logo_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:48}}>🍽️</div>}
-                      <div style={{position:"absolute",top:8,left:8,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(4px)",borderRadius:8,padding:"3px 8px",fontSize:10,color:"#fff",fontWeight:600}}>{tipoLabel}</div>
+                    {/* CABECERA TARJETA */}
+                    <div style={{position:"relative",height:110,background:"linear-gradient(135deg,#1e293b,#334155)",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      {r.logo_url
+                        ?<img src={r.logo_url} alt="" style={{maxWidth:"80%",maxHeight:"90px",objectFit:"contain",display:"block"}}/>
+                        :<div style={{fontSize:52}}>🍽️</div>
+                      }
+                      <div style={{position:"absolute",top:8,left:8,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(4px)",borderRadius:8,padding:"3px 8px",fontSize:10,color:"#fff",fontWeight:600}}>{tipoLabel}</div>
                       <div style={{position:"absolute",top:8,right:8,background:r.activo?"#22c55e":"#ef4444",borderRadius:20,padding:"3px 8px",fontSize:10,color:"#fff",fontWeight:700}}>{r.activo?"● Abierto":"● Cerrado"}</div>
                     </div>
                     {/* INFO */}
