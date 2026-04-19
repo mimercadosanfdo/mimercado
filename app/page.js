@@ -61,6 +61,31 @@ const NEGOCIO_LOCAL_CATS = [
   {cat:"Otros",emoji:"📦",color:"#f8fafc",tc:"#64748b"},
 ];
 const NEGOCIO_CATS_RESTAURANTE = ["Comida criolla","Comida rápida","Pizzería","Mariscos","Panadería/Pastelería","Jugos y bebidas","Postres","Otro"];
+const TIPOS_OPERACION_GASTRO = [
+  {value:"restaurante",label:"Restaurante (local abierto al público)"},
+  {value:"cocina_oscura",label:"Cocina de delivery (solo delivery)"},
+  {value:"comida_casera",label:"Comida casera"},
+  {value:"comida_rapida",label:"Comida rápida"},
+];
+const TIPOS_COMIDA = [
+  "Parrilla","Carne asada","Pollo a la brasa","Costillas","BBQ / Ahumados",
+  "Hamburguesas","Perros calientes","Pepitos","Club house","Papas fritas","Salchipapas","Alitas / Nuggets",
+  "Comida criolla","Cachapas","Arepas","Pabellón","Pisillo","Empanadas","Asado llanero",
+  "Pizzería","Pastas","Lasaña",
+  "Mondongo","Caldos","Hervidos",
+  "Pescado frito","Mariscos","Ceviches",
+  "Comida china","Comida asiática","Comida mexicana","Comida árabe","Comida peruana",
+  "Panadería","Pastelería","Postres","Tortas","Repostería",
+  "Jugos naturales","Batidos","Bebidas frías","Café",
+  "Comida saludable","Vegetariana","Vegana",
+  "Combos","Menú del día","Especiales","Otros",
+];
+const TIPO_GASTRO_LABEL = {
+  restaurante:"🍽️ Atención en local",
+  cocina_oscura:"🚚 Pedidos solo por delivery",
+  comida_casera:"🏠 Comida casera · Delivery",
+  comida_rapida:"⚡ Comida rápida · Delivery disponible",
+};
 const NEGOCIO_CATS_TRANSPORTE = ["Mototaxi","Taxi","Línea de transporte","Encomiendas"];
 const SERVICIO_CATS = ["Plomería","Electricidad","Mecánica","Belleza y estética","Costura y modistería","Clases y tutorías","Limpieza","Construcción","Transporte","Salud","Otros"];
 
@@ -227,7 +252,7 @@ export default function App() {
   // ---------------------------------------------------------
 
   const [provMode,setProvMode]=useState("login");
-  const [provForm,setProvForm]=useState({email:"",nombre:"",negocio:"",whatsapp_negocio:"",telefono_principal:"",instagram:"",categorias:[],pass:"",tipo_negocio:"Restaurante / Cocina / Comida",descripcion_negocio:"",delivery_propio:false,delivery_costo:0,delivery_gratis_desde:15,direccion_fisica:"",horario_desde:"08:00",horario_hasta:"18:00",horario_desc:""});
+  const [provForm,setProvForm]=useState({email:"",nombre:"",negocio:"",whatsapp_negocio:"",telefono_principal:"",instagram:"",categorias:[],pass:"",tipo_negocio:"Restaurante / Cocina / Comida",tipo_operacion_gastro:"",descripcion_negocio:"",delivery_propio:false,delivery_costo:0,delivery_gratis_desde:15,direccion_fisica:"",horario_desde:"08:00",horario_hasta:"18:00",horario_desc:""});
   const [provData,setProvData]=useState(null);
   const [myProds,setMyProds]=useState([]);
   const [myPromos,setMyPromos]=useState([]);
@@ -654,6 +679,7 @@ export default function App() {
       logo_url,aprobado:true,activo:false,en_pausa:false,password_plain:provForm.pass,
       tipo_negocio:provForm.tipo_negocio||"Restaurante / Cocina / Comida",
       descripcion_negocio:provForm.descripcion_negocio||null,
+      tipo_operacion_gastro:provForm.tipo_operacion_gastro||null,
       horario_desde:provForm.horario_desde||null,
       horario_hasta:provForm.horario_hasta||null,
       horario_desc:provForm.horario_desc||null,
@@ -1493,12 +1519,12 @@ export default function App() {
                 <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
                   <button onClick={()=>{setRestauranteActivo(null);setCartRest({});setCartRestId(null);setCartRestNombre("");setCartRestWa("");}} style={{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:8,color:"#fff",padding:"6px 10px",fontSize:12,cursor:"pointer",flexShrink:0}}>← Volver</button>
                   {restauranteActivo.logo_url
-                    ?<img src={restauranteActivo.logo_url} alt="" style={{width:48,height:48,borderRadius:14,objectFit:"cover",border:"2px solid rgba(255,255,255,0.3)",flexShrink:0}}/>
+                    ?<img src={restauranteActivo.logo_url} alt="" style={{width:48,height:48,borderRadius:14,objectFit:"contain",background:"rgba(255,255,255,0.9)",padding:2,border:"2px solid rgba(255,255,255,0.3)",flexShrink:0}}/>
                     :<div style={{width:48,height:48,borderRadius:14,background:"rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🍽️</div>
                   }
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{color:"#fff",fontWeight:900,fontSize:17,letterSpacing:-0.3}}>{restauranteActivo.negocio}</div>
-                    <div style={{color:"rgba(255,255,255,0.7)",fontSize:11,marginTop:1}}>{restauranteActivo.descripcion_negocio||(restauranteActivo.categorias||[]).join(" · ")}</div>
+                    <div style={{color:"rgba(255,255,255,0.7)",fontSize:11,marginTop:1}}>{restauranteActivo.tipo_operacion_gastro?TIPO_GASTRO_LABEL[restauranteActivo.tipo_operacion_gastro]:""}{restauranteActivo.descripcion_negocio?` · ${restauranteActivo.descripcion_negocio}`:""}</div>
                   </div>
                   <span style={{fontSize:11,fontWeight:700,padding:"4px 10px",borderRadius:20,background:restauranteActivo.activo?"#dcfce7":"#fee2e2",color:restauranteActivo.activo?"#15803d":"#dc2626",flexShrink:0}}>{restauranteActivo.activo?"● Abierto":"● Cerrado"}</span>
                 </div>
@@ -1537,14 +1563,17 @@ export default function App() {
                 const todosProds=allProdsConMargen.filter(p=>p.kitchen===restauranteActivo.negocio&&p.name.toLowerCase().includes(search.toLowerCase()));
                 const combos=todosProds.filter(p=>p.name?.toLowerCase().includes("combo")||p.isPromo);
                 const resto=todosProds.filter(p=>!p.name?.toLowerCase().includes("combo")&&!p.isPromo);
+                const iconoTipo={"Hamburguesas":"🍔","Perros calientes":"🌭","Pizzería":"🍕","Pastas":"🍝","Comida criolla":"🍲","Arepas":"🫓","Cachapas":"🥞","Panadería":"🍞","Pastelería":"🎂","Postres":"🍰","Jugos naturales":"🥤","Batidos":"🥛","Bebidas frías":"🧃","Café":"☕","Comida saludable":"🥗","Vegetariana":"🥦","Mariscos":"🦐","Pescado frito":"🐟","Comida rápida":"⚡","Alitas / Nuggets":"🍗","Papas fritas":"🍟","Salchipapas":"🍟","Combos":"🔥","Menú del día":"📋","Especiales":"⭐"};
+                const catsProv=restauranteActivo.categorias?.length>0?restauranteActivo.categorias:PROV_CATS;
                 const secciones=[
                   {key:"combos",label:"🔥 Combos recomendados",items:combos,highlight:true},
-                  ...PROV_CATS.map(cat=>({
+                  ...catsProv.filter(cat=>cat!=="Combos"&&cat!=="Especiales"&&cat!=="Menú del día").map(cat=>({
                     key:cat,
-                    label:cat==="Comida preparada"?"🍱 Platos":cat==="Postres"?"🍰 Postres":cat==="Jugos y bebidas"?"🥤 Bebidas":"🍞 Pan y repostería",
-                    items:resto.filter(p=>p.cat===cat),
+                    label:`${iconoTipo[cat]||"🍽️"} ${cat}`,
+                    items:resto.filter(p=>p.cat===cat||p.name?.toLowerCase().includes(cat.toLowerCase())),
                     highlight:false
-                  }))
+                  })),
+                  {key:"otros",label:"🍽️ Otros platos",items:resto.filter(p=>!catsProv.some(c=>p.cat===c||p.name?.toLowerCase().includes(c.toLowerCase()))),highlight:false}
                 ].filter(s=>s.items.length>0);
                 if(secciones.length===0)return <div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🍽️</div><p>No hay platos disponibles ahora</p></div>;
                 return secciones.map(sec=>(
@@ -1664,7 +1693,7 @@ export default function App() {
               <div style={{...s.sec,paddingTop:12}}>
                 {allRestaurantes.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🍽️</div><p>Próximamente restaurantes aquí</p></div>}
                 {allRestaurantes.map(r=>{
-                  const tipoLabel=r.tipo_negocio==="Restaurante / Cocina / Comida"?"🍴 Restaurante":"🛵 Cocina de delivery";
+                  const tipoLabel=r.tipo_operacion_gastro?TIPO_GASTRO_LABEL[r.tipo_operacion_gastro]||"🍽️ Cocina":"🍽️ Restaurante";
                   return(
                   <div key={r.id} onClick={()=>{setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);setSearch("");}} style={{background:"#fff",borderRadius:16,overflow:"hidden",border:"1px solid #f1f5f9",marginBottom:12,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
                     {/* IMAGEN BANNER */}
@@ -2042,15 +2071,29 @@ export default function App() {
             <label style={s.lbl}>Dirección física</label>
             <input style={s.inp} placeholder="Calle Comercio #47, Local 3..." value={provForm.direccion_fisica||""} onChange={e=>setProvForm({...provForm,direccion_fisica:e.target.value})}/>
             {(()=>{
-  const regCats=provForm.tipo_negocio==="Restaurante / Cocina / Comida"?NEGOCIO_CATS_RESTAURANTE:
+  const esComida=provForm.tipo_negocio==="Restaurante / Cocina / Comida";
+  const regCats=esComida?TIPOS_COMIDA:
     provForm.tipo_negocio==="Transporte y encomiendas"||provForm.tipo_negocio==="Lavandería"?NEGOCIO_CATS_TRANSPORTE:
     provForm.tipo_negocio==="Tienda / Negocio local"?NEGOCIO_CATS.map(c=>c.cat):
     [...NEGOCIO_CATS.map(c=>c.cat),...NEGOCIO_CATS_RESTAURANTE];
-  const catLabel=provForm.tipo_negocio==="Restaurante / Cocina / Comida"?"Tipo de comida que ofreces":
+  const catLabel=esComida?"Tipos de comida que ofreces (selecciona varios)":
     provForm.tipo_negocio==="Tienda / Negocio local"?"Categorías de tu negocio":
     provForm.tipo_negocio==="Transporte y encomiendas"||provForm.tipo_negocio==="Lavandería"?"Tipo de servicio":
     "Categorías";
   return(<>
+    {esComida&&(
+      <>
+        <label style={s.lbl}>¿Cómo funciona tu negocio? *</label>
+        <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
+          {TIPOS_OPERACION_GASTRO.map(t=>(
+            <div key={t.value} onClick={()=>setProvForm(f=>({...f,tipo_operacion_gastro:t.value}))} style={{display:"flex",alignItems:"center",gap:10,background:provForm.tipo_operacion_gastro===t.value?"#f0fdf4":"#f8fafc",border:`2px solid ${provForm.tipo_operacion_gastro===t.value?"#15803d":"#e2e8f0"}`,borderRadius:10,padding:"10px 12px",cursor:"pointer"}}>
+              <div style={{width:18,height:18,borderRadius:"50%",background:provForm.tipo_operacion_gastro===t.value?"#15803d":"#cbd5e1",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>{provForm.tipo_operacion_gastro===t.value&&<span style={{color:"#fff",fontSize:11}}>✓</span>}</div>
+              <span style={{fontSize:13,fontWeight:600,color:provForm.tipo_operacion_gastro===t.value?"#15803d":"#374151"}}>{t.label}</span>
+            </div>
+          ))}
+        </div>
+      </>
+    )}
     <label style={s.lbl}>{catLabel} {provForm.categorias.length>0&&<span style={{color:P,fontWeight:700}}>({provForm.categorias.length} seleccionadas)</span>}</label>
     <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
       {regCats.map(c=>(<button key={c} onClick={()=>setProvForm(f=>({...f,categorias:f.categorias.includes(c)?f.categorias.filter(x=>x!==c):[...f.categorias,c]}))} style={{padding:"6px 12px",borderRadius:20,fontSize:12,cursor:"pointer",background:provForm.categorias.includes(c)?P:"#f1f5f9",color:provForm.categorias.includes(c)?"#fff":"#64748b",border:provForm.categorias.includes(c)?`2px solid ${P}`:"2px solid transparent",fontWeight:provForm.categorias.includes(c)?700:500,transition:"all 0.15s"}}>{c}</button>))}
