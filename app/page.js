@@ -298,7 +298,7 @@ export default function App() {
     ]);
     if(z.data)setZonas(z.data);
     if(sp.data)setSuperProds(sp.data);
-    if(pp.data)setProvProds(pp.data.filter(p=>!p.proveedores?.en_pausa&&p.proveedores?.activo!==false&&p.proveedores?.suscripcion_activa!==false&&(p.permanente||(p.fecha===hoy&&p.stock>0))));
+    if(pp.data)setProvProds(pp.data.filter(p=>!p.proveedores?.en_pausa&&p.proveedores?.suscripcion_activa!==false&&(p.permanente||(p.fecha===hoy&&p.stock>0))));
     if(pr.data)setProvPromos(pr.data.filter(p=>!p.proveedores?.en_pausa&&p.proveedores?.activo!==false));
     if(cb.data)setCombos(cb.data);
     // Load restaurantes list
@@ -1342,7 +1342,7 @@ export default function App() {
                   <div style={{color:"#fff",fontWeight:900,fontSize:17,letterSpacing:-0.3}}>{negocioActivo.negocio}</div>
                   <div style={{color:"rgba(255,255,255,0.6)",fontSize:11,marginTop:1}}>{negocioActivo.descripcion_negocio||(negocioActivo.categorias||[]).join(" · ")}</div>
                 </div>
-                <span style={{fontSize:11,fontWeight:700,padding:"4px 10px",borderRadius:20,background:negocioActivo.activo?"#22c55e":"#ef4444",color:"#fff",flexShrink:0}}>{negocioActivo.activo?"● Abierto":"● Cerrado"}</span>
+                <span style={{fontSize:11,fontWeight:700,padding:"4px 10px",borderRadius:20,background:negocioActivo.activo?"#dcfce7":"#fee2e2",color:negocioActivo.activo?"#15803d":"#dc2626",flexShrink:0,border:`1px solid ${negocioActivo.activo?"#86efac":"#fca5a5"}`}}>{negocioActivo.activo?"● Abierto":"● Cerrado"}</span>
               </div>
               {/* INFO CONFIANZA */}
               <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
