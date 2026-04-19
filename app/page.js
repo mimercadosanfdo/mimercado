@@ -283,6 +283,8 @@ export default function App() {
   const [promoFotoFile,setPromoFotoFile]=useState(null);
   const [promoFotoPreview,setPromoFotoPreview]=useState(null);
   const [logoFile,setLogoFile]=useState(null);
+  const [editLogoFile,setEditLogoFile]=useState(null);
+  const [editLogoPreview,setEditLogoPreview]=useState(null);
   const [fotoFile,setFotoFile]=useState(null);
   const [logoPreview,setLogoPreview]=useState(null);
   const [fotoPreview,setFotoPreview]=useState(null);
@@ -2818,9 +2820,30 @@ export default function App() {
                 const cats=esComida?TIPOS_COMIDA:provData.tipo_negocio==="Tienda / Negocio local"?NEGOCIO_CATS.map(c=>c.cat):provData.tipo_negocio==="Transporte y encomiendas"?NEGOCIO_CATS_TRANSPORTE:[...NEGOCIO_CATS.map(c=>c.cat),...NEGOCIO_CATS_RESTAURANTE];
                 return(<div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>{cats.map(c=>(<button key={c} onClick={()=>setPerfilData(pd=>({...pd,categorias:pd.categorias.includes(c)?pd.categorias.filter(x=>x!==c):[...pd.categorias,c]}))} style={{padding:"5px 10px",borderRadius:20,fontSize:11,cursor:"pointer",background:perfilData.categorias?.includes(c)?P:"#f1f5f9",color:perfilData.categorias?.includes(c)?"#fff":"#64748b",border:"none",fontWeight:500}}>{c}</button>))}</div>);
               })()}
+              <label style={s.lbl}>Logo del negocio</label>
+              <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
+                <div style={{width:56,height:56,borderRadius:"50%",background:"#f1f5f9",border:"1px solid #e2e8f0",overflow:"hidden",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  {editLogoPreview
+                    ?<img src={editLogoPreview} alt="" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
+                    :provData.logo_url
+                    ?<img src={provData.logo_url} alt="" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
+                    :<span style={{fontSize:24}}>🏪</span>
+                  }
+                </div>
+                <div>
+                  <label style={{display:"block",background:P,color:"#fff",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:4}}>
+                    📷 Cambiar logo
+                    <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){setEditLogoFile(f);setEditLogoPreview(URL.createObjectURL(f));}}}/>
+                  </label>
+                  <div style={{fontSize:10,color:"#94a3b8"}}>PNG con fondo blanco o transparente</div>
+                  {editLogoPreview&&<div style={{fontSize:10,color:"#15803d",fontWeight:600}}>✓ Nuevo logo listo para guardar</div>}
+                </div>
+              </div>
               <div style={{display:"flex",gap:8}}>
                 <button onClick={async()=>{
-                  await supabase.from("proveedores").update({
+                  let logo_url=provData.logo_url;
+                  if(editLogoFile){logo_url=await upload(editLogoFile,"logos",`${provData.email?.split("@")[0]||provData.usuario}_logo`);}
+                  await supabase.from("proveedores").update({logo_url,
                     descripcion_negocio:perfilData.descripcion_negocio,
                     whatsapp_negocio:perfilData.whatsapp_negocio,
                     telefono:perfilData.whatsapp_negocio,
@@ -2838,9 +2861,9 @@ export default function App() {
                     delivery_gratis_desde:perfilData.delivery_gratis_desde,
                   }).eq("id",provData.id);
                   setProvData({...provData,...perfilData,telefono:perfilData.whatsapp_negocio});
-                  setEditandoPerfil(false);setPmsg("✅ Perfil actualizado");loadAll();
+                  setEditandoPerfil(false);setEditLogoFile(null);setEditLogoPreview(null);setPmsg("✅ Perfil actualizado");loadAll();
                 }} style={{...s.btnGreen,flex:1,borderRadius:10,padding:"9px",fontSize:12}}>Guardar cambios</button>
-                <button onClick={()=>setEditandoPerfil(false)} style={{...s.btnG,flex:1,marginTop:0,borderRadius:10,padding:"9px",fontSize:12}}>Cancelar</button>
+                <button onClick={()=>{setEditandoPerfil(false);setEditLogoFile(null);setEditLogoPreview(null);}} style={{...s.btnG,flex:1,marginTop:0,borderRadius:10,padding:"9px",fontSize:12}}>Cancelar</button>
               </div>
             </div>
           )}
