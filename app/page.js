@@ -2730,7 +2730,7 @@ export default function App() {
           {/* EDITAR PERFIL */}
           {!editandoPerfil&&!cambiandoClave&&(
             <div style={{display:"flex",gap:8,marginTop:8}}>
-              <button style={{...s.btnG,flex:1,marginTop:0}} onClick={()=>{setPerfilData({descripcion_negocio:provData.descripcion_negocio||"",whatsapp_negocio:provData.whatsapp_negocio||provData.telefono||"",telefono_principal:provData.telefono_principal||"",instagram:provData.instagram||"",direccion_fisica:provData.direccion_fisica||"",categorias:[...(provData.categorias||[])]});setEditandoPerfil(true);}}>✏️ Editar perfil</button>
+              <button style={{...s.btnG,flex:1,marginTop:0}} onClick={()=>{setPerfilData({descripcion_negocio:provData.descripcion_negocio||"",whatsapp_negocio:provData.whatsapp_negocio||provData.telefono||"",telefono_principal:provData.telefono_principal||"",instagram:provData.instagram||"",direccion_fisica:provData.direccion_fisica||"",categorias:[...(provData.categorias||[])],tipo_operacion_gastro:provData.tipo_operacion_gastro||"",horario_desde:provData.horario_desde||"08:00",horario_hasta:provData.horario_hasta||"18:00",horario_desc:provData.horario_desc||"",delivery_propio:provData.delivery_propio||false,delivery_costo:provData.delivery_costo||0,delivery_gratis_desde:provData.delivery_gratis_desde||15});setEditandoPerfil(true);}}>✏️ Editar perfil</button>
               <button style={{...s.btnG,flex:1,marginTop:0}} onClick={()=>{setClaveForm({actual:"",nueva:"",confirmar:""});setCambiandoClave(true);}}>🔑 Cambiar clave</button>
             </div>
           )}
@@ -2738,22 +2738,72 @@ export default function App() {
             <div style={{background:"#f8fafc",borderRadius:12,padding:"14px",marginTop:8,border:"1px solid #e2e8f0"}}>
               <div style={{fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:10}}>✏️ Editar mi perfil</div>
               <label style={s.lbl}>Descripción del negocio</label>
-              <input style={s.inp} placeholder="Cuidado capilar y belleza natural" value={perfilData.descripcion_negocio} onChange={e=>setPerfilData({...perfilData,descripcion_negocio:e.target.value})}/>
+              <input style={s.inp} placeholder="Tortas y dulces · Delivery disponible" value={perfilData.descripcion_negocio} onChange={e=>setPerfilData({...perfilData,descripcion_negocio:e.target.value})}/>
               <label style={s.lbl}>WhatsApp de pedidos</label>
               <input style={s.inp} placeholder="04243232671" value={perfilData.whatsapp_negocio} onChange={e=>setPerfilData({...perfilData,whatsapp_negocio:e.target.value})}/>
               <label style={s.lbl}>Teléfono principal</label>
               <input style={s.inp} placeholder="04143232671" value={perfilData.telefono_principal} onChange={e=>setPerfilData({...perfilData,telefono_principal:e.target.value})}/>
-              <label style={s.lbl}>Instagram</label>
+              <label style={s.lbl}>Instagram (opcional)</label>
               <input style={s.inp} placeholder="@minegocio" value={perfilData.instagram} onChange={e=>setPerfilData({...perfilData,instagram:e.target.value})}/>
               <label style={s.lbl}>Dirección física</label>
               <input style={s.inp} placeholder="Calle Comercio #47..." value={perfilData.direccion_fisica} onChange={e=>setPerfilData({...perfilData,direccion_fisica:e.target.value})}/>
+              {provData.tipo_negocio==="Restaurante / Cocina / Comida"&&(
+                <>
+                  <label style={s.lbl}>¿Cómo funciona tu negocio?</label>
+                  <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:10}}>
+                    {TIPOS_OPERACION_GASTRO.map(t=>(
+                      <div key={t.value} onClick={()=>setPerfilData(pd=>({...pd,tipo_operacion_gastro:t.value}))} style={{display:"flex",alignItems:"flex-start",gap:10,background:perfilData.tipo_operacion_gastro===t.value?"#eff6ff":"#fff",border:`2px solid ${perfilData.tipo_operacion_gastro===t.value?"#3b82f6":"#e2e8f0"}`,borderRadius:10,padding:"9px 12px",cursor:"pointer"}}>
+                        <div style={{width:18,height:18,borderRadius:"50%",background:perfilData.tipo_operacion_gastro===t.value?"#3b82f6":"#e2e8f0",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",marginTop:1}}>{perfilData.tipo_operacion_gastro===t.value&&<span style={{color:"#fff",fontSize:11}}>✓</span>}</div>
+                        <div><div style={{fontSize:12,fontWeight:600,color:perfilData.tipo_operacion_gastro===t.value?"#1d4ed8":"#374151"}}>{t.label}</div></div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+              <label style={s.lbl}>Horario de atención</label>
+              <div style={{display:"flex",gap:8,marginBottom:6}}>
+                <div style={{flex:1}}><label style={{...s.lbl,marginBottom:2}}>Abre</label><input style={s.inp} type="time" value={perfilData.horario_desde||"08:00"} onChange={e=>setPerfilData({...perfilData,horario_desde:e.target.value})}/></div>
+                <div style={{flex:1}}><label style={{...s.lbl,marginBottom:2}}>Cierra</label><input style={s.inp} type="time" value={perfilData.horario_hasta||"18:00"} onChange={e=>setPerfilData({...perfilData,horario_hasta:e.target.value})}/></div>
+              </div>
+              <input style={s.inp} placeholder="Ej: Solo fines de semana..." value={perfilData.horario_desc||""} onChange={e=>setPerfilData({...perfilData,horario_desc:e.target.value})}/>
+              <label style={s.lbl}>¿Ofreces delivery?</label>
+              <div onClick={()=>setPerfilData(pd=>({...pd,delivery_propio:!pd.delivery_propio}))} style={{display:"flex",alignItems:"center",gap:10,background:perfilData.delivery_propio?"#f0fdf4":"#f8fafc",border:`1px solid ${perfilData.delivery_propio?"#86efac":"#e2e8f0"}`,borderRadius:10,padding:"10px 12px",cursor:"pointer",marginBottom:8}}>
+                <div style={{width:20,height:20,borderRadius:"50%",background:perfilData.delivery_propio?"#15803d":"#cbd5e1",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{perfilData.delivery_propio&&<span style={{color:"#fff",fontSize:12}}>✓</span>}</div>
+                <span style={{fontSize:13,fontWeight:600,color:perfilData.delivery_propio?"#15803d":"#64748b"}}>{perfilData.delivery_propio?"✅ Sí ofrezco delivery":"❌ Solo retiro en tienda"}</span>
+              </div>
+              {perfilData.delivery_propio&&(
+                <div style={{display:"flex",gap:8,marginBottom:8}}>
+                  <div style={{flex:1}}><label style={s.lbl}>Costo $</label><input style={s.inp} type="number" value={perfilData.delivery_costo||0} onChange={e=>setPerfilData({...perfilData,delivery_costo:parseFloat(e.target.value)||0})}/></div>
+                  <div style={{flex:1}}><label style={s.lbl}>Gratis desde $</label><input style={s.inp} type="number" value={perfilData.delivery_gratis_desde||15} onChange={e=>setPerfilData({...perfilData,delivery_gratis_desde:parseFloat(e.target.value)||15})}/></div>
+                </div>
+              )}
               <label style={s.lbl}>Categorías</label>
               {(()=>{
-                const cats=provData.tipo_negocio==="Tienda / Negocio local"?NEGOCIO_CATS.map(c=>c.cat):provData.tipo_negocio==="Restaurante / Cocina / Comida"?NEGOCIO_CATS_RESTAURANTE:provData.tipo_negocio==="Transporte y encomiendas"?NEGOCIO_CATS_TRANSPORTE:[...NEGOCIO_CATS.map(c=>c.cat),...NEGOCIO_CATS_RESTAURANTE];
-                return(<div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>{cats.map(c=>(<button key={c} onClick={()=>setPerfilData(pd=>({...pd,categorias:pd.categorias.includes(c)?pd.categorias.filter(x=>x!==c):[...pd.categorias,c]}))} style={{padding:"5px 10px",borderRadius:20,fontSize:12,cursor:"pointer",background:perfilData.categorias?.includes(c)?P:"#f1f5f9",color:perfilData.categorias?.includes(c)?"#fff":"#64748b",border:"none",fontWeight:500}}>{c}</button>))}</div>);
+                const esComida=provData.tipo_negocio==="Restaurante / Cocina / Comida";
+                const cats=esComida?TIPOS_COMIDA:provData.tipo_negocio==="Tienda / Negocio local"?NEGOCIO_CATS.map(c=>c.cat):provData.tipo_negocio==="Transporte y encomiendas"?NEGOCIO_CATS_TRANSPORTE:[...NEGOCIO_CATS.map(c=>c.cat),...NEGOCIO_CATS_RESTAURANTE];
+                return(<div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>{cats.map(c=>(<button key={c} onClick={()=>setPerfilData(pd=>({...pd,categorias:pd.categorias.includes(c)?pd.categorias.filter(x=>x!==c):[...pd.categorias,c]}))} style={{padding:"5px 10px",borderRadius:20,fontSize:11,cursor:"pointer",background:perfilData.categorias?.includes(c)?P:"#f1f5f9",color:perfilData.categorias?.includes(c)?"#fff":"#64748b",border:"none",fontWeight:500}}>{c}</button>))}</div>);
               })()}
               <div style={{display:"flex",gap:8}}>
-                <button onClick={async()=>{await supabase.from("proveedores").update({descripcion_negocio:perfilData.descripcion_negocio,whatsapp_negocio:perfilData.whatsapp_negocio,telefono:perfilData.whatsapp_negocio,telefono_principal:perfilData.telefono_principal,instagram:perfilData.instagram,direccion_fisica:perfilData.direccion_fisica,categorias:perfilData.categorias}).eq("id",provData.id);setProvData({...provData,...perfilData,telefono:perfilData.whatsapp_negocio});setEditandoPerfil(false);setPmsg("✅ Perfil actualizado");loadAll();}} style={{...s.btnGreen,flex:1,borderRadius:10,padding:"9px",fontSize:12}}>Guardar cambios</button>
+                <button onClick={async()=>{
+                  await supabase.from("proveedores").update({
+                    descripcion_negocio:perfilData.descripcion_negocio,
+                    whatsapp_negocio:perfilData.whatsapp_negocio,
+                    telefono:perfilData.whatsapp_negocio,
+                    telefono_principal:perfilData.telefono_principal,
+                    instagram:perfilData.instagram,
+                    direccion_fisica:perfilData.direccion_fisica,
+                    categorias:perfilData.categorias,
+                    tipo_operacion_gastro:perfilData.tipo_operacion_gastro||null,
+                    horario_desde:perfilData.horario_desde,
+                    horario_hasta:perfilData.horario_hasta,
+                    horario_desc:perfilData.horario_desc,
+                    delivery_propio:perfilData.delivery_propio,
+                    delivery_costo:perfilData.delivery_costo,
+                    delivery_gratis_desde:perfilData.delivery_gratis_desde,
+                  }).eq("id",provData.id);
+                  setProvData({...provData,...perfilData,telefono:perfilData.whatsapp_negocio});
+                  setEditandoPerfil(false);setPmsg("✅ Perfil actualizado");loadAll();
+                }} style={{...s.btnGreen,flex:1,borderRadius:10,padding:"9px",fontSize:12}}>Guardar cambios</button>
                 <button onClick={()=>setEditandoPerfil(false)} style={{...s.btnG,flex:1,marginTop:0,borderRadius:10,padding:"9px",fontSize:12}}>Cancelar</button>
               </div>
             </div>
