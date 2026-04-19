@@ -648,7 +648,7 @@ export default function App() {
     return `🛒 *Nuevo pedido ${APP_NAME} ${CITY}*\n📋 Ref: ${pedidoRef}\n----------------------------\n${lineas}\n----------------------------\nSubtotal: ${sub.toFixed(2)}\nDelivery: ${delDetalle}\n*TOTAL: ${total.toFixed(2)}*\n----------------------------\n👤 ${form.nombre}\n📱 ${form.telefono}\n📍 ${zonaSel?.zona||""}\n🏠 ${dir}\n💳 ${form.pago}\n⏰ ${hora}`;
   };
 
-  const sendWa=()=>{window.open(`https://wa.me/${WA}?text=${encodeURIComponent(buildWaMsg())}`);};
+  const sendWa=()=>{window.location.href=`https://wa.me/${WA}?text=${encodeURIComponent(buildWaMsg())}`;};
   const sendSvcWa=()=>{const m=`*Solicitud: ${selSvc.name}* — ${APP_NAME}\n\nNombre: ${svcForm.nombre}\nTeléfono: ${svcForm.telefono}\nDirección: ${svcForm.direccion}\nDetalle: ${svcForm.detalle}`;window.open(`https://wa.me/${WA}?text=${encodeURIComponent(m)}`);setSheet(null);setSelSvc(null);};
   const enviarResena=async()=>{if(!resena.estrellas||!resena.nombre)return setResenaMsj("Pon tu nombre y calificación");await supabase.from("resenas").insert({producto_id:resenaSheet,cliente_nombre:resena.nombre,cliente_telefono:resena.telefono,estrellas:resena.estrellas,comentario:resena.comentario,aprobada:false});setResenaMsj("✅ Gracias por tu reseña.");setTimeout(()=>{setSheet(null);setResenaSheet(null);setResena({estrellas:0,comentario:"",nombre:"",telefono:""});setResenaMsj("");},2000);};
 
@@ -3447,10 +3447,9 @@ export default function App() {
               if(!negWaNum)return alert("Este negocio no tiene WhatsApp configurado. Contacta al administrador.");
               const deliveryTexto=!negTieneDelivery?"Solo retiro en tienda":negDelGratis?"GRATIS 🎉":"$"+negDel.toFixed(2);
               const msg=`🏪 *Nuevo pedido - ${APP_NAME}*\n📋 Ref: ${negRef}\n----------------------------\n${negItems.map(i=>`• ${i.name} x${i.qty} — $${(i.price*i.qty).toFixed(2)}`).join("\n")}\n----------------------------\nSubtotal: $${negSub.toFixed(2)}\nDelivery: ${deliveryTexto}\n*TOTAL: $${negTotal.toFixed(2)}*\n----------------------------\n👤 ${form.nombre}\n📱 ${form.telefono}\n📍 ${zonaSel?.zona||"San Fernando"}, ${addr.calle||"(sin dirección)"}`;
-              await guardarPedidoRestaurante(cartNegocioId,negItems,negSub,negDel,negTotal,negRef);
-              window.open(`https://wa.me/${negWaNum}?text=${encodeURIComponent(msg)}`);
+              window.location.href=`https://wa.me/${negWaNum}?text=${encodeURIComponent(msg)}`;
+              guardarPedidoRestaurante(cartNegocioId,negItems,negSub,negDel,negTotal,negRef);
               setCartNegocio({});setSheet(null);
-              alert(`✅ Pedido ${negRef} enviado a ${cartNegocioNombre}`);
             }}>📲 Enviar pedido a {cartNegocioNombre}</button>
             <button style={s.btnG} onClick={()=>setSheet(null)}>← Seguir viendo</button>
           </>);
@@ -3501,10 +3500,11 @@ export default function App() {
             <div style={{...s.ib,background:"#fffbeb"}}><div style={{fontSize:12,color:"#92400e"}}>⚡ Tu pedido irá directo al WhatsApp de {cartRestNombre}</div></div>
             <button style={s.btnWa} onClick={async()=>{
               if(!form.nombre||!form.telefono||!zonaSelId)return alert("Completa nombre, teléfono y zona");
-              await guardarPedidoRestaurante(cartRestId,restItems,restSub,restDel,restTotal,restRef);
-              {const rawRest=(cartRestWa||"").replace(/\D/g,"");const numRest=rawRest.startsWith("0")?"58"+rawRest.slice(1):rawRest.startsWith("58")?rawRest:"58"+rawRest;window.open(`https://wa.me/${numRest}?text=${encodeURIComponent(buildRestWaMsg(cartRestNombre,restItems,restSub,restDel,restTotal,restRef))}`);}
+              const rawRest=(cartRestWa||"").replace(/\D/g,"");const numRest=rawRest.startsWith("0")?"58"+rawRest.slice(1):rawRest.startsWith("58")?rawRest:"58"+rawRest;
+              const msgRest=buildRestWaMsg(cartRestNombre,restItems,restSub,restDel,restTotal,restRef);
+              window.location.href=`https://wa.me/${numRest}?text=${encodeURIComponent(msgRest)}`;
+              guardarPedidoRestaurante(cartRestId,restItems,restSub,restDel,restTotal,restRef);
               setCartRest({});setSheet(null);
-              alert(`✅ Pedido ${restRef} enviado a ${cartRestNombre}`);
             }}>📲 Enviar pedido a {cartRestNombre}</button>
             <button style={s.btnG} onClick={()=>setSheet(null)}>← Seguir viendo</button>
           </>);
