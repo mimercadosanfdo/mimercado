@@ -219,6 +219,7 @@ export default function App() {
   const [misRestPedidos,setMisRestPedidos]=useState([]);
   const [suscripciones,setSuscripciones]=useState([]);
   const [sheet,setSheet]=useState(null);
+  const [platoDetalle,setPlatoDetalle]=useState(null);
   const [zonas,setZonas]=useState([]);
   const [zonaSelId,setZonaSelId]=useState("");
   const [zonaSel,setZonaSel]=useState(null);
@@ -968,7 +969,7 @@ export default function App() {
     const qtyRest=cartRest[p.id]?.qty||0;
     const isCombo=p.name?.toLowerCase().includes("combo")||p.tag==="🎉 Promo";
     return(
-      <div style={{...s.card,padding:"0 0 10px",overflow:"hidden"}}>
+      <div style={{...s.card,padding:"0 0 10px",overflow:"hidden",cursor:"pointer"}} onClick={()=>setPlatoDetalle(p)}>
         <div style={{position:"relative",marginBottom:6}}>
           {p.foto
             ?<img src={p.foto} alt={p.name} style={{width:"100%",height:115,objectFit:"cover",display:"block",borderRadius:"12px 12px 0 0"}}/>
@@ -984,11 +985,11 @@ export default function App() {
             <div style={{fontSize:17,fontWeight:900,color:"#ef4444",letterSpacing:-0.3}}>${p.price.toFixed(2)}</div>
             {qtyRest>0?(
               <div style={s.qR}>
-                <button style={s.qB} onClick={()=>{const n={...cartRest};n[p.id].qty>1?n[p.id]={...n[p.id],qty:n[p.id].qty-1}:delete n[p.id];setCartRest(n);}}>−</button>
+                <button style={s.qB} onClick={e=>{e.stopPropagation();const n={...cartRest};n[p.id].qty>1?n[p.id]={...n[p.id],qty:n[p.id].qty-1}:delete n[p.id];setCartRest(n);}}>−</button>
                 <span style={s.qN}>{qtyRest}</span>
-                <button style={s.qB} onClick={()=>{const stockMax=p.stock||999;if(qtyRest>=stockMax){alert("Stock máximo");return;}setCartRest(c=>({...c,[p.id]:{...p,qty:qtyRest+1}}))}}>+</button>
+                <button style={s.qB} onClick={e=>{e.stopPropagation();const stockMax=p.stock||999;if(qtyRest>=stockMax){alert("Stock máximo");return;}setCartRest(c=>({...c,[p.id]:{...p,qty:qtyRest+1}}))}}>+</button>
               </div>
-            ):<button style={{...s.aBtn,borderRadius:8,width:"auto",padding:"5px 10px",fontSize:11,fontWeight:700,background:"#ef4444"}} onClick={()=>{const stockMax=p.stock||999;if(qtyRest>=stockMax)return;setCartRest(c=>({...c,[p.id]:{...p,qty:1}}))}}>+ Agregar</button>}
+            ):<button style={{...s.aBtn,borderRadius:8,width:"auto",padding:"5px 10px",fontSize:11,fontWeight:700,background:"#ef4444"}} onClick={e=>{e.stopPropagation();const stockMax=p.stock||999;if(qtyRest>=stockMax)return;setCartRest(c=>({...c,[p.id]:{...p,qty:1}}))}}>+ Agregar</button>}
           </div>
         </div>
       </div>
@@ -1612,7 +1613,7 @@ export default function App() {
                               </div>
                               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:6}}>
                                 <div style={{fontSize:16,fontWeight:900,color:"#ef4444"}}>${p.price.toFixed(2)}</div>
-                                {qtyRest>0?(<div style={s.qR}><button style={s.qB} onClick={()=>{const n={...cartRest};n[p.id].qty>1?n[p.id]={...n[p.id],qty:n[p.id].qty-1}:delete n[p.id];setCartRest(n);}}>−</button><span style={s.qN}>{qtyRest}</span><button style={s.qB} onClick={()=>setCartRest(c=>({...c,[p.id]:{...p,qty:qtyRest+1}}))}>+</button></div>)
+                                {qtyRest>0?(<div style={s.qR}><button style={s.qB} onClick={e=>{e.stopPropagation();const n={...cartRest};n[p.id].qty>1?n[p.id]={...n[p.id],qty:n[p.id].qty-1}:delete n[p.id];setCartRest(n);}}>−</button><span style={s.qN}>{qtyRest}</span><button style={s.qB} onClick={()=>setCartRest(c=>({...c,[p.id]:{...p,qty:qtyRest+1}}))}>+</button></div>)
                                 :<button style={{background:"#ef4444",color:"#fff",border:"none",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,cursor:"pointer"}} onClick={()=>setCartRest(c=>({...c,[p.id]:{...p,qty:1}}))}>+ Agregar</button>}
                               </div>
                             </div>
@@ -3507,6 +3508,43 @@ export default function App() {
         <div style={{marginTop:10}}><div style={s.sr}><span style={s.sL}>Subtotal</span><span style={s.sV}>${sub.toFixed(2)}</span></div><div style={s.sr}><span style={s.sL}>Delivery</span>{del===0?<span style={s.fT}>GRATIS</span>:<span style={s.sV}>${del.toFixed(2)}</span>}</div><div style={s.tR}><span style={{fontWeight:700}}>Total</span><span style={{fontWeight:700,fontSize:17}}>${total.toFixed(2)}</span></div></div><button style={s.btn} onClick={()=>setSheet("checkout")}>Continuar →</button><button style={s.btnG} onClick={()=>setSheet(null)}>Seguir comprando</button></div></div>)}
 
       {/* SHEET CHECKOUT */}
+      {/* MODAL DETALLE PLATO */}
+      {platoDetalle&&(
+        <div style={s.ov} onClick={()=>setPlatoDetalle(null)}>
+          <div style={{...s.sh,padding:0,overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
+            <div style={s.hnd}/>
+            {/* IMAGEN GRANDE */}
+            {platoDetalle.foto
+              ?<img src={platoDetalle.foto} alt={platoDetalle.name} style={{width:"100%",height:220,objectFit:"cover",display:"block"}}/>
+              :<div style={{height:160,background:"linear-gradient(135deg,#fef3c7,#fde68a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:64}}>🍽️</div>
+            }
+            {/* INFO */}
+            <div style={{padding:"16px 20px 20px"}}>
+              {platoDetalle.tag&&<span style={{fontSize:11,fontWeight:800,background:"#f59e0b",color:"#fff",padding:"3px 10px",borderRadius:8,marginBottom:8,display:"inline-block"}}>{platoDetalle.tag}</span>}
+              <div style={{fontSize:20,fontWeight:900,color:"#0f172a",marginBottom:6,letterSpacing:-0.3}}>{platoDetalle.name}</div>
+              {platoDetalle.descripcion&&<div style={{fontSize:13,color:"#64748b",lineHeight:1.6,marginBottom:12}}>{platoDetalle.descripcion}</div>}
+              {platoDetalle.marca&&<div style={{fontSize:12,color:"#94a3b8",marginBottom:10}}>🏷️ {platoDetalle.marca}</div>}
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:8}}>
+                <div style={{fontSize:28,fontWeight:900,color:"#ef4444",letterSpacing:-0.5}}>${platoDetalle.price.toFixed(2)}</div>
+                {(()=>{
+                  const qty=cartRest[platoDetalle.id]?.qty||0;
+                  return qty>0?(
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <button style={{...s.qB,width:34,height:34,fontSize:18}} onClick={()=>{const n={...cartRest};n[platoDetalle.id].qty>1?n[platoDetalle.id]={...n[platoDetalle.id],qty:n[platoDetalle.id].qty-1}:delete n[platoDetalle.id];setCartRest(n);}}>−</button>
+                      <span style={{fontSize:16,fontWeight:800,minWidth:20,textAlign:"center"}}>{qty}</span>
+                      <button style={{...s.qB,width:34,height:34,fontSize:18}} onClick={()=>setCartRest(c=>({...c,[platoDetalle.id]:{...platoDetalle,qty:qty+1}}))}>+</button>
+                    </div>
+                  ):(
+                    <button style={{background:"#ef4444",color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:800,cursor:"pointer"}} onClick={()=>{setCartRest(c=>({...c,[platoDetalle.id]:{...platoDetalle,qty:1}}));setPlatoDetalle(null);}}>
+                      + Agregar al pedido
+                    </button>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {sheet==="checkout"&&(<div style={s.ov} onClick={()=>setSheet("cart")}><div style={s.sh} onClick={e=>e.stopPropagation()}><div style={s.hnd}/><div style={s.shT}>Datos de entrega</div><label style={s.lbl}>Tu nombre *</label><input style={s.inp} placeholder="María González" value={form.nombre} onChange={e=>setForm({...form,nombre:e.target.value})}/><label style={s.lbl}>WhatsApp *</label><input style={s.inp} placeholder="+58 424-000-0000" value={form.telefono} onChange={e=>setForm({...form,telefono:e.target.value})}/><label style={s.lbl}>Sexo (opcional)</label><select style={{...s.inp,background:"#fff"}} value={form.sexo} onChange={e=>setForm({...form,sexo:e.target.value})}><option value="">Prefiero no decir</option><option value="femenino">Femenino</option><option value="masculino">Masculino</option></select><label style={s.lbl}>Método de pago</label><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>{PAGOS.map(p=>(<button key={p} onClick={()=>setForm({...form,pago:p})} style={{padding:"10px 8px",borderRadius:12,border:form.pago===p?`2px solid ${P}`:"1px solid #e2e8f0",background:form.pago===p?"#f8fafc":"#fff",fontSize:12,fontWeight:form.pago===p?700:400,cursor:"pointer",color:form.pago===p?P:"#64748b"}}>{p==="Pago Móvil"?"📱":p==="Zelle"?"🏦":p==="Efectivo al recibir"?"💵":"₿"} {p}</button>))}</div><div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,background:"#f0fdf4",padding:"10px 14px",borderRadius:10}}><input type="checkbox" id="promos" checked={form.recibirPromos} onChange={e=>setForm({...form,recibirPromos:e.target.checked})} style={{width:18,height:18}}/><label htmlFor="promos" style={{fontSize:13,color:"#15803d",cursor:"pointer"}}>📲 Quiero recibir promociones por WhatsApp</label></div><div style={s.ib}><div style={s.sr}><span style={s.sL}>Zona</span><span style={s.sV}>{zonaSel?.zona||"Sin seleccionar"}</span></div><div style={s.sr}><span style={s.sL}>Delivery</span>{del===0?<span style={s.fT}>GRATIS</span>:<span style={s.sV}>${del.toFixed(2)}</span>}</div><div style={s.sr}><span style={{fontWeight:700}}>Total</span><span style={{fontWeight:700,fontSize:16,color:P}}>${total.toFixed(2)}</span></div></div><button style={s.btn} onClick={confirm}>Revisar pedido →</button><button style={s.btnG} onClick={()=>setSheet("cart")}>← Volver</button></div></div>)}
 
       {/* SHEET RESUMEN */}
