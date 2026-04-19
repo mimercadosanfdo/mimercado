@@ -1693,31 +1693,34 @@ export default function App() {
               <div style={{...s.sec,paddingTop:12}}>
                 {allRestaurantes.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🍽️</div><p>Próximamente restaurantes aquí</p></div>}
                 {allRestaurantes.map(r=>{
-                  const tipoLabel=r.tipo_operacion_gastro?TIPO_GASTRO_LABEL[r.tipo_operacion_gastro]||"🍽️ Cocina":"🍽️ Restaurante";
+                  const tipoLabel=r.tipo_operacion_gastro?TIPO_GASTRO_LABEL[r.tipo_operacion_gastro]:"";
                   return(
-                  <div key={r.id} onClick={()=>{setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);setSearch("");}} style={{background:"#fff",borderRadius:16,overflow:"hidden",border:"1px solid #f1f5f9",marginBottom:12,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-                    {/* CABECERA TARJETA */}
-                    <div style={{position:"relative",height:110,background:"linear-gradient(135deg,#1e293b,#334155)",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <div key={r.id} onClick={()=>{setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);setSearch("");}} style={{background:"#fff",borderRadius:16,border:"1px solid #e2e8f0",marginBottom:10,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.05)",padding:"12px 14px",display:"flex",gap:12,alignItems:"flex-start"}}>
+                    {/* AVATAR LOGO */}
+                    <div style={{width:54,height:54,borderRadius:12,background:"#f8fafc",border:"1px solid #e2e8f0",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",padding:3}}>
                       {r.logo_url
-                        ?<img src={r.logo_url} alt="" style={{maxWidth:"80%",maxHeight:"90px",objectFit:"contain",display:"block"}}/>
-                        :<div style={{fontSize:52}}>🍽️</div>
+                        ?<img src={r.logo_url} alt="" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
+                        :<span style={{fontSize:26}}>🍽️</span>
                       }
-                      <div style={{position:"absolute",top:8,left:8,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(4px)",borderRadius:8,padding:"3px 8px",fontSize:10,color:"#fff",fontWeight:600}}>{tipoLabel}</div>
-                      <div style={{position:"absolute",top:8,right:8,background:r.activo?"#22c55e":"#ef4444",borderRadius:20,padding:"3px 8px",fontSize:10,color:"#fff",fontWeight:700}}>{r.activo?"● Abierto":"● Cerrado"}</div>
                     </div>
                     {/* INFO */}
-                    <div style={{padding:"10px 14px 12px"}}>
-                      <div style={{fontSize:15,fontWeight:800,color:"#0f172a",marginBottom:4}}>{r.negocio}</div>
-                      {r.descripcion_negocio&&<div style={{fontSize:11,color:"#64748b",marginBottom:5}}>{r.descripcion_negocio}</div>}
-                      <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
-                        {r.horario_desde&&<span style={{fontSize:10,color:"#64748b"}}>🕐 {r.horario_desde}–{r.horario_hasta}</span>}
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:6,marginBottom:2}}>
+                        <div style={{fontSize:15,fontWeight:800,color:"#0f172a",letterSpacing:-0.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.negocio}</div>
+                        <span style={{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:20,background:r.activo?"#dcfce7":"#fee2e2",color:r.activo?"#15803d":"#dc2626",flexShrink:0}}>{r.activo?"● Abierto":"● Cerrado"}</span>
+                      </div>
+                      {tipoLabel&&<div style={{fontSize:11,color:"#ea580c",fontWeight:600,marginBottom:3}}>{tipoLabel}</div>}
+                      {r.descripcion_negocio&&<div style={{fontSize:11,color:"#64748b",marginBottom:4,lineHeight:1.3}}>{r.descripcion_negocio}</div>}
+                      <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
+                        {r.horario_desde&&<span style={{fontSize:10,color:"#94a3b8"}}>🕐 {r.horario_desde}–{r.horario_hasta}</span>}
                         {r.delivery_propio
-                          ?<span style={{fontSize:10,background:"#dcfce7",color:"#15803d",padding:"2px 8px",borderRadius:20,fontWeight:600}}>🛵 Delivery</span>
-                          :<span style={{fontSize:10,background:"#f1f5f9",color:"#64748b",padding:"2px 8px",borderRadius:20}}>🏃 Solo retiro</span>
+                          ?<span style={{fontSize:10,background:"#dcfce7",color:"#15803d",padding:"2px 7px",borderRadius:20,fontWeight:600}}>🛵 Delivery</span>
+                          :<span style={{fontSize:10,background:"#f1f5f9",color:"#64748b",padding:"2px 7px",borderRadius:20}}>🏃 Solo retiro</span>
                         }
-                        {!r.delivery_propio&&<span style={{fontSize:10,color:"#94a3b8"}}>Solo delivery · Pedido online</span>}
+                        {(r.categorias||[]).slice(0,2).map(c=>(<span key={c} style={{fontSize:10,color:"#94a3b8",background:"#f8fafc",padding:"2px 7px",borderRadius:20,border:"1px solid #e2e8f0"}}>{c}</span>))}
                       </div>
                     </div>
+                    <div style={{color:"#cbd5e1",fontSize:18,alignSelf:"center"}}>›</div>
                   </div>
                   );
                 })}
