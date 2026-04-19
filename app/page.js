@@ -3432,7 +3432,18 @@ export default function App() {
           return(<>
             <div style={{marginTop:10}}>
               <div style={s.sr}><span style={s.sL}>Subtotal</span><span style={s.sV}>${restSub.toFixed(2)}</span></div>
-              <div style={s.sr}><span style={s.sL}>Delivery</span>{restDel===0?<span style={s.fT}>{restauranteActivo?.delivery_propio?"GRATIS":"No aplica"}</span>:<span style={s.sV}>${restDel.toFixed(2)}</span>}</div>
+              <div style={s.sr}>
+                <span style={s.sL}>Delivery</span>
+                {restDel===0
+                  ?<span style={s.fT}>{restauranteActivo?.delivery_propio?"🚚 GRATIS":"No aplica"}</span>
+                  :<div style={{textAlign:"right"}}>
+                    <div style={s.sV}>Desde ${restDel.toFixed(2)}</div>
+                    {restauranteActivo?.delivery_gratis_desde>0&&restSub<restauranteActivo.delivery_gratis_desde&&(
+                      <div style={{fontSize:10,color:"#15803d"}}>Gratis desde ${restauranteActivo.delivery_gratis_desde}</div>
+                    )}
+                  </div>
+                }
+              </div>
               <div style={s.tR}><span style={{fontWeight:700}}>Total</span><span style={{fontWeight:700,fontSize:17}}>${restTotal.toFixed(2)}</span></div>
             </div>
             <label style={{...s.lbl,marginTop:10}}>Tu nombre *</label>
@@ -3443,7 +3454,7 @@ export default function App() {
             <button style={s.btnWa} onClick={async()=>{
               if(!form.nombre||!form.telefono||!zonaSelId)return alert("Completa nombre, teléfono y zona");
               await guardarPedidoRestaurante(cartRestId,restItems,restSub,restDel,restTotal,restRef);
-              window.open(`https://wa.me/${cartRestWa?.replace(/\D/g,"")}?text=${encodeURIComponent(buildRestWaMsg(cartRestNombre,restItems,restSub,restDel,restTotal,restRef))}`);
+              {const rawRest=(cartRestWa||"").replace(/\D/g,"");const numRest=rawRest.startsWith("0")?"58"+rawRest.slice(1):rawRest.startsWith("58")?rawRest:"58"+rawRest;window.open(`https://wa.me/${numRest}?text=${encodeURIComponent(buildRestWaMsg(cartRestNombre,restItems,restSub,restDel,restTotal,restRef))}`);}
               setCartRest({});setSheet(null);
               alert(`✅ Pedido ${restRef} enviado a ${cartRestNombre}`);
             }}>📲 Enviar pedido a {cartRestNombre}</button>
