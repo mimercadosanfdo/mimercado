@@ -670,7 +670,7 @@ export default function App() {
     const{data:existing}=await supabase.from("proveedores").select("id").eq("email",provForm.email).single();
     if(existing){setLoading(false);return setPmsg("Ya existe una cuenta con ese correo");}
     let logo_url=null;
-    if(logoFile)logo_url=await upload(logoFile,"logos",`${provForm.email.split("@")[0]}_logo`);
+    if(logoFile)logo_url=await upload(logoFile,"logos",`${provForm.email.split("@")[0]}_logo_${Date.now()}`);
     const{error}=await supabase.from("proveedores").insert({
       usuario:provForm.email.split("@")[0],nombre:provForm.nombre,negocio:provForm.negocio,
       telefono:provForm.whatsapp_negocio,email:provForm.email,
@@ -2842,7 +2842,7 @@ export default function App() {
               <div style={{display:"flex",gap:8}}>
                 <button onClick={async()=>{
                   let logo_url=provData.logo_url;
-                  if(editLogoFile){logo_url=await upload(editLogoFile,"logos",`${provData.email?.split("@")[0]||provData.usuario}_logo`);}
+                  if(editLogoFile){logo_url=await upload(editLogoFile,"logos",`${provData.email?.split("@")[0]||provData.usuario}_logo_${Date.now()}`);}
                   await supabase.from("proveedores").update({logo_url,
                     descripcion_negocio:perfilData.descripcion_negocio,
                     whatsapp_negocio:perfilData.whatsapp_negocio,
