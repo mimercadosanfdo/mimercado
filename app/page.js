@@ -46,7 +46,7 @@ const TRANSMISION = ["Manual","Automático"];
 const COMBUSTIBLE = ["Gasolina","Diesel","Eléctrico","Híbrido"];
 const TIPO_OPERACION = ["Venta","Alquiler"];
 const REMATE_CATS = ["Electrodomésticos","Ropa y calzado","Muebles","Electrónica","Repuestos","Herramientas","Hogar","Juguetes","Otros"];
-const TIPO_NEGOCIO = ["Restaurante/Cocina","Negocio Local","Transporte/Taxi","Lavandería","Otro Servicio"];
+const TIPO_NEGOCIO = ["Restaurante / Cocina / Comida","Tienda / Negocio local","Transporte y encomiendas","Lavandería","Otro servicio"];
 const NEGOCIO_LOCAL_CATS = [
   {cat:"Ropa y calzado",emoji:"👗",color:"#fce7f3",tc:"#be185d"},
   {cat:"Accesorios y joyería",emoji:"💍",color:"#fef3c7",tc:"#92400e"},
@@ -227,7 +227,7 @@ export default function App() {
   // ---------------------------------------------------------
 
   const [provMode,setProvMode]=useState("login");
-  const [provForm,setProvForm]=useState({email:"",nombre:"",negocio:"",whatsapp_negocio:"",telefono_principal:"",instagram:"",categorias:[],pass:"",tipo_negocio:"Restaurante/Cocina",descripcion_negocio:"",delivery_propio:false,delivery_costo:0,delivery_gratis_desde:15,direccion_fisica:"",horario_desde:"08:00",horario_hasta:"18:00",horario_desc:""});
+  const [provForm,setProvForm]=useState({email:"",nombre:"",negocio:"",whatsapp_negocio:"",telefono_principal:"",instagram:"",categorias:[],pass:"",tipo_negocio:"Restaurante / Cocina / Comida",descripcion_negocio:"",delivery_propio:false,delivery_costo:0,delivery_gratis_desde:15,direccion_fisica:"",horario_desde:"08:00",horario_hasta:"18:00",horario_desc:""});
   const [provData,setProvData]=useState(null);
   const [myProds,setMyProds]=useState([]);
   const [myPromos,setMyPromos]=useState([]);
@@ -300,11 +300,11 @@ export default function App() {
     // Load restaurantes list
     const{data:restList}=await supabase.from("proveedores").select("id,negocio,logo_url,activo,en_pausa,horario_desde,horario_hasta,horario_desc,telefono,whatsapp_negocio,suscripcion_activa,tipo_negocio,descripcion_negocio,delivery_propio,delivery_costo,delivery_gratis_desde,categorias,direccion_fisica").eq("aprobado",true).eq("suscripcion_activa",true).eq("en_pausa",false).order("negocio");
     if(restList){
-      setAllRestaurantes(restList.filter(r=>r.tipo_negocio==="Restaurante/Cocina"||!r.tipo_negocio));
-      setAllNegocios(restList.filter(r=>r.tipo_negocio==="Negocio Local"));
+      setAllRestaurantes(restList.filter(r=>r.tipo_negocio==="Restaurante / Cocina / Comida"||!r.tipo_negocio));
+      setAllNegocios(restList.filter(r=>r.tipo_negocio==="Tienda / Negocio local"));
     }
     // Load negocios locales (tipo_negocio not restaurante, suscripcion active)
-    const{data:negList}=await supabase.from("proveedores").select("id,negocio,logo_url,activo,en_pausa,horario_desde,horario_hasta,horario_desc,telefono,whatsapp_negocio,suscripcion_activa,tipo_negocio,descripcion_negocio,delivery_propio,delivery_costo,delivery_gratis_desde,categorias,direccion").eq("aprobado",true).eq("suscripcion_activa",true).eq("en_pausa",false).not("tipo_negocio","eq","Restaurante/Cocina").order("negocio");
+    const{data:negList}=await supabase.from("proveedores").select("id,negocio,logo_url,activo,en_pausa,horario_desde,horario_hasta,horario_desc,telefono,whatsapp_negocio,suscripcion_activa,tipo_negocio,descripcion_negocio,delivery_propio,delivery_costo,delivery_gratis_desde,categorias,direccion").eq("aprobado",true).eq("suscripcion_activa",true).eq("en_pausa",false).not("tipo_negocio","eq","Restaurante / Cocina / Comida").order("negocio");
     if(negList)setAllNegocios(negList);
   };
 
@@ -648,7 +648,7 @@ export default function App() {
       instagram:provForm.instagram||null,
       categorias:provForm.categorias,
       logo_url,aprobado:true,activo:false,en_pausa:false,password_plain:provForm.pass,
-      tipo_negocio:provForm.tipo_negocio||"Restaurante/Cocina",
+      tipo_negocio:provForm.tipo_negocio||"Restaurante / Cocina / Comida",
       descripcion_negocio:provForm.descripcion_negocio||null,
       horario_desde:provForm.horario_desde||null,
       horario_hasta:provForm.horario_hasta||null,
@@ -1937,15 +1937,21 @@ export default function App() {
             )}
             <label style={s.lbl}>Dirección física</label>
             <input style={s.inp} placeholder="Calle Comercio #47, Local 3..." value={provForm.direccion_fisica||""} onChange={e=>setProvForm({...provForm,direccion_fisica:e.target.value})}/>
-            <label style={s.lbl}>Categorías (tipo de comida o servicio)</label>
             {(()=>{
-  const regCats=provForm.tipo_negocio==="Restaurante/Cocina"?NEGOCIO_CATS_RESTAURANTE:
-    provForm.tipo_negocio==="Transporte/Taxi"||provForm.tipo_negocio==="Lavandería"?NEGOCIO_CATS_TRANSPORTE:
-    provForm.tipo_negocio==="Negocio Local"?NEGOCIO_CATS.map(c=>c.cat):
+  const regCats=provForm.tipo_negocio==="Restaurante / Cocina / Comida"?NEGOCIO_CATS_RESTAURANTE:
+    provForm.tipo_negocio==="Transporte y encomiendas"||provForm.tipo_negocio==="Lavandería"?NEGOCIO_CATS_TRANSPORTE:
+    provForm.tipo_negocio==="Tienda / Negocio local"?NEGOCIO_CATS.map(c=>c.cat):
     [...NEGOCIO_CATS.map(c=>c.cat),...NEGOCIO_CATS_RESTAURANTE];
-  return(<div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
-    {regCats.map(c=>(<button key={c} onClick={()=>setProvForm(f=>({...f,categorias:f.categorias.includes(c)?f.categorias.filter(x=>x!==c):[...f.categorias,c]}))} style={{padding:"5px 10px",borderRadius:20,fontSize:12,cursor:"pointer",background:provForm.categorias.includes(c)?P:"#f1f5f9",color:provForm.categorias.includes(c)?"#fff":"#64748b",border:"none",fontWeight:500}}>{c}</button>))}
-  </div>);
+  const catLabel=provForm.tipo_negocio==="Restaurante / Cocina / Comida"?"Tipo de comida que ofreces":
+    provForm.tipo_negocio==="Tienda / Negocio local"?"Categorías de tu negocio":
+    provForm.tipo_negocio==="Transporte y encomiendas"||provForm.tipo_negocio==="Lavandería"?"Tipo de servicio":
+    "Categorías";
+  return(<>
+    <label style={s.lbl}>{catLabel} {provForm.categorias.length>0&&<span style={{color:P,fontWeight:700}}>({provForm.categorias.length} seleccionadas)</span>}</label>
+    <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
+      {regCats.map(c=>(<button key={c} onClick={()=>setProvForm(f=>({...f,categorias:f.categorias.includes(c)?f.categorias.filter(x=>x!==c):[...f.categorias,c]}))} style={{padding:"6px 12px",borderRadius:20,fontSize:12,cursor:"pointer",background:provForm.categorias.includes(c)?P:"#f1f5f9",color:provForm.categorias.includes(c)?"#fff":"#64748b",border:provForm.categorias.includes(c)?`2px solid ${P}`:"2px solid transparent",fontWeight:provForm.categorias.includes(c)?700:500,transition:"all 0.15s"}}>{c}</button>))}
+    </div>
+  </>);
 })()}
             <div style={{...s.ib,background:"#f0fdf4",marginBottom:8}}><div style={{fontSize:12,color:"#15803d"}}>🎁 Los primeros 3 meses son completamente gratis. Después $8/mes.</div></div>
             <label style={s.lbl}>Logo del negocio</label>
@@ -2104,9 +2110,9 @@ export default function App() {
                 <input style={s.inp} placeholder="Ingredientes, sabor..." value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
                 <label style={s.lbl}>Categoría *</label>
                 {(()=>{
-                  const prodCats=provData.tipo_negocio==="Negocio Local"
+                  const prodCats=provData.tipo_negocio==="Tienda / Negocio local"
                     ?(provData.categorias?.length>0?provData.categorias:NEGOCIO_CATS.map(c=>c.cat))
-                    :provData.tipo_negocio==="Restaurante/Cocina"
+                    :provData.tipo_negocio==="Restaurante / Cocina / Comida"
                     ?(provData.categorias?.length>0?provData.categorias:NEGOCIO_CATS_RESTAURANTE)
                     :(provData.categorias?.length>0?provData.categorias:PROV_CATS);
                   return(<select style={{...s.inp,background:"#fff"}} value={newProd.categoria} onChange={e=>setNewProd({...newProd,categoria:e.target.value})}>{prodCats.map(c=><option key={c}>{c}</option>)}</select>);
@@ -2246,9 +2252,9 @@ export default function App() {
                         <input style={s.inp} placeholder="Ingredientes, sabor..." value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
                         <label style={s.lbl}>Categoría *</label>
                         {(()=>{
-                          const editCats=provData.tipo_negocio==="Negocio Local"
+                          const editCats=provData.tipo_negocio==="Tienda / Negocio local"
                             ?(provData.categorias?.length>0?provData.categorias:NEGOCIO_CATS.map(c=>c.cat))
-                            :provData.tipo_negocio==="Restaurante/Cocina"
+                            :provData.tipo_negocio==="Restaurante / Cocina / Comida"
                             ?(provData.categorias?.length>0?provData.categorias:NEGOCIO_CATS_RESTAURANTE)
                             :(provData.categorias?.length>0?provData.categorias:PROV_CATS);
                           return(<select style={{...s.inp,background:"#fff"}} value={newProd.categoria} onChange={e=>setNewProd({...newProd,categoria:e.target.value})}>{editCats.map(c=><option key={c}>{c}</option>)}</select>);
