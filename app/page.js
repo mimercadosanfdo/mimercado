@@ -1521,8 +1521,8 @@ export default function App() {
                 <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
                   <button onClick={()=>{setRestauranteActivo(null);setCartRest({});setCartRestId(null);setCartRestNombre("");setCartRestWa("");}} style={{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:8,color:"#fff",padding:"6px 10px",fontSize:12,cursor:"pointer",flexShrink:0}}>← Volver</button>
                   {restauranteActivo.logo_url
-                    ?<img src={restauranteActivo.logo_url} alt="" style={{width:48,height:48,borderRadius:14,objectFit:"contain",background:"rgba(255,255,255,0.9)",padding:2,border:"2px solid rgba(255,255,255,0.3)",flexShrink:0}}/>
-                    :<div style={{width:48,height:48,borderRadius:14,background:"rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🍽️</div>
+                    ?<img src={restauranteActivo.logo_url} alt="" style={{width:52,height:52,borderRadius:"50%",objectFit:"contain",background:"#fff",padding:4,border:"2px solid rgba(255,255,255,0.4)",flexShrink:0}}/>
+                    :<div style={{width:52,height:52,borderRadius:"50%",background:"rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🍽️</div>
                   }
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{color:"#fff",fontWeight:900,fontSize:17,letterSpacing:-0.3}}>{restauranteActivo.negocio}</div>
@@ -1704,8 +1704,8 @@ export default function App() {
                   const catPrincipal=(r.categorias||[])[0]||"";
                   return(
                   <div key={r.id} onClick={()=>{setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);setSearch("");}} style={{background:"#fff",borderRadius:16,border:"1px solid #f1f5f9",marginBottom:10,cursor:"pointer",boxShadow:"0 1px 6px rgba(0,0,0,0.06)",padding:"14px 14px",display:"flex",gap:14,alignItems:"center"}}>
-                    {/* AVATAR LOGO — respira, sin borde */}
-                    <div style={{width:56,height:56,borderRadius:14,background:"#f8fafc",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",padding:6}}>
+                    {/* AVATAR LOGO */}
+                    <div style={{width:56,height:56,borderRadius:"50%",background:"#fff",border:"1px solid #f1f5f9",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",padding:4}}>
                       {r.logo_url
                         ?<img src={r.logo_url} alt="" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
                         :<span style={{fontSize:28}}>🍽️</span>
