@@ -80,6 +80,22 @@ const TIPOS_COMIDA = [
   "Comida saludable","Vegetariana","Vegana",
   "Combos","Menú del día","Especiales","Otros",
 ];
+// Avatar inteligente para proveedores de comida
+const getAvatarColor=(name)=>{const colors=["#f97316","#ec4899","#8b5cf6","#06b6d4","#10b981","#f59e0b","#ef4444","#6366f1"];const i=name?.charCodeAt(0)%colors.length||0;return colors[i];};
+const FoodAvatar=({logo_url,nombre,size=52})=>{
+  const [imgError,setImgError]=React.useState(false);
+  const inicial=(nombre||"?")[0].toUpperCase();
+  const color=getAvatarColor(nombre);
+  const showLogo=logo_url&&!imgError;
+  return(
+    <div style={{width:size,height:size,borderRadius:"50%",background:showLogo?"#f8fafc":color,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",padding:showLogo?5:0}}>
+      {showLogo
+        ?<img src={logo_url} alt="" style={{width:"100%",height:"100%",objectFit:"contain"}} onError={()=>setImgError(true)}/>
+        :<span style={{color:"#fff",fontSize:size*0.38,fontWeight:900,lineHeight:1}}>{inicial}</span>
+      }
+    </div>
+  );
+};
 const TIPO_GASTRO_LABEL = {
   restaurante:"🍽️ Restaurante · Atención en local",
   cocina_oscura:"🚚 Cocina de delivery · Solo a domicilio",
@@ -1069,7 +1085,7 @@ export default function App() {
             <div style={{display:"flex",gap:12,overflowX:"auto",paddingBottom:8}}>
               {allRestaurantes.filter(r=>r.activo).slice(0,6).map(r=>(
                 <div key={r.id} onClick={()=>{setTab("Feria de comidas");setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);}} style={{flexShrink:0,textAlign:"center",cursor:"pointer",width:72}}>
-                  {r.logo_url?<img src={r.logo_url} alt={r.negocio} style={{width:60,height:60,borderRadius:"50%",objectFit:"cover",border:"3px solid #dcfce7",display:"block",margin:"0 auto"}}/>:<div style={{width:60,height:60,borderRadius:"50%",background:"#fef3c7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,margin:"0 auto",border:"3px solid #fde68a"}}>🍽️</div>}
+                  <div style={{margin:"0 auto",width:60,height:60,border:"2px solid #dcfce7",borderRadius:"50%"}}><FoodAvatar logo_url={r.logo_url} nombre={r.negocio} size={56}/></div>
                   <div style={{fontSize:10,fontWeight:600,color:"#1e293b",marginTop:4,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:72}}>{r.negocio}</div>
                   <div style={{fontSize:9,color:"#22c55e",fontWeight:600}}>● Abierto</div>
                 </div>
@@ -1522,10 +1538,9 @@ export default function App() {
               <div style={{padding:"12px 16px 14px"}}>
                 <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
                   <button onClick={()=>{setRestauranteActivo(null);setCartRest({});setCartRestId(null);setCartRestNombre("");setCartRestWa("");}} style={{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:8,color:"#fff",padding:"6px 10px",fontSize:12,cursor:"pointer",flexShrink:0}}>← Volver</button>
-                  {restauranteActivo.logo_url
-                    ?<img src={restauranteActivo.logo_url} alt="" style={{width:52,height:52,borderRadius:"50%",objectFit:"contain",background:"#fff",padding:4,border:"2px solid rgba(255,255,255,0.4)",flexShrink:0}}/>
-                    :<div style={{width:52,height:52,borderRadius:"50%",background:"rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🍽️</div>
-                  }
+                  <div style={{border:"2px solid rgba(255,255,255,0.3)",borderRadius:"50%",flexShrink:0}}>
+                    <FoodAvatar logo_url={restauranteActivo.logo_url} nombre={restauranteActivo.negocio} size={50}/>
+                  </div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{color:"#fff",fontWeight:900,fontSize:17,letterSpacing:-0.3}}>{restauranteActivo.negocio}</div>
                     <div style={{color:"rgba(255,255,255,0.7)",fontSize:11,marginTop:1}}>{restauranteActivo.tipo_operacion_gastro?TIPO_GASTRO_LABEL[restauranteActivo.tipo_operacion_gastro]:""}{restauranteActivo.descripcion_negocio?` · ${restauranteActivo.descripcion_negocio}`:""}</div>
@@ -1706,13 +1721,7 @@ export default function App() {
                   const catPrincipal=(r.categorias||[])[0]||"";
                   return(
                   <div key={r.id} onClick={()=>{setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);setSearch("");}} style={{background:"#fff",borderRadius:16,border:"1px solid #f1f5f9",marginBottom:10,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.05)",padding:"12px 14px",display:"flex",gap:12,alignItems:"center"}}>
-                    {/* AVATAR LOGO — integrado, sin borde */}
-                    <div style={{width:52,height:52,borderRadius:"50%",background:"#f8fafc",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",padding:5}}>
-                      {r.logo_url
-                        ?<img src={r.logo_url} alt="" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
-                        :<span style={{fontSize:26}}>🍽️</span>
-                      }
-                    </div>
+                    <FoodAvatar logo_url={r.logo_url} nombre={r.negocio} size={52}/>
                     {/* CONTENIDO */}
                     <div style={{flex:1,minWidth:0}}>
                       {/* FILA 1: nombre + estado */}
