@@ -921,27 +921,35 @@ export default function App() {
 
   const CardRest=({p})=>{
     const qtyRest=cartRest[p.id]?.qty||0;
+    const isCombo=p.name?.toLowerCase().includes("combo")||p.tag==="🎉 Promo";
     return(
-      <div style={s.card}>
-        {p.foto?<img src={p.foto} alt={p.name} style={s.cImg}/>:<div style={s.cEm}>🍽️</div>}
-        {p.tag&&<div style={s.tag}>{p.tag}</div>}
-        <div style={s.cNm}>{p.name}</div>
-        {p.descripcion&&<div style={{fontSize:10,color:"#94a3b8",lineHeight:1.3}}>{p.descripcion}</div>}
-        {p.horario&&<div style={{fontSize:10,color:"#94a3b8"}}>🕐 {p.horario}</div>}
-        <div style={s.cBt}>
-          <div><div style={s.cPr}>${p.price.toFixed(2)}</div><div style={s.cUn}>/{p.unit}</div></div>
-          {qtyRest>0?(
-            <div style={s.qR}>
-              <button style={s.qB} onClick={()=>{const n={...cartRest};n[p.id].qty>1?n[p.id]={...n[p.id],qty:n[p.id].qty-1}:delete n[p.id];setCartRest(n);}}>−</button>
-              <span style={s.qN}>{qtyRest}</span>
-              <button style={s.qB} onClick={()=>{const stockMax=p.stock||999;if(qtyRest>=stockMax){alert("Stock máximo");return;}setCartRest(c=>({...c,[p.id]:{...p,qty:qtyRest+1}}));}}>+</button>
-            </div>
-          ):<button style={s.aBtn} onClick={()=>{const stockMax=p.stock||999;if(qtyRest>=stockMax)return;setCartRest(c=>({...c,[p.id]:{...p,qty:1}}));}}>+</button>}
+      <div style={{...s.card,padding:"0 0 10px",overflow:"hidden"}}>
+        <div style={{position:"relative",marginBottom:6}}>
+          {p.foto
+            ?<img src={p.foto} alt={p.name} style={{width:"100%",height:115,objectFit:"cover",display:"block",borderRadius:"12px 12px 0 0"}}/>
+            :<div style={{height:115,background:"linear-gradient(135deg,#fef3c7,#fde68a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:40,borderRadius:"12px 12px 0 0"}}>🍽️</div>
+          }
+          {isCombo&&<div style={{position:"absolute",top:6,left:6,background:"#ef4444",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 8px",borderRadius:8}}>🔥 COMBO</div>}
+          {p.tag&&!isCombo&&<div style={{position:"absolute",top:6,left:6,background:"#f59e0b",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 8px",borderRadius:8}}>{p.tag}</div>}
+        </div>
+        <div style={{padding:"0 10px"}}>
+          <div style={{fontSize:12,fontWeight:700,color:"#0f172a",lineHeight:1.3,marginBottom:3}}>{p.name}</div>
+          {p.descripcion&&<div style={{fontSize:10,color:"#64748b",lineHeight:1.3,marginBottom:5}}>{p.descripcion.length>50?p.descripcion.slice(0,50)+"…":p.descripcion}</div>}
+          <div style={s.cBt}>
+            <div style={{fontSize:17,fontWeight:900,color:"#ef4444",letterSpacing:-0.3}}>${p.price.toFixed(2)}</div>
+            {qtyRest>0?(
+              <div style={s.qR}>
+                <button style={s.qB} onClick={()=>{const n={...cartRest};n[p.id].qty>1?n[p.id]={...n[p.id],qty:n[p.id].qty-1}:delete n[p.id];setCartRest(n);}}>−</button>
+                <span style={s.qN}>{qtyRest}</span>
+                <button style={s.qB} onClick={()=>{const stockMax=p.stock||999;if(qtyRest>=stockMax){alert("Stock máximo");return;}setCartRest(c=>({...c,[p.id]:{...p,qty:qtyRest+1}}))}}>+</button>
+              </div>
+            ):<button style={{...s.aBtn,borderRadius:8,width:"auto",padding:"5px 10px",fontSize:11,fontWeight:700,background:"#ef4444"}} onClick={()=>{const stockMax=p.stock||999;if(qtyRest>=stockMax)return;setCartRest(c=>({...c,[p.id]:{...p,qty:1}}))}}>+ Agregar</button>}
+          </div>
         </div>
       </div>
     );
   };
-
+  
   const StatCard=({num,lbl,color})=>(<div style={s.statCard}><div style={{...s.statNum,color:color||P}}>{num}</div><div style={s.statLbl}>{lbl}</div></div>);
   const BarChart=({data,max})=>(<div style={{display:"flex",flexDirection:"column",gap:8}}>{data.map(([name,val],i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:8}}><div style={{fontSize:11,color:"#64748b",width:110,flexShrink:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name}</div><div style={s.barWrap}><div style={s.barFill((val/max)*100,["#6366f1","#f59e0b","#22c55e","#ef4444","#0ea5e9"][i%5])}/></div><div style={{fontSize:12,fontWeight:700,color:P,minWidth:24,textAlign:"right"}}>{val}</div></div>))}</div>);
 
@@ -1479,22 +1487,34 @@ export default function App() {
         {restauranteActivo?(
           /* -- MENÚ DEL RESTAURANTE -- */
           <div>
-            {/* HEADER RESTAURANTE */}
-            <div style={{background:P,padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}>
-              <button onClick={()=>{setRestauranteActivo(null);setCartRest({});setCartRestId(null);setCartRestNombre("");setCartRestWa("");}} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:8,color:"#fff",padding:"6px 10px",fontSize:12,cursor:"pointer"}}>← Volver</button>
-              {restauranteActivo.logo_url&&<img src={restauranteActivo.logo_url} alt="" style={{width:36,height:36,borderRadius:"50%",objectFit:"cover"}}/>}
-              <div style={{flex:1}}>
-                <div style={{color:"#fff",fontWeight:700,fontSize:15}}>{restauranteActivo.negocio}</div>
-                <div style={{color:"rgba(255,255,255,0.7)",fontSize:11}}>{restauranteActivo.horario_desde&&`🕐 ${restauranteActivo.horario_desde}–${restauranteActivo.horario_hasta}`}{restauranteActivo.horario_desc&&` · ${restauranteActivo.horario_desc}`}</div>
+            {/* HEADER RESTAURANTE — emocional */}
+            <div style={{background:"linear-gradient(160deg,#7c2d12 0%,#c2410c 70%,#ea580c 100%)",color:"#fff"}}>
+              <div style={{padding:"12px 16px 14px"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+                  <button onClick={()=>{setRestauranteActivo(null);setCartRest({});setCartRestId(null);setCartRestNombre("");setCartRestWa("");}} style={{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:8,color:"#fff",padding:"6px 10px",fontSize:12,cursor:"pointer",flexShrink:0}}>← Volver</button>
+                  {restauranteActivo.logo_url
+                    ?<img src={restauranteActivo.logo_url} alt="" style={{width:48,height:48,borderRadius:14,objectFit:"cover",border:"2px solid rgba(255,255,255,0.3)",flexShrink:0}}/>
+                    :<div style={{width:48,height:48,borderRadius:14,background:"rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🍽️</div>
+                  }
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{color:"#fff",fontWeight:900,fontSize:17,letterSpacing:-0.3}}>{restauranteActivo.negocio}</div>
+                    <div style={{color:"rgba(255,255,255,0.7)",fontSize:11,marginTop:1}}>{restauranteActivo.descripcion_negocio||(restauranteActivo.categorias||[]).join(" · ")}</div>
+                  </div>
+                  <span style={{fontSize:11,fontWeight:700,padding:"4px 10px",borderRadius:20,background:restauranteActivo.activo?"#dcfce7":"#fee2e2",color:restauranteActivo.activo?"#15803d":"#dc2626",flexShrink:0}}>{restauranteActivo.activo?"● Abierto":"● Cerrado"}</span>
+                </div>
+                {/* INFO RÁPIDA */}
+                <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
+                  {restauranteActivo.horario_desde&&<span style={{fontSize:10,color:"rgba(255,255,255,0.8)",background:"rgba(255,255,255,0.1)",padding:"3px 8px",borderRadius:20}}>🕐 {restauranteActivo.horario_desde}–{restauranteActivo.horario_hasta}</span>}
+                  {restauranteActivo.delivery_propio
+                    ?<span style={{fontSize:10,color:"#86efac",fontWeight:600,background:"rgba(34,197,94,0.15)",padding:"3px 8px",borderRadius:20}}>🛵 Delivery {restauranteActivo.delivery_costo>0?`$${restauranteActivo.delivery_costo}`:"gratis"}</span>
+                    :<span style={{fontSize:10,color:"rgba(255,255,255,0.7)",background:"rgba(255,255,255,0.1)",padding:"3px 8px",borderRadius:20}}>🏃 Solo retiro en local</span>
+                  }
+                  {!restauranteActivo.direccion_fisica&&!restauranteActivo.delivery_propio&&<span style={{fontSize:10,color:"rgba(255,255,255,0.6)",background:"rgba(255,255,255,0.08)",padding:"3px 8px",borderRadius:20}}>📦 Solo delivery · Pedido online</span>}
+                </div>
+                {/* BUSCADOR */}
+                <input style={{width:"100%",padding:"10px 14px",borderRadius:12,border:"none",fontSize:13,background:"rgba(255,255,255,0.15)",color:"#fff",boxSizing:"border-box",outline:"none"}} placeholder="🔍  Buscar en el menú…" value={search} onChange={e=>setSearch(e.target.value)}/>
               </div>
-              <span style={{fontSize:11,fontWeight:700,padding:"3px 8px",borderRadius:20,background:restauranteActivo.activo?"#22c55e":"#ef4444",color:"#fff"}}>{restauranteActivo.activo?"● Abierto":"● Cerrado"}</span>
             </div>
-            {/* DELIVERY INFO */}
-            <div style={{background:"#f0fdf4",padding:"8px 16px",fontSize:12,color:"#15803d",display:"flex",gap:6,alignItems:"center"}}>
-              {restauranteActivo.delivery_propio?<span>🛵 Delivery disponible · ${restauranteActivo.delivery_costo>0?`$${restauranteActivo.delivery_costo}`:"Gratis"}</span>:<span>🏃 Solo para llevar / retiro en local</span>}
-            </div>
-            {/* BUSCADOR */}
-            <div style={s.sw}><input style={s.si} placeholder="🔍  Buscar en el menú..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
             {/* MENÚ - products of this restaurant */}
             <div style={s.sec}>
               {PROV_CATS.map(cat=>{
@@ -1519,12 +1539,18 @@ export default function App() {
         ):(
           /* -- LISTA DE RESTAURANTES -- */
           <>
-            <div style={s.banner}>
-              <p style={s.bT}>Restaurantes en {CITY} 🍽️</p>
-              <p style={s.bS}>Elige tu restaurante · Pedido directo</p>
+            <div style={{background:"linear-gradient(160deg,#7c2d12 0%,#c2410c 60%,#ea580c 100%)",padding:"18px 16px 16px",color:"#fff"}}>
+              <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
+                <div style={{width:48,height:48,background:"rgba(255,255,255,0.15)",borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>🍽️</div>
+                <div>
+                  <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:-0.5}}>Feria de comidas</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",marginTop:1}}>Restaurantes y cocinas de San Fernando</div>
+                </div>
+              </div>
+              <input style={{width:"100%",padding:"11px 16px",borderRadius:12,border:"none",fontSize:13,background:"rgba(255,255,255,0.15)",color:"#fff",boxSizing:"border-box",outline:"none"}} placeholder="🔍  Buscar comida o restaurantes…" value={search} onChange={e=>setSearch(e.target.value)}/>
             </div>
-            {/* BÚSQUEDA GLOBAL */}
-            <div style={s.sw}><input style={s.si} placeholder="🔍  Buscar pizza, pollo, hamburguesa..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
+            {/* BÚSQUEDA - mantenemos variable */}
+            <div style={{display:"none"}}><input value={search} onChange={e=>setSearch(e.target.value)}/></div>
             {/* SI HAY BÚSQUEDA - mostrar platos de todos los restaurantes */}
             {search.length>1?(
               <div style={s.sec}>
@@ -1584,20 +1610,32 @@ export default function App() {
               )}
               <div style={{...s.sec,paddingTop:12}}>
                 {allRestaurantes.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🍽️</div><p>Próximamente restaurantes aquí</p></div>}
-                {allRestaurantes.map(r=>(
-                  <div key={r.id} onClick={()=>{setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);setSearch("");}} style={{background:"#fff",borderRadius:14,padding:14,border:"1px solid #f1f5f9",display:"flex",gap:12,alignItems:"center",marginBottom:10,cursor:"pointer"}}>
-                    {r.logo_url?<img src={r.logo_url} alt="" style={{width:56,height:56,borderRadius:12,objectFit:"cover",flexShrink:0}}/>:<div style={{width:56,height:56,borderRadius:12,background:"#fef3c7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>🍽️</div>}
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:15,fontWeight:700,color:P}}>{r.negocio}</div>
-                      <div style={{fontSize:11,color:"#64748b",marginTop:1}}>{(r.categorias||[]).join(" · ")}</div>
-                      {r.horario_desde&&<div style={{fontSize:11,color:"#94a3b8"}}>🕐 {r.horario_desde}–{r.horario_hasta}{r.horario_desc&&` · ${r.horario_desc}`}</div>}
-                      <div style={{display:"flex",alignItems:"center",gap:6,marginTop:3}}>
-                        <span style={{fontSize:11,fontWeight:600,color:r.activo?"#15803d":"#94a3b8"}}>{r.activo?"● Abierto":"● Cerrado"}</span>
-                        {r.delivery_propio&&<span style={{fontSize:10,background:"#dcfce7",color:"#15803d",padding:"1px 6px",borderRadius:8}}>🛵 Delivery</span>}
+                {allRestaurantes.map(r=>{
+                  const tipoLabel=r.tipo_negocio==="Restaurante / Cocina / Comida"?"🍴 Restaurante":"🛵 Cocina de delivery";
+                  return(
+                  <div key={r.id} onClick={()=>{setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);setSearch("");}} style={{background:"#fff",borderRadius:16,overflow:"hidden",border:"1px solid #f1f5f9",marginBottom:12,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+                    {/* IMAGEN BANNER */}
+                    <div style={{position:"relative",height:110,background:"linear-gradient(135deg,#fef3c7,#fde68a)",overflow:"hidden"}}>
+                      {r.logo_url?<img src={r.logo_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:48}}>🍽️</div>}
+                      <div style={{position:"absolute",top:8,left:8,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(4px)",borderRadius:8,padding:"3px 8px",fontSize:10,color:"#fff",fontWeight:600}}>{tipoLabel}</div>
+                      <div style={{position:"absolute",top:8,right:8,background:r.activo?"#22c55e":"#ef4444",borderRadius:20,padding:"3px 8px",fontSize:10,color:"#fff",fontWeight:700}}>{r.activo?"● Abierto":"● Cerrado"}</div>
+                    </div>
+                    {/* INFO */}
+                    <div style={{padding:"10px 14px 12px"}}>
+                      <div style={{fontSize:15,fontWeight:800,color:"#0f172a",marginBottom:4}}>{r.negocio}</div>
+                      {r.descripcion_negocio&&<div style={{fontSize:11,color:"#64748b",marginBottom:5}}>{r.descripcion_negocio}</div>}
+                      <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+                        {r.horario_desde&&<span style={{fontSize:10,color:"#64748b"}}>🕐 {r.horario_desde}–{r.horario_hasta}</span>}
+                        {r.delivery_propio
+                          ?<span style={{fontSize:10,background:"#dcfce7",color:"#15803d",padding:"2px 8px",borderRadius:20,fontWeight:600}}>🛵 Delivery</span>
+                          :<span style={{fontSize:10,background:"#f1f5f9",color:"#64748b",padding:"2px 8px",borderRadius:20}}>🏃 Solo retiro</span>
+                        }
+                        {!r.delivery_propio&&<span style={{fontSize:10,color:"#94a3b8"}}>Solo delivery · Pedido online</span>}
                       </div>
                     </div>
-                    <div style={{color:"#94a3b8",fontSize:18}}>›</div>
                   </div>
+                  );
+                }
                 ))}
               </div>
               </>
