@@ -252,7 +252,7 @@ export default function App() {
   // ---------------------------------------------------------
 
   const [provMode,setProvMode]=useState("login");
-  const [provForm,setProvForm]=useState({email:"",nombre:"",negocio:"",whatsapp_negocio:"",telefono_principal:"",instagram:"",categorias:[],pass:"",tipo_negocio:"Restaurante / Cocina / Comida",tipo_operacion_gastro:"",descripcion_negocio:"",delivery_propio:false,delivery_costo:0,delivery_gratis_desde:15,direccion_fisica:"",horario_desde:"08:00",horario_hasta:"18:00",horario_desc:""});
+  const [provForm,setProvForm]=useState({email:"",nombre:"",negocio:"",whatsapp_negocio:"",telefono_principal:"",instagram:"",categorias:[],pass:"",tipo_negocio:"Restaurante / Cocina / Comida",tipo_operacion_gastro:"",descripcion_negocio:"",delivery_propio:false,permite_retiro:false,delivery_costo:0,delivery_gratis_desde:15,direccion_fisica:"",horario_desde:"08:00",horario_hasta:"18:00",horario_desc:""});
   const [provData,setProvData]=useState(null);
   const [myProds,setMyProds]=useState([]);
   const [myPromos,setMyPromos]=useState([]);
@@ -684,6 +684,7 @@ export default function App() {
       horario_hasta:provForm.horario_hasta||null,
       horario_desc:provForm.horario_desc||null,
       delivery_propio:provForm.delivery_propio||false,
+      permite_retiro:provForm.permite_retiro||false,
       delivery_costo:provForm.delivery_costo||0,
       delivery_gratis_desde:provForm.delivery_gratis_desde||15,
       direccion_fisica:provForm.direccion_fisica||null,
@@ -1473,6 +1474,7 @@ export default function App() {
                         <div style={{display:"flex",gap:6,marginTop:4,flexWrap:"wrap"}}>
                           <span style={{fontSize:10,fontWeight:600,color:n.activo?"#15803d":"#94a3b8",background:n.activo?"#dcfce7":"#f1f5f9",padding:"2px 7px",borderRadius:8}}>{n.activo?"● Abierto":"● Cerrado"}</span>
                           {n.delivery_propio&&<span style={{fontSize:10,background:"#dbeafe",color:"#1d4ed8",padding:"2px 7px",borderRadius:8,fontWeight:600}}>🛵 Delivery</span>}
+                          {n.permite_retiro&&<span style={{fontSize:10,background:"#eff6ff",color:"#3b82f6",padding:"2px 7px",borderRadius:8,fontWeight:600}}>🏪 Retiro</span>}
                         </div>
                       </div>
                       <div style={{color:"#3b82f6",fontSize:20,fontWeight:300}}>›</div>
@@ -2084,19 +2086,19 @@ export default function App() {
               <div style={{flex:1}}><label style={{...s.lbl,marginBottom:2}}>Cierra</label><input style={s.inp} type="time" value={provForm.horario_hasta} onChange={e=>setProvForm({...provForm,horario_hasta:e.target.value})}/></div>
             </div>
             <input style={s.inp} placeholder="Ej: Solo fines de semana, Lun-Vie..." value={provForm.horario_desc} onChange={e=>setProvForm({...provForm,horario_desc:e.target.value})}/>
-            <label style={s.lbl}>¿Ofreces delivery?</label>
+            <label style={s.lbl}>¿Cómo entregas los pedidos? (puedes marcar ambas)</label>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
-              <button type="button" onClick={()=>setProvForm({...provForm,delivery_propio:true})} style={{padding:"12px 8px",borderRadius:12,border:`2px solid ${provForm.delivery_propio?"#15803d":"#e2e8f0"}`,background:provForm.delivery_propio?"#f0fdf4":"#fff",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+              <button type="button" onClick={()=>setProvForm({...provForm,delivery_propio:!provForm.delivery_propio})} style={{padding:"12px 8px",borderRadius:12,border:`2px solid ${provForm.delivery_propio?"#15803d":"#e2e8f0"}`,background:provForm.delivery_propio?"#f0fdf4":"#fff",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
                 <span style={{fontSize:22}}>🛵</span>
-                <span style={{fontSize:12,fontWeight:700,color:provForm.delivery_propio?"#15803d":"#374151"}}>Sí, hago delivery</span>
+                <span style={{fontSize:12,fontWeight:700,color:provForm.delivery_propio?"#15803d":"#374151"}}>Delivery</span>
                 <span style={{fontSize:10,color:provForm.delivery_propio?"#15803d":"#94a3b8"}}>Entrego a domicilio</span>
-                {provForm.delivery_propio&&<span style={{fontSize:10,fontWeight:800,color:"#15803d"}}>✓ Seleccionado</span>}
+                <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${provForm.delivery_propio?"#15803d":"#d1d5db"}`,background:provForm.delivery_propio?"#15803d":"#fff",display:"flex",alignItems:"center",justifyContent:"center",marginTop:2}}>{provForm.delivery_propio&&<span style={{color:"#fff",fontSize:11,fontWeight:900}}>✓</span>}</div>
               </button>
-              <button type="button" onClick={()=>setProvForm({...provForm,delivery_propio:false})} style={{padding:"12px 8px",borderRadius:12,border:`2px solid ${!provForm.delivery_propio?"#94a3b8":"#e2e8f0"}`,background:!provForm.delivery_propio?"#f8fafc":"#fff",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+              <button type="button" onClick={()=>setProvForm({...provForm,permite_retiro:!provForm.permite_retiro})} style={{padding:"12px 8px",borderRadius:12,border:`2px solid ${provForm.permite_retiro?"#3b82f6":"#e2e8f0"}`,background:provForm.permite_retiro?"#eff6ff":"#fff",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
                 <span style={{fontSize:22}}>🏪</span>
-                <span style={{fontSize:12,fontWeight:700,color:!provForm.delivery_propio?"#374151":"#94a3b8"}}>Solo retiro</span>
-                <span style={{fontSize:10,color:"#94a3b8"}}>El cliente recoge en local</span>
-                {!provForm.delivery_propio&&<span style={{fontSize:10,fontWeight:800,color:"#374151"}}>✓ Seleccionado</span>}
+                <span style={{fontSize:12,fontWeight:700,color:provForm.permite_retiro?"#1d4ed8":"#374151"}}>Retiro en local</span>
+                <span style={{fontSize:10,color:provForm.permite_retiro?"#3b82f6":"#94a3b8"}}>El cliente recoge</span>
+                <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${provForm.permite_retiro?"#3b82f6":"#d1d5db"}`,background:provForm.permite_retiro?"#3b82f6":"#fff",display:"flex",alignItems:"center",justifyContent:"center",marginTop:2}}>{provForm.permite_retiro&&<span style={{color:"#fff",fontSize:11,fontWeight:900}}>✓</span>}</div>
               </button>
             </div>
             {provForm.delivery_propio&&(
@@ -2742,7 +2744,8 @@ export default function App() {
           {/* EDITAR PERFIL */}
           {!editandoPerfil&&!cambiandoClave&&(
             <div style={{display:"flex",gap:8,marginTop:8}}>
-              <button style={{...s.btnG,flex:1,marginTop:0}} onClick={()=>{setPerfilData({descripcion_negocio:provData.descripcion_negocio||"",whatsapp_negocio:provData.whatsapp_negocio||provData.telefono||"",telefono_principal:provData.telefono_principal||"",instagram:provData.instagram||"",direccion_fisica:provData.direccion_fisica||"",categorias:[...(provData.categorias||[])],tipo_operacion_gastro:provData.tipo_operacion_gastro||"",horario_desde:provData.horario_desde||"08:00",horario_hasta:provData.horario_hasta||"18:00",horario_desc:provData.horario_desc||"",delivery_propio:provData.delivery_propio||false,delivery_costo:provData.delivery_costo||0,delivery_gratis_desde:provData.delivery_gratis_desde||15});setEditandoPerfil(true);}}>✏️ Editar perfil</button>
+              <button style={{...s.btnG,flex:1,marginTop:0}} onClick={()=>{setPerfilData({descripcion_negocio:provData.descripcion_negocio||"",whatsapp_negocio:provData.whatsapp_negocio||provData.telefono||"",telefono_principal:provData.telefono_principal||"",instagram:provData.instagram||"",direccion_fisica:provData.direccion_fisica||"",categorias:[...(provData.categorias||[])],tipo_operacion_gastro:provData.tipo_operacion_gastro||"",
+      permite_retiro:provData.permite_retiro||false,horario_desde:provData.horario_desde||"08:00",horario_hasta:provData.horario_hasta||"18:00",horario_desc:provData.horario_desc||"",delivery_propio:provData.delivery_propio||false,delivery_costo:provData.delivery_costo||0,delivery_gratis_desde:provData.delivery_gratis_desde||15});setEditandoPerfil(true);}}>✏️ Editar perfil</button>
               <button style={{...s.btnG,flex:1,marginTop:0}} onClick={()=>{setClaveForm({actual:"",nueva:"",confirmar:""});setCambiandoClave(true);}}>🔑 Cambiar clave</button>
             </div>
           )}
@@ -2778,19 +2781,19 @@ export default function App() {
                 <div style={{flex:1}}><label style={{...s.lbl,marginBottom:2}}>Cierra</label><input style={s.inp} type="time" value={perfilData.horario_hasta||"18:00"} onChange={e=>setPerfilData({...perfilData,horario_hasta:e.target.value})}/></div>
               </div>
               <input style={s.inp} placeholder="Ej: Solo fines de semana..." value={perfilData.horario_desc||""} onChange={e=>setPerfilData({...perfilData,horario_desc:e.target.value})}/>
-              <label style={s.lbl}>¿Ofreces delivery?</label>
+              <label style={s.lbl}>¿Cómo entregas los pedidos? (puedes marcar ambas)</label>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
-                <button type="button" onClick={()=>setPerfilData(pd=>({...pd,delivery_propio:true}))} style={{padding:"12px 8px",borderRadius:12,border:`2px solid ${perfilData.delivery_propio?"#15803d":"#e2e8f0"}`,background:perfilData.delivery_propio?"#f0fdf4":"#fff",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                <button type="button" onClick={()=>setPerfilData(pd=>({...pd,delivery_propio:!pd.delivery_propio}))} style={{padding:"12px 8px",borderRadius:12,border:`2px solid ${perfilData.delivery_propio?"#15803d":"#e2e8f0"}`,background:perfilData.delivery_propio?"#f0fdf4":"#fff",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
                   <span style={{fontSize:22}}>🛵</span>
-                  <span style={{fontSize:12,fontWeight:700,color:perfilData.delivery_propio?"#15803d":"#374151"}}>Sí, hago delivery</span>
+                  <span style={{fontSize:12,fontWeight:700,color:perfilData.delivery_propio?"#15803d":"#374151"}}>Delivery</span>
                   <span style={{fontSize:10,color:perfilData.delivery_propio?"#15803d":"#94a3b8"}}>Entrego a domicilio</span>
-                  {perfilData.delivery_propio&&<span style={{fontSize:10,fontWeight:800,color:"#15803d"}}>✓ Seleccionado</span>}
+                  <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${perfilData.delivery_propio?"#15803d":"#d1d5db"}`,background:perfilData.delivery_propio?"#15803d":"#fff",display:"flex",alignItems:"center",justifyContent:"center",marginTop:2}}>{perfilData.delivery_propio&&<span style={{color:"#fff",fontSize:11,fontWeight:900}}>✓</span>}</div>
                 </button>
-                <button type="button" onClick={()=>setPerfilData(pd=>({...pd,delivery_propio:false}))} style={{padding:"12px 8px",borderRadius:12,border:`2px solid ${!perfilData.delivery_propio?"#94a3b8":"#e2e8f0"}`,background:!perfilData.delivery_propio?"#f8fafc":"#fff",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                <button type="button" onClick={()=>setPerfilData(pd=>({...pd,permite_retiro:!pd.permite_retiro}))} style={{padding:"12px 8px",borderRadius:12,border:`2px solid ${perfilData.permite_retiro?"#3b82f6":"#e2e8f0"}`,background:perfilData.permite_retiro?"#eff6ff":"#fff",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
                   <span style={{fontSize:22}}>🏪</span>
-                  <span style={{fontSize:12,fontWeight:700,color:!perfilData.delivery_propio?"#374151":"#94a3b8"}}>Solo retiro</span>
-                  <span style={{fontSize:10,color:"#94a3b8"}}>El cliente recoge en local</span>
-                  {!perfilData.delivery_propio&&<span style={{fontSize:10,fontWeight:800,color:"#374151"}}>✓ Seleccionado</span>}
+                  <span style={{fontSize:12,fontWeight:700,color:perfilData.permite_retiro?"#1d4ed8":"#374151"}}>Retiro en local</span>
+                  <span style={{fontSize:10,color:perfilData.permite_retiro?"#3b82f6":"#94a3b8"}}>El cliente recoge</span>
+                  <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${perfilData.permite_retiro?"#3b82f6":"#d1d5db"}`,background:perfilData.permite_retiro?"#3b82f6":"#fff",display:"flex",alignItems:"center",justifyContent:"center",marginTop:2}}>{perfilData.permite_retiro&&<span style={{color:"#fff",fontSize:11,fontWeight:900}}>✓</span>}</div>
                 </button>
               </div>
               {perfilData.delivery_propio&&(
@@ -2830,6 +2833,7 @@ export default function App() {
                     horario_hasta:perfilData.horario_hasta,
                     horario_desc:perfilData.horario_desc,
                     delivery_propio:perfilData.delivery_propio,
+                    permite_retiro:perfilData.permite_retiro||false,
                     delivery_costo:perfilData.delivery_costo,
                     delivery_gratis_desde:perfilData.delivery_gratis_desde,
                   }).eq("id",provData.id);
