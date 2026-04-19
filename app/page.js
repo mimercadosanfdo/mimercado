@@ -243,6 +243,10 @@ export default function App() {
   const [combosAdmin,setCombosAdmin]=useState([]);
   const [rejectMotivo,setRejectMotivo]=useState({});
   const [resetPass,setResetPass]=useState({});
+  const [editandoPerfil,setEditandoPerfil]=useState(false);
+  const [perfilData,setPerfilData]=useState({});
+  const [cambiandoClave,setCambiandoClave]=useState(false);
+  const [claveForm,setClaveForm]=useState({actual:"",nueva:"",confirmar:""});
 
   const [newProd,setNewProd]=useState({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"",stock:1,hi:"08:00",hf:"18:00",permanente:false,es_oferta:false});
   const [editandoHorario,setEditandoHorario]=useState(false);
@@ -1963,6 +1967,14 @@ export default function App() {
           <input style={s.inp} type="password" placeholder="••••••••" value={provForm.pass} onChange={e=>setProvForm({...provForm,pass:e.target.value})}/>
           <button style={s.btn} onClick={provMode==="login"?handleLogin:handleRegister} disabled={loading}>{loading?"Procesando...":(provMode==="login"?"Entrar":"Registrarme")}</button>
           <button style={s.btnG} onClick={()=>{setProvMode(provMode==="login"?"register":"login");setPmsg("");}}>{provMode==="login"?"¿Nuevo? Regístrate aquí":"¿Ya tienes cuenta? Inicia sesión"}</button>
+          {provMode==="login"&&(
+            <button style={{background:"none",border:"none",color:"#94a3b8",fontSize:12,cursor:"pointer",marginTop:4,textDecoration:"underline"}} onClick={()=>{
+              const correo=provForm.email;
+              if(!correo)return setPmsg("Escribe tu correo primero");
+              const num=WA.startsWith("0")?"58"+WA.slice(1):WA;
+              window.open(`https://wa.me/${num}?text=${encodeURIComponent(`Hola Apure Market, olvidé mi contraseña. Mi correo registrado es: ${correo}`)}`);
+            }}>¿Olvidaste tu contraseña?</button>
+          )}
         </div>)}
 
         {/* DASHBOARD PROVEEDOR */}
@@ -2557,7 +2569,60 @@ export default function App() {
 
           {provTab==="ventas"&&(<div style={s.pc}><div style={s.pT}>💰 Mis ventas recientes</div>{myVentas.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>Aún no tienes ventas registradas</div>}{myVentas.slice(0,20).map(v=>(<div key={v.id} style={{padding:"8px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}><div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontWeight:600}}>{v.producto_nombre}</span><span style={{fontWeight:700,color:"#22c55e"}}>${(v.total_item||0).toFixed(2)}</span></div><div style={{color:"#94a3b8"}}>{v.cliente_nombre} · x{v.cantidad} · {v.fecha?.slice(0,10)}</div></div>))}</div>)}
 
-          <button style={{...s.btnG,marginTop:8}} onClick={()=>{setProvMode("login");setProvData(null);setMyProds([]);setMyPromos([]);setMyVentas([]);setPmsg("");}}>Cerrar sesión</button>
+          {/* EDITAR PERFIL */}
+          {!editandoPerfil&&!cambiandoClave&&(
+            <div style={{display:"flex",gap:8,marginTop:8}}>
+              <button style={{...s.btnG,flex:1,marginTop:0}} onClick={()=>{setPerfilData({descripcion_negocio:provData.descripcion_negocio||"",whatsapp_negocio:provData.whatsapp_negocio||provData.telefono||"",telefono_principal:provData.telefono_principal||"",instagram:provData.instagram||"",direccion_fisica:provData.direccion_fisica||"",categorias:[...(provData.categorias||[])]});setEditandoPerfil(true);}}>✏️ Editar perfil</button>
+              <button style={{...s.btnG,flex:1,marginTop:0}} onClick={()=>{setClaveForm({actual:"",nueva:"",confirmar:""});setCambiandoClave(true);}}>🔑 Cambiar clave</button>
+            </div>
+          )}
+          {editandoPerfil&&(
+            <div style={{background:"#f8fafc",borderRadius:12,padding:"14px",marginTop:8,border:"1px solid #e2e8f0"}}>
+              <div style={{fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:10}}>✏️ Editar mi perfil</div>
+              <label style={s.lbl}>Descripción del negocio</label>
+              <input style={s.inp} placeholder="Cuidado capilar y belleza natural" value={perfilData.descripcion_negocio} onChange={e=>setPerfilData({...perfilData,descripcion_negocio:e.target.value})}/>
+              <label style={s.lbl}>WhatsApp de pedidos</label>
+              <input style={s.inp} placeholder="04243232671" value={perfilData.whatsapp_negocio} onChange={e=>setPerfilData({...perfilData,whatsapp_negocio:e.target.value})}/>
+              <label style={s.lbl}>Teléfono principal</label>
+              <input style={s.inp} placeholder="04143232671" value={perfilData.telefono_principal} onChange={e=>setPerfilData({...perfilData,telefono_principal:e.target.value})}/>
+              <label style={s.lbl}>Instagram</label>
+              <input style={s.inp} placeholder="@minegocio" value={perfilData.instagram} onChange={e=>setPerfilData({...perfilData,instagram:e.target.value})}/>
+              <label style={s.lbl}>Dirección física</label>
+              <input style={s.inp} placeholder="Calle Comercio #47..." value={perfilData.direccion_fisica} onChange={e=>setPerfilData({...perfilData,direccion_fisica:e.target.value})}/>
+              <label style={s.lbl}>Categorías</label>
+              {(()=>{
+                const cats=provData.tipo_negocio==="Tienda / Negocio local"?NEGOCIO_CATS.map(c=>c.cat):provData.tipo_negocio==="Restaurante / Cocina / Comida"?NEGOCIO_CATS_RESTAURANTE:provData.tipo_negocio==="Transporte y encomiendas"?NEGOCIO_CATS_TRANSPORTE:[...NEGOCIO_CATS.map(c=>c.cat),...NEGOCIO_CATS_RESTAURANTE];
+                return(<div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>{cats.map(c=>(<button key={c} onClick={()=>setPerfilData(pd=>({...pd,categorias:pd.categorias.includes(c)?pd.categorias.filter(x=>x!==c):[...pd.categorias,c]}))} style={{padding:"5px 10px",borderRadius:20,fontSize:12,cursor:"pointer",background:perfilData.categorias?.includes(c)?P:"#f1f5f9",color:perfilData.categorias?.includes(c)?"#fff":"#64748b",border:"none",fontWeight:500}}>{c}</button>))}</div>);
+              })()}
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={async()=>{await supabase.from("proveedores").update({descripcion_negocio:perfilData.descripcion_negocio,whatsapp_negocio:perfilData.whatsapp_negocio,telefono:perfilData.whatsapp_negocio,telefono_principal:perfilData.telefono_principal,instagram:perfilData.instagram,direccion_fisica:perfilData.direccion_fisica,categorias:perfilData.categorias}).eq("id",provData.id);setProvData({...provData,...perfilData,telefono:perfilData.whatsapp_negocio});setEditandoPerfil(false);setPmsg("✅ Perfil actualizado");loadAll();}} style={{...s.btnGreen,flex:1,borderRadius:10,padding:"9px",fontSize:12}}>Guardar cambios</button>
+                <button onClick={()=>setEditandoPerfil(false)} style={{...s.btnG,flex:1,marginTop:0,borderRadius:10,padding:"9px",fontSize:12}}>Cancelar</button>
+              </div>
+            </div>
+          )}
+          {cambiandoClave&&(
+            <div style={{background:"#f8fafc",borderRadius:12,padding:"14px",marginTop:8,border:"1px solid #e2e8f0"}}>
+              <div style={{fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:10}}>🔑 Cambiar contraseña</div>
+              <label style={s.lbl}>Clave actual</label>
+              <input style={s.inp} type="password" placeholder="••••••••" value={claveForm.actual} onChange={e=>setClaveForm({...claveForm,actual:e.target.value})}/>
+              <label style={s.lbl}>Nueva clave</label>
+              <input style={s.inp} type="password" placeholder="••••••••" value={claveForm.nueva} onChange={e=>setClaveForm({...claveForm,nueva:e.target.value})}/>
+              <label style={s.lbl}>Confirmar nueva clave</label>
+              <input style={s.inp} type="password" placeholder="••••••••" value={claveForm.confirmar} onChange={e=>setClaveForm({...claveForm,confirmar:e.target.value})}/>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={async()=>{
+                  if(claveForm.actual!==provData.password_plain)return setPmsg("La clave actual no es correcta");
+                  if(claveForm.nueva.length<6)return setPmsg("La nueva clave debe tener al menos 6 caracteres");
+                  if(claveForm.nueva!==claveForm.confirmar)return setPmsg("Las claves no coinciden");
+                  await supabase.from("proveedores").update({password_plain:claveForm.nueva}).eq("id",provData.id);
+                  setProvData({...provData,password_plain:claveForm.nueva});
+                  setCambiandoClave(false);setPmsg("✅ Contraseña actualizada");
+                }} style={{...s.btnGreen,flex:1,borderRadius:10,padding:"9px",fontSize:12}}>Guardar</button>
+                <button onClick={()=>setCambiandoClave(false)} style={{...s.btnG,flex:1,marginTop:0,borderRadius:10,padding:"9px",fontSize:12}}>Cancelar</button>
+              </div>
+            </div>
+          )}
+          <button style={{...s.btnG,marginTop:8}} onClick={()=>{setProvMode("login");setProvData(null);setMyProds([]);setMyPromos([]);setMyVentas([]);setPmsg("");setEditandoPerfil(false);setCambiandoClave(false);}}>Cerrar sesión</button>
         </>)}
 
         {/* ADMIN */}
@@ -2699,9 +2764,13 @@ export default function App() {
                   <button onClick={()=>togglePausa(p.id,p.en_pausa)} style={{...s.btnAmber,fontSize:11}}>{p.en_pausa?"▶️ Quitar pausa":"⏸️ Pausar"}</button>
                   <button onClick={()=>deleteProveedor(p.id)} style={{...s.btnRed,fontSize:11}}>🗑️ Eliminar</button>
                 </div>
-                <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                  <input style={{...s.inp,marginBottom:0,flex:1,fontSize:12,padding:"7px 10px"}} type="password" placeholder="Nueva clave..." value={resetPass[p.id]||""} onChange={e=>setResetPass({...resetPass,[p.id]:e.target.value})}/>
-                  <button onClick={()=>cambiarClave(p.id,resetPass[p.id]||"")} style={{...s.btnGreen,fontSize:11,flexShrink:0}}>🔑 Cambiar</button>
+                <div style={{background:"#f8fafc",borderRadius:10,padding:"8px 10px",border:"1px solid #e2e8f0"}}>
+                  <div style={{fontSize:11,color:"#64748b",marginBottom:6,fontWeight:600}}>🔑 Resetear contraseña</div>
+                  <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                    <input style={{...s.inp,marginBottom:0,flex:1,fontSize:12,padding:"7px 10px"}} type="text" placeholder="Nueva clave temporal..." value={resetPass[p.id]||""} onChange={e=>setResetPass({...resetPass,[p.id]:e.target.value})}/>
+                    <button onClick={()=>{if(!resetPass[p.id])return;cambiarClave(p.id,resetPass[p.id]);}} style={{...s.btnGreen,fontSize:11,flexShrink:0,padding:"7px 12px"}}>✓ Guardar</button>
+                  </div>
+                  {resetPass[p.id]&&<div style={{fontSize:10,color:"#15803d",marginTop:4}}>⚠️ Comunica esta clave al proveedor por WhatsApp</div>}
                 </div>
               </div>))}
             </div>
