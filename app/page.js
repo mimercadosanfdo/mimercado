@@ -649,7 +649,7 @@ export default function App() {
   };
 
   const sendWa=()=>{window.location.href=`https://wa.me/${WA}?text=${encodeURIComponent(buildWaMsg())}`;};
-  const sendSvcWa=()=>{const m=`*Solicitud: ${selSvc.name}* — ${APP_NAME}\n\nNombre: ${svcForm.nombre}\nTeléfono: ${svcForm.telefono}\nDirección: ${svcForm.direccion}\nDetalle: ${svcForm.detalle}`;window.open(`https://wa.me/${WA}?text=${encodeURIComponent(m)}`);setSheet(null);setSelSvc(null);};
+  const sendSvcWa=()=>{const m=`*Solicitud: ${selSvc.name}* — ${APP_NAME}\n\nNombre: ${svcForm.nombre}\nTeléfono: ${svcForm.telefono}\nDirección: ${svcForm.direccion}\nDetalle: ${svcForm.detalle}`;window.location.href=`https://wa.me/${WA}?text=${encodeURIComponent(m)}`);setSheet(null);setSelSvc(null);};
   const enviarResena=async()=>{if(!resena.estrellas||!resena.nombre)return setResenaMsj("Pon tu nombre y calificación");await supabase.from("resenas").insert({producto_id:resenaSheet,cliente_nombre:resena.nombre,cliente_telefono:resena.telefono,estrellas:resena.estrellas,comentario:resena.comentario,aprobada:false});setResenaMsj("✅ Gracias por tu reseña.");setTimeout(()=>{setSheet(null);setResenaSheet(null);setResena({estrellas:0,comentario:"",nombre:"",telefono:""});setResenaMsj("");},2000);};
 
   const upload=async(file,bucket,path)=>{await supabase.storage.from(bucket).upload(path,file,{upsert:true});return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;};
@@ -801,7 +801,7 @@ export default function App() {
   };
 
   const toggleDisp=async(id,val)=>{await supabase.from("productos_proveedor").update({disponible:!val}).eq("id",id);loadMyProds(provData.id);loadAll();};
-  const notifyClientes=async(promo)=>{const{data:c}=await supabase.from("ventas").select("cliente_telefono").eq("proveedor_id",provData.id);const nums=[...new Set((c||[]).filter(x=>x.cliente_telefono).map(x=>x.cliente_telefono))];if(nums.length===0)return alert("Aún no tienes compradores registrados");const msg=`🎉 *${provData.negocio}* tiene una nueva promo!\n\n*${promo.nombre}*\n${promo.descripcion}\n💰 $${promo.precio}\n📅 Hasta ${promo.fecha_fin}\n\n👉 mimercado-mu5k.vercel.app`;window.open(`https://wa.me/${nums[0]}?text=${encodeURIComponent(msg)}`);};
+  const notifyClientes=async(promo)=>{const{data:c}=await supabase.from("ventas").select("cliente_telefono").eq("proveedor_id",provData.id);const nums=[...new Set((c||[]).filter(x=>x.cliente_telefono).map(x=>x.cliente_telefono))];if(nums.length===0)return alert("Aún no tienes compradores registrados");const msg=`🎉 *${provData.negocio}* tiene una nueva promo!\n\n*${promo.nombre}*\n${promo.descripcion}\n💰 $${promo.precio}\n📅 Hasta ${promo.fecha_fin}\n\n👉 mimercado-mu5k.vercel.app`;window.location.href=`https://wa.me/${nums[0]}?text=${encodeURIComponent(msg)}`);};
 
   const approvePr=async(id)=>{await supabase.from("productos_proveedor").update({aprobado:true,primera_aprobacion:true,rechazado:false}).eq("id",id);loadAdmin();loadAll();};
   const rejectPr=async(id)=>{const motivo=rejectMotivo[id]||"No cumple los requisitos";await supabase.from("productos_proveedor").update({rechazado:true,aprobado:false,motivo_rechazo:motivo}).eq("id",id);loadAdmin();};
@@ -1377,7 +1377,7 @@ export default function App() {
                   <div style={s.cBt}>
                     <div><div style={s.cPr}>${parseFloat(r.precio).toFixed(2)}</div><div style={{fontSize:10,color:"#94a3b8"}}>{r.vendedor_nombre}</div></div>
                   </div>
-                  <button onClick={()=>window.open(`https://wa.me/${r.vendedor_whatsapp?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${r.vendedor_nombre}, vi tu artículo *${r.titulo}* en MiMercado y me interesa. ¿Sigue disponible?`)}`)} style={{...s.btnWa,marginTop:6,padding:"8px",fontSize:12}}>
+                  <button onClick={()=>window.location.href=`https://wa.me/${r.vendedor_whatsapp?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${r.vendedor_nombre}, vi tu artículo *${r.titulo}* en MiMercado y me interesa. ¿Sigue disponible?`)}`)} style={{...s.btnWa,marginTop:6,padding:"8px",fontSize:12}}>
                     📲 Contactar vendedor
                   </button>
                 </div>
@@ -1416,7 +1416,7 @@ export default function App() {
               </div>
               {/* CTA WHATSAPP */}
               {(negocioActivo.whatsapp_negocio||negocioActivo.telefono)&&(
-                <button onClick={()=>{const num=((negocioActivo.whatsapp_negocio||negocioActivo.telefono)||"").replace(/\D/g,"");const n=num.startsWith("0")?"58"+num.slice(1):num.startsWith("58")?num:"58"+num;window.open(`https://wa.me/${n}?text=${encodeURIComponent(`Hola, vi tu tienda ${negocioActivo.negocio} en Apure Market y quiero consultar algo`)}`);}} style={{width:"100%",background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:10,padding:"9px",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <button onClick={()=>{const num=((negocioActivo.whatsapp_negocio||negocioActivo.telefono)||"").replace(/\D/g,"");const n=num.startsWith("0")?"58"+num.slice(1):num.startsWith("58")?num:"58"+num;window.location.href=`https://wa.me/${n}?text=${encodeURIComponent(`Hola, vi tu tienda ${negocioActivo.negocio} en Apure Market y quiero consultar algo`)}`);}} style={{width:"100%",background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:10,padding:"9px",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                   💬 Consultar por WhatsApp
                 </button>
               )}
@@ -1582,7 +1582,7 @@ export default function App() {
             {/* CTA PRINCIPAL */}
             {Object.values(cartRest).length===0&&(
               <div style={{padding:"12px 16px 4px"}}>
-                <button onClick={()=>{const num=((restauranteActivo.whatsapp_negocio||restauranteActivo.telefono)||"").replace(/\D/g,"");const n=num.startsWith("0")?"58"+num.slice(1):num.startsWith("58")?num:"58"+num;window.open(`https://wa.me/${n}?text=${encodeURIComponent(`Hola ${restauranteActivo.negocio}, quiero hacer un pedido`)}`);}} style={{width:"100%",background:"linear-gradient(135deg,#ea580c,#c2410c)",color:"#fff",border:"none",borderRadius:14,padding:"13px",fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 4px 12px rgba(234,88,12,0.35)"}}>
+                <button onClick={()=>{const num=((restauranteActivo.whatsapp_negocio||restauranteActivo.telefono)||"").replace(/\D/g,"");const n=num.startsWith("0")?"58"+num.slice(1):num.startsWith("58")?num:"58"+num;window.location.href=`https://wa.me/${n}?text=${encodeURIComponent(`Hola ${restauranteActivo.negocio}, quiero hacer un pedido`)}`);}} style={{width:"100%",background:"linear-gradient(135deg,#ea580c,#c2410c)",color:"#fff",border:"none",borderRadius:14,padding:"13px",fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 4px 12px rgba(234,88,12,0.35)"}}>
                   🍽️ Pedir por WhatsApp
                 </button>
               </div>
@@ -1945,7 +1945,7 @@ export default function App() {
               </div>
               {clasificadoSeleccionado.descripcion&&<div style={{fontSize:13,color:"#64748b",marginBottom:12,lineHeight:1.6}}>{clasificadoSeleccionado.descripcion}</div>}
               <div style={{fontSize:12,color:"#64748b",marginBottom:12}}>👤 {clasificadoSeleccionado.vendedor_nombre}</div>
-              <button onClick={()=>window.open(`https://wa.me/${clasificadoSeleccionado.vendedor_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${clasificadoSeleccionado.vendedor_nombre}, vi tu anuncio *${clasificadoSeleccionado.titulo}* en MiMercado. ¿Sigue disponible?`)}`)} style={s.btnWa}>
+              <button onClick={()=>window.location.href=`https://wa.me/${clasificadoSeleccionado.vendedor_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${clasificadoSeleccionado.vendedor_nombre}, vi tu anuncio *${clasificadoSeleccionado.titulo}* en MiMercado. ¿Sigue disponible?`)}`)} style={s.btnWa}>
                 📲 Contactar por WhatsApp
               </button>
             </div>
@@ -2059,7 +2059,7 @@ export default function App() {
                   <div style={{fontSize:11,color:"#64748b",marginTop:2}}>👤 {sv.proveedor_nombre}</div>
                 </div>
               </div>
-              <button onClick={()=>window.open(`https://wa.me/${sv.proveedor_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${sv.proveedor_nombre}, vi tu servicio de *${sv.nombre_servicio}* en MiMercado. ¿Podrías ayudarme?`)}`)} style={{...s.btnWa,marginTop:10,padding:"8px",fontSize:12}}>
+              <button onClick={()=>window.location.href=`https://wa.me/${sv.proveedor_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${sv.proveedor_nombre}, vi tu servicio de *${sv.nombre_servicio}* en MiMercado. ¿Podrías ayudarme?`)}`)} style={{...s.btnWa,marginTop:10,padding:"8px",fontSize:12}}>
                 📲 Contactar
               </button>
             </div>
@@ -2173,7 +2173,7 @@ export default function App() {
               const correo=provForm.email;
               if(!correo)return setPmsg("Escribe tu correo primero");
               const num=WA.startsWith("0")?"58"+WA.slice(1):WA;
-              window.open(`https://wa.me/${num}?text=${encodeURIComponent(`Hola Apure Market, olvidé mi contraseña. Mi correo registrado es: ${correo}`)}`);
+              window.location.href=`https://wa.me/${num}?text=${encodeURIComponent(`Hola Apure Market, olvidé mi contraseña. Mi correo registrado es: ${correo}`)}`);
             }}>¿Olvidaste tu contraseña?</button>
           )}
         </div>)}
@@ -2758,7 +2758,7 @@ export default function App() {
                   {!ped.completado&&(
                     <div style={{display:"flex",gap:6}}>
                       <button onClick={async()=>{await supabase.from("pedidos_restaurante").update({completado:true,estado:"completado"}).eq("id",ped.id);loadMisRestPedidos(provData.id);}} style={{...s.btnGreen,flex:1,borderRadius:10,padding:"8px",fontSize:12}}>✅ Marcar completado</button>
-                      <button onClick={()=>window.open(`https://wa.me/${ped.cliente_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${ped.cliente_nombre} 👋 Tu pedido *${ped.ref}* está listo`)}`)} style={{...s.btnWa,flex:1,marginTop:0,padding:"8px",fontSize:12}}>📲 Escribir</button>
+                      <button onClick={()=>window.location.href=`https://wa.me/${ped.cliente_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${ped.cliente_nombre} 👋 Tu pedido *${ped.ref}* está listo`)}`)} style={{...s.btnWa,flex:1,marginTop:0,padding:"8px",fontSize:12}}>📲 Escribir</button>
                     </div>
                   )}
                 </div>
@@ -3027,7 +3027,7 @@ export default function App() {
                         )}
                       </div>
                     )}
-                    <button onClick={()=>window.open(`https://wa.me/${ped.cliente_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${ped.cliente_nombre} 👋 Tu pedido *${ped.ref}* está ${estadoConfig.label}`)}`)} style={{...s.btnWa,marginTop:6,padding:"8px",fontSize:12}}>
+                    <button onClick={()=>window.location.href=`https://wa.me/${ped.cliente_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${ped.cliente_nombre} 👋 Tu pedido *${ped.ref}* está ${estadoConfig.label}`)}`)} style={{...s.btnWa,marginTop:6,padding:"8px",fontSize:12}}>
                       📲 Escribir al cliente
                     </button>
                   </div>
