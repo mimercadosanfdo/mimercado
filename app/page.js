@@ -801,7 +801,7 @@ export default function App() {
   };
 
   const toggleDisp=async(id,val)=>{await supabase.from("productos_proveedor").update({disponible:!val}).eq("id",id);loadMyProds(provData.id);loadAll();};
-  const notifyClientes=async(promo)=>{const{data:c}=await supabase.from("ventas").select("cliente_telefono").eq("proveedor_id",provData.id);const nums=[...new Set((c||[]).filter(x=>x.cliente_telefono).map(x=>x.cliente_telefono))];if(nums.length===0)return alert("Aún no tienes compradores registrados");const msg=`🎉 *${provData.negocio}* tiene una nueva promo!\n\n*${promo.nombre}*\n${promo.descripcion}\n💰 $${promo.precio}\n📅 Hasta ${promo.fecha_fin}\n\n👉 mimercado-mu5k.vercel.app`;window.location.href=`https://wa.me/${nums[0]}?text=${encodeURIComponent(msg)}`);};
+  const notifyClientes=async(promo)=>{const{data:c}=await supabase.from("ventas").select("cliente_telefono").eq("proveedor_id",provData.id);const nums=[...new Set((c||[]).filter(x=>x.cliente_telefono).map(x=>x.cliente_telefono))];if(nums.length===0)return alert("Aún no tienes compradores registrados");const msg=`🎉 *${provData.negocio}* tiene una nueva promo!\n\n*${promo.nombre}*\n${promo.descripcion}\n💰 $${promo.precio}\n📅 Hasta ${promo.fecha_fin}\n\n👉 mimercado-mu5k.vercel.app`;window.location.href=`https://wa.me/${nums[0]}?text=${encodeURIComponent(msg)}`;};
 
   const approvePr=async(id)=>{await supabase.from("productos_proveedor").update({aprobado:true,primera_aprobacion:true,rechazado:false}).eq("id",id);loadAdmin();loadAll();};
   const rejectPr=async(id)=>{const motivo=rejectMotivo[id]||"No cumple los requisitos";await supabase.from("productos_proveedor").update({rechazado:true,aprobado:false,motivo_rechazo:motivo}).eq("id",id);loadAdmin();};
@@ -1416,7 +1416,7 @@ export default function App() {
               </div>
               {/* CTA WHATSAPP */}
               {(negocioActivo.whatsapp_negocio||negocioActivo.telefono)&&(
-                <button onClick={()=>{const num=((negocioActivo.whatsapp_negocio||negocioActivo.telefono)||"").replace(/\D/g,"");const n=num.startsWith("0")?"58"+num.slice(1):num.startsWith("58")?num:"58"+num;window.location.href=`https://wa.me/${n}?text=${encodeURIComponent(`Hola, vi tu tienda ${negocioActivo.negocio} en Apure Market y quiero consultar algo`)}`);}} style={{width:"100%",background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:10,padding:"9px",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <button onClick={()=>{const num=((negocioActivo.whatsapp_negocio||negocioActivo.telefono)||"").replace(/\D/g,"");const n=num.startsWith("0")?"58"+num.slice(1):num.startsWith("58")?num:"58"+num;window.location.href=`https://wa.me/${n}?text=${encodeURIComponent(`Hola, vi tu tienda ${negocioActivo.negocio} en Apure Market y quiero consultar algo`)`);}} style={{width:"100%",background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:10,padding:"9px",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                   💬 Consultar por WhatsApp
                 </button>
               )}
@@ -1582,7 +1582,7 @@ export default function App() {
             {/* CTA PRINCIPAL */}
             {Object.values(cartRest).length===0&&(
               <div style={{padding:"12px 16px 4px"}}>
-                <button onClick={()=>{const num=((restauranteActivo.whatsapp_negocio||restauranteActivo.telefono)||"").replace(/\D/g,"");const n=num.startsWith("0")?"58"+num.slice(1):num.startsWith("58")?num:"58"+num;window.location.href=`https://wa.me/${n}?text=${encodeURIComponent(`Hola ${restauranteActivo.negocio}, quiero hacer un pedido`)}`);}} style={{width:"100%",background:"linear-gradient(135deg,#ea580c,#c2410c)",color:"#fff",border:"none",borderRadius:14,padding:"13px",fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 4px 12px rgba(234,88,12,0.35)"}}>
+                <button onClick={()=>{const num=((restauranteActivo.whatsapp_negocio||restauranteActivo.telefono)||"").replace(/\D/g,"");const n=num.startsWith("0")?"58"+num.slice(1):num.startsWith("58")?num:"58"+num;window.location.href=`https://wa.me/${n}?text=${encodeURIComponent(`Hola ${restauranteActivo.negocio}, quiero hacer un pedido`)`);}} style={{width:"100%",background:"linear-gradient(135deg,#ea580c,#c2410c)",color:"#fff",border:"none",borderRadius:14,padding:"13px",fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 4px 12px rgba(234,88,12,0.35)"}}>
                   🍽️ Pedir por WhatsApp
                 </button>
               </div>
@@ -2173,7 +2173,7 @@ export default function App() {
               const correo=provForm.email;
               if(!correo)return setPmsg("Escribe tu correo primero");
               const num=WA.startsWith("0")?"58"+WA.slice(1):WA;
-              window.location.href=`https://wa.me/${num}?text=${encodeURIComponent(`Hola Apure Market, olvidé mi contraseña. Mi correo registrado es: ${correo}`)}`);
+              window.location.href=`https://wa.me/${num}?text=${encodeURIComponent(`Hola Apure Market, olvidé mi contraseña. Mi correo registrado es: ${correo}`)`);
             }}>¿Olvidaste tu contraseña?</button>
           )}
         </div>)}
