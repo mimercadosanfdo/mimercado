@@ -1377,7 +1377,7 @@ export default function App() {
                   <div style={s.cBt}>
                     <div><div style={s.cPr}>${parseFloat(r.precio).toFixed(2)}</div><div style={{fontSize:10,color:"#94a3b8"}}>{r.vendedor_nombre}</div></div>
                   </div>
-                  <button onClick={()=>window.location.href=`https://wa.me/${r.vendedor_whatsapp?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${r.vendedor_nombre}, vi tu artículo *${r.titulo}* en MiMercado y me interesa. ¿Sigue disponible?`)}`)} style={{...s.btnWa,marginTop:6,padding:"8px",fontSize:12}}>
+                  <button onClick={()=>window.location.href=`https://wa.me/${r.vendedor_whatsapp?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${r.vendedor_nombre}, vi tu artículo *${r.titulo}* en MiMercado y me interesa. ¿Sigue disponible?`}`)} style={{...s.btnWa,marginTop:6,padding:"8px",fontSize:12}}>
                     📲 Contactar vendedor
                   </button>
                 </div>
@@ -1945,7 +1945,7 @@ export default function App() {
               </div>
               {clasificadoSeleccionado.descripcion&&<div style={{fontSize:13,color:"#64748b",marginBottom:12,lineHeight:1.6}}>{clasificadoSeleccionado.descripcion}</div>}
               <div style={{fontSize:12,color:"#64748b",marginBottom:12}}>👤 {clasificadoSeleccionado.vendedor_nombre}</div>
-              <button onClick={()=>window.location.href=`https://wa.me/${clasificadoSeleccionado.vendedor_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${clasificadoSeleccionado.vendedor_nombre}, vi tu anuncio *${clasificadoSeleccionado.titulo}* en MiMercado. ¿Sigue disponible?`)}`)} style={s.btnWa}>
+              <button onClick={()=>window.location.href=`https://wa.me/${clasificadoSeleccionado.vendedor_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${clasificadoSeleccionado.vendedor_nombre}, vi tu anuncio *${clasificadoSeleccionado.titulo}* en MiMercado. ¿Sigue disponible?`}`)} style={s.btnWa}>
                 📲 Contactar por WhatsApp
               </button>
             </div>
@@ -2059,7 +2059,7 @@ export default function App() {
                   <div style={{fontSize:11,color:"#64748b",marginTop:2}}>👤 {sv.proveedor_nombre}</div>
                 </div>
               </div>
-              <button onClick={()=>window.location.href=`https://wa.me/${sv.proveedor_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${sv.proveedor_nombre}, vi tu servicio de *${sv.nombre_servicio}* en MiMercado. ¿Podrías ayudarme?`)}`)} style={{...s.btnWa,marginTop:10,padding:"8px",fontSize:12}}>
+              <button onClick={()=>window.location.href=`https://wa.me/${sv.proveedor_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${sv.proveedor_nombre}, vi tu servicio de *${sv.nombre_servicio}* en MiMercado. ¿Podrías ayudarme?`}`)} style={{...s.btnWa,marginTop:10,padding:"8px",fontSize:12}}>
                 📲 Contactar
               </button>
             </div>
@@ -2758,7 +2758,7 @@ export default function App() {
                   {!ped.completado&&(
                     <div style={{display:"flex",gap:6}}>
                       <button onClick={async()=>{await supabase.from("pedidos_restaurante").update({completado:true,estado:"completado"}).eq("id",ped.id);loadMisRestPedidos(provData.id);}} style={{...s.btnGreen,flex:1,borderRadius:10,padding:"8px",fontSize:12}}>✅ Marcar completado</button>
-                      <button onClick={()=>window.location.href=`https://wa.me/${ped.cliente_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${ped.cliente_nombre} 👋 Tu pedido *${ped.ref}* está listo`)}`)} style={{...s.btnWa,flex:1,marginTop:0,padding:"8px",fontSize:12}}>📲 Escribir</button>
+                      <button onClick={()=>window.location.href=`https://wa.me/${ped.cliente_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${ped.cliente_nombre} 👋 Tu pedido *${ped.ref}* está listo`}`)} style={{...s.btnWa,flex:1,marginTop:0,padding:"8px",fontSize:12}}>📲 Escribir</button>
                     </div>
                   )}
                 </div>
@@ -3027,7 +3027,7 @@ export default function App() {
                         )}
                       </div>
                     )}
-                    <button onClick={()=>window.location.href=`https://wa.me/${ped.cliente_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${ped.cliente_nombre} 👋 Tu pedido *${ped.ref}* está ${estadoConfig.label}`)}`)} style={{...s.btnWa,marginTop:6,padding:"8px",fontSize:12}}>
+                    <button onClick={()=>window.location.href=`https://wa.me/${ped.cliente_telefono?.replace(/\D/g,"")}?text=${encodeURIComponent(`Hola ${ped.cliente_nombre} 👋 Tu pedido *${ped.ref}* está ${estadoConfig.label}`}`)} style={{...s.btnWa,marginTop:6,padding:"8px",fontSize:12}}>
                       📲 Escribir al cliente
                     </button>
                   </div>
