@@ -2173,7 +2173,7 @@ export default function App() {
               const correo=provForm.email;
               if(!correo)return setPmsg("Escribe tu correo primero");
               const num=WA.startsWith("0")?"58"+WA.slice(1):WA;
-              window.location.href=`https://wa.me/${num}?text=${encodeURIComponent(`Hola Apure Market, olvidé mi contraseña. Mi correo registrado es: ${correo}`)`);
+              window.location.href=`https://wa.me/${num}?text=${encodeURIComponent(`Hola Apure Market, olvidé mi contraseña. Mi correo registrado es: ${correo}`)}`;
             }}>¿Olvidaste tu contraseña?</button>
           )}
         </div>)}
