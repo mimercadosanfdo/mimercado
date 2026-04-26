@@ -1,4 +1,4 @@
-// BUILD:1777243700
+// BUILD:1776395781
 "use client"; // Apure Market v1776307949
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
@@ -19,7 +19,7 @@ const DARK = "#2E2E2E";
 const LIGHT = "#F6F6F6";
 const P2 = "#1aab52";
 
-const MAIN_TABS = ["Inicio","Supermercado","Negocios locales","Feria de comidas","Servicios"];
+const MAIN_TABS = ["Inicio","Supermercado","Negocios locales","Feria de comidas ✓","Servicios"];
 const SEC_TABS = ["Clasificados","Mercadito local"];
 const NEGOCIO_CATS = [
   {cat:"Ropa y calzado",emoji:"👗",color:"#fdf2f8",tc:"#9d174d"},
