@@ -206,6 +206,7 @@ export default function App() {
   const [suscripciones,setSuscripciones]=useState([]);
   const [sheet,setSheet]=useState(null);
   const [platoDetalle,setPlatoDetalle]=useState(null);
+  const [imgZoom,setImgZoom]=useState(null);
   const [zonas,setZonas]=useState([]);
   const [zonaSelId,setZonaSelId]=useState("");
   const [zonaSel,setZonaSel]=useState(null);
@@ -963,7 +964,7 @@ export default function App() {
         {/* 1. IMAGEN — elemento dominante */}
         <div style={{position:"relative",marginBottom:8}}>
           {p.foto
-            ?<img src={p.foto} alt={p.name} style={{width:"100%",height:120,objectFit:"cover",display:"block",borderRadius:"14px 14px 0 0"}}/>
+            ?<img src={p.foto} alt={p.name} style={{width:"100%",height:120,objectFit:"cover",display:"block",borderRadius:"14px 14px 0 0",cursor:"zoom-in"}} onClick={e=>{e.stopPropagation();setImgZoom(p.foto);}}/>
             :<div style={{height:120,background:"linear-gradient(135deg,#fef3c7,#fde68a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:44,borderRadius:"14px 14px 0 0"}}>🍽️</div>
           }
           {/* 2. BADGE — máximo 1, esquina sup izquierda */}
@@ -1615,10 +1616,10 @@ export default function App() {
                           const qtyRest=cartRest[p.id]?.qty||0;
                           return(
                           <div key={p.id} style={{background:"#fff",borderRadius:16,overflow:"hidden",border:"2px solid #fed7aa",boxShadow:"0 3px 12px rgba(249,115,22,0.12)",cursor:"pointer"}} onClick={()=>setPlatoDetalle(p)}>
-                            {/* IMAGEN CLICKABLE */}
+                            {/* IMAGEN CLICKABLE → ZOOM */}
                             <div style={{position:"relative"}}>
                               {p.foto
-                                ?<img src={p.foto} alt={p.name} style={{width:"100%",height:130,objectFit:"cover",display:"block"}}/>
+                                ?<img src={p.foto} alt={p.name} style={{width:"100%",height:130,objectFit:"cover",display:"block",cursor:"zoom-in"}} onClick={e=>{e.stopPropagation();setImgZoom(p.foto);}}/>
                                 :<div style={{height:130,background:"linear-gradient(135deg,#fff7ed,#fde68a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:48}}>🎁</div>
                               }
                               <div style={{position:"absolute",top:8,left:8,background:"#f97316",color:"#fff",fontSize:9,fontWeight:900,padding:"3px 9px",borderRadius:20,letterSpacing:0.3}}>🔥 PROMO</div>
@@ -3537,6 +3538,13 @@ export default function App() {
         <div style={{marginTop:10}}><div style={s.sr}><span style={s.sL}>Subtotal</span><span style={s.sV}>${sub.toFixed(2)}</span></div><div style={s.sr}><span style={s.sL}>Delivery</span>{del===0?<span style={s.fT}>GRATIS</span>:<span style={s.sV}>${del.toFixed(2)}</span>}</div><div style={s.tR}><span style={{fontWeight:700}}>Total</span><span style={{fontWeight:700,fontSize:17}}>${total.toFixed(2)}</span></div></div><button style={s.btn} onClick={()=>setSheet("checkout")}>Continuar →</button><button style={s.btnG} onClick={()=>setSheet(null)}>Seguir comprando</button></div></div>)}
 
       {/* SHEET CHECKOUT */}
+      {/* LIGHTBOX IMAGEN AMPLIADA */}
+      {imgZoom&&(
+        <div onClick={()=>setImgZoom(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <button onClick={()=>setImgZoom(null)} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:"50%",width:36,height:36,color:"#fff",fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+          <img src={imgZoom} alt="" style={{maxWidth:"100%",maxHeight:"85vh",objectFit:"contain",borderRadius:12,boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}}/>
+        </div>
+      )}
       {/* MODAL DETALLE PLATO */}
       {platoDetalle&&(
         <div style={s.ov} onClick={()=>setPlatoDetalle(null)}>
