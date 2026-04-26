@@ -570,7 +570,7 @@ export default function App() {
   const allProds=[
     ...superProds.map(p=>({id:`sp_${p.id}`,name:p.nombre,cat:"Supermercado",superCat:p.categoria,price:p.precio,unit:p.unidad,emoji:p.emoji||"🛒",margin:0.10,foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,abierto:true})),
     ...provProds.map(p=>({id:`pv_${p.id}`,name:p.nombre,cat:p.categoria,price:p.precio,unit:p.unidad,emoji:"🍽️",margin:0.20,kitchen:p.proveedores?.negocio,logo:p.proveedores?.logo_url,foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,stock:p.stock,horario:p.permanente?"Siempre disponible":`${p.horario_inicio}–${p.horario_fin}`,tag:p.stock<=3?`Solo ${p.stock} disp.`:null,dbId:p.id,abierto:p.proveedores?.activo!==false&&!p.proveedores?.en_pausa,horarioNeg:p.proveedores?.horario_desde&&p.proveedores?.horario_hasta?`${p.proveedores.horario_desde}–${p.proveedores.horario_hasta}${p.proveedores.horario_desc?" ("+p.proveedores.horario_desc+")":""}`:null})),
-    ...provPromos.map(pr=>({id:`promo_${pr.id}`,name:pr.nombre,cat:"Comida preparada",price:pr.precio,unit:"promo",emoji:"🎁",margin:0.20,kitchen:pr.proveedores?.negocio,logo:pr.proveedores?.logo_url,foto:pr.foto_url,descripcion:pr.descripcion,isPromo:true,tag:"🎉 Promo",horario:`Hasta ${pr.fecha_fin}`,abierto:pr.proveedores?.activo!==false&&!pr.proveedores?.en_pausa,horarioNeg:pr.proveedores?.horario_desde&&pr.proveedores?.horario_hasta?`${pr.proveedores.horario_desde}–${pr.proveedores.horario_hasta}${pr.proveedores.horario_desc?" ("+pr.proveedores.horario_desc+")":""}`:null})),
+    ...provPromos.map(pr=>({id:`promo_${pr.id}`,name:pr.nombre,cat:"Comida preparada",price:pr.precio,unit:"promo",emoji:"🎁",margin:0.20,kitchen:pr.proveedores?.negocio,logo:pr.proveedores?.logo_url,foto:pr.foto_url,descripcion:pr.descripcion,isPromo:true,tag:"🔥 PROMO",horario:`Hasta ${pr.fecha_fin}`,abierto:pr.proveedores?.activo!==false&&!pr.proveedores?.en_pausa,horarioNeg:pr.proveedores?.horario_desde&&pr.proveedores?.horario_hasta?`${pr.proveedores.horario_desde}–${pr.proveedores.horario_hasta}${pr.proveedores.horario_desc?" ("+pr.proveedores.horario_desc+")":""}`:null})),
   ];
 
   const allProdsConMargen=allProds.map(p=>({...p,priceOriginal:p.price,price:p.cat==="Supermercado"?p.price:parseFloat((p.price*1.20).toFixed(2))}));
@@ -954,9 +954,9 @@ export default function App() {
   const CardRest=({p})=>{
     const qtyRest=cartRest[p.id]?.qty||0;
     // Badge permitido: solo basado en tag del producto, filtrado
-    const BADGES_OK={"⭐ Más vendido":{bg:"#f59e0b",txt:"⭐ Más vendido"},"🔥 Recomendado":{bg:"#ef4444",txt:"🔥 Recomendado"},"🌶️ Picante":{bg:"#dc2626",txt:"🌶️ Picante"},"👶 Infantil":{bg:"#06b6d4",txt:"👶 Infantil"},"⏱️ Listo rápido":{bg:"#8b5cf6",txt:"⏱️ Listo rápido"},"🔥 COMBO":{bg:"#ef4444",txt:"🔥 Combo"}};
-    const isCombo=p.name?.toLowerCase().includes("combo")||p.isPromo;
-    const badgeKey=isCombo?"🔥 COMBO":p.tag;
+    const BADGES_OK={"⭐ Más vendido":{bg:"#f59e0b",txt:"⭐ Más vendido"},"🔥 Recomendado":{bg:"#ef4444",txt:"🔥 Recomendado"},"🌶️ Picante":{bg:"#dc2626",txt:"🌶️ Picante"},"👶 Infantil":{bg:"#06b6d4",txt:"👶 Infantil"},"⏱️ Listo rápido":{bg:"#8b5cf6",txt:"⏱️ Listo rápido"},"🔥 COMBO":{bg:"#f97316",txt:"🔥 Promo"}};
+    const isCombo=p.name?.toLowerCase().includes("combo")||p.name?.toLowerCase().includes("promo")||p.isPromo;
+    const badgeKey=isCombo?"🔥 COMBO":(p.isPromo?"🔥 COMBO":p.tag);
     const badge=BADGES_OK[badgeKey]||null;
     return(
       <div style={{...s.card,padding:"0 0 10px",overflow:"hidden",cursor:"pointer",borderRadius:14,boxShadow:"0 2px 8px rgba(0,0,0,0.07)"}} onClick={()=>setPlatoDetalle(p)}>
@@ -1591,12 +1591,12 @@ export default function App() {
             <div style={s.sec}>
               {(()=>{
                 const todosProds=allProdsConMargen.filter(p=>p.kitchen===restauranteActivo.negocio&&p.name.toLowerCase().includes(search.toLowerCase()));
-                const combos=todosProds.filter(p=>p.name?.toLowerCase().includes("combo")||p.isPromo);
-                const resto=todosProds.filter(p=>!p.name?.toLowerCase().includes("combo")&&!p.isPromo);
+                const combos=todosProds.filter(p=>p.name?.toLowerCase().includes("combo")||p.name?.toLowerCase().includes("promo")||p.isPromo);
+                const resto=todosProds.filter(p=>!p.name?.toLowerCase().includes("combo")&&!p.name?.toLowerCase().includes("promo")&&!p.isPromo);
                 const iconoTipo={"Hamburguesas":"🍔","Perros calientes":"🌭","Pizzería":"🍕","Pastas":"🍝","Comida criolla":"🍲","Arepas":"🫓","Cachapas":"🥞","Panadería":"🍞","Pastelería":"🎂","Postres":"🍰","Jugos naturales":"🥤","Batidos":"🥛","Bebidas frías":"🧃","Café":"☕","Comida saludable":"🥗","Vegetariana":"🥦","Mariscos":"🦐","Pescado frito":"🐟","Comida rápida":"⚡","Alitas / Nuggets":"🍗","Papas fritas":"🍟","Salchipapas":"🍟","Combos":"🔥","Menú del día":"📋","Especiales":"⭐"};
                 const catsProv=restauranteActivo.categorias?.length>0?restauranteActivo.categorias:PROV_CATS;
                 const secciones=[
-                  {key:"combos",label:"🔥 Combos recomendados",items:combos,highlight:true},
+                  {key:"combos",label:"🔥 Promos recomendadas",items:combos,highlight:true},
                   ...catsProv.filter(cat=>cat!=="Combos"&&cat!=="Especiales"&&cat!=="Menú del día").map(cat=>({
                     key:cat,
                     label:`${iconoTipo[cat]||"🍽️"} ${cat}`,
@@ -1614,17 +1614,31 @@ export default function App() {
                         {sec.items.map(p=>{
                           const qtyRest=cartRest[p.id]?.qty||0;
                           return(
-                          <div key={p.id} style={{background:"#fff",borderRadius:14,overflow:"hidden",border:"2px solid #fed7aa",display:"flex",gap:0,boxShadow:"0 2px 8px rgba(234,88,12,0.1)"}}>
-                            {p.foto?<img src={p.foto} alt={p.name} style={{width:100,height:90,objectFit:"cover",flexShrink:0}}/>:<div style={{width:100,height:90,background:"linear-gradient(135deg,#fef3c7,#fde68a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,flexShrink:0}}>🎁</div>}
-                            <div style={{flex:1,padding:"8px 10px",display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
-                              <div>
-                                <div style={{fontSize:12,fontWeight:800,color:"#0f172a",lineHeight:1.3}}>{p.name}</div>
-                                {p.descripcion&&<div style={{fontSize:10,color:"#64748b",lineHeight:1.3,marginTop:2}}>{p.descripcion.length>60?p.descripcion.slice(0,60)+"…":p.descripcion}</div>}
-                              </div>
-                              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:6}}>
-                                <div style={{fontSize:16,fontWeight:900,color:"#ef4444"}}>${p.price.toFixed(2)}</div>
-                                {qtyRest>0?(<div style={s.qR}><button style={s.qB} onClick={e=>{e.stopPropagation();const n={...cartRest};n[p.id].qty>1?n[p.id]={...n[p.id],qty:n[p.id].qty-1}:delete n[p.id];setCartRest(n);}}>−</button><span style={s.qN}>{qtyRest}</span><button style={s.qB} onClick={()=>setCartRest(c=>({...c,[p.id]:{...p,qty:qtyRest+1}}))}>+</button></div>)
-                                :<button style={{background:"#ef4444",color:"#fff",border:"none",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,cursor:"pointer"}} onClick={()=>setCartRest(c=>({...c,[p.id]:{...p,qty:1}}))}>+ Agregar</button>}
+                          <div key={p.id} style={{background:"#fff",borderRadius:16,overflow:"hidden",border:"2px solid #fed7aa",boxShadow:"0 3px 12px rgba(249,115,22,0.12)",cursor:"pointer"}} onClick={()=>setPlatoDetalle(p)}>
+                            {/* IMAGEN CLICKABLE */}
+                            <div style={{position:"relative"}}>
+                              {p.foto
+                                ?<img src={p.foto} alt={p.name} style={{width:"100%",height:130,objectFit:"cover",display:"block"}}/>
+                                :<div style={{height:130,background:"linear-gradient(135deg,#fff7ed,#fde68a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:48}}>🎁</div>
+                              }
+                              <div style={{position:"absolute",top:8,left:8,background:"#f97316",color:"#fff",fontSize:9,fontWeight:900,padding:"3px 9px",borderRadius:20,letterSpacing:0.3}}>🔥 PROMO</div>
+                            </div>
+                            {/* INFO */}
+                            <div style={{padding:"10px 12px 12px"}}>
+                              <div style={{fontSize:13,fontWeight:800,color:"#0f172a",lineHeight:1.3,marginBottom:3}}>{p.name}</div>
+                              {p.descripcion&&<div style={{fontSize:11,color:"#64748b",lineHeight:1.4,marginBottom:4}}>{p.descripcion.length>70?p.descripcion.slice(0,70)+"…":p.descripcion}</div>}
+                              <div style={{fontSize:10,color:"#f97316",fontWeight:600,marginBottom:8}}>💰 Ahorra más con esta promo</div>
+                              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                                <div style={{fontSize:18,fontWeight:900,color:"#ef4444",letterSpacing:-0.3}}>${p.price.toFixed(2)}</div>
+                                {qtyRest>0?(
+                                  <div style={s.qR}>
+                                    <button style={s.qB} onClick={e=>{e.stopPropagation();const n={...cartRest};n[p.id].qty>1?n[p.id]={...n[p.id],qty:n[p.id].qty-1}:delete n[p.id];setCartRest(n);}}>−</button>
+                                    <span style={s.qN}>{qtyRest}</span>
+                                    <button style={s.qB} onClick={e=>{e.stopPropagation();setCartRest(c=>({...c,[p.id]:{...p,qty:qtyRest+1}}))}}>+</button>
+                                  </div>
+                                ):(
+                                  <button style={{background:"#f97316",color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",fontSize:11,fontWeight:800,cursor:"pointer"}} onClick={e=>{e.stopPropagation();setCartRest(c=>({...c,[p.id]:{...p,qty:1}}))}}>+ Agregar Promo</button>
+                                )}
                               </div>
                             </div>
                           </div>
