@@ -546,7 +546,7 @@ export default function App() {
       categoria:i.cat,
     }));
     const margenTotal=items.reduce((a,i)=>{
-      const margen=i.cat==="Supermercado"?0.10:0.20;
+      const margen=i.cat==="Supermercado"?0.10:0;
       return a+(i.price*i.qty*margen);
     },0);
     const{error}=await supabase.from("pedidos").insert({
@@ -574,7 +574,7 @@ export default function App() {
     ...provPromos.map(pr=>({id:`promo_${pr.id}`,name:pr.nombre,cat:"Comida preparada",price:pr.precio,unit:"promo",emoji:"🎁",margin:0,kitchen:pr.proveedores?.negocio,logo:pr.proveedores?.logo_url,foto:pr.foto_url,descripcion:pr.descripcion,isPromo:true,tag:"🔥 PROMO",horario:`Hasta ${pr.fecha_fin}`,abierto:pr.proveedores?.activo!==false&&!pr.proveedores?.en_pausa,horarioNeg:pr.proveedores?.horario_desde&&pr.proveedores?.horario_hasta?`${pr.proveedores.horario_desde}–${pr.proveedores.horario_hasta}${pr.proveedores.horario_desc?" ("+pr.proveedores.horario_desc+")":""}`:null})),
   ];
 
-  const allProdsConMargen=allProds.map(p=>({...p,priceOriginal:p.price,price:p.cat==="Supermercado"?p.price:parseFloat((p.price*1.20).toFixed(2))}));
+  const allProdsConMargen=allProds.map(p=>({...p,priceOriginal:p.price}));
 
   const filteredProds=allProdsConMargen.filter(p=>{
     const matchCat=cat==="Todo"||(cat==="Supermercado"?p.cat==="Supermercado":p.cat===cat);
@@ -625,8 +625,7 @@ export default function App() {
   const generarRef=()=>`PED-${Date.now().toString().slice(-5)}`;
 
   const precioConMargen=(p)=>{
-    if(p.cat==="Supermercado")return p.price;
-    return parseFloat((p.price*1.20).toFixed(2));
+    return p.price;
   };
 
   const saveCliente=async()=>{
