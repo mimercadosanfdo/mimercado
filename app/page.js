@@ -3495,7 +3495,7 @@ export default function App() {
         const proveedores=Object.values(grupos);
         const esMultiple=proveedores.length>1;
         const datosOk=form.nombre&&form.telefono;
-        const dirCliente=[addr.calle,addr.referencia].filter(Boolean).join(", ");
+        const dirCliente=[zonaSel?.zona,addr.calle,addr.referencia].filter(Boolean).join(", ");
         const enviarAProveedor=(prov)=>{
           if(!datosOk)return alert("Completa tu nombre y teléfono antes de enviar");
           if(!prov.wa){alert(`${prov.nombre} no tiene WhatsApp configurado. Contacta al administrador.`);return;}
@@ -3531,7 +3531,18 @@ export default function App() {
                 <div style={{fontSize:12,fontWeight:700,color:"#15803d",marginBottom:8}}>👤 Tus datos de contacto</div>
                 <input style={{...s.inp,marginBottom:8}} placeholder="Nombre y apellido *" value={form.nombre} onChange={e=>setForm({...form,nombre:e.target.value})}/>
                 <input style={{...s.inp,marginBottom:8}} placeholder="Tu WhatsApp * (Ej: 04XX-XXXXXXX)" value={form.telefono} onChange={e=>setForm({...form,telefono:e.target.value})}/>
-                <input style={{...s.inp,marginBottom:0}} placeholder="Dirección de entrega (opcional)" value={addr.calle} onChange={e=>setAddr({...addr,calle:e.target.value})}/>
+                {/* ZONA DEL SISTEMA */}
+                <div style={{fontSize:11,fontWeight:600,color:"#374151",marginBottom:4}}>📍 Zona de entrega</div>
+                <select style={{...s.inp,marginBottom:8,background:"#fff",color:zonaSelId?"#0f172a":"#94a3b8"}} value={zonaSelId} onChange={e=>{setZonaSelId(e.target.value);setZonaSel(zonas.find(z=>z.id===e.target.value)||null);}}>
+                  <option value="">Selecciona tu zona / barrio...</option>
+                  {zonas.map(z=><option key={z.id} value={z.id}>{z.zona}{z.municipio&&z.municipio!=="San Fernando"?` — ${z.municipio}`:""}</option>)}
+                </select>
+                {/* DIRECCIÓN EXACTA */}
+                <div style={{fontSize:11,fontWeight:600,color:"#374151",marginBottom:4}}>🏠 Dirección exacta</div>
+                <input style={{...s.inp,marginBottom:6}} placeholder="Calle, carrera, av. y número (Ej: Calle Bolívar #23)" value={addr.calle} onChange={e=>setAddr({...addr,calle:e.target.value})}/>
+                {/* PUNTO DE REFERENCIA */}
+                <div style={{fontSize:11,fontWeight:600,color:"#374151",marginBottom:4}}>🗺️ Punto de referencia</div>
+                <input style={{...s.inp,marginBottom:0}} placeholder="Ej: Casa azul, frente al CANTV, al lado del parque..." value={addr.referencia} onChange={e=>setAddr({...addr,referencia:e.target.value})}/>
                 {!datosOk&&<div style={{fontSize:11,color:"#dc2626",marginTop:6}}>⚠️ Nombre y teléfono son obligatorios para enviar pedidos</div>}
               </div>
               {/* BLOQUE POR PROVEEDOR */}
