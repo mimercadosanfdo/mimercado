@@ -358,7 +358,7 @@ export default function App() {
     if(data)setSuscripciones(data);
   };
 
-  const guardarPedidoRestaurante=async(restId,restItems,restSub,restDel,restTotal,restRef)=>{
+  const guardarPedidoRestaurante=async(restId,restItems,restSub,restDel,restTotal,restRef,aceptaPromo,provNombre)=>{
     await supabase.from("pedidos_restaurante").insert({
       proveedor_id:restId,
       ref:restRef,
@@ -371,6 +371,26 @@ export default function App() {
       estado:"iniciado",
       completado:false,
     });
+    // Guardar suscripción a promos si el cliente aceptó, solo para este proveedor
+    if(aceptaPromo&&form.telefono&&form.nombre&&restId){
+      const{data:existe}=await supabase.from("suscriptores_promo")
+        .select("id").eq("proveedor_id",restId).eq("cliente_telefono",form.telefono).single();
+      if(!existe){
+        await supabase.from("suscriptores_promo").insert({
+          proveedor_id:restId,
+          proveedor_nombre:provNombre||"",
+          cliente_nombre:form.nombre,
+          cliente_telefono:form.telefono,
+          zona:zonaSel?.zona||"",
+          acepta_promos:true,
+          ultimo_pedido:new Date().toISOString(),
+        });
+      } else {
+        await supabase.from("suscriptores_promo")
+          .update({acepta_promos:true,ultimo_pedido:new Date().toISOString(),cliente_nombre:form.nombre})
+          .eq("proveedor_id",restId).eq("cliente_telefono",form.telefono);
+      }
+    }
   };
 
   const buildNegocioWaMsg=(negNombre,negItems,negSub,negDel,negTotal,negRef)=>{
@@ -812,7 +832,22 @@ export default function App() {
   };
 
   const toggleDisp=async(id,val)=>{await supabase.from("productos_proveedor").update({disponible:!val}).eq("id",id);loadMyProds(provData.id);loadAll();};
-  const notifyClientes=async(promo)=>{const{data:c}=await supabase.from("ventas").select("cliente_telefono").eq("proveedor_id",provData.id);const nums=[...new Set((c||[]).filter(x=>x.cliente_telefono).map(x=>x.cliente_telefono))];if(nums.length===0)return alert("Aún no tienes compradores registrados");const msg=`🎉 *${provData.negocio}* tiene una nueva promo!\n\n*${promo.nombre}*\n${promo.descripcion}\n💰 $${promo.precio}\n📅 Hasta ${promo.fecha_fin}\n\n👉 mimercado-mu5k.vercel.app`;window.location.href=`https://wa.me/${nums[0]}?text=${encodeURIComponent(msg)}`;};
+  const notifyClientes=async(promo)=>{
+    // Solo clientes que aceptaron promos de ESTE proveedor
+    const{data:subs}=await supabase.from("suscriptores_promo")
+      .select("cliente_nombre,cliente_telefono")
+      .eq("proveedor_id",provData.id)
+      .eq("acepta_promos",true);
+    if(!subs||subs.length===0)return alert("Aún no tienes clientes suscritos a tus promos.\n\nCuando un cliente acepte recibir promociones al hacer un pedido, aparecerá aquí.");
+    const appUrl="https://mimercado-mu5k.vercel.app";
+    // Abrir WhatsApp con el primero — el proveedor envía manualmente uno a uno
+    const primero=subs[0];
+    const raw=(primero.cliente_telefono||"").replace(/\D/g,"");
+    const num=raw.startsWith("0")?"58"+raw.slice(1):raw.startsWith("58")?raw:"58"+raw;
+    const msg=`👋 Hola ${primero.cliente_nombre||""}\n\n*${provData.negocio}* tiene una nueva promo para ti 🍔\n\n🔥 *${promo.nombre}*\n${promo.descripcion||""}\n\n💵 Precio: $${promo.precio}\n\n👉 Pide aquí:\n${appUrl}\n\nSi no deseas recibir más promociones, responde *BAJA*.`;
+    alert(`Vas a enviar esta promo a ${subs.length} cliente${subs.length>1?"s":""} suscrito${subs.length>1?"s":""}.\n\nSe abrirá WhatsApp con el primer mensaje. Recuerda enviar uno a uno.`);
+    window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank");
+  };
 
   const approvePr=async(id)=>{await supabase.from("productos_proveedor").update({aprobado:true,primera_aprobacion:true,rechazado:false}).eq("id",id);loadAdmin();loadAll();};
   const rejectPr=async(id)=>{const motivo=rejectMotivo[id]||"No cumple los requisitos";await supabase.from("productos_proveedor").update({rechazado:true,aprobado:false,motivo_rechazo:motivo}).eq("id",id);loadAdmin();};
@@ -2647,7 +2682,17 @@ export default function App() {
                         <button onClick={async()=>{if(!window.confirm("¿Eliminar esta promoción?"))return;await supabase.from("promociones_proveedor").delete().eq("id",pr.id);loadMyPromos(provData.id);loadAll();}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fee2e2",color:"#be123c"}}>🗑️ Eliminar</button>
                       </div>
                     )}
-                    <button onClick={()=>notifyClientes(pr)} style={{background:"#25d366",color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",width:"100%"}}>📲 Notificar compradores</button>
+                    <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:"8px 10px",marginTop:2}}>
+                      <div style={{fontSize:10,color:"#15803d",marginBottom:5,fontWeight:600}}>
+                        👥 Enviar promo a clientes suscritos
+                      </div>
+                      <div style={{fontSize:10,color:"#64748b",marginBottom:6,lineHeight:1.4}}>
+                        Solo se notifica a clientes que aceptaron recibir tus promos.
+                      </div>
+                      <button onClick={()=>notifyClientes(pr)} style={{background:"#25d366",color:"#fff",border:"none",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:700,cursor:"pointer",width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                        📲 Notificar mis suscriptores
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -3496,17 +3541,22 @@ export default function App() {
         const esMultiple=proveedores.length>1;
         const datosOk=form.nombre&&form.telefono;
         const dirCliente=[zonaSel?.zona,addr.calle,addr.referencia].filter(Boolean).join(", ");
+        // Estado de consentimiento por proveedor — desmarcado por defecto
+        const [consentPromo,setConsentPromo]=React.useState({});
         const enviarAProveedor=(prov)=>{
           if(!datosOk)return alert("Completa tu nombre y teléfono antes de enviar");
           if(!prov.wa){alert(`${prov.nombre} no tiene WhatsApp configurado. Contacta al administrador.`);return;}
           const sub=prov.items.reduce((a,i)=>a+i.price*i.qty,0);
           const del=prov.delivery?(sub>=prov.gratis?0:prov.costo):0;
           const total=sub+del;
+          const aceptaPromo=!!consentPromo[prov.nombre];
           const msg=buildRestWaMsg(prov.nombre,prov.items,total,del,form.nombre,form.telefono,dirCliente);
           const raw=prov.wa.replace(/\D/g,"");
           const num=raw.startsWith("0")?"58"+raw.slice(1):raw.startsWith("58")?raw:"58"+raw;
           const ref=`REST-${Date.now().toString().slice(-5)}`;
-          guardarPedidoRestaurante(null,prov.items,sub,del,total,ref);
+          // Buscar id del proveedor desde allRestaurantes
+          const restObj=allRestaurantes?.find(r=>r.negocio===prov.nombre);
+          guardarPedidoRestaurante(restObj?.id||null,prov.items,sub,del,total,ref,aceptaPromo,prov.nombre);
           const nuevoCart={...cartRest};
           prov.items.forEach(i=>delete nuevoCart[i.id]);
           setCartRest(nuevoCart);
@@ -3613,6 +3663,25 @@ export default function App() {
                         {del===0?(prov.delivery?"Delivery incluido":"Sin delivery"):`Delivery: $${del.toFixed(2)}`}
                       </span>
                       <span style={{fontWeight:800,color:"#0f172a",fontSize:14}}>Total: <span style={{color:"#ef4444"}}>${total.toFixed(2)}</span></span>
+                    </div>
+                    {/* Consentimiento promos — desmarcado por defecto */}
+                    <div style={{marginTop:10,padding:"10px 12px",background:"#f8fafc",borderRadius:10,border:"1px solid #e2e8f0"}}>
+                      <label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer"}}>
+                        <input
+                          type="checkbox"
+                          checked={!!consentPromo[prov.nombre]}
+                          onChange={e=>setConsentPromo(c=>({...c,[prov.nombre]:e.target.checked}))}
+                          style={{marginTop:2,width:16,height:16,accentColor:"#25D366",flexShrink:0,cursor:"pointer"}}
+                        />
+                        <div>
+                          <div style={{fontSize:12,fontWeight:600,color:"#0f172a",lineHeight:1.4}}>
+                            ¿Deseas recibir promociones de <strong>{prov.nombre}</strong> por WhatsApp?
+                          </div>
+                          <div style={{fontSize:10,color:"#64748b",marginTop:2,lineHeight:1.4}}>
+                            Solo te contactarán cuando tengan nuevas promos. Puedes cancelar respondiendo BAJA.
+                          </div>
+                        </div>
+                      </label>
                     </div>
                     {/* Botón */}
                     {sinWa
