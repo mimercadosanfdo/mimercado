@@ -378,13 +378,15 @@ export default function App() {
     return `🛍️ *Nuevo pedido - ${APP_NAME}*\n📋 Ref: ${negRef}\n----------------------------\n${lineas}\n----------------------------\nSubtotal: $${negSub.toFixed(2)}\nDelivery: ${negDel===0?"GRATIS":"$"+negDel.toFixed(2)}\n*TOTAL: $${negTotal.toFixed(2)}*\n----------------------------\n👤 ${form.nombre}\n📱 ${form.telefono}\n📍 ${zonaSel?.zona||""}, ${addr.calle}\n`;
   };
 
-  const buildRestWaMsg=(restNombre,restItems,restTotal,modalidad)=>{
+  const buildRestWaMsg=(restNombre,restItems,restTotal,del,clienteNombre,clienteTel,clienteDir)=>{
     const promos=restItems.filter(i=>i.isPromo);
     const platos=restItems.filter(i=>!i.isPromo);
     const lineasPromo=promos.map(i=>`🔥 Promo ${i.name}\n• Precio: $${i.price.toFixed(2)}`).join("\n\n");
     const lineasPlato=platos.map(i=>`🍔 ${i.name}\n• Cantidad: ${i.qty}\n• Precio: $${i.price.toFixed(2)}${i.nota?"\n• Nota: "+i.nota:""}`).join("\n\n");
     const lineas=[lineasPromo,lineasPlato].filter(Boolean).join("\n\n");
-    return `👋 Hola, quiero realizar un pedido:\n\n🏪 *${restNombre}*\n\n🍽️ *Mi pedido:*\n\n${lineas}\n\n💵 *Total estimado:* $${restTotal.toFixed(2)}\n\n📍 Modalidad: ${modalidad}\n\n📞 Quedo atento(a) para confirmar disponibilidad, tiempo de entrega y método de pago.\nGracias.`;
+    const delLinea=del===0?"🚚 Delivery: Gratis 🎉":`🚚 Delivery: $${del.toFixed(2)}`;
+    const clienteBloque=`👤 *Datos del cliente:*\nNombre: ${clienteNombre||"No indicado"}\nTeléfono: ${clienteTel||"No indicado"}${clienteDir?`\nDirección: ${clienteDir}`:""}`;
+    return `👋 Hola, quiero realizar un pedido:\n\n🏪 *${restNombre}*\n\n${clienteBloque}\n\n🍽️ *Mi pedido:*\n\n${lineas}\n\n${delLinea}\n\n💵 *Total estimado:* $${restTotal.toFixed(2)}\n\n📞 Quedo atento(a) para confirmar disponibilidad, tiempo de entrega y método de pago.\nGracias.`;
   };
   const getModalidad=(prov)=>{
     if(prov?.delivery_propio&&prov?.permite_retiro)return"Delivery disponible";
@@ -1554,7 +1556,7 @@ export default function App() {
             <div style={{background:"linear-gradient(160deg,#7c2d12 0%,#c2410c 70%,#ea580c 100%)",color:"#fff"}}>
               <div style={{padding:"12px 16px 14px"}}>
                 <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-                  <button onClick={()=>{setRestauranteActivo(null);setCartRest({});setCartRestId(null);setCartRestNombre("");setCartRestWa("");}} style={{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:8,color:"#fff",padding:"6px 10px",fontSize:12,cursor:"pointer",flexShrink:0}}>← Volver</button>
+                  <button onClick={()=>{setRestauranteActivo(null);}} style={{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:8,color:"#fff",padding:"6px 10px",fontSize:12,cursor:"pointer",flexShrink:0}}>← Volver</button>
                   <div style={{width:52,height:52,borderRadius:"50%",background:restauranteActivo.logo_url?"#fff":getAvatarColor(restauranteActivo.negocio),flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",padding:restauranteActivo.logo_url?4:0,border:"2px solid rgba(255,255,255,0.3)"}}>
                     {restauranteActivo.logo_url
                       ?<img src={restauranteActivo.logo_url} alt="" style={{width:"100%",height:"100%",objectFit:"contain"}} onError={e=>{e.target.style.display="none";e.target.parentNode.style.background=getAvatarColor(restauranteActivo.negocio);e.target.parentNode.innerHTML=`<span style="color:#fff;font-size:20px;font-weight:900">${(restauranteActivo.negocio||"?")[0].toUpperCase()}</span>`;}}/>
@@ -3479,31 +3481,32 @@ export default function App() {
         })()}
       </div></div>)}
 
-      {/* SHEET CARRITO RESTAURANTE — MULTI-PROVEEDOR */}
+      {/* SHEET CARRITO RESTAURANTE — MULTI-PROVEEDOR v2 */}
       {sheet==="cartRest"&&(()=>{
         const allRestItems=Object.values(cartRest);
         if(allRestItems.length===0)return null;
-        // Agrupar por proveedor (kitchen)
+        // Agrupar por proveedor
         const grupos={};
         allRestItems.forEach(i=>{
           const k=i.kitchen||"Sin proveedor";
-          if(!grupos[k])grupos[k]={nombre:k,wa:i.kitchenWa||"",items:[],delivery:i.kitchenDelivery,costo:i.kitchenDeliveryCosto||0,gratis:i.kitchenDeliveryGratis||15,retiro:i.kitchenRetiro,tipo:i.kitchenTipo};
+          if(!grupos[k])grupos[k]={nombre:k,wa:i.kitchenWa||"",items:[],delivery:i.kitchenDelivery,costo:i.kitchenDeliveryCosto||0,gratis:i.kitchenDeliveryGratis||15,retiro:i.kitchenRetiro};
           grupos[k].items.push(i);
         });
         const proveedores=Object.values(grupos);
         const esMultiple=proveedores.length>1;
+        const datosOk=form.nombre&&form.telefono;
+        const dirCliente=[addr.calle,addr.referencia].filter(Boolean).join(", ");
         const enviarAProveedor=(prov)=>{
+          if(!datosOk)return alert("Completa tu nombre y teléfono antes de enviar");
           if(!prov.wa){alert(`${prov.nombre} no tiene WhatsApp configurado. Contacta al administrador.`);return;}
           const sub=prov.items.reduce((a,i)=>a+i.price*i.qty,0);
           const del=prov.delivery?(sub>=prov.gratis?0:prov.costo):0;
           const total=sub+del;
-          const modalidad=prov.delivery&&prov.retiro?"Delivery disponible":prov.delivery?"Solo delivery":prov.retiro?"Retiro en local":"Solo delivery";
-          const msg=buildRestWaMsg(prov.nombre,prov.items,total,modalidad);
+          const msg=buildRestWaMsg(prov.nombre,prov.items,total,del,form.nombre,form.telefono,dirCliente);
           const raw=prov.wa.replace(/\D/g,"");
           const num=raw.startsWith("0")?"58"+raw.slice(1):raw.startsWith("58")?raw:"58"+raw;
           const ref=`REST-${Date.now().toString().slice(-5)}`;
           guardarPedidoRestaurante(null,prov.items,sub,del,total,ref);
-          // Eliminar items de ese proveedor del carrito
           const nuevoCart={...cartRest};
           prov.items.forEach(i=>delete nuevoCart[i.id]);
           setCartRest(nuevoCart);
@@ -3519,15 +3522,24 @@ export default function App() {
                 {esMultiple?"🛒 Pedidos con varios proveedores":"🛒 Tu pedido"}
               </div>
               {esMultiple&&(
-                <div style={{fontSize:12,color:"#64748b",background:"#f8fafc",borderRadius:10,padding:"8px 12px",marginBottom:14,lineHeight:1.5}}>
-                  Tienes pedidos con <strong>{proveedores.length} proveedores</strong>. Cada uno recibe su pedido por separado.
+                <div style={{fontSize:12,color:"#64748b",background:"#f8fafc",borderRadius:10,padding:"8px 12px",marginBottom:12,lineHeight:1.5}}>
+                  Tienes pedidos con <strong>{proveedores.length} proveedores</strong>. Cada uno recibirá su pedido de forma independiente.
                 </div>
               )}
+              {/* DATOS DEL CLIENTE — una sola vez para todos */}
+              <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:"12px 14px",marginBottom:14}}>
+                <div style={{fontSize:12,fontWeight:700,color:"#15803d",marginBottom:8}}>👤 Tus datos de contacto</div>
+                <input style={{...s.inp,marginBottom:8}} placeholder="Nombre y apellido *" value={form.nombre} onChange={e=>setForm({...form,nombre:e.target.value})}/>
+                <input style={{...s.inp,marginBottom:8}} placeholder="Tu WhatsApp * (Ej: 04XX-XXXXXXX)" value={form.telefono} onChange={e=>setForm({...form,telefono:e.target.value})}/>
+                <input style={{...s.inp,marginBottom:0}} placeholder="Dirección de entrega (opcional)" value={addr.calle} onChange={e=>setAddr({...addr,calle:e.target.value})}/>
+                {!datosOk&&<div style={{fontSize:11,color:"#dc2626",marginTop:6}}>⚠️ Nombre y teléfono son obligatorios para enviar pedidos</div>}
+              </div>
               {/* BLOQUE POR PROVEEDOR */}
               {proveedores.map((prov,idx)=>{
                 const sub=prov.items.reduce((a,i)=>a+i.price*i.qty,0);
                 const del=prov.delivery?(sub>=prov.gratis?0:prov.costo):0;
                 const total=sub+del;
+                const falta=prov.delivery&&del>0?parseFloat((prov.gratis-sub).toFixed(2)):0;
                 const promos=prov.items.filter(i=>i.isPromo);
                 const platos=prov.items.filter(i=>!i.isPromo);
                 const sinWa=!prov.wa;
@@ -3547,7 +3559,7 @@ export default function App() {
                       <div style={{fontWeight:900,fontSize:16,color:"#ef4444"}}>${total.toFixed(2)}</div>
                     </div>
                     {/* Promos */}
-                    {promos.length>0&&promos.map(i=>(
+                    {promos.map(i=>(
                       <div key={i.id} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0",borderBottom:"1px solid #f8fafc"}}>
                         <span style={{fontSize:11,background:"#fdf4ff",color:"#7e22ce",padding:"2px 7px",borderRadius:8,fontWeight:700,flexShrink:0}}>🔥 PROMO</span>
                         <span style={{flex:1,fontSize:12,fontWeight:600,color:"#0f172a"}}>{i.name}</span>
@@ -3560,7 +3572,7 @@ export default function App() {
                       </div>
                     ))}
                     {/* Platos */}
-                    {platos.length>0&&platos.map(i=>(
+                    {platos.map(i=>(
                       <div key={i.id} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0",borderBottom:"1px solid #f8fafc"}}>
                         <span style={{fontSize:18,flexShrink:0}}>🍽️</span>
                         <div style={{flex:1}}>
@@ -3575,20 +3587,27 @@ export default function App() {
                         <span style={{fontSize:13,fontWeight:700,color:P,minWidth:46,textAlign:"right"}}>${(i.price*i.qty).toFixed(2)}</span>
                       </div>
                     ))}
-                    {/* Subtotal del proveedor */}
+                    {/* Delivery gratis / falta */}
+                    {prov.delivery&&(
+                      <div style={{marginTop:8,padding:"7px 10px",borderRadius:8,background:del===0?"#f0fdf4":"#fffbeb",border:`1px solid ${del===0?"#bbf7d0":"#fde68a"}`}}>
+                        {del===0
+                          ?<span style={{fontSize:12,fontWeight:700,color:"#15803d"}}>🚚 Delivery gratis</span>
+                          :<span style={{fontSize:12,color:"#92400e"}}>🟡 Te faltan <strong>${falta.toFixed(2)}</strong> para delivery gratis</span>
+                        }
+                      </div>
+                    )}
+                    {/* Total del proveedor */}
                     <div style={{display:"flex",justifyContent:"space-between",marginTop:8,paddingTop:8,borderTop:"1px solid #f1f5f9",fontSize:12}}>
                       <span style={{color:"#64748b"}}>
-                        {del===0
-                          ?(prov.delivery?"🚚 Delivery gratis":"📦 Sin cargo delivery")
-                          :`🚚 Delivery: $${del.toFixed(2)}`
-                        }
+                        {del===0?(prov.delivery?"Delivery incluido":"Sin delivery"):`Delivery: $${del.toFixed(2)}`}
                       </span>
-                      <span style={{fontWeight:700,color:"#0f172a"}}>Total: <span style={{color:"#ef4444"}}>${total.toFixed(2)}</span></span>
+                      <span style={{fontWeight:800,color:"#0f172a",fontSize:14}}>Total: <span style={{color:"#ef4444"}}>${total.toFixed(2)}</span></span>
                     </div>
-                    {/* Botón por proveedor */}
+                    {/* Botón */}
                     {sinWa
                       ?<div style={{...s.msg(false),marginTop:8}}>⚠️ {prov.nombre} no tiene WhatsApp configurado aún</div>
-                      :<button style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:13,fontWeight:800,cursor:"pointer",marginTop:10,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}
+                      :<button
+                        style={{width:"100%",background:datosOk?"#25D366":"#94a3b8",color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:13,fontWeight:800,cursor:datosOk?"pointer":"not-allowed",marginTop:10,display:"flex",alignItems:"center",justifyContent:"center",gap:6,transition:"background 0.2s"}}
                         onClick={()=>enviarAProveedor(prov)}>
                         📲 Pedir a {prov.nombre}
                       </button>
@@ -3596,10 +3615,9 @@ export default function App() {
                   </div>
                 );
               })}
-              {/* Nota final multi-proveedor */}
               {esMultiple&&(
                 <div style={{fontSize:11,color:"#94a3b8",textAlign:"center",padding:"4px 0 8px",lineHeight:1.5}}>
-                  Cada proveedor recibe <strong>solo su pedido</strong>.<br/>Puedes enviarlos en el orden que quieras.
+                  Cada proveedor recibe <strong>solo su pedido</strong>. Envíalos en el orden que quieras.
                 </div>
               )}
               <button style={s.btnG} onClick={()=>setSheet(null)}>← Seguir agregando</button>
