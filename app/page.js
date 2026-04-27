@@ -324,7 +324,7 @@ export default function App() {
       supabase.from("zonas_delivery").select("*").eq("activa",true).order("municipio"),
       supabase.from("productos_supermercado").select("*").eq("disponible",true).order("categoria"),
       supabase.from("productos_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc,whatsapp_negocio,telefono,suscripcion_activa,delivery_propio,delivery_costo,delivery_gratis_desde,tipo_negocio,instagram,descripcion_negocio)").eq("aprobado",true).eq("disponible",true).eq("rechazado",false),
-      supabase.from("promociones_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc)").eq("aprobada",true).eq("activa",true),
+      supabase.from("promociones_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc,whatsapp_negocio,telefono,delivery_propio,delivery_costo,delivery_gratis_desde,permite_retiro,tipo_operacion_gastro)").eq("aprobada",true).eq("activa",true),
       supabase.from("combos").select("*").eq("activa",true),
     ]);
     if(z.data)setZonas(z.data);
@@ -378,10 +378,19 @@ export default function App() {
     return `🛍️ *Nuevo pedido - ${APP_NAME}*\n📋 Ref: ${negRef}\n----------------------------\n${lineas}\n----------------------------\nSubtotal: $${negSub.toFixed(2)}\nDelivery: ${negDel===0?"GRATIS":"$"+negDel.toFixed(2)}\n*TOTAL: $${negTotal.toFixed(2)}*\n----------------------------\n👤 ${form.nombre}\n📱 ${form.telefono}\n📍 ${zonaSel?.zona||""}, ${addr.calle}\n`;
   };
 
-  const buildRestWaMsg=(restNombre,restItems,restSub,restDel,restTotal,restRef)=>{
-    const lineas=restItems.map(i=>`  • ${i.name} x${i.qty} - $${(i.price*i.qty).toFixed(2)}${i.nota?" ("+i.nota+")":""}`).join("\n")
-    const hora=new Date().toLocaleTimeString("es-VE",{hour:"2-digit",minute:"2-digit"});
-    return `🍽️ *Nuevo pedido - ${APP_NAME}*\n📋 Ref: ${restRef}\n----------------------------\n${lineas}\n----------------------------\nSubtotal: $${restSub.toFixed(2)}\nDelivery: ${restDel===0?"GRATIS":"$"+restDel.toFixed(2)}\n*TOTAL: $${restTotal.toFixed(2)}*\n----------------------------\n👤 ${form.nombre}\n📱 ${form.telefono}\n📍 ${zonaSel?.zona||""}, ${addr.calle}\n⏰ ${hora}`;
+  const buildRestWaMsg=(restNombre,restItems,restTotal,modalidad)=>{
+    const promos=restItems.filter(i=>i.isPromo);
+    const platos=restItems.filter(i=>!i.isPromo);
+    const lineasPromo=promos.map(i=>`🔥 Promo ${i.name}\n• Precio: $${i.price.toFixed(2)}`).join("\n\n");
+    const lineasPlato=platos.map(i=>`🍔 ${i.name}\n• Cantidad: ${i.qty}\n• Precio: $${i.price.toFixed(2)}${i.nota?"\n• Nota: "+i.nota:""}`).join("\n\n");
+    const lineas=[lineasPromo,lineasPlato].filter(Boolean).join("\n\n");
+    return `👋 Hola, quiero realizar un pedido:\n\n🏪 *${restNombre}*\n\n🍽️ *Mi pedido:*\n\n${lineas}\n\n💵 *Total estimado:* $${restTotal.toFixed(2)}\n\n📍 Modalidad: ${modalidad}\n\n📞 Quedo atento(a) para confirmar disponibilidad, tiempo de entrega y método de pago.\nGracias.`;
+  };
+  const getModalidad=(prov)=>{
+    if(prov?.delivery_propio&&prov?.permite_retiro)return"Delivery disponible";
+    if(prov?.delivery_propio)return"Solo delivery";
+    if(prov?.permite_retiro)return"Retiro en local";
+    return"Solo delivery";
   };
 
   const parseCsvRow=(row)=>{
@@ -570,8 +579,8 @@ export default function App() {
 
   const allProds=[
     ...superProds.map(p=>({id:`sp_${p.id}`,name:p.nombre,cat:"Supermercado",superCat:p.categoria,price:p.precio,unit:p.unidad,emoji:p.emoji||"🛒",margin:0.10,foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,abierto:true})),
-    ...provProds.map(p=>({id:`pv_${p.id}`,name:p.nombre,cat:p.categoria,price:p.precio,unit:p.unidad,emoji:"🍽️",margin:0.20,kitchen:p.proveedores?.negocio,logo:p.proveedores?.logo_url,foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,stock:p.stock,horario:p.permanente?"Siempre disponible":`${p.horario_inicio}–${p.horario_fin}`,tag:p.stock<=3?`Solo ${p.stock} disp.`:null,dbId:p.id,abierto:p.proveedores?.activo!==false&&!p.proveedores?.en_pausa,horarioNeg:p.proveedores?.horario_desde&&p.proveedores?.horario_hasta?`${p.proveedores.horario_desde}–${p.proveedores.horario_hasta}${p.proveedores.horario_desc?" ("+p.proveedores.horario_desc+")":""}`:null})),
-    ...provPromos.map(pr=>({id:`promo_${pr.id}`,name:pr.nombre,cat:"Comida preparada",price:pr.precio,unit:"promo",emoji:"🎁",margin:0,kitchen:pr.proveedores?.negocio,logo:pr.proveedores?.logo_url,foto:pr.foto_url,descripcion:pr.descripcion,isPromo:true,tag:"🔥 PROMO",horario:`Hasta ${pr.fecha_fin}`,abierto:pr.proveedores?.activo!==false&&!pr.proveedores?.en_pausa,horarioNeg:pr.proveedores?.horario_desde&&pr.proveedores?.horario_hasta?`${pr.proveedores.horario_desde}–${pr.proveedores.horario_hasta}${pr.proveedores.horario_desc?" ("+pr.proveedores.horario_desc+")":""}`:null})),
+    ...provProds.map(p=>({id:`pv_${p.id}`,name:p.nombre,cat:p.categoria,price:p.precio,unit:p.unidad,emoji:"🍽️",margin:0,kitchen:p.proveedores?.negocio,kitchenWa:p.proveedores?.whatsapp_negocio||p.proveedores?.telefono,kitchenDelivery:p.proveedores?.delivery_propio,kitchenDeliveryCosto:p.proveedores?.delivery_costo||0,kitchenDeliveryGratis:p.proveedores?.delivery_gratis_desde||15,kitchenRetiro:p.proveedores?.permite_retiro,kitchenTipo:p.proveedores?.tipo_operacion_gastro,logo:p.proveedores?.logo_url,foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,stock:p.stock,horario:p.permanente?"Siempre disponible":`${p.horario_inicio}–${p.horario_fin}`,tag:p.stock<=3?`Solo ${p.stock} disp.`:null,dbId:p.id,abierto:p.proveedores?.activo!==false&&!p.proveedores?.en_pausa,horarioNeg:p.proveedores?.horario_desde&&p.proveedores?.horario_hasta?`${p.proveedores.horario_desde}–${p.proveedores.horario_hasta}${p.proveedores.horario_desc?" ("+p.proveedores.horario_desc+")":""}`:null})),
+    ...provPromos.map(pr=>({id:`promo_${pr.id}`,name:pr.nombre,cat:"Comida preparada",price:pr.precio,unit:"promo",emoji:"🎁",margin:0,kitchen:pr.proveedores?.negocio,kitchenWa:pr.proveedores?.whatsapp_negocio||pr.proveedores?.telefono,kitchenDelivery:pr.proveedores?.delivery_propio,kitchenDeliveryCosto:pr.proveedores?.delivery_costo||0,kitchenDeliveryGratis:pr.proveedores?.delivery_gratis_desde||15,kitchenRetiro:pr.proveedores?.permite_retiro,kitchenTipo:pr.proveedores?.tipo_operacion_gastro,logo:pr.proveedores?.logo_url,foto:pr.foto_url,descripcion:pr.descripcion,isPromo:true,tag:"🔥 PROMO",horario:`Hasta ${pr.fecha_fin}`,abierto:pr.proveedores?.activo!==false&&!pr.proveedores?.en_pausa,horarioNeg:pr.proveedores?.horario_desde&&pr.proveedores?.horario_hasta?`${pr.proveedores.horario_desde}–${pr.proveedores.horario_hasta}${pr.proveedores.horario_desc?" ("+pr.proveedores.horario_desc+")":""}`:null})),
   ];
 
   const allProdsConMargen=allProds.map(p=>({...p,priceOriginal:p.price}));
@@ -3470,60 +3479,134 @@ export default function App() {
         })()}
       </div></div>)}
 
-      {/* SHEET CARRITO RESTAURANTE */}
-      {sheet==="cartRest"&&(<div style={s.ov} onClick={()=>setSheet(null)}><div style={s.sh} onClick={e=>e.stopPropagation()}>
-        <div style={s.hnd}/>
-        <div style={s.shT}>Pedido — {cartRestNombre}</div>
-        <div style={s.ib}>
-          <label style={s.lbl}>Zona de entrega *</label>
-          <select style={{...s.inp,marginBottom:8,background:"#fff"}} value={zonaSelId} onChange={e=>{setZonaSelId(e.target.value);setZonaSel(zonas.find(z=>z.id===e.target.value)||null);}}>
-            <option value="">Selecciona tu zona...</option>
-            {zonas.map(z=><option key={z.id} value={z.id}>{z.municipio} — {z.zona}</option>)}
-          </select>
-          <label style={s.lbl}>Calle y referencia</label>
-          <input style={{...s.inp,marginBottom:0}} placeholder="Calle Principal #47, casa azul..." value={addr.calle} onChange={e=>setAddr({...addr,calle:e.target.value})}/>
-        </div>
-        {Object.values(cartRest).map(i=>(<div key={i.id} style={s.ci}><span style={{fontSize:22,width:32,textAlign:"center"}}>🍽️</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{i.name}</div></div><div style={s.qR}><button style={s.qB} onClick={()=>{const n={...cartRest};n[i.id].qty>1?n[i.id]={...n[i.id],qty:n[i.id].qty-1}:delete n[i.id];setCartRest(n);}}>−</button><span style={s.qN}>{i.qty}</span><button style={s.qB} onClick={()=>setCartRest(c=>({...c,[i.id]:{...c[i.id],qty:c[i.id].qty+1}}))}>+</button></div><div style={{fontSize:13,fontWeight:700,color:P,marginLeft:8}}>${(i.price*i.qty).toFixed(2)}</div></div>))}
-        {(()=>{
-          const restItems=Object.values(cartRest);
-          const restSub=restItems.reduce((a,i)=>a+i.price*i.qty,0);
-          const restDel=restauranteActivo?.delivery_propio?(restSub>=(restauranteActivo?.delivery_gratis_desde||15)?0:(restauranteActivo?.delivery_costo||0)):0;
-          const restTotal=restSub+restDel;
-          const restRef=`REST-${Date.now().toString().slice(-5)}`;
-          return(<>
-            <div style={{marginTop:10}}>
-              <div style={s.sr}><span style={s.sL}>Subtotal</span><span style={s.sV}>${restSub.toFixed(2)}</span></div>
-              <div style={s.sr}>
-                <span style={s.sL}>Delivery</span>
-                {restDel===0
-                  ?<span style={s.fT}>{restauranteActivo?.delivery_propio?"🚚 GRATIS":"No aplica"}</span>
-                  :<div style={{textAlign:"right"}}>
-                    <div style={s.sV}>Desde ${restDel.toFixed(2)}</div>
-                    {restauranteActivo?.delivery_gratis_desde>0&&restSub<restauranteActivo.delivery_gratis_desde&&(
-                      <div style={{fontSize:10,color:"#15803d"}}>Gratis desde ${restauranteActivo.delivery_gratis_desde}</div>
-                    )}
-                  </div>
-                }
+      {/* SHEET CARRITO RESTAURANTE — MULTI-PROVEEDOR */}
+      {sheet==="cartRest"&&(()=>{
+        const allRestItems=Object.values(cartRest);
+        if(allRestItems.length===0)return null;
+        // Agrupar por proveedor (kitchen)
+        const grupos={};
+        allRestItems.forEach(i=>{
+          const k=i.kitchen||"Sin proveedor";
+          if(!grupos[k])grupos[k]={nombre:k,wa:i.kitchenWa||"",items:[],delivery:i.kitchenDelivery,costo:i.kitchenDeliveryCosto||0,gratis:i.kitchenDeliveryGratis||15,retiro:i.kitchenRetiro,tipo:i.kitchenTipo};
+          grupos[k].items.push(i);
+        });
+        const proveedores=Object.values(grupos);
+        const esMultiple=proveedores.length>1;
+        const enviarAProveedor=(prov)=>{
+          if(!prov.wa){alert(`${prov.nombre} no tiene WhatsApp configurado. Contacta al administrador.`);return;}
+          const sub=prov.items.reduce((a,i)=>a+i.price*i.qty,0);
+          const del=prov.delivery?(sub>=prov.gratis?0:prov.costo):0;
+          const total=sub+del;
+          const modalidad=prov.delivery&&prov.retiro?"Delivery disponible":prov.delivery?"Solo delivery":prov.retiro?"Retiro en local":"Solo delivery";
+          const msg=buildRestWaMsg(prov.nombre,prov.items,total,modalidad);
+          const raw=prov.wa.replace(/\D/g,"");
+          const num=raw.startsWith("0")?"58"+raw.slice(1):raw.startsWith("58")?raw:"58"+raw;
+          const ref=`REST-${Date.now().toString().slice(-5)}`;
+          guardarPedidoRestaurante(null,prov.items,sub,del,total,ref);
+          // Eliminar items de ese proveedor del carrito
+          const nuevoCart={...cartRest};
+          prov.items.forEach(i=>delete nuevoCart[i.id]);
+          setCartRest(nuevoCart);
+          window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`,"_blank");
+          if(Object.keys(nuevoCart).length===0)setSheet(null);
+        };
+        return(
+          <div style={s.ov} onClick={()=>setSheet(null)}>
+            <div style={s.sh} onClick={e=>e.stopPropagation()}>
+              <div style={s.hnd}/>
+              {/* TÍTULO */}
+              <div style={{fontSize:17,fontWeight:800,color:"#0f172a",marginBottom:4}}>
+                {esMultiple?"🛒 Pedidos con varios proveedores":"🛒 Tu pedido"}
               </div>
-              <div style={s.tR}><span style={{fontWeight:700}}>Total</span><span style={{fontWeight:700,fontSize:17}}>${restTotal.toFixed(2)}</span></div>
+              {esMultiple&&(
+                <div style={{fontSize:12,color:"#64748b",background:"#f8fafc",borderRadius:10,padding:"8px 12px",marginBottom:14,lineHeight:1.5}}>
+                  Tienes pedidos con <strong>{proveedores.length} proveedores</strong>. Cada uno recibe su pedido por separado.
+                </div>
+              )}
+              {/* BLOQUE POR PROVEEDOR */}
+              {proveedores.map((prov,idx)=>{
+                const sub=prov.items.reduce((a,i)=>a+i.price*i.qty,0);
+                const del=prov.delivery?(sub>=prov.gratis?0:prov.costo):0;
+                const total=sub+del;
+                const promos=prov.items.filter(i=>i.isPromo);
+                const platos=prov.items.filter(i=>!i.isPromo);
+                const sinWa=!prov.wa;
+                return(
+                  <div key={idx} style={{background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:14,padding:"14px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.04)"}}>
+                    {/* Header proveedor */}
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                      <div style={{width:36,height:36,borderRadius:"50%",background:getAvatarColor(prov.nombre),display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:900,fontSize:15,flexShrink:0}}>
+                        {prov.nombre[0]?.toUpperCase()}
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{fontWeight:800,fontSize:14,color:"#0f172a"}}>{prov.nombre}</div>
+                        <div style={{fontSize:11,color:prov.delivery?"#15803d":"#64748b"}}>
+                          {prov.delivery?"🛵 Delivery disponible":prov.retiro?"🏃 Solo retiro":"📦 Consultar modalidad"}
+                        </div>
+                      </div>
+                      <div style={{fontWeight:900,fontSize:16,color:"#ef4444"}}>${total.toFixed(2)}</div>
+                    </div>
+                    {/* Promos */}
+                    {promos.length>0&&promos.map(i=>(
+                      <div key={i.id} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0",borderBottom:"1px solid #f8fafc"}}>
+                        <span style={{fontSize:11,background:"#fdf4ff",color:"#7e22ce",padding:"2px 7px",borderRadius:8,fontWeight:700,flexShrink:0}}>🔥 PROMO</span>
+                        <span style={{flex:1,fontSize:12,fontWeight:600,color:"#0f172a"}}>{i.name}</span>
+                        <div style={s.qR}>
+                          <button style={s.qB} onClick={()=>{const n={...cartRest};n[i.id].qty>1?n[i.id]={...n[i.id],qty:n[i.id].qty-1}:delete n[i.id];setCartRest(n);}}>−</button>
+                          <span style={s.qN}>{i.qty}</span>
+                          <button style={s.qB} onClick={()=>setCartRest(c=>({...c,[i.id]:{...c[i.id],qty:c[i.id].qty+1}}))}>+</button>
+                        </div>
+                        <span style={{fontSize:13,fontWeight:700,color:P,minWidth:46,textAlign:"right"}}>${(i.price*i.qty).toFixed(2)}</span>
+                      </div>
+                    ))}
+                    {/* Platos */}
+                    {platos.length>0&&platos.map(i=>(
+                      <div key={i.id} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0",borderBottom:"1px solid #f8fafc"}}>
+                        <span style={{fontSize:18,flexShrink:0}}>🍽️</span>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:12,fontWeight:600,color:"#0f172a"}}>{i.name}</div>
+                          {i.nota&&<div style={{fontSize:10,color:"#7e22ce"}}>📝 {i.nota}</div>}
+                        </div>
+                        <div style={s.qR}>
+                          <button style={s.qB} onClick={()=>{const n={...cartRest};n[i.id].qty>1?n[i.id]={...n[i.id],qty:n[i.id].qty-1}:delete n[i.id];setCartRest(n);}}>−</button>
+                          <span style={s.qN}>{i.qty}</span>
+                          <button style={s.qB} onClick={()=>setCartRest(c=>({...c,[i.id]:{...c[i.id],qty:c[i.id].qty+1}}))}>+</button>
+                        </div>
+                        <span style={{fontSize:13,fontWeight:700,color:P,minWidth:46,textAlign:"right"}}>${(i.price*i.qty).toFixed(2)}</span>
+                      </div>
+                    ))}
+                    {/* Subtotal del proveedor */}
+                    <div style={{display:"flex",justifyContent:"space-between",marginTop:8,paddingTop:8,borderTop:"1px solid #f1f5f9",fontSize:12}}>
+                      <span style={{color:"#64748b"}}>
+                        {del===0
+                          ?(prov.delivery?"🚚 Delivery gratis":"📦 Sin cargo delivery")
+                          :`🚚 Delivery: $${del.toFixed(2)}`
+                        }
+                      </span>
+                      <span style={{fontWeight:700,color:"#0f172a"}}>Total: <span style={{color:"#ef4444"}}>${total.toFixed(2)}</span></span>
+                    </div>
+                    {/* Botón por proveedor */}
+                    {sinWa
+                      ?<div style={{...s.msg(false),marginTop:8}}>⚠️ {prov.nombre} no tiene WhatsApp configurado aún</div>
+                      :<button style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:13,fontWeight:800,cursor:"pointer",marginTop:10,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}
+                        onClick={()=>enviarAProveedor(prov)}>
+                        📲 Pedir a {prov.nombre}
+                      </button>
+                    }
+                  </div>
+                );
+              })}
+              {/* Nota final multi-proveedor */}
+              {esMultiple&&(
+                <div style={{fontSize:11,color:"#94a3b8",textAlign:"center",padding:"4px 0 8px",lineHeight:1.5}}>
+                  Cada proveedor recibe <strong>solo su pedido</strong>.<br/>Puedes enviarlos en el orden que quieras.
+                </div>
+              )}
+              <button style={s.btnG} onClick={()=>setSheet(null)}>← Seguir agregando</button>
             </div>
-            <label style={{...s.lbl,marginTop:10}}>Tu nombre *</label>
-            <input style={s.inp} placeholder="Juan Pérez" value={form.nombre} onChange={e=>setForm({...form,nombre:e.target.value})}/>
-            <label style={s.lbl}>Tu WhatsApp *</label>
-            <input style={s.inp} placeholder="+58 424-000-0000" value={form.telefono} onChange={e=>setForm({...form,telefono:e.target.value})}/>
-            <div style={{...s.ib,background:"#fffbeb"}}><div style={{fontSize:12,color:"#92400e"}}>⚡ Tu pedido irá directo al WhatsApp de {cartRestNombre}</div></div>
-            <button style={s.btnWa} onClick={async()=>{
-              if(!form.nombre||!form.telefono||!zonaSelId)return alert("Completa nombre, teléfono y zona");
-              const rawRest=(cartRestWa||"").replace(/\D/g,"");const numRest=rawRest.startsWith("0")?"58"+rawRest.slice(1):rawRest.startsWith("58")?rawRest:"58"+rawRest;
-              const msgRest=buildRestWaMsg(cartRestNombre,restItems,restSub,restDel,restTotal,restRef);
-              window.location.href=`https://wa.me/${numRest}?text=${encodeURIComponent(msgRest)}`;
-              guardarPedidoRestaurante(cartRestId,restItems,restSub,restDel,restTotal,restRef);
-              setCartRest({});setSheet(null);
-            }}>📲 Enviar pedido a {cartRestNombre}</button>
-            <button style={s.btnG} onClick={()=>setSheet(null)}>← Seguir viendo</button>
-          </>);
-        })()}
-      </div></div>)}
+          </div>
+        );
+      })()}
 
       {/* SHEET CARRITO */}
       {sheet==="cart"&&(<div style={s.ov} onClick={()=>setSheet(null)}><div style={s.sh} onClick={e=>e.stopPropagation()}><div style={s.hnd}/><div style={s.shT}>Tu pedido</div><div style={s.ib}><label style={s.lbl}>Zona de entrega *</label><select style={{...s.inp,marginBottom:8,background:"#fff"}} value={zonaSelId} onChange={e=>{setZonaSelId(e.target.value);setZonaSel(zonas.find(z=>z.id===e.target.value)||null);}}><option value="">Selecciona tu zona...</option>{zonas.map(z=><option key={z.id} value={z.id}>{z.municipio} — {z.zona} (${z.costo_delivery})</option>)}</select><label style={s.lbl}>Calle y número</label><input style={{...s.inp,marginBottom:8}} placeholder="Calle Principal #47" value={addr.calle} onChange={e=>setAddr({...addr,calle:e.target.value})}/><label style={s.lbl}>Referencia</label><input style={{...s.inp,marginBottom:0}} placeholder="Casa azul, frente al parque..." value={addr.referencia} onChange={e=>setAddr({...addr,referencia:e.target.value})}/></div>{items.map(i=>(<div key={i.id} style={s.ci}><span style={{fontSize:22,width:32,textAlign:"center"}}>{i.emoji}</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{i.name}</div>{i.kitchen&&<div style={{fontSize:10,color:"#94a3b8"}}>{i.kitchen}</div>}</div><div style={s.qR}><button style={s.qB} onClick={()=>rem(i.id)}>−</button><span style={s.qN}>{i.qty}</span><button style={s.qB} onClick={()=>add(i)}>+</button></div><div style={{fontSize:13,fontWeight:700,color:P,marginLeft:8,minWidth:50,textAlign:"right"}}>${(i.price*i.qty).toFixed(2)}</div></div>))}
