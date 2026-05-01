@@ -2839,7 +2839,13 @@ export default function App() {
               "entregado": {label:"✅ Entregado",   bg:"#dcfce7",color:"#15803d"},
               "cancelado": {label:"❌ Cancelado",   bg:"#fee2e2",color:"#991b1b"},
             };
-            const actualizarEstado=async(pedId,nuevoEstado)=>{
+            const MSGS_ESTADO={
+              "recibido": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n✅ Recibimos tu pedido *${ped.ref}* y lo estamos preparando. ¡En breve estará listo!`,
+              "en_camino": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n🚀 Tu pedido *${ped.ref}* ya va en camino hacia tu dirección.\n\n📍 ${ped.cliente_direccion||""}\n\n¡Pronto llega!`,
+              "entregado": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n🎉 Tu pedido *${ped.ref}* fue entregado exitosamente.\n\n¡Gracias por tu preferencia! Esperamos verte pronto. 😊`,
+              "cancelado": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n😔 Lamentamos informarte que tu pedido *${ped.ref}* fue cancelado.\n\nPor favor contáctanos para más información. Disculpa los inconvenientes.`,
+            };
+            const actualizarEstado=async(pedId,nuevoEstado,ped)=>{
               const{error}=await supabase.from("pedidos").update({
                 estado:nuevoEstado,
                 completado:nuevoEstado==="entregado",
@@ -2850,6 +2856,14 @@ export default function App() {
                 return;
               }
               await loadMisRestPedidos(provData.id,provData.negocio);
+              // Abrir WhatsApp automáticamente con mensaje del estado
+              const msgFn=MSGS_ESTADO[nuevoEstado];
+              if(msgFn&&ped?.cliente_telefono){
+                const _t=ped.cliente_telefono.replace(/\D/g,"");
+                const num=_t.startsWith("0")?"58"+_t.slice(1):_t.startsWith("58")?_t:"58"+_t;
+                const msg=msgFn(ped);
+                setTimeout(()=>window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank"),300);
+              }
             };
             // Filtros
             const hoy=new Date().toISOString().slice(0,10);
@@ -2943,7 +2957,7 @@ export default function App() {
                             const e=ESTADOS[sig];
                             const isCancel=sig==="cancelado";
                             return(
-                              <button key={sig} onClick={()=>actualizarEstado(ped.id,sig)}
+                              <button key={sig} onClick={()=>actualizarEstado(ped.id,sig,ped)}
                                 style={{flex:1,padding:"9px",borderRadius:10,border:"none",fontSize:11,fontWeight:800,cursor:"pointer",background:isCancel?"#fee2e2":e.bg,color:isCancel?"#991b1b":e.color}}>
                                 {e.label}
                               </button>
