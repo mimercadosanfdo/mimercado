@@ -407,7 +407,7 @@ export default function App() {
   const buildRestWaMsg=(restNombre,restItems,restTotal,del,clienteNombre,clienteTel,clienteDir)=>{
     const promos=restItems.filter(i=>i.isPromo);
     const platos=restItems.filter(i=>!i.isPromo);
-    const lineasPromo=promos.map(i=>`🔥 Promo ${i.name}\n• Precio: $${i.price.toFixed(2)}`).join("\n\n");
+    const lineasPromo=promos.map(i=>`🔥 Promo: ${i.name} x${i.qty||1}\n• Cantidad: ${i.qty||1}\n• Precio unitario: $${i.price.toFixed(2)}\n• Subtotal: $${(i.price*(i.qty||1)).toFixed(2)}`).join("\n\n");
     const lineasPlato=platos.map(i=>`🍔 ${i.name}\n• Cantidad: ${i.qty}\n• Precio: $${i.price.toFixed(2)}${i.nota?"\n• Nota: "+i.nota:""}`).join("\n\n");
     const lineas=[lineasPromo,lineasPlato].filter(Boolean).join("\n\n");
     const delLinea=del===0?"🚚 Delivery: Gratis 🎉":`🚚 Delivery: $${del.toFixed(2)}`;
@@ -427,7 +427,7 @@ export default function App() {
     // Recalcular subtotal internamente para garantizar exactitud
     const subReal=items.reduce((a,i)=>a+i.price*i.qty,0);
     const totalReal=subReal+del;
-    const lineasPromo=promos.map(i=>`🔥 Promo: ${i.name}\n   • Cantidad: ${i.qty}\n   • Precio unitario: $${i.price.toFixed(2)}\n   • Subtotal: $${(i.price*i.qty).toFixed(2)}`).join("\n\n");
+    const lineasPromo=promos.map(i=>`🔥 Promo: ${i.name} x${i.qty||1}\n   • Cantidad: ${i.qty||1}\n   • Precio unitario: $${i.price.toFixed(2)}\n   • Subtotal: $${(i.price*(i.qty||1)).toFixed(2)}`).join("\n\n");
     const lineasPlato=platos.map(i=>`🍽️ ${i.name}\n   • Cantidad: ${i.qty}\n   • Precio unitario: $${i.price.toFixed(2)}\n   • Subtotal: $${(i.price*i.qty).toFixed(2)}${i.nota?"\n   • Nota: "+i.nota:""}`).join("\n\n");
     const lineas=[lineasPromo,lineasPlato].filter(Boolean).join("\n\n");
     const delLinea=del===0?"🚚 Delivery: Gratis 🎉":`🚚 Delivery: $${del.toFixed(2)}`;
@@ -1702,7 +1702,7 @@ export default function App() {
                                     <button style={s.qB} onClick={e=>{e.stopPropagation();setCartRest(c=>({...c,[p.id]:{...p,qty:qtyRest+1}}))}}>+</button>
                                   </div>
                                 ):(
-                                  <button style={{background:"#f97316",color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",fontSize:11,fontWeight:800,cursor:"pointer"}} onClick={e=>{e.stopPropagation();setCartRest(c=>({...c,[p.id]:{...p,qty:1}}))}}>+ Agregar Promo</button>
+                                  <button style={{background:"#f97316",color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",fontSize:11,fontWeight:800,cursor:"pointer"}} onClick={e=>{e.stopPropagation();setCartRest(c=>({...c,[p.id]:{...p,qty:(c[p.id]?.qty||0)+1}}))}}>+ Agregar Promo</button>
                                 )}
                               </div>
                             </div>
