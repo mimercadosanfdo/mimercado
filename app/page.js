@@ -215,6 +215,8 @@ export default function App() {
   const [consentPromo,setConsentPromo]=useState({});
   const [pedidoEnviadoA,setPedidoEnviadoA]=useState(null); // confirmación visual post-envío
   const [numsPedido,setNumsPedido]=useState({}); // {provNombre: numero_siguiente}
+  const [filtroPed,setFiltroPed]=useState("hoy");
+  const [filtroEstado,setFiltroEstado]=useState("todos");
   const [selSvc,setSelSvc]=useState(null);
   const [svcForm,setSvcForm]=useState({nombre:"",telefono:"",direccion:"",detalle:""});
   const [superProds,setSuperProds]=useState([]);
@@ -2822,38 +2824,139 @@ export default function App() {
             )}
           </>)}
 
-          {provTab==="pedidos_rest"&&(
-            <div style={s.pc}>
-              <div style={s.pT}>📋 Pedidos recibidos desde MiMercado</div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
-                <div style={s.statCard}><div style={{...s.statNum,fontSize:18,color:"#6366f1"}}>{misRestPedidos.length}</div><div style={s.statLbl}>Total iniciados</div></div>
-                <div style={s.statCard}><div style={{...s.statNum,fontSize:18,color:"#22c55e"}}>{misRestPedidos.filter(p=>p.completado).length}</div><div style={s.statLbl}>Completados</div></div>
-                <div style={s.statCard}><div style={{...s.statNum,fontSize:18,color:A}}>${misRestPedidos.filter(p=>p.completado).reduce((a,p)=>a+(p.total||0),0).toFixed(0)}</div><div style={s.statLbl}>Ingreso est.</div></div>
-              </div>
-              {misRestPedidos.length===0&&<div style={{fontSize:13,color:"#94a3b8",textAlign:"center",padding:"20px 0"}}>Aún no tienes pedidos por aquí. ¡Cuando un cliente te pida desde la app aparecerá aquí!</div>}
-              {misRestPedidos.map(ped=>(
-                <div key={ped.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-                    <div><div style={{fontSize:13,fontWeight:700,color:P}}>📋 {ped.ref}</div><div style={{fontSize:11,color:"#64748b"}}>{ped.created_at?.slice(0,16).replace("T"," ")}</div></div>
-                    <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8,background:ped.completado?"#dcfce7":"#fef9c3",color:ped.completado?"#15803d":"#854d0e"}}>{ped.completado?"✓ Completado":"⏳ Pendiente"}</span>
-                  </div>
-                  <div style={{background:"#f8fafc",borderRadius:8,padding:"8px 10px",marginBottom:6,fontSize:12}}>
-                    {(ped.items||[]).map((it,i)=><div key={i}>{it.nombre} x{it.qty} — ${((it.precio||0)*(it.qty||1)).toFixed(2)}{it.nota&&<span style={{color:"#7e22ce"}}> 📝{it.nota}</span>}</div>)}
-                  </div>
-                  <div style={{fontSize:12,color:"#64748b",marginBottom:6}}>👤 {ped.cliente_nombre} · 📱 {ped.cliente_telefono}</div>
-                  <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:8}}>
-                    <span>Total: <strong style={{color:"#22c55e"}}>${(ped.total||0).toFixed(2)}</strong></span>
-                  </div>
-                  {!ped.completado&&(
-                    <div style={{display:"flex",gap:6}}>
-                      <button onClick={async()=>{await supabase.from("pedidos").update({completado:true,estado:"completado"}).eq("id",ped.id);loadMisRestPedidos(provData.id);}} style={{...s.btnGreen,flex:1,borderRadius:10,padding:"8px",fontSize:12}}>✅ Marcar completado</button>
-                      <button onClick={()=>{const _t=(ped.cliente_telefono||"").replace(/\D/g,"");window.location.href="https://wa.me/"+_t+"?text="+encodeURIComponent("Hola "+ped.cliente_nombre+" 👋 Tu pedido *"+ped.ref+"* está listo");}} style={{...s.btnWa,flex:1,marginTop:0,padding:"8px",fontSize:12}}>📲 Escribir</button>
-                    </div>
-                  )}
+          {provTab==="pedidos_rest"&&(()=>{
+            // Estados y colores
+            const ESTADOS={
+              "nuevo":     {label:"🆕 Nuevo",       bg:"#fef9c3",color:"#854d0e"},
+              "recibido":  {label:"📥 Recibido",    bg:"#dbeafe",color:"#1e40af"},
+              "en_camino": {label:"🚀 En camino",   bg:"#fef3c7",color:"#92400e"},
+              "entregado": {label:"✅ Entregado",   bg:"#dcfce7",color:"#15803d"},
+              "cancelado": {label:"❌ Cancelado",   bg:"#fee2e2",color:"#991b1b"},
+            };
+            const actualizarEstado=async(pedId,nuevoEstado)=>{
+              await supabase.from("pedidos").update({estado:nuevoEstado,completado:nuevoEstado==="entregado"}).eq("id",pedId);
+              loadMisRestPedidos(provData.id);
+            };
+            // Filtros
+            const hoy=new Date().toISOString().slice(0,10);
+            const ayer=new Date(Date.now()-86400000).toISOString().slice(0,10);
+            const semana=new Date(Date.now()-7*86400000).toISOString().slice(0,10);
+            // filtroPed y filtroEstado están en el estado del componente principal
+            const pedFiltrados=misRestPedidos.filter(p=>{
+              const fecha=p.created_at?.slice(0,10);
+              const pasaFecha=filtroPed==="hoy"?fecha===hoy:filtroPed==="ayer"?fecha===ayer:filtroPed==="semana"?fecha>=semana:true;
+              const pasaEstado=filtroEstado==="todos"||p.estado===filtroEstado;
+              return pasaFecha&&pasaEstado;
+            });
+            // Stats
+            const totalHoy=misRestPedidos.filter(p=>p.created_at?.slice(0,10)===hoy);
+            const ingreso=misRestPedidos.filter(p=>p.estado==="entregado").reduce((a,p)=>a+(p.total||0),0);
+            const pendientes=misRestPedidos.filter(p=>!["entregado","cancelado"].includes(p.estado));
+            return(
+              <div style={s.pc}>
+                <div style={s.pT}>📋 Mis pedidos</div>
+                {/* STATS */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
+                  <div style={s.statCard}><div style={{...s.statNum,fontSize:20,color:"#6366f1"}}>{totalHoy.length}</div><div style={s.statLbl}>Hoy</div></div>
+                  <div style={s.statCard}><div style={{...s.statNum,fontSize:20,color:"#f59e0b"}}>{pendientes.length}</div><div style={s.statLbl}>Pendientes</div></div>
+                  <div style={s.statCard}><div style={{...s.statNum,fontSize:18,color:"#22c55e"}}>${ingreso.toFixed(0)}</div><div style={s.statLbl}>Entregados</div></div>
                 </div>
-              ))}
-            </div>
-          )}
+                {/* FILTRO FECHA */}
+                <div style={{display:"flex",gap:6,marginBottom:8,overflowX:"auto",paddingBottom:4}}>
+                  {[["hoy","Hoy"],["ayer","Ayer"],["semana","7 días"],["todos","Todos"]].map(([v,l])=>(
+                    <button key={v} onClick={()=>setFiltroPed(v)} style={{flexShrink:0,padding:"5px 12px",borderRadius:20,border:"none",fontSize:11,fontWeight:700,cursor:"pointer",background:filtroPed===v?P:"#f1f5f9",color:filtroPed===v?"#fff":"#64748b"}}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+                {/* FILTRO ESTADO */}
+                <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
+                  {[["todos","Todos"],["nuevo","Nuevos"],["recibido","Recibidos"],["en_camino","En camino"],["entregado","Entregados"],["cancelado","Cancelados"]].map(([v,l])=>(
+                    <button key={v} onClick={()=>setFiltroEstado(v)} style={{flexShrink:0,padding:"4px 10px",borderRadius:20,border:"none",fontSize:10,fontWeight:700,cursor:"pointer",background:filtroEstado===v?"#0f172a":"#f1f5f9",color:filtroEstado===v?"#fff":"#64748b"}}>
+                      {l} {v!=="todos"&&misRestPedidos.filter(p=>p.estado===v).length>0?`(${misRestPedidos.filter(p=>p.estado===v).length})`:""}
+                    </button>
+                  ))}
+                </div>
+                {/* LISTA */}
+                {pedFiltrados.length===0&&(
+                  <div style={{textAlign:"center",padding:"30px 0",color:"#94a3b8",fontSize:13}}>
+                    {misRestPedidos.length===0?"¡Cuando un cliente haga un pedido aparecerá aquí!":"No hay pedidos con este filtro."}
+                  </div>
+                )}
+                {pedFiltrados.map(ped=>{
+                  const est=ESTADOS[ped.estado]||ESTADOS["nuevo"];
+                  const siguientes={
+                    "nuevo":["recibido","cancelado"],
+                    "recibido":["en_camino","cancelado"],
+                    "en_camino":["entregado","cancelado"],
+                    "entregado":[],
+                    "cancelado":[],
+                  }[ped.estado||"nuevo"]||[];
+                  return(
+                    <div key={ped.id} style={{background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:14,padding:"14px",marginBottom:10,boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
+                      {/* Header pedido */}
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+                        <div>
+                          <div style={{fontSize:13,fontWeight:800,color:"#0f172a"}}>📋 {ped.ref||"Sin ref"}</div>
+                          <div style={{fontSize:10,color:"#94a3b8",marginTop:2}}>{ped.created_at?.slice(0,16).replace("T"," hs ")}</div>
+                        </div>
+                        <span style={{fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:20,background:est.bg,color:est.color,whiteSpace:"nowrap"}}>
+                          {est.label}
+                        </span>
+                      </div>
+                      {/* Items */}
+                      <div style={{background:"#f8fafc",borderRadius:10,padding:"8px 10px",marginBottom:8,fontSize:12}}>
+                        {(ped.items||[]).map((it,i)=>(
+                          <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"2px 0",borderBottom:i<(ped.items.length-1)?"1px solid #f1f5f9":"none"}}>
+                            <span style={{color:"#0f172a"}}>{it.isPromo?"🔥 ":""}{it.nombre} <strong>x{it.qty}</strong>{it.nota&&<span style={{color:"#7e22ce"}}> 📝{it.nota}</span>}</span>
+                            <span style={{fontWeight:700,color:P}}>${((it.precio||0)*(it.qty||1)).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Cliente y totales */}
+                      <div style={{fontSize:12,color:"#64748b",marginBottom:6}}>
+                        👤 <strong>{ped.cliente_nombre}</strong> · 📱 {ped.cliente_telefono}
+                        {ped.cliente_direccion&&<div style={{fontSize:11,marginTop:2}}>📍 {ped.cliente_direccion}</div>}
+                      </div>
+                      <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:10,paddingTop:6,borderTop:"1px solid #f1f5f9"}}>
+                        <span style={{color:"#64748b"}}>Delivery: ${(ped.delivery||0).toFixed(2)}</span>
+                        <span style={{fontWeight:800,color:"#0f172a"}}>Total: <span style={{color:"#22c55e"}}>${(ped.total||0).toFixed(2)}</span></span>
+                      </div>
+                      {/* Botones de estado */}
+                      {siguientes.length>0&&(
+                        <div style={{display:"flex",gap:6,marginBottom:6}}>
+                          {siguientes.map(sig=>{
+                            const e=ESTADOS[sig];
+                            const isCancel=sig==="cancelado";
+                            return(
+                              <button key={sig} onClick={()=>actualizarEstado(ped.id,sig)}
+                                style={{flex:1,padding:"9px",borderRadius:10,border:"none",fontSize:11,fontWeight:800,cursor:"pointer",background:isCancel?"#fee2e2":e.bg,color:isCancel?"#991b1b":e.color}}>
+                                {e.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {/* Botón WhatsApp cliente */}
+                      <button onClick={()=>{
+                        const _t=(ped.cliente_telefono||"").replace(/\D/g,"");
+                        const num=_t.startsWith("0")?"58"+_t.slice(1):_t.startsWith("58")?_t:"58"+_t;
+                        const estadoMsg={
+                          "recibido":"✅ Recibimos tu pedido *"+ped.ref+"* y lo estamos preparando.",
+                          "en_camino":"🚀 Tu pedido *"+ped.ref+"* ya va en camino. ¡Pronto llega!",
+                          "entregado":"🎉 Tu pedido *"+ped.ref+"* fue entregado. ¡Gracias por preferirnos!",
+                          "cancelado":"😔 Lamentamos informarte que tu pedido *"+ped.ref+"* fue cancelado. Contáctanos para más info.",
+                        }[ped.estado]||"Hola "+ped.cliente_nombre+" 👋, te escribimos sobre tu pedido *"+ped.ref+"*.";
+                        window.open("https://wa.me/"+num+"?text="+encodeURIComponent("Hola "+ped.cliente_nombre+" 👋\n\n"+estadoMsg),"_blank");
+                      }} style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:10,padding:"9px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                        📲 Notificar al cliente por WhatsApp
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
 
           {provTab==="ventas"&&(<div style={s.pc}><div style={s.pT}>💰 Mis ventas recientes</div>{myVentas.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>Aún no tienes ventas registradas</div>}{myVentas.slice(0,20).map(v=>(<div key={v.id} style={{padding:"8px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}><div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontWeight:600}}>{v.producto_nombre}</span><span style={{fontWeight:700,color:"#22c55e"}}>${(v.total_item||0).toFixed(2)}</span></div><div style={{color:"#94a3b8"}}>{v.cliente_nombre} · x{v.cantidad} · {v.fecha?.slice(0,10)}</div></div>))}</div>)}
 
