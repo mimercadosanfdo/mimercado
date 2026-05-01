@@ -2840,12 +2840,16 @@ export default function App() {
               "cancelado": {label:"❌ Cancelado",   bg:"#fee2e2",color:"#991b1b"},
             };
             const actualizarEstado=async(pedId,nuevoEstado)=>{
-              await supabase.from("pedidos").update({
+              const{error}=await supabase.from("pedidos").update({
                 estado:nuevoEstado,
                 completado:nuevoEstado==="entregado",
                 updated_at:new Date().toISOString()
               }).eq("id",pedId);
-              loadMisRestPedidos(provData.id,provData.negocio);
+              if(error){
+                alert("Error al actualizar: "+error.message);
+                return;
+              }
+              await loadMisRestPedidos(provData.id,provData.negocio);
             };
             // Filtros
             const hoy=new Date().toISOString().slice(0,10);
