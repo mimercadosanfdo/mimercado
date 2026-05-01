@@ -353,9 +353,15 @@ export default function App() {
     if(data)setMisNegPedidos(data);
   };
 
-  const loadMisRestPedidos=async(pid)=>{
-    const{data}=await supabase.from("pedidos").select("*").eq("proveedor_id",pid).order("created_at",{ascending:false}).limit(100);
-    if(data)setMisRestPedidos(data);
+  const loadMisRestPedidos=async(pid,nombre)=>{
+    // Buscar por proveedor_id O por proveedor_nombre (compatibilidad)
+    const{data:d1}=await supabase.from("pedidos").select("*").eq("proveedor_id",pid).order("created_at",{ascending:false}).limit(100);
+    const{data:d2}=await supabase.from("pedidos").select("*").eq("proveedor_nombre",nombre||"").order("created_at",{ascending:false}).limit(100);
+    // Combinar y deduplicar por id
+    const todos=[...(d1||[]),...(d2||[])];
+    const unique=Object.values(todos.reduce((acc,p)=>({...acc,[p.id]:p}),{}));
+    unique.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    setMisRestPedidos(unique);
   };
 
   const loadSuscripciones=async()=>{
@@ -716,7 +722,7 @@ export default function App() {
     if(data.en_pausa)return setPmsg("Tu cuenta está pausada. Contacta al administrador.");
     if(data.password_plain&&data.password_plain!==provForm.pass)return setPmsg("Contraseña incorrecta");
     setProvData(data);setProvMode("dash");setProvTab("prod_aprobados");setPmsg("");
-    loadMyProds(data.id);loadMyPromos(data.id);loadMyVentas(data.id);loadMisRestPedidos(data.id);
+    loadMyProds(data.id);loadMyPromos(data.id);loadMyVentas(data.id);loadMisRestPedidos(data.id,data.negocio);
   };
 
   const handleRegister=async()=>{
@@ -2835,7 +2841,7 @@ export default function App() {
             };
             const actualizarEstado=async(pedId,nuevoEstado)=>{
               await supabase.from("pedidos").update({estado:nuevoEstado,completado:nuevoEstado==="entregado"}).eq("id",pedId);
-              loadMisRestPedidos(provData.id);
+              loadMisRestPedidos(provData.id,provData.negocio);
             };
             // Filtros
             const hoy=new Date().toISOString().slice(0,10);
