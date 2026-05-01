@@ -217,6 +217,8 @@ export default function App() {
   const [numsPedido,setNumsPedido]=useState({}); // {provNombre: numero_siguiente}
   const [filtroPed,setFiltroPed]=useState("hoy");
   const [filtroEstado,setFiltroEstado]=useState("todos");
+  const [editandoPagos,setEditandoPagos]=useState(false);
+  const [pagoData,setPagoData]=useState({pago_movil_banco:"",pago_movil_telefono:"",pago_movil_cedula:"",pago_movil_nombre:"",acepta_efectivo:false,acepta_zelle:false,zelle_cuenta:"",acepta_divisas:false});
   const [selSvc,setSelSvc]=useState(null);
   const [svcForm,setSvcForm]=useState({nombre:"",telefono:"",direccion:"",detalle:""});
   const [superProds,setSuperProds]=useState([]);
@@ -2840,7 +2842,15 @@ export default function App() {
               "cancelado": {label:"❌ Cancelado",   bg:"#fee2e2",color:"#991b1b"},
             };
             const MSGS_ESTADO={
-              "recibido": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n✅ Recibimos tu pedido *${ped.ref}* y lo estamos preparando. ¡En breve estará listo!`,
+              "recibido": (ped)=>{
+                const items=(ped.items||[]).map(i=>`• ${i.nombre} x${i.qty||1} — $${((i.precio||0)*(i.qty||1)).toFixed(2)}`).join("\n");
+                const total=`💵 *Total a pagar: $${(ped.total||0).toFixed(2)}*`;
+                const pm=provData.pago_movil_banco?`\n\n💳 *Pago Móvil:*\nBanco: ${provData.pago_movil_banco}\nTeléfono: ${provData.pago_movil_telefono||""}\nCédula: ${provData.pago_movil_cedula||""}\nNombre: ${provData.pago_movil_nombre||""}`:"";
+                const zelle=provData.acepta_zelle&&provData.zelle_cuenta?`\n\n💵 *Zelle:* ${provData.zelle_cuenta}`:"";
+                const efectivo=provData.acepta_efectivo?"\n\n💵 *Efectivo:* Aceptamos efectivo USD":"";
+                const divisas=provData.acepta_divisas?"\n\n💱 *Divisas:* Aceptamos divisas":"";
+                return `Hola ${ped.cliente_nombre} 👋\n\n✅ *Recibimos tu pedido ${ped.ref}*\n\n🛒 *Resumen:*\n${items}\n\n🚚 Delivery: $${(ped.delivery||0).toFixed(2)}\n${total}\n\n💳 *Métodos de pago disponibles:*${pm}${zelle}${efectivo}${divisas}\n\nPor favor realiza el pago y envíanos el comprobante. ¡Gracias! 🙏`;
+              },
               "en_camino": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n🚀 Tu pedido *${ped.ref}* ya va en camino hacia tu dirección.\n\n📍 ${ped.cliente_direccion||""}\n\n¡Pronto llega!`,
               "entregado": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n🎉 Tu pedido *${ped.ref}* fue entregado exitosamente.\n\n¡Gracias por tu preferencia! Esperamos verte pronto. 😊`,
               "cancelado": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n😔 Lamentamos informarte que tu pedido *${ped.ref}* fue cancelado.\n\nPor favor contáctanos para más información. Disculpa los inconvenientes.`,
@@ -2987,6 +2997,71 @@ export default function App() {
           })()}
 
           {provTab==="ventas"&&(<div style={s.pc}><div style={s.pT}>💰 Mis ventas recientes</div>{myVentas.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>Aún no tienes ventas registradas</div>}{myVentas.slice(0,20).map(v=>(<div key={v.id} style={{padding:"8px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}><div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontWeight:600}}>{v.producto_nombre}</span><span style={{fontWeight:700,color:"#22c55e"}}>${(v.total_item||0).toFixed(2)}</span></div><div style={{color:"#94a3b8"}}>{v.cliente_nombre} · x{v.cantidad} · {v.fecha?.slice(0,10)}</div></div>))}</div>)}
+
+          {/* MÉTODOS DE PAGO */}
+          <div style={{background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:14,padding:"14px",marginBottom:12}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:editandoPagos?10:0}}>
+              <div>
+                <div style={{fontSize:13,fontWeight:800,color:"#0f172a"}}>💳 Métodos de pago</div>
+                {!editandoPagos&&(
+                  <div style={{fontSize:11,color:"#64748b",marginTop:2}}>
+                    {provData.pago_movil_banco?`Pago Móvil: ${provData.pago_movil_banco}`:"Sin métodos configurados"}
+                    {provData.acepta_zelle?" · Zelle":""}
+                    {provData.acepta_efectivo?" · Efectivo":""}
+                  </div>
+                )}
+              </div>
+              <button onClick={()=>{setPagoData({pago_movil_banco:provData.pago_movil_banco||"",pago_movil_telefono:provData.pago_movil_telefono||"",pago_movil_cedula:provData.pago_movil_cedula||"",pago_movil_nombre:provData.pago_movil_nombre||"",acepta_efectivo:provData.acepta_efectivo||false,acepta_zelle:provData.acepta_zelle||false,zelle_cuenta:provData.zelle_cuenta||"",acepta_divisas:provData.acepta_divisas||false});setEditandoPagos(!editandoPagos);}} style={{fontSize:11,background:editandoPagos?"#f1f5f9":"#f0fdf4",color:editandoPagos?"#64748b":"#15803d",border:"none",borderRadius:8,padding:"5px 12px",fontWeight:700,cursor:"pointer"}}>
+                {editandoPagos?"Cancelar":"✏️ Editar"}
+              </button>
+            </div>
+            {editandoPagos&&(
+              <div>
+                <div style={{fontSize:12,fontWeight:700,color:"#1e40af",marginBottom:8,background:"#dbeafe",padding:"6px 10px",borderRadius:8}}>📱 Pago Móvil</div>
+                <label style={s.lbl}>Banco</label>
+                <input style={s.inp} placeholder="Ej: Banesco, Provincial, BDV..." value={pagoData.pago_movil_banco} onChange={e=>setPagoData({...pagoData,pago_movil_banco:e.target.value})}/>
+                <label style={s.lbl}>Teléfono</label>
+                <input style={s.inp} placeholder="04XX-XXXXXXX" value={pagoData.pago_movil_telefono} onChange={e=>setPagoData({...pagoData,pago_movil_telefono:e.target.value})}/>
+                <label style={s.lbl}>Cédula</label>
+                <input style={s.inp} placeholder="V-XXXXXXXX" value={pagoData.pago_movil_cedula} onChange={e=>setPagoData({...pagoData,pago_movil_cedula:e.target.value})}/>
+                <label style={s.lbl}>Nombre del titular</label>
+                <input style={s.inp} placeholder="Nombre completo" value={pagoData.pago_movil_nombre} onChange={e=>setPagoData({...pagoData,pago_movil_nombre:e.target.value})}/>
+                <div style={{fontSize:12,fontWeight:700,color:"#15803d",marginBottom:8,marginTop:4,background:"#f0fdf4",padding:"6px 10px",borderRadius:8}}>💵 Otros métodos</div>
+                <label style={{display:"flex",alignItems:"center",gap:10,marginBottom:8,cursor:"pointer"}}>
+                  <input type="checkbox" checked={pagoData.acepta_efectivo} onChange={e=>setPagoData({...pagoData,acepta_efectivo:e.target.checked})} style={{width:16,height:16,accentColor:"#25D366"}}/>
+                  <span style={{fontSize:12,fontWeight:600}}>Acepto efectivo USD</span>
+                </label>
+                <label style={{display:"flex",alignItems:"center",gap:10,marginBottom:8,cursor:"pointer"}}>
+                  <input type="checkbox" checked={pagoData.acepta_divisas} onChange={e=>setPagoData({...pagoData,acepta_divisas:e.target.checked})} style={{width:16,height:16,accentColor:"#25D366"}}/>
+                  <span style={{fontSize:12,fontWeight:600}}>Acepto otras divisas</span>
+                </label>
+                <label style={{display:"flex",alignItems:"center",gap:10,marginBottom:8,cursor:"pointer"}}>
+                  <input type="checkbox" checked={pagoData.acepta_zelle} onChange={e=>setPagoData({...pagoData,acepta_zelle:e.target.checked})} style={{width:16,height:16,accentColor:"#25D366"}}/>
+                  <span style={{fontSize:12,fontWeight:600}}>Acepto Zelle</span>
+                </label>
+                {pagoData.acepta_zelle&&(
+                  <input style={s.inp} placeholder="Email o teléfono de Zelle" value={pagoData.zelle_cuenta} onChange={e=>setPagoData({...pagoData,zelle_cuenta:e.target.value})}/>
+                )}
+                <button onClick={async()=>{
+                  await supabase.from("proveedores").update({
+                    pago_movil_banco:pagoData.pago_movil_banco,
+                    pago_movil_telefono:pagoData.pago_movil_telefono,
+                    pago_movil_cedula:pagoData.pago_movil_cedula,
+                    pago_movil_nombre:pagoData.pago_movil_nombre,
+                    acepta_efectivo:pagoData.acepta_efectivo,
+                    acepta_zelle:pagoData.acepta_zelle,
+                    zelle_cuenta:pagoData.zelle_cuenta,
+                    acepta_divisas:pagoData.acepta_divisas,
+                  }).eq("id",provData.id);
+                  setProvData({...provData,...pagoData});
+                  setEditandoPagos(false);
+                  setPmsg("✅ Métodos de pago actualizados");
+                }} style={{...s.btnGreen,width:"100%",borderRadius:10,padding:"10px",fontSize:13,marginTop:4}}>
+                  💾 Guardar métodos de pago
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* EDITAR PERFIL */}
           {!editandoPerfil&&!cambiandoClave&&(
