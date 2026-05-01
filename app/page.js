@@ -2835,31 +2835,35 @@ export default function App() {
           {provTab==="pedidos_rest"&&(()=>{
             // Estados y colores
             const ESTADOS={
-              "nuevo":     {label:"🆕 Nuevo",       bg:"#fef9c3",color:"#854d0e"},
-              "recibido":  {label:"📥 Recibido",    bg:"#dbeafe",color:"#1e40af"},
-              "en_camino": {label:"🚀 En camino",   bg:"#fef3c7",color:"#92400e"},
-              "entregado": {label:"✅ Entregado",   bg:"#dcfce7",color:"#15803d"},
-              "cancelado": {label:"❌ Cancelado",   bg:"#fee2e2",color:"#991b1b"},
+              "nuevo":           {label:"🆕 Nuevo",              bg:"#fef9c3",color:"#854d0e"},
+              "recibido":        {label:"📥 Recibido",           bg:"#dbeafe",color:"#1e40af"},
+              "esperando_pago":  {label:"💳 Esperando pago",     bg:"#fdf4ff",color:"#7e22ce"},
+              "preparando":      {label:"👨‍🍳 Preparando",         bg:"#fff7ed",color:"#c2410c"},
+              "enviado":         {label:"🚀 Enviado",            bg:"#fef3c7",color:"#92400e"},
+              "entregado":       {label:"✅ Entregado",          bg:"#dcfce7",color:"#15803d"},
+              "cancelado":       {label:"❌ Cancelado",          bg:"#fee2e2",color:"#991b1b"},
             };
             const MSGS_ESTADO={
               "recibido": (ped)=>{
                 const items=(ped.items||[]).map(i=>`• ${i.nombre} x${i.qty||1} — $${((i.precio||0)*(i.qty||1)).toFixed(2)}`).join("\n");
                 const total=`💵 *Total a pagar: $${(ped.total||0).toFixed(2)}*`;
-                const pm=provData.pago_movil_banco?`\n\n💳 *Pago Móvil:*\nBanco: ${provData.pago_movil_banco}\nTeléfono: ${provData.pago_movil_telefono||""}\nCédula: ${provData.pago_movil_cedula||""}\nNombre: ${provData.pago_movil_nombre||""}`:"";
+                const pm=provData.pago_movil_banco?`\n\n📱 *Pago Móvil:*\nBanco: ${provData.pago_movil_banco}\nTeléfono: ${provData.pago_movil_telefono||""}\nCédula: ${provData.pago_movil_cedula||""}\nNombre: ${provData.pago_movil_nombre||""}`:"";
                 const zelle=provData.acepta_zelle&&provData.zelle_cuenta?`\n\n💵 *Zelle:* ${provData.zelle_cuenta}`:"";
                 const binance=provData.acepta_binance&&provData.binance_cuenta?`\n\n🟡 *Binance Pay:* ${provData.binance_cuenta}`:"";
-                const efectivo=provData.acepta_efectivo?"\n\n💵 *Efectivo:* Aceptamos efectivo USD":"";
-                const divisas=provData.acepta_divisas?"\n\n💱 *Divisas:* Aceptamos divisas":"";
-                return `Hola ${ped.cliente_nombre} 👋\n\n✅ *Recibimos tu pedido ${ped.ref}*\n\n🛒 *Resumen:*\n${items}\n\n🚚 Delivery: $${(ped.delivery||0).toFixed(2)}\n${total}\n\n💳 *Métodos de pago disponibles:*${pm}${zelle}${binance}${efectivo}${divisas}\n\nPor favor realiza el pago y envíanos el comprobante. ¡Gracias! 🙏`;
+                const efectivo=provData.acepta_efectivo?"\n\n💵 *Efectivo USD:* Aceptamos efectivo":"";
+                const divisas=provData.acepta_divisas?"\n\n💱 *Otras divisas:* Aceptamos":"";
+                return `Hola ${ped.cliente_nombre} 👋\n\n✅ *Recibimos tu pedido ${ped.ref}*\n\n🛒 *Tu pedido:*\n${items}\n\n🚚 Delivery: $${(ped.delivery||0).toFixed(2)}\n${total}\n\n💳 *Para completar tu pedido, realiza el pago:*${pm}${zelle}${binance}${efectivo}${divisas}\n\n📸 Envíanos el comprobante de pago para procesar tu pedido. ¡Gracias! 🙏`;
               },
-              "en_camino": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n🚀 Tu pedido *${ped.ref}* ya va en camino hacia tu dirección.\n\n📍 ${ped.cliente_direccion||""}\n\n¡Pronto llega!`,
+              "esperando_pago": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n💳 Estamos esperando tu comprobante de pago para el pedido *${ped.ref}* por un total de *$${(ped.total||0).toFixed(2)}*.\n\nCuando realices el pago, envíanos la captura y comenzamos a preparar tu pedido. ¡Gracias!`,
+              "preparando": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n👨‍🍳 ¡Pago confirmado! Tu pedido *${ped.ref}* está siendo preparado.\n\nTe avisaremos cuando esté listo para enviar. ¡Ya casi! 😊`,
+              "enviado": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n🚀 Tu pedido *${ped.ref}* ya va en camino hacia tu dirección.\n\n📍 ${ped.cliente_direccion||""}\n\n¡Pronto llega! Mantente atento(a).`,
               "entregado": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n🎉 Tu pedido *${ped.ref}* fue entregado exitosamente.\n\n¡Gracias por tu preferencia! Esperamos verte pronto. 😊`,
               "cancelado": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n😔 Lamentamos informarte que tu pedido *${ped.ref}* fue cancelado.\n\nPor favor contáctanos para más información. Disculpa los inconvenientes.`,
             };
             const actualizarEstado=async(pedId,nuevoEstado,ped)=>{
               const{error}=await supabase.from("pedidos").update({
                 estado:nuevoEstado,
-                completado:nuevoEstado==="entregado",
+                completado:["entregado"].includes(nuevoEstado),
                 updated_at:new Date().toISOString()
               }).eq("id",pedId);
               if(error){
@@ -2890,7 +2894,7 @@ export default function App() {
             // Stats
             const totalHoy=misRestPedidos.filter(p=>p.created_at?.slice(0,10)===hoy);
             const ingreso=misRestPedidos.filter(p=>p.estado==="entregado").reduce((a,p)=>a+(p.total||0),0);
-            const pendientes=misRestPedidos.filter(p=>!["entregado","cancelado"].includes(p.estado));
+            const pendientes=misRestPedidos.filter(p=>!["entregado","cancelado"].includes(p.estado||"nuevo"));
             return(
               <div style={s.pc}>
                 <div style={s.pT}>📋 Mis pedidos</div>
@@ -2910,7 +2914,7 @@ export default function App() {
                 </div>
                 {/* FILTRO ESTADO */}
                 <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
-                  {[["todos","Todos"],["nuevo","Nuevos"],["recibido","Recibidos"],["en_camino","En camino"],["entregado","Entregados"],["cancelado","Cancelados"]].map(([v,l])=>(
+                  {[["todos","Todos"],["nuevo","Nuevos"],["recibido","Recibidos"],["esperando_pago","Esp. pago"],["preparando","Preparando"],["enviado","Enviados"],["entregado","Entregados"],["cancelado","Cancelados"]].map(([v,l])=>(
                     <button key={v} onClick={()=>setFiltroEstado(v)} style={{flexShrink:0,padding:"4px 10px",borderRadius:20,border:"none",fontSize:10,fontWeight:700,cursor:"pointer",background:filtroEstado===v?"#0f172a":"#f1f5f9",color:filtroEstado===v?"#fff":"#64748b"}}>
                       {l} {v!=="todos"&&misRestPedidos.filter(p=>p.estado===v).length>0?`(${misRestPedidos.filter(p=>p.estado===v).length})`:""}
                     </button>
@@ -2925,11 +2929,13 @@ export default function App() {
                 {pedFiltrados.map(ped=>{
                   const est=ESTADOS[ped.estado]||ESTADOS["nuevo"];
                   const siguientes={
-                    "nuevo":["recibido","cancelado"],
-                    "recibido":["en_camino","cancelado"],
-                    "en_camino":["entregado","cancelado"],
-                    "entregado":[],
-                    "cancelado":[],
+                    "nuevo":          ["recibido","cancelado"],
+                    "recibido":       ["esperando_pago","cancelado"],
+                    "esperando_pago": ["preparando","cancelado"],
+                    "preparando":     ["enviado","cancelado"],
+                    "enviado":        ["entregado","cancelado"],
+                    "entregado":      [],
+                    "cancelado":      [],
                   }[ped.estado||"nuevo"]||[];
                   return(
                     <div key={ped.id} style={{background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:14,padding:"14px",marginBottom:10,boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
