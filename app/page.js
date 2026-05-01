@@ -218,7 +218,7 @@ export default function App() {
   const [filtroPed,setFiltroPed]=useState("hoy");
   const [filtroEstado,setFiltroEstado]=useState("todos");
   const [editandoPagos,setEditandoPagos]=useState(false);
-  const [pagoData,setPagoData]=useState({pago_movil_banco:"",pago_movil_telefono:"",pago_movil_cedula:"",pago_movil_nombre:"",acepta_efectivo:false,acepta_zelle:false,zelle_cuenta:"",acepta_divisas:false});
+  const [pagoData,setPagoData]=useState({pago_movil_banco:"",pago_movil_telefono:"",pago_movil_cedula:"",pago_movil_nombre:"",acepta_efectivo:false,acepta_zelle:false,zelle_cuenta:"",acepta_divisas:false,acepta_binance:false,binance_cuenta:""});
   const [selSvc,setSelSvc]=useState(null);
   const [svcForm,setSvcForm]=useState({nombre:"",telefono:"",direccion:"",detalle:""});
   const [superProds,setSuperProds]=useState([]);
@@ -2847,9 +2847,10 @@ export default function App() {
                 const total=`💵 *Total a pagar: $${(ped.total||0).toFixed(2)}*`;
                 const pm=provData.pago_movil_banco?`\n\n💳 *Pago Móvil:*\nBanco: ${provData.pago_movil_banco}\nTeléfono: ${provData.pago_movil_telefono||""}\nCédula: ${provData.pago_movil_cedula||""}\nNombre: ${provData.pago_movil_nombre||""}`:"";
                 const zelle=provData.acepta_zelle&&provData.zelle_cuenta?`\n\n💵 *Zelle:* ${provData.zelle_cuenta}`:"";
+                const binance=provData.acepta_binance&&provData.binance_cuenta?`\n\n🟡 *Binance Pay:* ${provData.binance_cuenta}`:"";
                 const efectivo=provData.acepta_efectivo?"\n\n💵 *Efectivo:* Aceptamos efectivo USD":"";
                 const divisas=provData.acepta_divisas?"\n\n💱 *Divisas:* Aceptamos divisas":"";
-                return `Hola ${ped.cliente_nombre} 👋\n\n✅ *Recibimos tu pedido ${ped.ref}*\n\n🛒 *Resumen:*\n${items}\n\n🚚 Delivery: $${(ped.delivery||0).toFixed(2)}\n${total}\n\n💳 *Métodos de pago disponibles:*${pm}${zelle}${efectivo}${divisas}\n\nPor favor realiza el pago y envíanos el comprobante. ¡Gracias! 🙏`;
+                return `Hola ${ped.cliente_nombre} 👋\n\n✅ *Recibimos tu pedido ${ped.ref}*\n\n🛒 *Resumen:*\n${items}\n\n🚚 Delivery: $${(ped.delivery||0).toFixed(2)}\n${total}\n\n💳 *Métodos de pago disponibles:*${pm}${zelle}${binance}${efectivo}${divisas}\n\nPor favor realiza el pago y envíanos el comprobante. ¡Gracias! 🙏`;
               },
               "en_camino": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n🚀 Tu pedido *${ped.ref}* ya va en camino hacia tu dirección.\n\n📍 ${ped.cliente_direccion||""}\n\n¡Pronto llega!`,
               "entregado": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n🎉 Tu pedido *${ped.ref}* fue entregado exitosamente.\n\n¡Gracias por tu preferencia! Esperamos verte pronto. 😊`,
@@ -3042,6 +3043,13 @@ export default function App() {
                 {pagoData.acepta_zelle&&(
                   <input style={s.inp} placeholder="Email o teléfono de Zelle" value={pagoData.zelle_cuenta} onChange={e=>setPagoData({...pagoData,zelle_cuenta:e.target.value})}/>
                 )}
+                <label style={{display:"flex",alignItems:"center",gap:10,marginBottom:8,cursor:"pointer"}}>
+                  <input type="checkbox" checked={pagoData.acepta_binance} onChange={e=>setPagoData({...pagoData,acepta_binance:e.target.checked})} style={{width:16,height:16,accentColor:"#F0B90B"}}/>
+                  <span style={{fontSize:12,fontWeight:600}}>Acepto Binance Pay</span>
+                </label>
+                {pagoData.acepta_binance&&(
+                  <input style={s.inp} placeholder="ID o email de Binance Pay" value={pagoData.binance_cuenta} onChange={e=>setPagoData({...pagoData,binance_cuenta:e.target.value})}/>
+                )}
                 <button onClick={async()=>{
                   await supabase.from("proveedores").update({
                     pago_movil_banco:pagoData.pago_movil_banco,
@@ -3052,6 +3060,8 @@ export default function App() {
                     acepta_zelle:pagoData.acepta_zelle,
                     zelle_cuenta:pagoData.zelle_cuenta,
                     acepta_divisas:pagoData.acepta_divisas,
+                    acepta_binance:pagoData.acepta_binance,
+                    binance_cuenta:pagoData.binance_cuenta,
                   }).eq("id",provData.id);
                   setProvData({...provData,...pagoData});
                   setEditandoPagos(false);
