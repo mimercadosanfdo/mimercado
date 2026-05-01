@@ -3772,10 +3772,11 @@ export default function App() {
           const del=prov.delivery?(sub>=prov.gratis?0:prov.costo):0;
           const total=sub+del;
           const aceptaPromo=!!consentPromo[prov.nombre];
-          const msg=buildRestWaMsg(prov.nombre,prov.items,total,del,form.nombre,form.telefono,dirCliente);
+          const numPedido=Date.now()%900+100;
+          const msg=buildGlobalWaMsg(prov.nombre,prov.items,total,del,numPedido,form.nombre,form.telefono,dirCliente);
           const raw=prov.wa.replace(/\D/g,"");
           const num=raw.startsWith("0")?"58"+raw.slice(1):raw.startsWith("58")?raw:"58"+raw;
-          const ref=`REST-${Date.now().toString().slice(-5)}`;
+          const ref=`PED-${String(numPedido).padStart(3,"0")}`;
           // Buscar id del proveedor desde allRestaurantes
           const restObj=allRestaurantes?.find(r=>r.negocio===prov.nombre);
           guardarPedidoRestaurante(restObj?.id||null,prov.items,sub,del,total,ref,aceptaPromo,prov.nombre);
