@@ -424,11 +424,14 @@ export default function App() {
   const buildGlobalWaMsg=(provNombre,items,total,del,numPedido,clienteNombre,clienteTel,clienteDir)=>{
     const promos=items.filter(i=>i.isPromo);
     const platos=items.filter(i=>!i.isPromo);
-    const lineasPromo=promos.map(i=>`🔥 Promo ${i.name}\n   • Precio: $${i.price.toFixed(2)}`).join("\n");
-    const lineasPlato=platos.map(i=>`• ${i.name} x${i.qty} — $${(i.price*i.qty).toFixed(2)}${i.nota?" ("+i.nota+")":""}`).join("\n");
-    const lineas=[lineasPromo,lineasPlato].filter(Boolean).join("\n");
+    // Recalcular subtotal internamente para garantizar exactitud
+    const subReal=items.reduce((a,i)=>a+i.price*i.qty,0);
+    const totalReal=subReal+del;
+    const lineasPromo=promos.map(i=>`🔥 Promo: ${i.name}\n   • Cantidad: ${i.qty}\n   • Precio unitario: $${i.price.toFixed(2)}\n   • Subtotal: $${(i.price*i.qty).toFixed(2)}`).join("\n\n");
+    const lineasPlato=platos.map(i=>`🍽️ ${i.name}\n   • Cantidad: ${i.qty}\n   • Precio unitario: $${i.price.toFixed(2)}\n   • Subtotal: $${(i.price*i.qty).toFixed(2)}${i.nota?"\n   • Nota: "+i.nota:""}`).join("\n\n");
+    const lineas=[lineasPromo,lineasPlato].filter(Boolean).join("\n\n");
     const delLinea=del===0?"🚚 Delivery: Gratis 🎉":`🚚 Delivery: $${del.toFixed(2)}`;
-    return `🧾 Pedido N° ${String(numPedido).padStart(3,"0")}\n\n👋 Hola, quiero realizar un pedido:\n\n🏪 *${provNombre}*\n\n👤 *Datos del cliente:*\nNombre: ${clienteNombre||"No indicado"}\nTeléfono: ${clienteTel||"No indicado"}${clienteDir?"\nDirección: "+clienteDir:""}\n\n🛒 *Mi pedido:*\n${lineas}\n\n${delLinea}\n\n💵 *Total estimado:* $${total.toFixed(2)}\n\n📞 Quedo atento(a) para confirmar disponibilidad, tiempo de entrega y método de pago.\nGracias.`;
+    return `🧾 *Pedido N° ${String(numPedido).padStart(3,"0")}*\n\n👋 Hola, quiero realizar un pedido:\n\n🏪 *${provNombre}*\n\n👤 *Datos del cliente:*\nNombre: ${clienteNombre||"No indicado"}\nTeléfono: ${clienteTel||"No indicado"}${clienteDir?"\nDirección: "+clienteDir:""}\n\n🛒 *Mi pedido:*\n\n${lineas}\n\n${delLinea}\n\n💵 *Total estimado: $${totalReal.toFixed(2)}*\n\n📞 Quedo atento(a) para confirmar disponibilidad, tiempo de entrega y método de pago.\nGracias.`;
   };
 
   const parseCsvRow=(row)=>{
