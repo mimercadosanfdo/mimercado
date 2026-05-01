@@ -347,12 +347,12 @@ export default function App() {
   };
 
   const loadMisNegPedidos=async(pid)=>{
-    const{data}=await supabase.from("pedidos_restaurante").select("*").eq("proveedor_id",pid).order("created_at",{ascending:false}).limit(100);
+    const{data}=await supabase.from("pedidos").select("*").eq("proveedor_id",pid).order("created_at",{ascending:false}).limit(100);
     if(data)setMisNegPedidos(data);
   };
 
   const loadMisRestPedidos=async(pid)=>{
-    const{data}=await supabase.from("pedidos_restaurante").select("*").eq("proveedor_id",pid).order("created_at",{ascending:false}).limit(100);
+    const{data}=await supabase.from("pedidos").select("*").eq("proveedor_id",pid).order("created_at",{ascending:false}).limit(100);
     if(data)setMisRestPedidos(data);
   };
 
@@ -362,18 +362,21 @@ export default function App() {
   };
 
   const guardarPedidoRestaurante=async(restId,restItems,restSub,restDel,restTotal,restRef,aceptaPromo,provNombre)=>{
-    await supabase.from("pedidos_restaurante").insert({
-      proveedor_id:restId,
+    const{error:errPed}=await supabase.from("pedidos").insert({
       ref:restRef,
+      proveedor_nombre:provNombre||"",
       cliente_nombre:form.nombre,
       cliente_telefono:form.telefono,
-      items:restItems.map(i=>({nombre:i.name,precio:i.price,qty:i.qty,nota:i.nota||null})),
+      cliente_direccion:[zonaSel?.zona,addr.calle,addr.referencia].filter(Boolean).join(", "),
+      zona:zonaSel?.zona||"",
+      metodo_pago:"WhatsApp",
+      items:restItems.map(i=>({nombre:i.name,precio:i.price,qty:i.qty,nota:i.nota||null,isPromo:i.isPromo||false})),
       subtotal:parseFloat(restSub.toFixed(2)),
       delivery:parseFloat(restDel.toFixed(2)),
       total:parseFloat(restTotal.toFixed(2)),
-      estado:"iniciado",
-      completado:false,
+      estado:"nuevo",
     });
+    if(errPed)console.error("Error guardando pedido:",errPed.message);
     // Guardar suscripción a promos si el cliente aceptó, solo para este proveedor
     if(aceptaPromo&&form.telefono&&form.nombre&&restId){
       const{data:existe}=await supabase.from("suscriptores_promo")
@@ -2840,7 +2843,7 @@ export default function App() {
                   </div>
                   {!ped.completado&&(
                     <div style={{display:"flex",gap:6}}>
-                      <button onClick={async()=>{await supabase.from("pedidos_restaurante").update({completado:true,estado:"completado"}).eq("id",ped.id);loadMisRestPedidos(provData.id);}} style={{...s.btnGreen,flex:1,borderRadius:10,padding:"8px",fontSize:12}}>✅ Marcar completado</button>
+                      <button onClick={async()=>{await supabase.from("pedidos").update({completado:true,estado:"completado"}).eq("id",ped.id);loadMisRestPedidos(provData.id);}} style={{...s.btnGreen,flex:1,borderRadius:10,padding:"8px",fontSize:12}}>✅ Marcar completado</button>
                       <button onClick={()=>{const _t=(ped.cliente_telefono||"").replace(/\D/g,"");window.location.href="https://wa.me/"+_t+"?text="+encodeURIComponent("Hola "+ped.cliente_nombre+" 👋 Tu pedido *"+ped.ref+"* está listo");}} style={{...s.btnWa,flex:1,marginTop:0,padding:"8px",fontSize:12}}>📲 Escribir</button>
                     </div>
                   )}
@@ -3516,9 +3519,7 @@ export default function App() {
           const msg=buildGlobalWaMsg(prov.nombre,prov.items,total,del,numPed,form.nombre,form.telefono,dirCliente);
           const raw=prov.wa.replace(/\D/g,"");
           const num=raw.startsWith("0")?"58"+raw.slice(1):raw.startsWith("58")?raw:"58"+raw;
-          const numFinal=numsPedido[prov.nombre]||(Date.now()%1000);
-          const ref=`PED-${String(numFinal).padStart(3,'0')}`;
-          setNumsPedido(n=>({...n,[prov.nombre]:numFinal+1}));
+          const ref=`PED-${Date.now().toString().slice(-6)}`;
           // Guardar en DB
           if(prov.tipo==="rest"){
             const restObj=allRestaurantes?.find(r=>r.negocio===prov.nombre);
@@ -3532,17 +3533,6 @@ export default function App() {
           window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank");
         };
         // Numeración secuencial por sesión
-        // Cargar contadores de pedidos si no están cargados
-        React.useEffect(()=>{
-          proveedores.forEach(async prov=>{
-            if(prov.tipo==="super"||numsPedido[prov.nombre])return;
-            const{count}=await supabase.from("pedidos_restaurante").select("*",{count:"exact",head:true}).eq("cliente_nombre",prov.nombre);
-            // Contar pedidos de este proveedor por nombre
-            const{data}=await supabase.from("pedidos_restaurante").select("id",{count:"exact"}).ilike("ref","PED-%").order("created_at",{ascending:false}).limit(1);
-            const{count:cnt}=await supabase.from("pedidos_restaurante").select("*",{count:"exact",head:true});
-            setNumsPedido(n=>({...n,[prov.nombre]:(cnt||0)+1}));
-          });
-        },[proveedores.length]);
         return(
           <div style={s.ov} onClick={()=>setSheet(null)}>
             <div style={s.sh} onClick={e=>e.stopPropagation()}>
@@ -3589,7 +3579,7 @@ export default function App() {
                 const del=prov.delivery?(sub>=prov.gratis?0:prov.costo):0;
                 const total=sub+del;
                 const falta=prov.delivery&&del>0?parseFloat((prov.gratis-sub).toFixed(2)):0;
-                const numPed=numsPedido[prov.nombre]||(idx+1);
+                const numPed=idx+1;
                 const yaEnviado=pedidoEnviadoA===prov.nombre;
                 return(
                   <div key={prov.nombre} style={{background:yaEnviado?"#f0fdf4":"#fff",border:`1.5px solid ${yaEnviado?"#86efac":"#e2e8f0"}`,borderRadius:14,padding:"14px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.04)",opacity:yaEnviado?0.7:1}}>
