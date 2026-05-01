@@ -214,6 +214,7 @@ export default function App() {
   const [form,setForm]=useState({nombre:"",telefono:"",sexo:"",pago:"Pago Móvil",recibirPromos:false});
   const [consentPromo,setConsentPromo]=useState({});
   const [pedidoEnviadoA,setPedidoEnviadoA]=useState(null); // confirmación visual post-envío
+  const [numsPedido,setNumsPedido]=useState({}); // {provNombre: numero_siguiente}
   const [selSvc,setSelSvc]=useState(null);
   const [svcForm,setSvcForm]=useState({nombre:"",telefono:"",direccion:"",detalle:""});
   const [superProds,setSuperProds]=useState([]);
@@ -3515,7 +3516,9 @@ export default function App() {
           const msg=buildGlobalWaMsg(prov.nombre,prov.items,total,del,numPed,form.nombre,form.telefono,dirCliente);
           const raw=prov.wa.replace(/\D/g,"");
           const num=raw.startsWith("0")?"58"+raw.slice(1):raw.startsWith("58")?raw:"58"+raw;
-          const ref=`PED-${Date.now().toString().slice(-5)}`;
+          const numFinal=numsPedido[prov.nombre]||(Date.now()%1000);
+          const ref=`PED-${String(numFinal).padStart(3,'0')}`;
+          setNumsPedido(n=>({...n,[prov.nombre]:numFinal+1}));
           // Guardar en DB
           if(prov.tipo==="rest"){
             const restObj=allRestaurantes?.find(r=>r.negocio===prov.nombre);
@@ -3529,7 +3532,17 @@ export default function App() {
           window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank");
         };
         // Numeración secuencial por sesión
-        const numBase=Date.now()%1000;
+        // Cargar contadores de pedidos si no están cargados
+        React.useEffect(()=>{
+          proveedores.forEach(async prov=>{
+            if(prov.tipo==="super"||numsPedido[prov.nombre])return;
+            const{count}=await supabase.from("pedidos_restaurante").select("*",{count:"exact",head:true}).eq("cliente_nombre",prov.nombre);
+            // Contar pedidos de este proveedor por nombre
+            const{data}=await supabase.from("pedidos_restaurante").select("id",{count:"exact"}).ilike("ref","PED-%").order("created_at",{ascending:false}).limit(1);
+            const{count:cnt}=await supabase.from("pedidos_restaurante").select("*",{count:"exact",head:true});
+            setNumsPedido(n=>({...n,[prov.nombre]:(cnt||0)+1}));
+          });
+        },[proveedores.length]);
         return(
           <div style={s.ov} onClick={()=>setSheet(null)}>
             <div style={s.sh} onClick={e=>e.stopPropagation()}>
@@ -3576,7 +3589,7 @@ export default function App() {
                 const del=prov.delivery?(sub>=prov.gratis?0:prov.costo):0;
                 const total=sub+del;
                 const falta=prov.delivery&&del>0?parseFloat((prov.gratis-sub).toFixed(2)):0;
-                const numPed=numBase+idx+1;
+                const numPed=numsPedido[prov.nombre]||(idx+1);
                 const yaEnviado=pedidoEnviadoA===prov.nombre;
                 return(
                   <div key={prov.nombre} style={{background:yaEnviado?"#f0fdf4":"#fff",border:`1.5px solid ${yaEnviado?"#86efac":"#e2e8f0"}`,borderRadius:14,padding:"14px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.04)",opacity:yaEnviado?0.7:1}}>
