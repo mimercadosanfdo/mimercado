@@ -212,6 +212,7 @@ export default function App() {
   const [zonaSel,setZonaSel]=useState(null);
   const [addr,setAddr]=useState({calle:"",referencia:""});
   const [form,setForm]=useState({nombre:"",telefono:"",sexo:"",pago:"Pago Móvil",recibirPromos:false});
+  const [consentPromo,setConsentPromo]=useState({});
   const [selSvc,setSelSvc]=useState(null);
   const [svcForm,setSvcForm]=useState({nombre:"",telefono:"",direccion:"",detalle:""});
   const [superProds,setSuperProds]=useState([]);
@@ -3541,8 +3542,7 @@ export default function App() {
         const esMultiple=proveedores.length>1;
         const datosOk=form.nombre&&form.telefono;
         const dirCliente=[zonaSel?.zona,addr.calle,addr.referencia].filter(Boolean).join(", ");
-        // Estado de consentimiento por proveedor — desmarcado por defecto
-        const [consentPromo,setConsentPromo]=React.useState({});
+        // consentPromo está en el estado del componente principal
         const enviarAProveedor=(prov)=>{
           if(!datosOk)return alert("Completa tu nombre y teléfono antes de enviar");
           if(!prov.wa){alert(`${prov.nombre} no tiene WhatsApp configurado. Contacta al administrador.`);return;}
@@ -3813,4 +3813,3 @@ export default function App() {
   );
 }
 
-// deploy-1777663054
