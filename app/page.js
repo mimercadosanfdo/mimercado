@@ -186,6 +186,33 @@ export default function App() {
   const [bulkMsg,setBulkMsg]=useState("");
   const [bulkLoading,setBulkLoading]=useState(false);
   const [search,setSearch]=useState("");
+const VE_ESTADOS_MUNICIPIOS={
+  "Amazonas":["Alto Orinoco", "Atabapo", "Atures", "Autana", "Manapiare", "Maroa", "Río Negro"],
+  "Anzoátegui":["Anaco", "Aragua", "Bolívar", "Bruzual", "Cajigal", "Carvajal", "Fernando de Peñalver", "Freites", "General Sir Arthur McGregor", "Guanipa", "Guanta", "Independencia", "Isla", "Libertad", "Lic. Diego Bautista Urban", "Miranda", "Monagas", "Píritu", "San Juan de Capistrano", "Santa Ana", "Simón Rodríguez", "Sotillo"],
+  "Apure":["Achaguas", "Biruaca", "Muñoz", "Pedro Camejo", "Páez", "Rómulo Gallegos", "San Fernando"],
+  "Aragua":["Bolívar", "Camatagua", "Francisco Linares", "Girardot", "José Angel Lamas", "José Félix Ribas", "José R Revenga", "Libertador", "Mario Briceño Iragorry", "Ocumare de la Costa de Oro", "San Casimiro", "San Sebastián", "Santiago Mariño", "Santos Michelena", "Sucre", "Tovar", "Urdaneta", "Zamora"],
+  "Barinas":["Alberto Arvelo Torrealba", "Andres Eloy Blanco", "Antonio José de Sucre", "Arismendi", "Barinas", "Bolívar", "Cruz Paredes", "Ezequiel Zamora", "Obispos", "Pedraza", "Rojas", "Sosa"],
+  "Bolívar":["Angostura", "Caroní", "Cedeño", "El Callao", "Gran Sabana", "Heres", "Padre Pedro Chien", "Piar", "Roscio", "Sifontes", "Sucre"],
+  "Carabobo":["Bejuma", "Carlos Arevalo", "Diego Ibarra", "Guacara", "Juan José Mora", "Lago Valencia", "Libertador", "Los Guayos", "Miranda", "Montalbán", "Naguanagua", "Puerto Cabello", "San Diego", "San Joaquín", "Valencia"],
+  "Cojedes":["Anzoátegui", "Ezequiel Zomora", "Falcón", "Girardot", "Lima Blanco", "Pao de San Juan Bautista", "Ricaurte", "Romulo Gallegos", "Tinaco"],
+  "Delta Amacuro":["Antonio Diaz", "Casacoima", "Pedernales", "Tucupita"],
+  "Distrito Capital":["Libertador"],
+  "Falcón":["Acosta", "Bolívar", "Buchivacoa", "Cacique Manaure", "Carirubana", "Colina", "Dabajuro", "Democracia", "Falcón", "Federación", "Jacura", "Los Tanques", "Mauroa", "Miranda", "Monseñor Iturriza", "Palma Sola", "Petit", "Píritu", "San Francisco", "Silva", "Sucre", "Tocópero", "Unión", "Urumaco", "Zamora"],
+  "Guárico":["Camaguán", "Chaguaramas", "El Socorro", "Infante", "Las Mercedes", "Mellado", "Miranda", "Monagas", "Ortíz", "Ribas", "Roscio", "San Gerónimo de Guayabal", "San José de Guaribe", "Santa María de Ipire", "Zaraza"],
+  "Lara":["Andrés Eloy Blanco", "Crespo", "Iribarren", "Jiménez", "Morán", "Palavecino", "Simón Planas", "Torres", "Urdaneta"],
+  "Miranda":["Acevedo", "Andrés Bello", "Baruta", "Brión", "Buroz", "Carrizal", "Chacao", "Cristóbal Rojas", "El Hatillo", "Guaicaipuro", "Independencia", "Lander", "Los Salias", "Paz Castillo", "Pedro Gual", "Plaza", "Páez", "Simón Bolívar", "Sucre", "Urdaneta", "Zamora"],
+  "Monagas":["Acosta", "Aguasay", "Bolívar", "Caripe", "Cedeño", "Ezequiel Zamora", "Libertador", "Maturín", "Piar", "Punceres", "Santa Barbara", "Sotillo", "Uracoa"],
+  "Mérida":["Alberto Adriani", "Andrés Bello", "Antonio Pinto Salinas", "Aricagua", "Arzobispo Chacón", "Campo Elías", "Caracciolo Parra Olmedo", "Cardenal Quintero", "Guaraque", "Julio César Salas", "Justo Briceño", "Libertador", "Miranda", "Obispo Ramos de Lora", "Padre Noguera", "Pueblo Llano", "Rangel", "Rivas Davila", "Santos Marquina", "Sucre", "Tovar", "Tulio Febres Cordero", "Zea"],
+  "Nueva Esparta":["Antolín del Campo", "Arismendi", "Díaz", "García", "Gómez", "Isla de Coche", "Maneiro", "Marcano", "Mariño", "Peninsula de Macanao", "Tubores"],
+  "Portuguesa":["Agua Blanca", "Araure", "Esteller", "Guanare", "Guanarito", "Monseñor José Vicente de Unda", "Ospino", "Papelón", "Páez", "San Genaro de Boconoito", "San Rafael de Onoto", "Santa Rosalía", "Sucre", "Turén"],
+  "Sucre":["Andrés Eloy Blanco", "Andrés Mata", "Arismendi", "Benítez", "Bermúdez", "Bolívar", "Cajigal", "Cruz Salmerón Acosta", "Libertador", "Mariño", "Mejía", "Montes", "Ribero", "Sucre", "Valdez"],
+  "Trujillo":["Andrés Bello", "Boconó", "Bolívar", "Candelaria", "Carache", "Escuque", "José Felipe Márquez Cañizalez", "Juan Vicente Campos Elías", "La Ceiba", "Miranda", "Monte Carmelo", "Motatán", "Pampanito", "Pampán", "Rafael Rangel", "San Rafael de Carvajal", "Sucre", "Trujillo", "Urdaneta", "Valera"],
+  "Táchira":["Andrés Bello", "Antonio Rómulo Costa", "Ayacucho", "Bolívar", "Cárdenas", "Córdoba", "Fernández Feo", "Francisco de Miranda", "García de Hevia", "Guasimos", "Independencia", "Jauregui", "José María Vargas", "Junín", "Libertad", "Libertador", "Lobatera", "Michelena", "Panamericano", "Pedro María Ureña", "Rafael Urdaneta", "Samuel Dario Maldonado", "San Cristóbal", "San Judas Tadeo", "Seboruco", "Simón Rodriguez", "Sucre", "Torbes", "Uribante"],
+  "Vargas":["Vargas"],
+  "Yaracuy":["Arístides Bastidas", "Bolívar", "Bruzual", "Cocorote", "Independencia", "José Antonio Páez", "La Trinidad", "Manuel Monge", "Nirgua", "Peña", "San Felipe", "Sucre", "Urachiche", "Veroes"],
+  "Zulia":["Almirante Padilla", "Baralt", "Cabimas", "Catatumbo", "Colón", "Francisco Javier Pulgar", "Guajira", "Jesús Enrique Lossada", "Jesús María Semprún", "La Cañada de Urdaneta", "Lagunillas", "Machiques de Perijá", "Mara", "Maracaibo", "Miranda", "Rosario de Perijá", "San Francisco", "Santa Rita", "Simón Bolívar", "Sucre", "Valmore Rodríguez"],
+};
+
   const [cart,setCart]=useState({});
   const [cartSuper,setCartSuper]=useState({});
   const [cartRest,setCartRest]=useState({});
@@ -2311,7 +2338,7 @@ export default function App() {
           <div>
             {[
               {k:"estado",      l:"📊 Inicio",         n:0},
-              {k:"pedidos_rest",l:"📋 Pedidos",         n:misRestPedidos.filter(p=>!["entregado","cancelado"].includes(p.estado)).length},
+              {k:"pedidos_rest",l:"📋 Pedidos",         n:misRestPedidos.filter(p=>!["entregado","cancelado"].includes(p.estado||"nuevo")).length},
               {k:"productos",   l:"📦 Productos",       n:0},
               {k:"promos",      l:"🎉 Promociones",     n:myPromos.filter(pr=>pr.motivo_rechazo).length},
               {k:"clientes",    l:"👥 Mis clientes",    n:0},
@@ -3171,11 +3198,17 @@ export default function App() {
                         <div style={{display:"flex",gap:8,marginBottom:6}}>
                           <div style={{flex:1}}>
                             <label style={s.lbl}>Estado</label>
-                            <input style={s.inp} value={perfilData.estado_ubicacion||provData.estado_ubicacion||""} onChange={e=>setPerfilData({...perfilData,estado_ubicacion:e.target.value})} placeholder="Apure"/>
+                            <select style={{...s.inp,background:"#fff"}} value={perfilData.estado_ubicacion||provData.estado_ubicacion||""} onChange={e=>{setPerfilData({...perfilData,estado_ubicacion:e.target.value,municipio:""});}}>
+                              <option value="">Selecciona estado...</option>
+                              {Object.keys(VE_ESTADOS_MUNICIPIOS).sort().map(est=><option key={est} value={est}>{est}</option>)}
+                            </select>
                           </div>
                           <div style={{flex:1}}>
                             <label style={s.lbl}>Municipio</label>
-                            <input style={s.inp} value={perfilData.municipio||provData.municipio||""} onChange={e=>setPerfilData({...perfilData,municipio:e.target.value})} placeholder="San Fernando"/>
+                            <select style={{...s.inp,background:"#fff"}} value={perfilData.municipio||provData.municipio||""} onChange={e=>setPerfilData({...perfilData,municipio:e.target.value})}>
+                              <option value="">Selecciona municipio...</option>
+                              {(VE_ESTADOS_MUNICIPIOS[perfilData.estado_ubicacion||provData.estado_ubicacion||""]||[]).map(m=><option key={m} value={m}>{m}</option>)}
+                            </select>
                           </div>
                         </div>
                         <label style={s.lbl}>Parroquia</label>
