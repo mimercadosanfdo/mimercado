@@ -3575,20 +3575,21 @@ const VE_ESTADOS_MUNICIPIOS={
                       if(logoFile){new_logo_url=await upload(logoFile,"logos",`${provData.id}_logo_${Date.now()}`);setLogoFile(null);}
                       const payload={
                         negocio:perfilData.negocio||provData.negocio,
-                        descripcion_negocio:perfilData.descripcion_negocio||provData.descripcion_negocio||null,
-                        whatsapp_negocio:perfilData.whatsapp_negocio||provData.whatsapp_negocio||null,
-                        telefono:perfilData.whatsapp_negocio||provData.whatsapp_negocio||null,
-                        telefono_principal:perfilData.telefono_principal||provData.telefono_principal||null,
-                        instagram:perfilData.instagram||provData.instagram||null,
-                        direccion_fisica:perfilData.direccion_fisica||provData.direccion_fisica||null,
+                        descripcion_negocio:perfilData.descripcion_negocio!=null?perfilData.descripcion_negocio:provData.descripcion_negocio||null,
+                        whatsapp_negocio:perfilData.whatsapp_negocio!=null?perfilData.whatsapp_negocio:provData.whatsapp_negocio||null,
+                        telefono:perfilData.whatsapp_negocio!=null?perfilData.whatsapp_negocio:provData.whatsapp_negocio||null,
+                        telefono_principal:perfilData.telefono_principal!=null?perfilData.telefono_principal:provData.telefono_principal||null,
+                        instagram:perfilData.instagram!=null?perfilData.instagram:provData.instagram||null,
+                        direccion_fisica:perfilData.direccion_fisica!=null?perfilData.direccion_fisica:provData.direccion_fisica||null,
                         tipo_presencia:perfilData.tipo_presencia||provData.tipo_presencia||"online",
-                        estado_ubicacion:perfilData.estado_ubicacion||provData.estado_ubicacion||null,
-                        municipio:perfilData.municipio||provData.municipio||null,
-                        parroquia:perfilData.parroquia||provData.parroquia||null,
-                        latitud:perfilData.latitud||provData.latitud||null,
-                        longitud:perfilData.longitud||provData.longitud||null,
+                        estado_ubicacion:perfilData.estado_ubicacion!=null?perfilData.estado_ubicacion:provData.estado_ubicacion||null,
+                        municipio:perfilData.municipio!=null?perfilData.municipio:provData.municipio||null,
+                        parroquia:perfilData.parroquia!=null?perfilData.parroquia:provData.parroquia||null,
+                        latitud:perfilData.latitud!=null?perfilData.latitud:provData.latitud||null,
+                        longitud:perfilData.longitud!=null?perfilData.longitud:provData.longitud||null,
                         logo_url:new_logo_url,
                       };
+                      console.log("Guardando perfil payload:",JSON.stringify({parroquia:payload.parroquia,direccion_fisica:payload.direccion_fisica,estado_ubicacion:payload.estado_ubicacion,municipio:payload.municipio}));
                       const{error}=await supabase.from("proveedores").update(payload).eq("id",provData.id);
                       if(error){alert("Error al guardar: "+error.message);return;}
                       // Recargar datos del proveedor desde la DB para confirmar
