@@ -354,7 +354,7 @@ const VE_ESTADOS_MUNICIPIOS={
     try{const g=typeof window!=="undefined"&&localStorage.getItem("apure_ubicacion");return g?JSON.parse(g):null;}catch{return null;}
   });
   const [showCiudadModal,setShowCiudadModal]=useState(false);
-  const [ciudadTemp,setCiudadTemp]=useState({estado:"",municipio:""});
+  const [ciudadTemp,setCiudadTemp]=useState({estado:"Apure",municipio:""});
   const [zonasOperacion,setZonasOperacion]=useState([]); // tabla zonas_operacion
   // Municipio activo resuelto (null = primera vez, aún no eligió)
   const ubiActiva=ubicacionUsuario||UBI_DEFAULT;
@@ -1184,7 +1184,7 @@ const VE_ESTADOS_MUNICIPIOS={
               </svg>
             </div>
           {/* BADGE CIUDAD */}
-          <button onClick={()=>{setCiudadTemp({estado:ubiActiva.estado,municipio:ubiActiva.municipio});setShowCiudadModal(true);}} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:20,padding:"4px 10px",fontSize:11,fontWeight:700,color:"#15803d",cursor:"pointer",display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
+          <button onClick={()=>{setCiudadTemp({estado:ubiActiva.estado||"Apure",municipio:ubiActiva.municipio||""});setShowCiudadModal(true);}} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:20,padding:"4px 10px",fontSize:11,fontWeight:700,color:"#15803d",cursor:"pointer",display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
             📍 {ubiActiva.municipio} ▾
           </button>
         </div>
@@ -4726,7 +4726,7 @@ const VE_ESTADOS_MUNICIPIOS={
             {/* SELECTOR */}
             <div style={{marginBottom:14}}>
               <label style={s.lbl}>Estado</label>
-              <select style={{...s.inp,background:"#fff",marginBottom:10}} value={ciudadTemp.estado||"Apure"} onChange={e=>setCiudadTemp({estado:e.target.value,municipio:""})}>
+              <select style={{...s.inp,background:"#fff",marginBottom:10}} value={ciudadTemp.estado} onChange={e=>setCiudadTemp({estado:e.target.value,municipio:""})}>
                 <option value="">Selecciona un estado...</option>
                 {Object.keys(VE_ESTADOS_MUNICIPIOS).sort().map(est=>(
                   <option key={est} value={est}>{est}</option>
