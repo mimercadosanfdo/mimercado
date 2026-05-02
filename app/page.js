@@ -3170,7 +3170,21 @@ const VE_ESTADOS_MUNICIPIOS={
                 {seccion==="perfil"&&(
                   <div>
                     <div style={{fontSize:11,color:"#94a3b8",marginBottom:10}}>Tu correo de acceso: <strong style={{color:"#0f172a"}}>{provData.email}</strong> (no editable)</div>
-
+                    {/* LOGO */}
+                    <label style={s.lbl}>Logo del negocio</label>
+                    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10,background:"#f8fafc",borderRadius:10,padding:"10px"}}> 
+                      {(perfilData.logo_preview||provData.logo_url)
+                        ?<img src={perfilData.logo_preview||provData.logo_url} style={{width:52,height:52,borderRadius:"50%",objectFit:"cover",border:"2px solid #e2e8f0"}}/>
+                        :<div style={{width:52,height:52,borderRadius:"50%",background:"#e2e8f0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🏪</div>
+                      }
+                      <div style={{flex:1}}>
+                        <input type="file" accept="image/*" id="logo_inp" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){setLogoFile(f);setPerfilData(p=>({...p,logo_preview:URL.createObjectURL(f)}));}}}/>
+                        <label htmlFor="logo_inp" style={{display:"block",background:"#eff6ff",color:"#1d4ed8",border:"1px solid #bfdbfe",borderRadius:8,padding:"8px 12px",fontSize:12,fontWeight:700,cursor:"pointer",textAlign:"center"}}>
+                          📸 {provData.logo_url?"Cambiar logo":"Subir logo"}
+                        </label>
+                        <div style={{fontSize:10,color:"#94a3b8",marginTop:3}}>JPG o PNG recomendado</div>
+                      </div>
+                    </div>
                     {/* TIPO DE PRESENCIA */}
                     <label style={s.lbl}>¿Cómo opera tu negocio? *</label>
                     <div style={{display:"flex",gap:6,marginBottom:10}}>
@@ -3188,11 +3202,13 @@ const VE_ESTADOS_MUNICIPIOS={
                     <input style={s.inp} value={perfilData.descripcion_negocio||provData.descripcion_negocio||""} onChange={e=>setPerfilData({...perfilData,descripcion_negocio:e.target.value})} placeholder="Describe tu negocio..."/>
                     <label style={s.lbl}>WhatsApp de pedidos *</label>
                     <input style={s.inp} value={perfilData.whatsapp_negocio||provData.whatsapp_negocio||""} onChange={e=>setPerfilData({...perfilData,whatsapp_negocio:e.target.value})} placeholder="04XX-XXXXXXX"/>
+                    <label style={s.lbl}>Teléfono administrativo</label>
+                    <input style={s.inp} value={perfilData.telefono_principal||provData.telefono_principal||""} onChange={e=>setPerfilData({...perfilData,telefono_principal:e.target.value})} placeholder="Para facturación y soporte"/>
                     <label style={s.lbl}>Instagram</label>
                     <input style={s.inp} value={perfilData.instagram||provData.instagram||""} onChange={e=>setPerfilData({...perfilData,instagram:e.target.value})} placeholder="@minegocio"/>
 
-                    {/* UBICACIÓN — solo si tiene local físico */}
-                    {["fisico","ambos"].includes(perfilData.tipo_presencia||provData.tipo_presencia||"online")&&(<>
+                    {/* UBICACIÓN — para todos los tipos */}
+                    {(()=>{
                       <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"10px 12px",marginBottom:8}}>
                         <div style={{fontSize:12,fontWeight:700,color:"#1d4ed8",marginBottom:8}}>📍 Ubicación del local</div>
                         <div style={{display:"flex",gap:8,marginBottom:6}}>
@@ -3248,14 +3264,17 @@ const VE_ESTADOS_MUNICIPIOS={
                           </a>
                         )}
                       </div>
-                    </>)}
+                    })()}
 
                     <button onClick={async()=>{
+                      let new_logo_url=provData.logo_url||null;
+                      if(logoFile){new_logo_url=await upload(logoFile,"logos",`${provData.id}_logo_${Date.now()}`);setLogoFile(null);}
                       await supabase.from("proveedores").update({
                         negocio:perfilData.negocio||provData.negocio,
                         descripcion_negocio:perfilData.descripcion_negocio,
                         whatsapp_negocio:perfilData.whatsapp_negocio,
                         telefono:perfilData.whatsapp_negocio,
+                        telefono_principal:perfilData.telefono_principal||provData.telefono_principal||null,
                         instagram:perfilData.instagram,
                         direccion_fisica:perfilData.direccion_fisica,
                         tipo_presencia:perfilData.tipo_presencia||provData.tipo_presencia||"online",
@@ -3264,9 +3283,10 @@ const VE_ESTADOS_MUNICIPIOS={
                         parroquia:perfilData.parroquia||provData.parroquia||null,
                         latitud:perfilData.latitud||provData.latitud||null,
                         longitud:perfilData.longitud||provData.longitud||null,
+                        logo_url:new_logo_url,
                       }).eq("id",provData.id);
-                      setProvData({...provData,...perfilData});
-                      setPmsg("✅ Perfil actualizado");loadAll();
+                      setProvData({...provData,...perfilData,logo_url:new_logo_url});
+                      setPmsg("✅ Perfil actualizado correctamente");loadAll();
                     }} style={{...s.btnGreen,width:"100%",borderRadius:10,padding:"10px",marginTop:4}}>💾 Guardar perfil</button>
                   </div>
                 )}
