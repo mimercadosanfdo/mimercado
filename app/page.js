@@ -390,11 +390,12 @@ const VE_ESTADOS_MUNICIPIOS={
   };
 
   const loadMisRestPedidos=async(pid,nombre)=>{
-    // Buscar por proveedor_id O por proveedor_nombre (compatibilidad)
-    const{data:d1}=await supabase.from("pedidos").select("*").eq("proveedor_id",pid).order("created_at",{ascending:false}).limit(100);
-    const{data:d2}=await supabase.from("pedidos").select("*").eq("proveedor_nombre",nombre||"").order("created_at",{ascending:false}).limit(100);
-    // Combinar y deduplicar por id
-    const todos=[...(d1||[]),...(d2||[])];
+    // Solo buscar por proveedor_nombre (más confiable)
+    const queries=[supabase.from("pedidos").select("*").eq("proveedor_nombre",nombre||"").order("created_at",{ascending:false}).limit(100)];
+    // Solo agregar búsqueda por id si pid existe y no es null
+    if(pid)queries.push(supabase.from("pedidos").select("*").eq("proveedor_id",pid).order("created_at",{ascending:false}).limit(100));
+    const results=await Promise.all(queries);
+    const todos=results.flatMap(r=>r.data||[]);
     const unique=Object.values(todos.reduce((acc,p)=>({...acc,[p.id]:p}),{}));
     unique.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
     setMisRestPedidos(unique);
@@ -2909,7 +2910,7 @@ const VE_ESTADOS_MUNICIPIOS={
             const fechaLocal2=(d)=>new Date(new Date(d).getTime()-new Date(d).getTimezoneOffset()*60000).toISOString().slice(0,10);
             const totalHoy=misRestPedidos.filter(p=>fechaLocal2(p.created_at)===hoy);
             const ingreso=misRestPedidos.filter(p=>p.estado==="entregado").reduce((a,p)=>a+(p.total||0),0);
-            const pendientes=misRestPedidos.filter(p=>!["entregado","cancelado"].includes(p.estado||"nuevo"));
+            const pendientes=misRestPedidos.filter(p=>!["entregado","cancelado","enviado"].includes(p.estado||"nuevo"));
             return(
               <div style={s.pc}>
                 <div style={s.pT}>📋 Mis pedidos</div>
