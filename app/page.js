@@ -3461,24 +3461,35 @@ const VE_ESTADOS_MUNICIPIOS={
               window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank");
             };
             return(
-              <div style={s.pc}>
-                <div style={s.pT}>⚙️ Mi negocio</div>
-                {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
-                {/* SUB-MENÚ */}
-                <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:4}}>
+              <div style={{background:"#fff",borderRadius:0,padding:"0 0 16px"}}>
+                {/* HEADER MI NEGOCIO */}
+                <div style={{background:"linear-gradient(135deg,#1e293b,#334155)",padding:"14px 16px",display:"flex",alignItems:"center",gap:10,marginBottom:0}}>
+                  <div style={{width:36,height:36,borderRadius:10,background:"rgba(255,255,255,0.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>⚙️</div>
+                  <div>
+                    <div style={{fontSize:14,fontWeight:800,color:"#fff"}}>Configuración del negocio</div>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>{provData.negocio}</div>
+                  </div>
+                </div>
+                {pmsg&&<div style={{...s.msg(pmsg.includes("✅")),margin:"8px 16px 0"}}>{pmsg}</div>}
+                {/* SUB-MENÚ PROFESIONAL */}
+                <div style={{display:"flex",overflowX:"auto",borderBottom:"2px solid #f1f5f9",marginBottom:0,gap:0}}>
                   {[
-                    {k:"perfil",  l:"👤 Perfil"},
-                    {k:"horario", l:"🕐 Horario"},
-                    {k:"delivery",l:"🛵 Delivery"},
-                    {k:"pagos",   l:"💳 Pagos"},
-                    {k:"eta",     l:"⏱️ Tiempo entrega"},
-                    {k:"clave",   l:"🔑 Clave"},
+                    {k:"perfil",  icon:"👤", l:"Perfil"},
+                    {k:"horario", icon:"🕐", l:"Horario"},
+                    {k:"delivery",icon:"🛵", l:"Delivery"},
+                    {k:"pagos",   icon:"💳", l:"Pagos"},
+                    {k:"eta",     icon:"⏱️", l:"Tiempos"},
+                    {k:"clave",   icon:"🔑", l:"Seguridad"},
                   ].map(s2=>(
-                    <button key={s2.k} onClick={()=>{setSeccion(s2.k);if(s2.k==="perfil")setPerfilData({negocio:provData.negocio||"",descripcion_negocio:provData.descripcion_negocio||"",whatsapp_negocio:provData.whatsapp_negocio||"",telefono_principal:provData.telefono_principal||"",instagram:provData.instagram||"",tipo_presencia:provData.tipo_presencia||"online",estado_ubicacion:provData.estado_ubicacion||"",municipio:provData.municipio||"",parroquia:provData.parroquia||"",direccion_fisica:provData.direccion_fisica||"",latitud:provData.latitud||null,longitud:provData.longitud||null});}} style={{flexShrink:0,padding:"6px 12px",borderRadius:20,border:"none",fontSize:11,fontWeight:700,cursor:"pointer",background:seccion===s2.k?"#0f172a":"#f1f5f9",color:seccion===s2.k?"#fff":"#64748b",whiteSpace:"nowrap"}}>
-                      {s2.l}
+                    <button key={s2.k} onClick={()=>{setSeccion(s2.k);if(s2.k==="perfil")setPerfilData({negocio:provData.negocio||"",descripcion_negocio:provData.descripcion_negocio||"",whatsapp_negocio:provData.whatsapp_negocio||"",telefono_principal:provData.telefono_principal||"",instagram:provData.instagram||"",tipo_presencia:provData.tipo_presencia||"online",estado_ubicacion:provData.estado_ubicacion||"",municipio:provData.municipio||"",parroquia:provData.parroquia||"",direccion_fisica:provData.direccion_fisica||"",latitud:provData.latitud||null,longitud:provData.longitud||null});}}
+                      style={{flexShrink:0,padding:"12px 14px 10px",border:"none",background:"transparent",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,borderBottom:seccion===s2.k?"3px solid #1d4ed8":"3px solid transparent",transition:"all 0.15s"}}>
+                      <span style={{fontSize:16,filter:seccion===s2.k?"none":"grayscale(40%)",opacity:seccion===s2.k?1:0.6}}>{s2.icon}</span>
+                      <span style={{fontSize:9,fontWeight:seccion===s2.k?700:500,color:seccion===s2.k?"#1d4ed8":"#94a3b8",whiteSpace:"nowrap",letterSpacing:0.3}}>{s2.l.toUpperCase()}</span>
                     </button>
                   ))}
                 </div>
+                {/* CONTENIDO DE SECCIÓN */}
+                <div style={{padding:"16px 16px 0"}}>
 
                 {/* ── PERFIL ── */}
                 {seccion==="perfil"&&(
@@ -3716,9 +3727,7 @@ const VE_ESTADOS_MUNICIPIOS={
                   </div>
                 )}
 
-                <div style={{marginTop:16,paddingTop:12,borderTop:"1px solid #f1f5f9"}}>
-                  <button style={{...s.btnG,width:"100%"}} onClick={()=>{setProvMode("login");setProvData(null);setMyProds([]);setMyPromos([]);setMyVentas([]);setPmsg("");setEditandoPerfil(false);setCambiandoClave(false);}}>🚪 Cerrar sesión</button>
-                </div>
+                </div> {/* end padding wrapper */}
               </div>
             );
           })()}
