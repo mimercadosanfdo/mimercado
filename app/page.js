@@ -379,6 +379,13 @@ const VE_ESTADOS_MUNICIPIOS={
     }
   },[form.telefono]);
 
+  // Redirigir sheets legacy al carrito unificado
+  useEffect(()=>{
+    if(["cart","cartRest","cartNegocio","checkout"].includes(sheet)){
+      setSheet("cartGlobal");
+    }
+  },[sheet]);
+
   useEffect(()=>{
     const interval=setInterval(()=>{
       loadAll();loadRemates();loadServiciosCom();loadClasificados();
@@ -4403,7 +4410,7 @@ const VE_ESTADOS_MUNICIPIOS={
       })()}
 
       {/* SHEET CARRITO NEGOCIO LOCAL */}
-      {sheet==="cartNegocio"&&(setSheet("cartGlobal"),null)}{false&&sheet==="cartNegocio_disabled"&&(<div style={s.ov} onClick={()=>setSheet(null)}><div style={s.sh} onClick={e=>e.stopPropagation()}>
+      {sheet==="cartNegocio"&&null}{false&&sheet==="cartNegocio_disabled"&&(<div style={s.ov} onClick={()=>setSheet(null)}><div style={s.sh} onClick={e=>e.stopPropagation()}>
         <div style={s.hnd}/>
         <div style={s.shT}>Pedido — {cartNegocioNombre}</div>
         <div style={s.ib}>
@@ -4473,7 +4480,7 @@ const VE_ESTADOS_MUNICIPIOS={
       </div></div>)}
 
       {/* SHEET CARRITO RESTAURANTE — MULTI-PROVEEDOR v2 */}
-      {sheet==="cartRest"&&(setSheet("cartGlobal"),null)}{false&&sheet==="cartRest_disabled"&&(()=>{
+      {sheet==="cartRest"&&null}{false&&sheet==="cartRest_disabled"&&(()=>{
         const allRestItems=Object.values(cartRest);
         if(allRestItems.length===0)return null;
         // Agrupar por proveedor
@@ -4653,7 +4660,7 @@ const VE_ESTADOS_MUNICIPIOS={
       })()}
 
       {/* SHEET CARRITO — redirige a cartGlobal unificado */}
-      {sheet==="cart"&&(setSheet("cartGlobal"),null)}
+      {sheet==="cart"&&null}
 
       {/* SHEET CHECKOUT */}
       {/* LIGHTBOX IMAGEN AMPLIADA */}
@@ -4701,7 +4708,7 @@ const VE_ESTADOS_MUNICIPIOS={
         </div>
       )}
       {/* SHEET CHECKOUT — redirige a cartGlobal */}
-      {sheet==="checkout"&&(setSheet("cartGlobal"),null)}
+      {sheet==="checkout"&&null}
 
       {/* SHEET RESUMEN */}
       {sheet==="resumen"&&(<div style={s.ov}><div style={s.sh}>
