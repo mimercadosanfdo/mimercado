@@ -1190,7 +1190,14 @@ const VE_ESTADOS_MUNICIPIOS={
           </button>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:6}}>
-          {(count>0||Object.values(cartNegocio).length>0)&&<button style={s.cBtn} onClick={()=>Object.values(cartNegocio).length>0?setSheet("cartNegocio"):setSheet("cart")}>🛒 {Object.values(cartNegocio).length>0&&<span style={s.cN}>{Object.values(cartNegocio).reduce((a,i)=>a+i.qty,0)}</span>}{count>0&&Object.values(cartNegocio).length===0&&<span style={s.cN}>{count}</span>}</button>}
+          {(count>0||Object.values(cartRest).length>0||Object.values(cartNegocio).length>0)&&(
+            <button style={s.cBtn} onClick={()=>setSheet("cartGlobal")}>
+              🛒
+              <span style={s.cN}>
+                {Object.values(cart).reduce((a,i)=>a+i.qty,0)+Object.values(cartRest).reduce((a,i)=>a+i.qty,0)+Object.values(cartNegocio).reduce((a,i)=>a+i.qty,0)}
+              </span>
+            </button>
+          )}
           <button onClick={()=>setTab("Proveedores")} style={{background:"#f6f6f6",border:"1px solid #e0e0e0",borderRadius:"50%",width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:16,flexShrink:0}}>👤</button>
         </div>
       </div>
@@ -4100,25 +4107,19 @@ const VE_ESTADOS_MUNICIPIOS={
         </>)}
       </div>)}
 
-      {/* BOTÓN FLOTANTE */}
-      {count>0&&!sheet&&tab!=="Proveedores"&&(<div style={{position:"fixed",bottom:16,left:"50%",transform:"translateX(-50%)",zIndex:150,width:"calc(100% - 32px)",maxWidth:398}}><button style={{...s.btn,margin:0,display:"flex",justifyContent:"space-between",alignItems:"center"}} onClick={()=>setSheet("cart")}><span>🛒 Ver pedido ({count})</span><span>${total.toFixed(2)}</span></button></div>)}
-
-      {/* FLOATING CART BUTTON */}
+      {/* FLOATING CART BUTTON — abre cartGlobal siempre */}
       {(()=>{
         const totalItems=Object.values(cart).reduce((a,i)=>a+i.qty,0)+Object.values(cartRest).reduce((a,i)=>a+i.qty,0)+Object.values(cartNegocio).reduce((a,i)=>a+i.qty,0);
-        if(totalItems===0||["cart","cartRest","cartNegocio","cartGlobal","checkout"].includes(sheet))return null;
-        // Contar proveedores activos
+        if(totalItems===0||["cartGlobal","checkout","resumen","success"].includes(sheet))return null;
         const gruposRest={};Object.values(cartRest).forEach(i=>{const k=i.kitchen||"Sin proveedor";if(!gruposRest[k])gruposRest[k]=true;});
         const gruposNeg=cartNegocioNombre?{[cartNegocioNombre]:true}:{};
         const totalProveedores=Object.keys(gruposRest).length+Object.keys(gruposNeg).length+(Object.values(cart).length>0?1:0);
+        const totalVal=Object.values(cart).reduce((a,i)=>a+i.price*i.qty,0)+Object.values(cartRest).reduce((a,i)=>a+i.price*i.qty,0)+Object.values(cartNegocio).reduce((a,i)=>a+i.price*i.qty,0);
         return(
-          <div style={{position:"fixed",bottom:24,right:16,zIndex:150}}>
-            <button onClick={()=>setSheet("cartGlobal")} style={{background:P,color:"#fff",border:"none",borderRadius:totalProveedores>1?"28px":"50%",width:totalProveedores>1?"auto":"58px",height:58,fontSize:18,cursor:"pointer",boxShadow:"0 4px 16px rgba(22,163,74,0.4)",display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:totalProveedores>1?"0 18px":"0",position:"relative",fontWeight:800}}>
-              🛒
-              {totalProveedores>1&&<span style={{fontSize:12}}>{totalProveedores} tiendas</span>}
-              <span style={{position:"absolute",top:-4,right:-4,background:"#f59e0b",color:"#fff",borderRadius:"50%",width:22,height:22,fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                {totalItems}
-              </span>
+          <div style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",zIndex:150,width:"calc(100% - 32px)",maxWidth:398}}>
+            <button onClick={()=>setSheet("cartGlobal")} style={{...s.btn,margin:0,display:"flex",justifyContent:"space-between",alignItems:"center",background:P,boxShadow:"0 4px 16px rgba(22,163,74,0.4)"}}>
+              <span>🛒 Ver carrito {totalProveedores>1?`(${totalProveedores} tiendas)`:""} · {totalItems} {totalItems===1?"item":"items"}</span>
+              <span style={{fontWeight:900}}>${totalVal.toFixed(2)}</span>
             </button>
           </div>
         );
@@ -4157,7 +4158,24 @@ const VE_ESTADOS_MUNICIPIOS={
         if(proveedores.length===0&&clienteHistorial.length===0)return null;
         const enviarProveedor=async(prov,numPed)=>{
           if(!datosOk)return alert("Completa tu nombre y teléfono antes de enviar");
-          if(prov.tipo==="super"){setSheet("cart");return;}
+          if(prov.tipo==="super"){
+            // Supermercado: guardar y enviar por WhatsApp al número admin
+            if(!zonaSel)return alert("Selecciona tu zona de entrega primero");
+            const sub=prov.items.reduce((a,i)=>a+i.price*i.qty,0);
+            const delCosto=zonaSel?.costo_delivery||2;
+            const freeMin=zonaSel?.delivery_gratis_super||18;
+            const del=sub>=freeMin?0:delCosto;
+            const totalS=sub+del;
+            const ref=`PED-${Date.now().toString().slice(-6)}`;
+            await guardarPedidoEnDB();
+            const lineas=prov.items.map(i=>`• ${i.name} x${i.qty} — $${(i.price*i.qty).toFixed(2)}`).join("\n");
+            const msg=`🛒 *Pedido Supermercado — ${APP_NAME}*\n📋 Ref: ${ref}\n\n${lineas}\n\nSubtotal: $${sub.toFixed(2)}\nDelivery: ${del===0?"GRATIS 🎉":"$"+del.toFixed(2)}\n*TOTAL: $${totalS.toFixed(2)}*\n\n👤 ${form.nombre}\n📱 ${form.telefono}\n📍 ${zonaSel?.zona||""}, ${addr.calle||""}\n🗺️ ${addr.referencia||""}`;
+            const num=WA;
+            window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank");
+            setCart({});
+            setPedidoEnviadoA("Supermercado");
+            return;
+          }
           if(!prov.wa){alert(`${prov.nombre} no tiene WhatsApp configurado.`);return;}
           const sub=prov.items.reduce((a,i)=>a+i.price*i.qty,0);
           const del=prov.delivery?(sub>=prov.gratis?0:prov.costo):0;
@@ -4223,9 +4241,12 @@ const VE_ESTADOS_MUNICIPIOS={
               {proveedores.map((prov,idx)=>{
                 if(prov.items.length===0)return null;
                 const sub=prov.items.reduce((a,i)=>a+i.price*i.qty,0);
-                const del=prov.delivery?(sub>=prov.gratis?0:prov.costo):0;
+                // Para supermercado usar datos de zona seleccionada
+                const delCostoReal=prov.tipo==="super"?(zonaSel?.costo_delivery||2):prov.costo;
+                const freeMinReal=prov.tipo==="super"?(zonaSel?.delivery_gratis_super||18):prov.gratis;
+                const del=prov.delivery?(sub>=freeMinReal?0:delCostoReal):0;
                 const total=sub+del;
-                const falta=prov.delivery&&del>0?parseFloat((prov.gratis-sub).toFixed(2)):0;
+                const falta=prov.delivery&&del>0?parseFloat((freeMinReal-sub).toFixed(2)):0;
                 const numPed=idx+1;
                 const yaEnviado=pedidoEnviadoA===prov.nombre;
                 return(
@@ -4303,7 +4324,14 @@ const VE_ESTADOS_MUNICIPIOS={
                     {yaEnviado
                       ?<div style={{textAlign:"center",padding:"10px 0",fontSize:13,fontWeight:700,color:"#15803d"}}>✅ Pedido enviado</div>
                       :prov.tipo==="super"
-                        ?<button style={{width:"100%",background:"#f1f5f9",color:"#0f172a",border:"1px solid #e2e8f0",borderRadius:12,padding:"11px",fontSize:13,fontWeight:700,cursor:"pointer",marginTop:10}} onClick={()=>setSheet("cart")}>🛒 Ver pedido supermercado →</button>
+                        ?<>
+                          {!zonaSel&&<div style={{fontSize:11,color:"#c2410c",background:"#fff7ed",borderRadius:8,padding:"6px 10px",marginTop:8}}>⚠️ Selecciona tu zona de entrega arriba para continuar</div>}
+                          <button
+                            style={{width:"100%",background:datosOk&&zonaSel?"#f59e0b":"#94a3b8",color:datosOk&&zonaSel?"#0f172a":"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:13,fontWeight:800,cursor:datosOk&&zonaSel?"pointer":"not-allowed",marginTop:10,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}
+                            onClick={()=>enviarProveedor(prov,numPed)}>
+                            📲 Enviar pedido al Supermercado
+                          </button>
+                        </>
                         :!prov.wa
                           ?<div style={{...s.msg(false),marginTop:8}}>⚠️ {prov.nombre} no tiene WhatsApp configurado</div>
                           :<button style={{width:"100%",background:datosOk?"#25D366":"#94a3b8",color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:13,fontWeight:800,cursor:datosOk?"pointer":"not-allowed",marginTop:10,display:"flex",alignItems:"center",justifyContent:"center",gap:6}} onClick={()=>enviarProveedor(prov,numPed)}>
