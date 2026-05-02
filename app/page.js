@@ -3596,7 +3596,10 @@ const VE_ESTADOS_MUNICIPIOS={
                       };
                       const{error}=await supabase.from("proveedores").update(payload).eq("id",provData.id);
                       if(error){alert("Error al guardar: "+error.message);return;}
-                      setProvData(d=>({...d,...payload}));
+                      // Recargar datos del proveedor desde la DB para confirmar
+                      const{data:updated}=await supabase.from("proveedores").select("*").eq("id",provData.id).single();
+                      if(updated)setProvData(updated);
+                      else setProvData(d=>({...d,...payload}));
                       alert("✅ Perfil guardado correctamente");
                       loadAll();
                     }} style={{width:"100%",background:"#22c55e",color:"#fff",border:"none",borderRadius:14,padding:"14px",fontSize:15,fontWeight:700,cursor:"pointer",marginTop:10,display:"block"}}>
