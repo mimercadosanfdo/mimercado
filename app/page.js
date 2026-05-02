@@ -2303,90 +2303,31 @@ export default function App() {
               <span style={{fontSize:20}}>{provData.activo?"🟢":"🔴"}</span>
               <div><div style={{fontSize:14,fontWeight:700,color:provData.activo?"#15803d":"#92400e"}}>{provData.activo?"ABIERTO — Recibiendo pedidos":"CERRADO — No recibo pedidos"}</div><div style={{fontSize:11,color:"#64748b"}}>Toca para {provData.activo?"cerrar":"abrir"} tu negocio</div></div>
             </button>
-            {!editandoHorario?(
-              <div style={{marginTop:10,background:"#f8fafc",borderRadius:12,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:11,fontWeight:700,color:"#64748b",marginBottom:2}}>🕐 Horario de atención</div>
-                  {provData.horario_desde&&provData.horario_hasta
-                    ?<div style={{fontSize:13,color:P,fontWeight:600}}>{provData.horario_desde} – {provData.horario_hasta}{provData.horario_desc?<span style={{fontSize:11,color:"#64748b",fontWeight:400}}> · {provData.horario_desc}</span>:null}</div>
-                    :<div style={{fontSize:12,color:"#94a3b8"}}>Sin horario — tus clientes no saben cuándo estás</div>
-                  }
-                </div>
-                <button onClick={()=>{setHorarioNegocio({desde:provData.horario_desde||"08:00",hasta:provData.horario_hasta||"20:00",descripcion:provData.horario_desc||""});setEditandoHorario(true);}} style={{background:P,color:"#fff",border:"none",borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:600,cursor:"pointer",flexShrink:0,marginLeft:8}}>✏️ Editar</button>
-              </div>
-            ):(
-              <div style={{marginTop:10,background:"#f0fdf4",borderRadius:12,padding:"12px 14px",border:"1px solid #bbf7d0"}}>
-                <div style={{fontSize:12,fontWeight:700,color:"#15803d",marginBottom:10}}>🕐 Configura tu horario</div>
-                <div style={{display:"flex",gap:10,marginBottom:8}}>
-                  <div style={{flex:1}}><label style={s.lbl}>Abre a las</label><input style={s.inp} type="time" value={horarioNegocio.desde} onChange={e=>setHorarioNegocio({...horarioNegocio,desde:e.target.value})}/></div>
-                  <div style={{flex:1}}><label style={s.lbl}>Cierra a las</label><input style={s.inp} type="time" value={horarioNegocio.hasta} onChange={e=>setHorarioNegocio({...horarioNegocio,hasta:e.target.value})}/></div>
-                </div>
-                <label style={s.lbl}>Nota (opcional)</label>
-                <input style={s.inp} placeholder="Ej: Solo cenas, Desayunos y almuerzos..." value={horarioNegocio.descripcion} onChange={e=>setHorarioNegocio({...horarioNegocio,descripcion:e.target.value})}/>
-                <div style={{display:"flex",gap:8}}>
-                  <button onClick={async()=>{await supabase.from("proveedores").update({horario_desde:horarioNegocio.desde,horario_hasta:horarioNegocio.hasta,horario_desc:horarioNegocio.descripcion}).eq("id",provData.id);setProvData({...provData,horario_desde:horarioNegocio.desde,horario_hasta:horarioNegocio.hasta,horario_desc:horarioNegocio.descripcion});setEditandoHorario(false);setPmsg("✅ Horario actualizado");}} style={{...s.btnGreen,flex:1,borderRadius:10,padding:"9px",fontSize:12}}>Guardar</button>
-                  <button onClick={()=>setEditandoHorario(false)} style={{...s.btnG,flex:1,marginTop:0,borderRadius:10,padding:"9px",fontSize:12}}>Cancelar</button>
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* CONFIGURACIÓN DELIVERY */}
-          <div style={{margin:"0 0 12px"}}>
-            {!editandoDelivery?(
-              <div style={{background:"#f8fafc",borderRadius:12,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:11,fontWeight:700,color:"#64748b",marginBottom:2}}>🛵 Configuración de delivery</div>
-                  {provData.delivery_propio
-                    ?<div style={{fontSize:12,color:"#15803d",fontWeight:600}}>Delivery activo · ${provData.delivery_costo||0} · Gratis desde ${provData.delivery_gratis_desde||15}</div>
-                    :<div style={{fontSize:12,color:"#94a3b8"}}>Sin delivery — solo retiro en tienda</div>
-                  }
-                </div>
-                <button onClick={()=>{setDeliveryConfig({delivery_propio:provData.delivery_propio||false,delivery_costo:provData.delivery_costo||0,delivery_gratis_desde:provData.delivery_gratis_desde||15});setEditandoDelivery(true);}} style={{background:P,color:"#fff",border:"none",borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:600,cursor:"pointer",flexShrink:0,marginLeft:8}}>✏️ Editar</button>
-              </div>
-            ):(
-              <div style={{background:"#f0fdf4",borderRadius:12,padding:"12px 14px",border:"1px solid #bbf7d0"}}>
-                <div style={{fontSize:12,fontWeight:700,color:"#15803d",marginBottom:10}}>🛵 Configura tu delivery</div>
-                <div style={{display:"flex",gap:8,marginBottom:10}}>
-                  <button onClick={()=>setDeliveryConfig({...deliveryConfig,delivery_propio:true})} style={{flex:1,padding:"10px 8px",borderRadius:10,border:`2px solid ${deliveryConfig.delivery_propio?"#15803d":"#e2e8f0"}`,background:deliveryConfig.delivery_propio?"#f0fdf4":"#fff",color:deliveryConfig.delivery_propio?"#15803d":"#64748b",fontSize:12,fontWeight:700,cursor:"pointer"}}>🛵 Sí, hago delivery</button>
-                  <button onClick={()=>setDeliveryConfig({...deliveryConfig,delivery_propio:false})} style={{flex:1,padding:"10px 8px",borderRadius:10,border:`2px solid ${!deliveryConfig.delivery_propio?"#64748b":"#e2e8f0"}`,background:!deliveryConfig.delivery_propio?"#f1f5f9":"#fff",color:!deliveryConfig.delivery_propio?"#374151":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>🏃 Solo retiro en local</button>
-                </div>
-                {deliveryConfig.delivery_propio&&(
-                  <>
-                    <label style={s.lbl}>Costo del delivery ($)</label>
-                    <input style={s.inp} type="number" placeholder="1.50" value={deliveryConfig.delivery_costo} onChange={e=>setDeliveryConfig({...deliveryConfig,delivery_costo:parseFloat(e.target.value)||0})}/>
-                    <label style={s.lbl}>Delivery gratis desde ($)</label>
-                    <input style={s.inp} type="number" placeholder="15" value={deliveryConfig.delivery_gratis_desde} onChange={e=>setDeliveryConfig({...deliveryConfig,delivery_gratis_desde:parseFloat(e.target.value)||15})}/>
-                    <div style={{fontSize:11,color:"#64748b",marginBottom:8,background:"#f0fdf4",padding:"8px 10px",borderRadius:8}}>
-                      💡 Si el pedido llega a ${deliveryConfig.delivery_gratis_desde}, el delivery será GRATIS. Si no, se cobra ${deliveryConfig.delivery_costo}.
-                    </div>
-                  </>
-                )}
-                <div style={{display:"flex",gap:8}}>
-                  <button onClick={async()=>{await supabase.from("proveedores").update({delivery_propio:deliveryConfig.delivery_propio,delivery_costo:deliveryConfig.delivery_costo,delivery_gratis_desde:deliveryConfig.delivery_gratis_desde}).eq("id",provData.id);setProvData({...provData,...deliveryConfig});setEditandoDelivery(false);setPmsg("✅ Delivery actualizado");loadAll();}} style={{...s.btnGreen,flex:1,borderRadius:10,padding:"9px",fontSize:12}}>Guardar</button>
-                  <button onClick={()=>setEditandoDelivery(false)} style={{...s.btnG,flex:1,marginTop:0,borderRadius:10,padding:"9px",fontSize:12}}>Cancelar</button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
+          <div style={{marginBottom:12}}>
             {[
-              {k:"estado",     l:"📊 Inicio"},
-              {k:"pedidos_rest",l:`📋 Pedidos${misRestPedidos.filter(p=>!["entregado","cancelado"].includes(p.estado)).length>0?` (${misRestPedidos.filter(p=>!["entregado","cancelado"].includes(p.estado)).length})`:""}`},
-              {k:"productos",  l:"📦 Productos"},
-              {k:"promos",     l:myPromos.filter(pr=>pr.motivo_rechazo).length>0?"🎉 Promos ⚠️":"🎉 Promos"},
-              {k:"clientes",   l:"👥 Clientes"},
-              {k:"ventas",     l:"📈 Ventas"},
-              {k:"mi_negocio", l:"⚙️ Mi negocio"},
+              {k:"estado",      l:"📊 Inicio",         n:0},
+              {k:"pedidos_rest",l:"📋 Pedidos",         n:misRestPedidos.filter(p=>!["entregado","cancelado"].includes(p.estado)).length},
+              {k:"productos",   l:"📦 Productos",       n:0},
+              {k:"promos",      l:"🎉 Promociones",     n:myPromos.filter(pr=>pr.motivo_rechazo).length},
+              {k:"clientes",    l:"👥 Mis clientes",    n:0},
+              {k:"ventas",      l:"📈 Dashboard ventas",n:0},
+              {k:"mi_negocio",  l:"⚙️ Mi negocio",      n:0},
             ].map(t=>{
               const isPromoTab=t.k==="promos"&&["promo_nueva","promo_activas","promo_pausadas","promo_pendientes","promo_rechazadas"].includes(provTab);
               const isProdTab=t.k==="productos"&&["productos","prod_nuevo","prod_aprobados","prod_pendientes","prod_rechazados"].includes(provTab);
               const isActive=provTab===t.k||isPromoTab||isProdTab;
-              return(<button key={t.k} onClick={()=>{
-                setProvTab(t.k==="promos"?"promo_nueva":t.k==="productos"?"prod_aprobados":t.k);
-                if(t.k==="clientes")loadMisClientes(provData.negocio);
-              }} style={{flexShrink:0,padding:"8px 12px",borderRadius:10,border:"none",background:isActive?P:"#f1f5f9",color:isActive?"#fff":"#64748b",fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>{t.l}</button>);
+              return(
+                <button key={t.k} style={s.admRow(isActive)} onClick={()=>{
+                  setProvTab(t.k==="promos"?"promo_nueva":t.k==="productos"?"prod_aprobados":t.k);
+                  if(t.k==="clientes")loadMisClientes(provData.negocio);
+                }}>
+                  <span>{t.l}</span>
+                  {t.n>0&&<span style={{background:"#ef4444",color:"#fff",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700}}>{t.n}</span>}
+                  {isActive&&<span style={{fontSize:12,color:isActive?"rgba(255,255,255,0.6)":"#94a3b8"}}>›</span>}
+                </button>
+              );
             })}
           </div>
           {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
