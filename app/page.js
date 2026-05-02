@@ -416,7 +416,11 @@ const VE_ESTADOS_MUNICIPIOS={
   useEffect(()=>{
     const interval=setInterval(()=>{
       loadAll();loadRemates();loadServiciosCom();loadClasificados();
-      if(provData){loadMyProds(provData.id);loadMyPromos(provData.id);}
+      if(provData){
+        loadMyProds(provData.id);
+        loadMyPromos(provData.id);
+        if(provTab==="pedidos_rest")loadMisRestPedidos(provData.id,provData.negocio);
+      }
       if(provMode==="admin"){loadAdmin();loadPedidos();setTab("Proveedores");}
     },15000);
     return ()=>clearInterval(interval);
@@ -2664,7 +2668,11 @@ const VE_ESTADOS_MUNICIPIOS={
                     {k:"ventas",       icon:"📈", label:"Mis ventas",  sub:"Dashboard de ingresos", color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#b45309,#f59e0b)", n:0},
                     {k:"mi_negocio",   icon:"⚙️", label:"Mi negocio",  sub:"Perfil y configuración",color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#374151,#6b7280)", n:0},
                   ].map(t=>(
-                    <button key={t.k} onClick={()=>{setProvTab(t.k);if(t.k==="clientes")loadMisClientes(provData.negocio);}} style={{background:t.bg,border:"none",borderRadius:16,padding:"16px 14px",textAlign:"left",cursor:"pointer",position:"relative",boxShadow:"0 4px 12px rgba(0,0,0,0.15)",transition:"transform 0.1s"}}>
+                    <button key={t.k} onClick={()=>{
+                      setProvTab(t.k);
+                      if(t.k==="clientes")loadMisClientes(provData.negocio);
+                      if(t.k==="pedidos_rest")loadMisRestPedidos(provData.id,provData.negocio);
+                    }} style={{background:t.bg,border:"none",borderRadius:16,padding:"16px 14px",textAlign:"left",cursor:"pointer",position:"relative",boxShadow:"0 4px 12px rgba(0,0,0,0.15)",transition:"transform 0.1s"}}>
                       <div style={{fontSize:26,marginBottom:8,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.2))"}}>{t.icon}</div>
                       <div style={{fontSize:13,fontWeight:800,color:"#fff",letterSpacing:-0.2}}>{t.label}</div>
                       <div style={{fontSize:10,color:"rgba(255,255,255,0.65)",marginTop:2,fontWeight:400}}>{t.sub}</div>
@@ -3214,7 +3222,12 @@ const VE_ESTADOS_MUNICIPIOS={
             const pendientes=misRestPedidos.filter(p=>!["entregado","cancelado","enviado"].includes(p.estado||"nuevo"));
             return(
               <div style={s.pc}>
-                <div style={s.pT}>📋 Mis pedidos</div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                  <div style={s.pT}>📋 Mis pedidos</div>
+                  <button onClick={()=>loadMisRestPedidos(provData.id,provData.negocio)} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:10,padding:"6px 12px",fontSize:12,fontWeight:700,color:"#15803d",cursor:"pointer"}}>
+                    🔄 Actualizar
+                  </button>
+                </div>
                 {/* STATS */}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
                   <div style={s.statCard}><div style={{...s.statNum,fontSize:20,color:"#6366f1"}}>{totalHoy.length}</div><div style={s.statLbl}>Hoy</div></div>
