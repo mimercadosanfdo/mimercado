@@ -2690,16 +2690,6 @@ const VE_ESTADOS_MUNICIPIOS={
                 )}
 
           {(provTab==="productos"||provTab==="prod_nuevo"||provTab==="prod_aprobados"||provTab==="prod_pendientes"||provTab==="prod_rechazados")&&(<>
-            <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}}>
-              {[
-                {k:"prod_nuevo",l:"➕ Nuevo"},
-                {k:"prod_aprobados",l:`✅ En tienda (${myProds.filter(p=>p.aprobado&&!p.rechazado).length})`},
-                {k:"prod_pendientes",l:`⏳ Pendientes (${myProds.filter(p=>!p.aprobado&&!p.rechazado).length})`},
-                {k:"prod_rechazados",l:`✗ Rechazados (${myProds.filter(p=>p.rechazado).length})`},
-              ].map(t=>(
-                <button key={t.k} onClick={()=>setProvTab(t.k)} style={{flexShrink:0,padding:"7px 11px",borderRadius:10,border:"none",background:provTab===t.k?P:"#f1f5f9",color:provTab===t.k?"#fff":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer"}}>{t.l}</button>
-              ))}
-            </div>
 
             {provTab==="prod_nuevo"&&(
               <div style={s.pc}>
@@ -2919,18 +2909,6 @@ const VE_ESTADOS_MUNICIPIOS={
           </>)}
 
           {(provTab==="promos"||provTab==="promo_nueva"||provTab==="promo_activas"||provTab==="promo_pausadas"||provTab==="promo_pendientes"||provTab==="promo_rechazadas")&&(<>
-            {/* SUB-TABS PROMOS */}
-            <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}}>
-              {[
-                {k:"promo_nueva",l:"➕ Nueva"},
-                {k:"promo_activas",l:`✅ Activas (${myPromos.filter(pr=>pr.aprobada&&pr.activa).length})`},
-                {k:"promo_pausadas",l:`⏸️ Pausadas (${myPromos.filter(pr=>pr.aprobada&&!pr.activa&&!pr.motivo_rechazo).length})`},
-                {k:"promo_pendientes",l:`⏳ Pendientes (${myPromos.filter(pr=>!pr.aprobada&&pr.activa&&!pr.motivo_rechazo).length})`},
-                {k:"promo_rechazadas",l:`✗ Rechazadas (${myPromos.filter(pr=>pr.motivo_rechazo).length})`},
-              ].map(t=>(
-                <button key={t.k} onClick={()=>setProvTab(t.k)} style={{flexShrink:0,padding:"7px 11px",borderRadius:10,border:"none",background:provTab===t.k?P:"#f1f5f9",color:provTab===t.k?"#fff":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer"}}>{t.l}</button>
-              ))}
-            </div>
 
             {/* NUEVA PROMO */}
             {(provTab==="promo_nueva")&&(
