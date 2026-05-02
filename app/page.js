@@ -1646,10 +1646,12 @@ export default function App() {
                 <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
                   {restauranteActivo.horario_desde&&<span style={{fontSize:10,color:"rgba(255,255,255,0.8)",background:"rgba(255,255,255,0.1)",padding:"3px 8px",borderRadius:20}}>🕐 {restauranteActivo.horario_desde}–{restauranteActivo.horario_hasta}</span>}
                   {restauranteActivo.delivery_propio
-                    ?<span style={{fontSize:10,color:"#86efac",fontWeight:600,background:"rgba(34,197,94,0.15)",padding:"3px 8px",borderRadius:20}}>🛵 Delivery {restauranteActivo.delivery_costo>0?`$${restauranteActivo.delivery_costo}`:"gratis"}</span>}
-                {(restauranteActivo.eta_texto||(restauranteActivo.eta_minutos_min&&restauranteActivo.eta_minutos_max))&&(<span style={{fontSize:10,background:"rgba(251,191,36,0.2)",color:"#92400e",padding:"3px 8px",borderRadius:20,fontWeight:600}}>⏱️ {restauranteActivo.eta_texto||`${restauranteActivo.eta_minutos_min}–${restauranteActivo.eta_minutos_max} min`}</span>
+                    ?<span style={{fontSize:10,color:"#86efac",fontWeight:600,background:"rgba(34,197,94,0.15)",padding:"3px 8px",borderRadius:20}}>🛵 Delivery {restauranteActivo.delivery_costo>0?`$${restauranteActivo.delivery_costo}`:"gratis"}</span>
                     :<span style={{fontSize:10,color:"rgba(255,255,255,0.7)",background:"rgba(255,255,255,0.1)",padding:"3px 8px",borderRadius:20}}>🏃 Solo retiro en local</span>
                   }
+                  {(restauranteActivo.eta_texto||(restauranteActivo.eta_minutos_min&&restauranteActivo.eta_minutos_max))&&(
+                    <span style={{fontSize:10,background:"rgba(251,191,36,0.2)",color:"#fbbf24",padding:"3px 8px",borderRadius:20,fontWeight:600}}>⏱️ {restauranteActivo.eta_texto||`${restauranteActivo.eta_minutos_min}–${restauranteActivo.eta_minutos_max} min`}</span>
+                  )}
                   {!restauranteActivo.direccion_fisica&&!restauranteActivo.delivery_propio&&<span style={{fontSize:10,color:"rgba(255,255,255,0.6)",background:"rgba(255,255,255,0.08)",padding:"3px 8px",borderRadius:20}}>📦 Solo delivery · Pedido online</span>}
                 </div>
                 {/* BUSCADOR */}
