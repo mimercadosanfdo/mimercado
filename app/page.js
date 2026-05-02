@@ -722,6 +722,36 @@ const VE_ESTADOS_MUNICIPIOS={
     });
     if(error)console.error("Error guardando pedido:",error.message);
   };
+
+  // Guardar pedido del supermercado desde cartGlobal (recibe datos como parámetros)
+  const guardarPedidoSuperDB=async(superItems,subVal,delVal,totalVal,refVal)=>{
+    const itemsParaGuardar=superItems.map(i=>({
+      id:i.id,
+      nombre:i.name,
+      precio:i.price,
+      qty:i.qty,
+      nota:i.nota||null,
+      categoria:"Supermercado",
+    }));
+    const margenTotal=superItems.reduce((a,i)=>a+(i.price*i.qty*0.10),0);
+    const{error}=await supabase.from("pedidos").insert({
+      ref:refVal,
+      proveedor_nombre:"Supermercado",
+      cliente_nombre:form.nombre,
+      cliente_telefono:form.telefono,
+      cliente_direccion:[zonaSel?.zona,addr.calle,addr.referencia].filter(Boolean).join(", "),
+      zona:zonaSel?.zona||"",
+      zona_id:zonaSelId||null,
+      metodo_pago:form.pago||"WhatsApp",
+      items:itemsParaGuardar,
+      subtotal:parseFloat(subVal.toFixed(2)),
+      delivery:parseFloat(delVal.toFixed(2)),
+      total:parseFloat(totalVal.toFixed(2)),
+      ganancia:parseFloat(margenTotal.toFixed(2)),
+      estado:"nuevo",
+    });
+    if(error)console.error("Error guardando pedido supermercado:",error.message);
+  };
   // ---------------------------------------------------------
 
   const allProds=[
@@ -4178,7 +4208,8 @@ const VE_ESTADOS_MUNICIPIOS={
             const del=sub>=freeMin?0:delCosto;
             const totalS=sub+del;
             const ref=`PED-${Date.now().toString().slice(-6)}`;
-            await guardarPedidoEnDB();
+            // Guardar en DB con función dedicada que recibe parámetros correctos
+            await guardarPedidoSuperDB(prov.items,sub,del,totalS,ref);
             const lineas=prov.items.map(i=>`• ${i.name} x${i.qty} — $${(i.price*i.qty).toFixed(2)}`).join("\n");
             const msg=`🛒 *Pedido Supermercado — ${APP_NAME}*\n📋 Ref: ${ref}\n\n${lineas}\n\nSubtotal: $${sub.toFixed(2)}\nDelivery: ${del===0?"GRATIS 🎉":"$"+del.toFixed(2)}\n*TOTAL: $${totalS.toFixed(2)}*\n\n👤 ${form.nombre}\n📱 ${form.telefono}\n📍 ${zonaSel?.zona||""}, ${addr.calle||""}\n🗺️ ${addr.referencia||""}`;
             const num=WA;
