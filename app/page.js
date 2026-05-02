@@ -224,6 +224,8 @@ export default function App() {
   const [misClientes,setMisClientes]=useState([]); // clientes del proveedor
   const [etaData,setEtaData]=useState({eta_minutos_min:"",eta_minutos_max:"",eta_texto:""});
   const [editandoEta,setEditandoEta]=useState(false);
+  const [seccionNegocio,setSeccionNegocio]=useState("perfil");
+  const [filtroVentas,setFiltroVentas]=useState("todo");
   const [selSvc,setSelSvc]=useState(null);
   const [svcForm,setSvcForm]=useState({nombre:"",telefono:"",direccion:"",detalle:""});
   const [superProds,setSuperProds]=useState([]);
@@ -2305,7 +2307,8 @@ export default function App() {
             </button>
           </div>
 
-          <div style={{marginBottom:12}}>
+          {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
+          <div>
             {[
               {k:"estado",      l:"📊 Inicio",         n:0},
               {k:"pedidos_rest",l:"📋 Pedidos",         n:misRestPedidos.filter(p=>!["entregado","cancelado"].includes(p.estado)).length},
@@ -2319,18 +2322,22 @@ export default function App() {
               const isProdTab=t.k==="productos"&&["productos","prod_nuevo","prod_aprobados","prod_pendientes","prod_rechazados"].includes(provTab);
               const isActive=provTab===t.k||isPromoTab||isProdTab;
               return(
-                <button key={t.k} style={s.admRow(isActive)} onClick={()=>{
-                  setProvTab(t.k==="promos"?"promo_nueva":t.k==="productos"?"prod_aprobados":t.k);
-                  if(t.k==="clientes")loadMisClientes(provData.negocio);
-                }}>
-                  <span>{t.l}</span>
-                  {t.n>0&&<span style={{background:"#ef4444",color:"#fff",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700}}>{t.n}</span>}
-                  {isActive&&<span style={{fontSize:12,color:isActive?"rgba(255,255,255,0.6)":"#94a3b8"}}>›</span>}
-                </button>
-              );
-            })}
-          </div>
-          {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
+                <div key={t.k} style={{marginBottom:6}}>
+                  {/* BOTÓN DEL MÓDULO */}
+                  <button style={{...s.admRow(isActive),marginBottom:0,borderRadius:isActive?"10px 10px 0 0":10}} onClick={()=>{
+                    const newTab=t.k==="promos"?"promo_nueva":t.k==="productos"?"prod_aprobados":t.k;
+                    setProvTab(isActive&&provTab===newTab?"__none__":newTab);
+                    if(t.k==="clientes")loadMisClientes(provData.negocio);
+                  }}>
+                    <span>{t.l}</span>
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      {t.n>0&&<span style={{background:"#ef4444",color:"#fff",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700}}>{t.n}</span>}
+                      <span style={{fontSize:14,color:isActive?"rgba(255,255,255,0.7)":"#94a3b8",transform:isActive?"rotate(90deg)":"none",transition:"transform 0.2s",display:"inline-block"}}>›</span>
+                    </div>
+                  </button>
+                  {/* CONTENIDO DEL MÓDULO — aparece justo debajo */}
+                  {isActive&&(
+                    <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderTop:"none",borderRadius:"0 0 10px 10px",padding:"14px 12px"}}>
 
           {provTab==="estado"&&(<>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
@@ -3055,7 +3062,8 @@ export default function App() {
             const hoyV=fechaLocalV(new Date());
             const sem=fechaLocalV(new Date(Date.now()-7*86400000));
             const mes=fechaLocalV(new Date(Date.now()-30*86400000));
-            const [filtroV,setFiltroV]=React.useState("todo");
+            // filtroVentas está en el estado del componente
+            const filtroV=filtroVentas;const setFiltroV=setFiltroVentas;
             const pedFiltV=pedidosEntregados.filter(p=>{
               const f=fechaLocalV(p.created_at);
               return filtroV==="hoy"?f===hoyV:filtroV==="semana"?f>=sem:filtroV==="mes"?f>=mes:true;
@@ -3103,7 +3111,8 @@ export default function App() {
 
           {/* ═══ TAB MI NEGOCIO ═══ */}
           {provTab==="mi_negocio"&&(()=>{
-            const [seccion,setSeccion]=React.useState("perfil");
+            // seccionNegocio está en el estado del componente
+            const seccion=seccionNegocio;const setSeccion=setSeccionNegocio;
             const notifPagoWa=(cambio)=>{
               const raw=(provData.whatsapp_negocio||provData.telefono||"").replace(/\D/g,"");
               const num=raw.startsWith("0")?"58"+raw.slice(1):raw.startsWith("58")?raw:"58"+raw;
@@ -3271,6 +3280,12 @@ export default function App() {
               </div>
             );
           })()}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
         </>)}
 
