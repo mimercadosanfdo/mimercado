@@ -3594,10 +3594,12 @@ const VE_ESTADOS_MUNICIPIOS={
                       };
                       const{error}=await supabase.from("proveedores").update(payload).eq("id",provData.id);
                       if(error){alert("Error al guardar: "+error.message);return;}
-                      setProvData({...provData,...payload});
-                      setPmsg("✅ Perfil actualizado correctamente");
+                      setProvData(d=>({...d,...payload}));
+                      alert("✅ Perfil guardado correctamente");
                       loadAll();
-                    }} style={{...s.btnGreen,width:"100%",borderRadius:10,padding:"10px",marginTop:4}}>💾 Guardar perfil</button>
+                    }} style={{width:"100%",background:"#22c55e",color:"#fff",border:"none",borderRadius:14,padding:"14px",fontSize:15,fontWeight:700,cursor:"pointer",marginTop:10,display:"block"}}>
+                      💾 Guardar perfil
+                    </button>
                   </div>
                 )}
 
