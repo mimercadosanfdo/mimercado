@@ -2594,35 +2594,66 @@ const VE_ESTADOS_MUNICIPIOS={
 
           {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
           <div>
-            {[
-              {k:"estado",      l:"📊 Inicio",         n:0},
-              {k:"pedidos_rest",l:"📋 Pedidos",         n:misRestPedidos.filter(p=>!["entregado","cancelado","enviado"].includes(p.estado||"nuevo")).length},
-              {k:"productos",   l:"📦 Productos",       n:0},
-              {k:"promos",      l:"🎉 Promociones",     n:myPromos.filter(pr=>pr.motivo_rechazo).length},
-              {k:"clientes",    l:"👥 Mis clientes",    n:0},
-              {k:"ventas",      l:"📈 Dashboard ventas",n:0},
-              {k:"mi_negocio",  l:"⚙️ Mi negocio",      n:0},
-            ].map(t=>{
-              const isPromoTab=t.k==="promos"&&["promo_nueva","promo_activas","promo_pausadas","promo_pendientes","promo_rechazadas"].includes(provTab);
-              const isProdTab=t.k==="productos"&&["productos","prod_nuevo","prod_aprobados","prod_pendientes","prod_rechazados"].includes(provTab);
-              const isActive=provTab===t.k||isPromoTab||isProdTab;
-              return(
-                <div key={t.k} style={{marginBottom:6}}>
-                  {/* BOTÓN DEL MÓDULO */}
-                  <button style={{...s.admRow(isActive),marginBottom:0,borderRadius:isActive?"10px 10px 0 0":10}} onClick={()=>{
-                    const newTab=t.k==="promos"?"promo_nueva":t.k==="productos"?"prod_aprobados":t.k;
-                    setProvTab(isActive&&provTab===newTab?"__none__":newTab);
-                    if(t.k==="clientes")loadMisClientes(provData.negocio);
-                  }}>
-                    <span>{t.l}</span>
-                    <div style={{display:"flex",alignItems:"center",gap:6}}>
-                      {t.n>0&&<span style={{background:"#ef4444",color:"#fff",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700}}>{t.n}</span>}
-                      <span style={{fontSize:14,color:isActive?"rgba(255,255,255,0.7)":"#94a3b8",transform:isActive?"rotate(90deg)":"none",transition:"transform 0.2s",display:"inline-block"}}>›</span>
-                    </div>
+            {/* Si hay sección activa distinta a estado, mostrar botón volver */}
+            {provTab!=="estado"&&!["prod_nuevo","prod_aprobados","prod_pendientes","prod_rechazados","promo_nueva","promo_activas","promo_pausadas","promo_pendientes","promo_rechazadas"].includes(provTab)&&(
+              <div style={{padding:"0 16px 10px"}}>
+                <button onClick={()=>setProvTab("estado")} style={{display:"flex",alignItems:"center",gap:6,background:"#f1f5f9",border:"none",borderRadius:10,padding:"8px 14px",fontSize:13,fontWeight:600,color:"#475569",cursor:"pointer"}}>
+                  ← Menú principal
+                </button>
+              </div>
+            )}
+            {/* MENÚ GRID — solo visible en pantalla de inicio */}
+            {provTab==="estado"&&(
+              <div style={{padding:"0 16px 12px"}}>
+                <div style={{fontSize:12,fontWeight:700,color:"#64748b",marginBottom:8,letterSpacing:0.5}}>GESTIONA TU NEGOCIO</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  {[
+                    {k:"pedidos_rest", icon:"📋", label:"Pedidos",       color:"#1d4ed8", bg:"#eff6ff", n:misRestPedidos.filter(p=>!["entregado","cancelado","enviado"].includes(p.estado||"nuevo")).length},
+                    {k:"prod_aprobados",icon:"📦",label:"Productos",      color:"#15803d", bg:"#f0fdf4", n:0},
+                    {k:"promo_nueva",  icon:"🎉", label:"Promociones",    color:"#7e22ce", bg:"#fdf4ff", n:myPromos.filter(pr=>pr.motivo_rechazo).length},
+                    {k:"clientes",     icon:"👥", label:"Mis clientes",   color:"#0369a1", bg:"#e0f2fe", n:0},
+                    {k:"ventas",       icon:"📈", label:"Mis ventas",     color:"#92400e", bg:"#fef9c3", n:0},
+                    {k:"mi_negocio",   icon:"⚙️", label:"Mi negocio",     color:"#475569", bg:"#f8fafc", n:0},
+                  ].map(t=>(
+                    <button key={t.k} onClick={()=>{
+                      setProvTab(t.k);
+                      if(t.k==="clientes")loadMisClientes(provData.negocio);
+                    }} style={{background:t.bg,border:`1px solid ${t.bg}`,borderRadius:12,padding:"14px 12px",textAlign:"left",cursor:"pointer",position:"relative",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
+                      <div style={{fontSize:24,marginBottom:6}}>{t.icon}</div>
+                      <div style={{fontSize:12,fontWeight:700,color:t.color,lineHeight:1.2}}>{t.label}</div>
+                      {t.n>0&&<span style={{position:"absolute",top:8,right:8,background:"#ef4444",color:"#fff",borderRadius:"50%",width:20,height:20,fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>{t.n}</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* CONTENIDO DE CADA SECCIÓN */}
+            {provTab!=="estado"&&(
+              <div style={{background:"#f8fafc",borderRadius:12,margin:"0 16px",padding:"14px 12px",border:"1px solid #e2e8f0"}}>
+                {/* Sub-menú para productos */}
+                {["productos","prod_nuevo","prod_aprobados","prod_pendientes","prod_rechazados"].includes(provTab)&&(
+                  <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
+                    <button onClick={()=>setProvTab("estado")} style={{flexShrink:0,padding:"6px 10px",borderRadius:10,border:"none",background:"#f1f5f9",color:"#64748b",fontSize:11,fontWeight:600,cursor:"pointer"}}>← Volver</button>
+                    {[{k:"prod_nuevo",l:"➕ Nuevo"},{k:"prod_aprobados",l:"✅ En tienda"},{k:"prod_pendientes",l:"⏳ Pendientes"},{k:"prod_rechazados",l:"✗ Rechazados"}].map(t=>(
+                      <button key={t.k} onClick={()=>setProvTab(t.k)} style={{flexShrink:0,padding:"7px 11px",borderRadius:10,border:"none",background:provTab===t.k?P:"#f1f5f9",color:provTab===t.k?"#fff":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer"}}>{t.l}</button>
+                    ))}
+                  </div>
+                )}
+                {/* Sub-menú para promociones */}
+                {["promos","promo_nueva","promo_activas","promo_pausadas","promo_pendientes","promo_rechazadas"].includes(provTab)&&(
+                  <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
+                    <button onClick={()=>setProvTab("estado")} style={{flexShrink:0,padding:"6px 10px",borderRadius:10,border:"none",background:"#f1f5f9",color:"#64748b",fontSize:11,fontWeight:600,cursor:"pointer"}}>← Volver</button>
+                    {[{k:"promo_nueva",l:"➕ Nueva"},{k:"promo_activas",l:"✅ Activas"},{k:"promo_pausadas",l:"⏸ Pausadas"},{k:"promo_pendientes",l:"⏳ Pendientes"},{k:"promo_rechazadas",l:"✗ Rechazadas"}].map(t=>(
+                      <button key={t.k} onClick={()=>setProvTab(t.k)} style={{flexShrink:0,padding:"7px 11px",borderRadius:10,border:"none",background:provTab===t.k?P:"#f1f5f9",color:provTab===t.k?"#fff":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer"}}>{t.l}</button>
+                    ))}
+                  </div>
+                )}
+                {/* Botón volver para secciones simples */}
+                {!["productos","prod_nuevo","prod_aprobados","prod_pendientes","prod_rechazados","promos","promo_nueva","promo_activas","promo_pausadas","promo_pendientes","promo_rechazadas"].includes(provTab)&&(
+                  <button onClick={()=>setProvTab("estado")} style={{display:"flex",alignItems:"center",gap:6,background:"#f1f5f9",border:"none",borderRadius:10,padding:"7px 12px",fontSize:12,fontWeight:600,color:"#475569",cursor:"pointer",marginBottom:12}}>
+                    ← Volver al menú
                   </button>
-                  {/* CONTENIDO DEL MÓDULO — aparece justo debajo */}
-                  {isActive&&(
-                    <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderTop:"none",borderRadius:"0 0 10px 10px",padding:"14px 12px"}}>
+                )}
 
           {provTab==="estado"&&(<>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
@@ -3661,11 +3692,8 @@ const VE_ESTADOS_MUNICIPIOS={
               </div>
             );
           })()}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+              </div>
+            )}
           </div>
 
         </>)}
