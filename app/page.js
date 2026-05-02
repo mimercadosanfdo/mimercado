@@ -3455,6 +3455,7 @@ const VE_ESTADOS_MUNICIPIOS={
             return(
               <div style={s.pc}>
                 <div style={s.pT}>⚙️ Mi negocio</div>
+                {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
                 {/* SUB-MENÚ */}
                 <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:4}}>
                   {[
@@ -3572,16 +3573,17 @@ const VE_ESTADOS_MUNICIPIOS={
                     ;})()}
 
                     <button onClick={async()=>{
+                      if(!provData?.id){alert("Error: no hay sesión activa");return;}
                       let new_logo_url=provData.logo_url||null;
                       if(logoFile){new_logo_url=await upload(logoFile,"logos",`${provData.id}_logo_${Date.now()}`);setLogoFile(null);}
-                      await supabase.from("proveedores").update({
+                      const payload={
                         negocio:perfilData.negocio||provData.negocio,
-                        descripcion_negocio:perfilData.descripcion_negocio,
-                        whatsapp_negocio:perfilData.whatsapp_negocio,
-                        telefono:perfilData.whatsapp_negocio,
+                        descripcion_negocio:perfilData.descripcion_negocio||provData.descripcion_negocio||null,
+                        whatsapp_negocio:perfilData.whatsapp_negocio||provData.whatsapp_negocio||null,
+                        telefono:perfilData.whatsapp_negocio||provData.whatsapp_negocio||null,
                         telefono_principal:perfilData.telefono_principal||provData.telefono_principal||null,
-                        instagram:perfilData.instagram,
-                        direccion_fisica:perfilData.direccion_fisica,
+                        instagram:perfilData.instagram||provData.instagram||null,
+                        direccion_fisica:perfilData.direccion_fisica||provData.direccion_fisica||null,
                         tipo_presencia:perfilData.tipo_presencia||provData.tipo_presencia||"online",
                         estado_ubicacion:perfilData.estado_ubicacion||provData.estado_ubicacion||null,
                         municipio:perfilData.municipio||provData.municipio||null,
@@ -3589,9 +3591,12 @@ const VE_ESTADOS_MUNICIPIOS={
                         latitud:perfilData.latitud||provData.latitud||null,
                         longitud:perfilData.longitud||provData.longitud||null,
                         logo_url:new_logo_url,
-                      }).eq("id",provData.id);
-                      setProvData({...provData,...perfilData,logo_url:new_logo_url});
-                      setPmsg("✅ Perfil actualizado correctamente");loadAll();
+                      };
+                      const{error}=await supabase.from("proveedores").update(payload).eq("id",provData.id);
+                      if(error){alert("Error al guardar: "+error.message);return;}
+                      setProvData({...provData,...payload});
+                      setPmsg("✅ Perfil actualizado correctamente");
+                      loadAll();
                     }} style={{...s.btnGreen,width:"100%",borderRadius:10,padding:"10px",marginTop:4}}>💾 Guardar perfil</button>
                   </div>
                 )}
