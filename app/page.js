@@ -3546,8 +3546,8 @@ const VE_ESTADOS_MUNICIPIOS={
                       <input style={s.inp} value={perfilData.direccion_fisica||""} onChange={e=>{const v=e.target.value;setPerfilData(p=>({...p,direccion_fisica:v}));}} placeholder="Calle Bolívar #23, frente al parque..."/>
                       <label style={s.lbl}>Coordenadas GPS</label>
                       <div style={{display:"flex",gap:6,marginBottom:6}}>
-                        <input style={{...s.inp,flex:1,marginBottom:0}} type="number" step="0.000001" placeholder="Latitud" value={perfilData.latitud||""} onChange={e=>{const v=parseFloat(e.target.value)||null;setPerfilData(p=>({...p,latitud:v}));}}/>
-                        <input style={{...s.inp,flex:1,marginBottom:0}} type="number" step="0.000001" placeholder="Longitud" value={perfilData.longitud||""} onChange={e=>{const v=parseFloat(e.target.value)||null;setPerfilData(p=>({...p,longitud:v}));}}/>
+                        <input style={{...s.inp,flex:1,marginBottom:0}} type="text" inputMode="decimal" placeholder="Latitud ej: 7.882672" value={perfilData.latitud!=null?String(perfilData.latitud):""} onChange={e=>{const v=e.target.value;setPerfilData(p=>({...p,latitud:v}));}}/>
+                        <input style={{...s.inp,flex:1,marginBottom:0}} type="text" inputMode="decimal" placeholder="Longitud ej: -67.482665" value={perfilData.longitud!=null?String(perfilData.longitud):""} onChange={e=>{const v=e.target.value;setPerfilData(p=>({...p,longitud:v}));}}/>
                       </div>
                       <button onClick={()=>{
                         if(!navigator.geolocation)return setPmsg("⚠️ Tu navegador no soporta geolocalización");
@@ -3591,8 +3591,8 @@ const VE_ESTADOS_MUNICIPIOS={
                         estado_ubicacion:perfilData.estado_ubicacion,
                         municipio:perfilData.municipio,
                         parroquia:perfilData.parroquia,
-                        latitud:perfilData.latitud,
-                        longitud:perfilData.longitud,
+                        latitud:perfilData.latitud!=null&&perfilData.latitud!==""?parseFloat(String(perfilData.latitud)):null,
+                        longitud:perfilData.longitud!=null&&perfilData.longitud!==""?parseFloat(String(perfilData.longitud)):null,
                         logo_url:new_logo_url,
                       };
                       console.log("Guardando:",{parroquia:payload.parroquia,direccion:payload.direccion_fisica});
