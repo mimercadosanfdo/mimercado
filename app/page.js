@@ -1281,25 +1281,24 @@ const VE_ESTADOS_MUNICIPIOS={
       <div style={s.tabs}>
         {MAIN_TABS.map(t=>{
           const icons={"Inicio":"🏠","Supermercado":"🛒","Negocios locales":"🏪","Feria de comidas":"🍽️","Servicios":"⚡"};
-          const labels={"Inicio":"Inicio","Supermercado":"Supermercado","Negocios locales":"Negocios locales","Feria de comidas":"Feria de comidas","Servicios":"Servicios"};
-          const isActive=tab===t||(t==="Negocios"&&tab==="MiCuenta"===false);
-          return(<button key={t} style={s.tab(tab===t)} onClick={()=>setTab(t)}>
-            <span style={{fontSize:tab===t?26:19,transition:"all 0.2s",filter:tab===t?"none":"grayscale(50%)",display:"block"}}>{icons[t]}</span>
-            <span style={{fontSize:9,lineHeight:1.2,textAlign:"center"}}>{labels[t]}</span>
-          </button>);
+          const activeColors={
+            "Inicio":     {bg:"#f0fdf4",border:"#15803d",text:"#15803d"},
+            "Supermercado":{bg:"#fef9c3",border:"#b45309",text:"#b45309"},
+            "Negocios locales":{bg:"#eff6ff",border:"#1d4ed8",text:"#1d4ed8"},
+            "Feria de comidas":{bg:"#fff7ed",border:"#c2410c",text:"#c2410c"},
+            "Servicios":  {bg:"#fdf4ff",border:"#7e22ce",text:"#7e22ce"},
+          };
+          const ac=activeColors[t];
+          const isActive=tab===t;
+          return(
+            <button key={t} style={{flex:1,padding:"8px 2px 6px",border:"none",background:isActive?ac.bg:"transparent",borderBottom:isActive?`3px solid ${ac.border}`:"3px solid transparent",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,transition:"all 0.15s",minWidth:0}} onClick={()=>setTab(t)}>
+              <span style={{fontSize:isActive?24:18,transition:"all 0.2s",filter:isActive?"none":"grayscale(60%)",display:"block"}}>{icons[t]}</span>
+              <span style={{fontSize:8,lineHeight:1.2,textAlign:"center",fontWeight:isActive?700:400,color:isActive?ac.text:"#94a3b8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",width:"100%",paddingX:2}}>{t==="Negocios locales"?"Negocios":t==="Feria de comidas"?"Restaurantes":t}</span>
+            </button>
+          );
         })}
       </div>
-      {/* SECONDARY TABS — solo visible en tabs relevantes */}
-      {!["Servicios","Proveedores"].includes(tab)&&(
-      <div style={{display:"flex",background:"#f0fdf4",borderBottom:"1px solid #dcfce7",position:"sticky",top:102,zIndex:98}}>
-        {SEC_TABS.map(t=>(
-          <button key={t} onClick={()=>setTab(t)} style={{flex:1,padding:"6px 0",border:"none",background:"transparent",color:tab===t?P:"#64748b",fontWeight:tab===t?700:400,fontSize:10,cursor:"pointer",borderBottom:tab===t?`2px solid ${P}`:"2px solid transparent",display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
-            <span style={{fontSize:14}}>{t==="Clasificados"?"🚗":"🏷️"}</span>
-            <span>{t}</span>
-          </button>
-        ))}
-      </div>
-      )}
+      {/* SECONDARY TABS ELIMINADOS — Clasificados y Mercadito accesibles desde Inicio */}
 
       {/* INICIO */}
       {tab==="Inicio"&&(<>
@@ -1314,18 +1313,20 @@ const VE_ESTADOS_MUNICIPIOS={
           </div>
         </div>
 
-        {/* ACCESOS RÁPIDOS */}
+        {/* ACCESOS RÁPIDOS — 6 secciones */}
         <div style={{padding:"14px 16px 0"}}>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
             {[
-              {icon:"🛒",label:"Supermercado",tab:"Supermercado",bg:"#0f172a",tc:"#fbbf24"},
-              {icon:"🍽️",label:"Restaurantes",tab:"Feria de comidas",bg:"#c2410c",tc:"#fff"},
-              {icon:"🏪",label:"Negocios",tab:"Negocios locales",bg:"#1d4ed8",tc:"#fff"},
-              {icon:"⚡",label:"Servicios",tab:"Servicios",bg:"#7c3aed",tc:"#fff"},
+              {icon:"🛒", label:"Supermercado", tab:"Supermercado",     bg:"linear-gradient(135deg,#0f172a,#1e293b)",   tc:"#fbbf24"},
+              {icon:"🍽️", label:"Restaurantes", tab:"Feria de comidas", bg:"linear-gradient(135deg,#9a3412,#c2410c)",   tc:"#fff"},
+              {icon:"🏪", label:"Negocios",     tab:"Negocios locales", bg:"linear-gradient(135deg,#1e40af,#2563eb)",   tc:"#fff"},
+              {icon:"⚡", label:"Servicios",    tab:"Servicios",        bg:"linear-gradient(135deg,#581c87,#7e22ce)",   tc:"#fff"},
+              {icon:"🚗", label:"Clasificados", tab:"Clasificados",     bg:"linear-gradient(135deg,#065f46,#059669)",   tc:"#fff"},
+              {icon:"🏷️", label:"Mercadito",    tab:"Mercadito local",  bg:"linear-gradient(135deg,#92400e,#d97706)",   tc:"#fff"},
             ].map(x=>(
-              <button key={x.tab} onClick={()=>setTab(x.tab)} style={{background:x.bg,borderRadius:14,padding:"12px 4px",display:"flex",flexDirection:"column",alignItems:"center",gap:5,border:"none",cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.12)"}}>
-                <span style={{fontSize:24}}>{x.icon}</span>
-                <span style={{fontSize:9,fontWeight:700,color:x.tc,textAlign:"center",lineHeight:1.2}}>{x.label}</span>
+              <button key={x.tab} onClick={()=>setTab(x.tab)} style={{background:x.bg,borderRadius:16,padding:"14px 6px 12px",display:"flex",flexDirection:"column",alignItems:"center",gap:6,border:"none",cursor:"pointer",boxShadow:"0 3px 10px rgba(0,0,0,0.15)",position:"relative",overflow:"hidden"}}>
+                <span style={{fontSize:26,filter:"drop-shadow(0 2px 3px rgba(0,0,0,0.2))"}}>{x.icon}</span>
+                <span style={{fontSize:10,fontWeight:700,color:x.tc,textAlign:"center",lineHeight:1.2,letterSpacing:0.2}}>{x.label}</span>
               </button>
             ))}
           </div>
@@ -1413,27 +1414,15 @@ const VE_ESTADOS_MUNICIPIOS={
           </div>
         )}
 
-        {/* CTA MERCADITO */}
-        <div style={{padding:"14px 16px"}}>
-          <div onClick={()=>setTab("Mercadito local")} style={{background:"linear-gradient(135deg,#f59e0b,#d97706)",borderRadius:16,padding:"14px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
-            <span style={{fontSize:32}}>🏷️</span>
-            <div style={{flex:1}}>
-              <div style={{fontSize:15,fontWeight:900,color:"#fff",letterSpacing:-0.3}}>¿Tienes algo que vender?</div>
-              <div style={{fontSize:12,color:"rgba(255,255,255,0.9)",fontWeight:600,marginTop:2}}>Publícalo <span style={{textDecoration:"underline"}}>GRATIS</span> en el Mercadito local</div>
-            </div>
-            <span style={{color:"#fff",fontSize:20}}>→</span>
-          </div>
-        </div>
-
         {/* CTA PROVEEDOR */}
-        <div style={{padding:"0 16px 16px"}}>
-          <div onClick={()=>setTab("Proveedores")} style={{background:"linear-gradient(135deg,#1d4ed8,#4338ca)",borderRadius:16,padding:"14px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
-            <span style={{fontSize:32}}>🏪</span>
+        <div style={{padding:"14px 16px 16px"}}>
+          <div onClick={()=>setTab("Proveedores")} style={{background:"linear-gradient(135deg,#1d4ed8,#4338ca)",borderRadius:16,padding:"16px",cursor:"pointer",display:"flex",alignItems:"center",gap:14,boxShadow:"0 4px 12px rgba(29,78,216,0.25)"}}>
+            <div style={{width:44,height:44,borderRadius:12,background:"rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🏪</div>
             <div style={{flex:1}}>
-              <div style={{fontSize:15,fontWeight:900,color:"#fff",letterSpacing:-0.3}}>¿Tienes un negocio?</div>
-              <div style={{fontSize:12,color:"rgba(255,255,255,0.85)",fontWeight:500,marginTop:2}}>Únete a Apure Market · 3 meses gratis al registrarte</div>
+              <div style={{fontSize:14,fontWeight:900,color:"#fff",letterSpacing:-0.3}}>¿Tienes un negocio?</div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.75)",fontWeight:400,marginTop:2}}>Únete gratis · 3 meses de prueba sin costo</div>
             </div>
-            <span style={{color:"#fff",fontSize:20}}>→</span>
+            <span style={{color:"rgba(255,255,255,0.6)",fontSize:20}}>›</span>
           </div>
         </div>
 
