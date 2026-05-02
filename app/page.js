@@ -734,7 +734,7 @@ const VE_ESTADOS_MUNICIPIOS={
       categoria:"Supermercado",
     }));
     const margenTotal=superItems.reduce((a,i)=>a+(i.price*i.qty*0.10),0);
-    const{error}=await supabase.from("pedidos").insert({
+    const payload={
       ref:refVal,
       proveedor_nombre:"Supermercado",
       cliente_nombre:form.nombre,
@@ -749,8 +749,13 @@ const VE_ESTADOS_MUNICIPIOS={
       total:parseFloat(totalVal.toFixed(2)),
       ganancia:parseFloat(margenTotal.toFixed(2)),
       estado:"nuevo",
-    });
-    if(error)console.error("Error guardando pedido supermercado:",error.message);
+    };
+    const{error}=await supabase.from("pedidos").insert(payload);
+    if(error){
+      console.error("Error guardando pedido supermercado:",error.message);
+      // Mostrar error visible para diagnóstico
+      alert("⚠️ Error al registrar pedido: "+error.message);
+    }
   };
   // ---------------------------------------------------------
 
