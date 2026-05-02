@@ -347,7 +347,7 @@ export default function App() {
     if(pr.data)setProvPromos(pr.data.filter(p=>!p.proveedores?.en_pausa&&p.proveedores?.activo!==false));
     if(cb.data)setCombos(cb.data);
     // Load restaurantes list
-    const{data:restList}=await supabase.from("proveedores").select("id,negocio,logo_url,activo,en_pausa,horario_desde,horario_hasta,horario_desc,telefono,whatsapp_negocio,suscripcion_activa,tipo_negocio,descripcion_negocio,delivery_propio,delivery_costo,delivery_gratis_desde,categorias,direccion_fisica").eq("aprobado",true).eq("suscripcion_activa",true).eq("en_pausa",false).order("negocio");
+    const{data:restList}=await supabase.from("proveedores").select("id,negocio,logo_url,activo,en_pausa,horario_desde,horario_hasta,horario_desc,telefono,whatsapp_negocio,suscripcion_activa,tipo_negocio,descripcion_negocio,delivery_propio,delivery_costo,delivery_gratis_desde,categorias,direccion_fisica,tipo_presencia,estado_ubicacion,municipio,parroquia,latitud,longitud,eta_minutos_min,eta_minutos_max,eta_texto,permite_retiro").eq("aprobado",true).eq("suscripcion_activa",true).eq("en_pausa",false).order("negocio");
     if(restList){
       setAllRestaurantes(restList.filter(r=>r.tipo_negocio==="Restaurante / Cocina / Comida"||!r.tipo_negocio));
       setAllNegocios(restList.filter(r=>r.tipo_negocio==="Tienda / Negocio local"));
@@ -3143,6 +3143,18 @@ export default function App() {
                 {seccion==="perfil"&&(
                   <div>
                     <div style={{fontSize:11,color:"#94a3b8",marginBottom:10}}>Tu correo de acceso: <strong style={{color:"#0f172a"}}>{provData.email}</strong> (no editable)</div>
+
+                    {/* TIPO DE PRESENCIA */}
+                    <label style={s.lbl}>¿Cómo opera tu negocio? *</label>
+                    <div style={{display:"flex",gap:6,marginBottom:10}}>
+                      {[["online","🌐 Solo online"],["fisico","🏪 Solo local físico"],["ambos","🌐🏪 Online y físico"]].map(([v,l])=>(
+                        <button key={v} onClick={()=>setPerfilData({...perfilData,tipo_presencia:v})}
+                          style={{flex:1,padding:"8px 4px",borderRadius:10,border:`2px solid ${(perfilData.tipo_presencia||provData.tipo_presencia||"online")===v?"#25D366":"#e2e8f0"}`,background:(perfilData.tipo_presencia||provData.tipo_presencia||"online")===v?"#f0fdf4":"#fff",color:(perfilData.tipo_presencia||provData.tipo_presencia||"online")===v?"#15803d":"#64748b",fontSize:10,fontWeight:700,cursor:"pointer",textAlign:"center",lineHeight:1.3}}>
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+
                     <label style={s.lbl}>Nombre del negocio</label>
                     <input style={s.inp} value={perfilData.negocio||provData.negocio||""} onChange={e=>setPerfilData({...perfilData,negocio:e.target.value})} placeholder="Nombre de tu negocio"/>
                     <label style={s.lbl}>Descripción</label>
@@ -3151,8 +3163,60 @@ export default function App() {
                     <input style={s.inp} value={perfilData.whatsapp_negocio||provData.whatsapp_negocio||""} onChange={e=>setPerfilData({...perfilData,whatsapp_negocio:e.target.value})} placeholder="04XX-XXXXXXX"/>
                     <label style={s.lbl}>Instagram</label>
                     <input style={s.inp} value={perfilData.instagram||provData.instagram||""} onChange={e=>setPerfilData({...perfilData,instagram:e.target.value})} placeholder="@minegocio"/>
-                    <label style={s.lbl}>Dirección física</label>
-                    <input style={s.inp} value={perfilData.direccion_fisica||provData.direccion_fisica||""} onChange={e=>setPerfilData({...perfilData,direccion_fisica:e.target.value})} placeholder="Calle, edificio..."/>
+
+                    {/* UBICACIÓN — solo si tiene local físico */}
+                    {["fisico","ambos"].includes(perfilData.tipo_presencia||provData.tipo_presencia||"online")&&(<>
+                      <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"10px 12px",marginBottom:8}}>
+                        <div style={{fontSize:12,fontWeight:700,color:"#1d4ed8",marginBottom:8}}>📍 Ubicación del local</div>
+                        <div style={{display:"flex",gap:8,marginBottom:6}}>
+                          <div style={{flex:1}}>
+                            <label style={s.lbl}>Estado</label>
+                            <input style={s.inp} value={perfilData.estado_ubicacion||provData.estado_ubicacion||""} onChange={e=>setPerfilData({...perfilData,estado_ubicacion:e.target.value})} placeholder="Apure"/>
+                          </div>
+                          <div style={{flex:1}}>
+                            <label style={s.lbl}>Municipio</label>
+                            <input style={s.inp} value={perfilData.municipio||provData.municipio||""} onChange={e=>setPerfilData({...perfilData,municipio:e.target.value})} placeholder="San Fernando"/>
+                          </div>
+                        </div>
+                        <label style={s.lbl}>Parroquia</label>
+                        <input style={s.inp} value={perfilData.parroquia||provData.parroquia||""} onChange={e=>setPerfilData({...perfilData,parroquia:e.target.value})} placeholder="Parroquia San Fernando"/>
+                        <label style={s.lbl}>Dirección exacta</label>
+                        <input style={s.inp} value={perfilData.direccion_fisica||provData.direccion_fisica||""} onChange={e=>setPerfilData({...perfilData,direccion_fisica:e.target.value})} placeholder="Calle Bolívar #23, frente al parque..."/>
+
+                        {/* COORDENADAS GPS */}
+                        <label style={s.lbl}>Coordenadas GPS</label>
+                        <div style={{display:"flex",gap:6,marginBottom:6}}>
+                          <input style={{...s.inp,flex:1,marginBottom:0}} type="number" step="0.000001" placeholder="Latitud" value={perfilData.latitud||provData.latitud||""} onChange={e=>setPerfilData({...perfilData,latitud:parseFloat(e.target.value)||null})}/>
+                          <input style={{...s.inp,flex:1,marginBottom:0}} type="number" step="0.000001" placeholder="Longitud" value={perfilData.longitud||provData.longitud||""} onChange={e=>setPerfilData({...perfilData,longitud:parseFloat(e.target.value)||null})}/>
+                        </div>
+                        <button onClick={()=>{
+                          if(!navigator.geolocation)return setPmsg("⚠️ Tu navegador no soporta geolocalización");
+                          setPmsg("📡 Obteniendo ubicación...");
+                          navigator.geolocation.getCurrentPosition(
+                            (pos)=>{
+                              const lat=parseFloat(pos.coords.latitude.toFixed(6));
+                              const lng=parseFloat(pos.coords.longitude.toFixed(6));
+                              setPerfilData(p=>({...p,latitud:lat,longitud:lng}));
+                              setPmsg(`✅ Ubicación obtenida: ${lat}, ${lng}`);
+                            },
+                            (err)=>{
+                              if(err.code===1)setPmsg("⚠️ Permiso de ubicación denegado. Actívalo en tu navegador.");
+                              else setPmsg("⚠️ No se pudo obtener la ubicación. Intenta de nuevo.");
+                            },
+                            {enableHighAccuracy:true,timeout:10000}
+                          );
+                        }} style={{width:"100%",background:"#1d4ed8",color:"#fff",border:"none",borderRadius:10,padding:"10px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                          📍 Obtener mi ubicación actual (GPS)
+                        </button>
+                        {(perfilData.latitud||provData.latitud)&&(perfilData.longitud||provData.longitud)&&(
+                          <a href={`https://maps.google.com/?q=${perfilData.latitud||provData.latitud},${perfilData.longitud||provData.longitud}`} target="_blank" rel="noreferrer"
+                            style={{display:"block",textAlign:"center",fontSize:11,color:"#1d4ed8",marginTop:6,textDecoration:"underline"}}>
+                            🗺️ Ver en Google Maps
+                          </a>
+                        )}
+                      </div>
+                    </>)}
+
                     <button onClick={async()=>{
                       await supabase.from("proveedores").update({
                         negocio:perfilData.negocio||provData.negocio,
@@ -3161,6 +3225,12 @@ export default function App() {
                         telefono:perfilData.whatsapp_negocio,
                         instagram:perfilData.instagram,
                         direccion_fisica:perfilData.direccion_fisica,
+                        tipo_presencia:perfilData.tipo_presencia||provData.tipo_presencia||"online",
+                        estado_ubicacion:perfilData.estado_ubicacion||provData.estado_ubicacion||null,
+                        municipio:perfilData.municipio||provData.municipio||null,
+                        parroquia:perfilData.parroquia||provData.parroquia||null,
+                        latitud:perfilData.latitud||provData.latitud||null,
+                        longitud:perfilData.longitud||provData.longitud||null,
                       }).eq("id",provData.id);
                       setProvData({...provData,...perfilData});
                       setPmsg("✅ Perfil actualizado");loadAll();
