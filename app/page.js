@@ -3681,21 +3681,35 @@ const VE_ESTADOS_MUNICIPIOS={
           </div>
 
           <div style={{...s.sec,paddingTop:0}}>
-            {[
-              {key:"dashboard",label:"📊 Dashboard",n:0},
-              {key:"pedidos",label:"📦 Pedidos",n:pedidos.filter(p=>p.estado==="nuevo").length},
-              {key:"proveedores_lista",label:"🏪 Proveedores",n:0},
-              {key:"pendientes",label:"⏳ Productos pendientes",n:pendProds.length},
-              {key:"promos_pend",label:"🎉 Promos pendientes",n:pendPromos.filter(p=>!p.motivo_rechazo).length},
-              {key:"resenas",label:"⭐ Reseñas",n:pendResenas.length},
-              {key:"zonas",label:"🗺️ Zonas de delivery",n:0},
-              {key:"combos",label:"🎁 Combos",n:0},
-              {key:"super",label:"🛒 Supermercado",n:0},
-              {key:"remates_pend",label:"🏷️ Remates pendientes",n:pendRemates.length},
-              {key:"servicios_pend",label:"🛠️ Servicios pendientes",n:pendServiciosCom.length},
-              {key:"clasificados_pend",label:"🚗 Clasificados pendientes",n:pendClasificados.length},
-              {key:"suscripciones",label:"💳 Suscripciones",n:suscripciones.filter(s=>!s.suscripcion_pagada&&s.meses_gratis_restantes===0).length},
-            ].map(x=>(<button key={x.key} style={s.admRow(adminSec===x.key)} onClick={()=>{setAdminSec(x.key);if(x.key==="pedidos")loadPedidos();}}><span>{x.label}</span>{x.n>0&&<span style={{background:"#ef4444",color:"#fff",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700}}>{x.n}</span>}</button>))}
+            {/* Si hay sección activa, mostrar botón de volver + título */}
+            {adminSec!=="dashboard"?(
+              <div style={{marginBottom:10}}>
+                <button onClick={()=>setAdminSec("dashboard")} style={{display:"flex",alignItems:"center",gap:6,background:"#f1f5f9",border:"none",borderRadius:10,padding:"8px 14px",fontSize:13,fontWeight:600,color:"#475569",cursor:"pointer",marginBottom:10}}>
+                  ← Menú principal
+                </button>
+              </div>
+            ):(
+              // Mostrar menú completo solo en dashboard
+              [
+                {key:"pedidos",label:"📦 Pedidos",n:pedidos.filter(p=>p.estado==="nuevo").length},
+                {key:"proveedores_lista",label:"🏪 Proveedores",n:0},
+                {key:"pendientes",label:"⏳ Productos pendientes",n:pendProds.length},
+                {key:"promos_pend",label:"🎉 Promos pendientes",n:pendPromos.filter(p=>!p.motivo_rechazo).length},
+                {key:"resenas",label:"⭐ Reseñas",n:pendResenas.length},
+                {key:"zonas",label:"🗺️ Zonas de delivery",n:0},
+                {key:"combos",label:"🎁 Combos",n:0},
+                {key:"super",label:"🛒 Supermercado",n:0},
+                {key:"remates_pend",label:"🏷️ Remates pendientes",n:pendRemates.length},
+                {key:"servicios_pend",label:"🛠️ Servicios pendientes",n:pendServiciosCom.length},
+                {key:"clasificados_pend",label:"🚗 Clasificados pendientes",n:pendClasificados.length},
+                {key:"suscripciones",label:"💳 Suscripciones",n:suscripciones.filter(s=>!s.suscripcion_pagada&&s.meses_gratis_restantes===0).length},
+              ].map(x=>(
+                <button key={x.key} style={s.admRow(false)} onClick={()=>{setAdminSec(x.key);if(x.key==="pedidos")loadPedidos();if(x.key==="suscripciones")loadSuscripciones();}}>
+                  <span>{x.label}</span>
+                  {x.n>0&&<span style={{background:"#ef4444",color:"#fff",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700}}>{x.n}</span>}
+                </button>
+              ))
+            )}
           </div>
 
           {adminSec==="dashboard"&&(<>
@@ -3740,6 +3754,28 @@ const VE_ESTADOS_MUNICIPIOS={
             </div>
             {topAdminProds.length>0&&(<div style={{margin:"0 16px"}}><div style={s.pc}><div style={s.pT}>🏆 Más vendidos del ecosistema</div><BarChart data={topAdminProds} max={topAdminProds[0]?.[1]||1}/></div></div>)}
             <div style={{margin:"0 16px"}}><div style={s.pc}><div style={s.pT}>🕐 Últimas ventas</div>{adminVentas.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>Aún no hay ventas</div>}{adminVentas.slice(0,10).map(v=>(<div key={v.id} style={{padding:"7px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}><div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontWeight:600}}>{v.producto_nombre}</span><span style={{fontWeight:700,color:"#22c55e"}}>${(v.total_item||0).toFixed(2)}</span></div><div style={{color:"#94a3b8"}}>{v.cliente_nombre} · {v.fecha?.slice(0,10)}</div></div>))}</div></div>
+            {/* ACCESOS RÁPIDOS */}
+            <div style={{margin:"0 16px 16px"}}>
+              <div style={{fontSize:12,fontWeight:700,color:"#64748b",marginBottom:8,letterSpacing:0.5}}>ACCESOS RÁPIDOS</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                {[
+                  {key:"pedidos",icon:"📦",label:"Pedidos",n:pedidos.filter(p=>p.estado==="nuevo").length,color:"#1d4ed8",bg:"#eff6ff"},
+                  {key:"pendientes",icon:"⏳",label:"Prod. pendientes",n:pendProds.length,color:"#92400e",bg:"#fef9c3"},
+                  {key:"proveedores_lista",icon:"🏪",label:"Proveedores",n:0,color:"#15803d",bg:"#f0fdf4"},
+                  {key:"super",icon:"🛒",label:"Supermercado",n:0,color:"#0369a1",bg:"#e0f2fe"},
+                  {key:"promos_pend",icon:"🎉",label:"Promos",n:pendPromos.filter(p=>!p.motivo_rechazo).length,color:"#7e22ce",bg:"#fdf4ff"},
+                  {key:"suscripciones",icon:"💳",label:"Suscripciones",n:suscripciones.filter(s=>!s.suscripcion_pagada&&s.meses_gratis_restantes===0).length,color:"#be123c",bg:"#fff1f2"},
+                  {key:"zonas",icon:"🗺️",label:"Zonas",n:0,color:"#475569",bg:"#f8fafc"},
+                  {key:"resenas",icon:"⭐",label:"Reseñas",n:pendResenas.length,color:"#b45309",bg:"#fffbeb"},
+                ].map(x=>(
+                  <button key={x.key} onClick={()=>{setAdminSec(x.key);if(x.key==="pedidos")loadPedidos();if(x.key==="suscripciones")loadSuscripciones();}} style={{background:x.bg,border:`1px solid ${x.bg}`,borderRadius:12,padding:"12px",textAlign:"left",cursor:"pointer",position:"relative"}}>
+                    <div style={{fontSize:22,marginBottom:4}}>{x.icon}</div>
+                    <div style={{fontSize:12,fontWeight:700,color:x.color}}>{x.label}</div>
+                    {x.n>0&&<span style={{position:"absolute",top:8,right:8,background:"#ef4444",color:"#fff",borderRadius:"50%",width:20,height:20,fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>{x.n}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
           </>)}
 
           {adminSec==="pedidos"&&(
