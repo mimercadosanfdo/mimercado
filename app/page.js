@@ -3161,7 +3161,7 @@ const VE_ESTADOS_MUNICIPIOS={
                     {k:"eta",     l:"⏱️ Tiempo entrega"},
                     {k:"clave",   l:"🔑 Clave"},
                   ].map(s2=>(
-                    <button key={s2.k} onClick={()=>setSeccion(s2.k)} style={{flexShrink:0,padding:"6px 12px",borderRadius:20,border:"none",fontSize:11,fontWeight:700,cursor:"pointer",background:seccion===s2.k?"#0f172a":"#f1f5f9",color:seccion===s2.k?"#fff":"#64748b",whiteSpace:"nowrap"}}>
+                    <button key={s2.k} onClick={()=>{setSeccion(s2.k);if(s2.k==="perfil")setPerfilData({negocio:provData.negocio||"",descripcion_negocio:provData.descripcion_negocio||"",whatsapp_negocio:provData.whatsapp_negocio||"",telefono_principal:provData.telefono_principal||"",instagram:provData.instagram||"",tipo_presencia:provData.tipo_presencia||"online",estado_ubicacion:provData.estado_ubicacion||"",municipio:provData.municipio||"",parroquia:provData.parroquia||"",direccion_fisica:provData.direccion_fisica||"",latitud:provData.latitud||null,longitud:provData.longitud||null});}} style={{flexShrink:0,padding:"6px 12px",borderRadius:20,border:"none",fontSize:11,fontWeight:700,cursor:"pointer",background:seccion===s2.k?"#0f172a":"#f1f5f9",color:seccion===s2.k?"#fff":"#64748b",whiteSpace:"nowrap"}}>
                       {s2.l}
                     </button>
                   ))}
