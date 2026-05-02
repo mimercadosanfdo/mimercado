@@ -2596,66 +2596,90 @@ const VE_ESTADOS_MUNICIPIOS={
 
         {/* DASHBOARD PROVEEDOR */}
         {provMode==="dash"&&provData&&(<>
-          <div style={{...s.pc,background:"#f0fdf4",borderColor:"#bbf7d0"}}>
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-              {provData.logo_url&&<img src={provData.logo_url} alt="" style={{width:48,height:48,borderRadius:"50%",objectFit:"cover"}}/>}
-              <div><div style={{fontSize:14,fontWeight:700,color:"#15803d"}}>{provData.negocio}</div><div style={{fontSize:11,color:"#64748b"}}>{provData.email}{provData.tipo_negocio&&<span style={{marginLeft:6,background:"#f0fdf4",padding:"1px 6px",borderRadius:8,color:"#15803d"}}>{provData.tipo_negocio}</span>}</div>{provData.instagram&&<div style={{fontSize:11,color:"#6366f1",marginTop:2}}>📷 {provData.instagram}</div>}</div>
+          {/* HEADER PROFESIONAL */}
+          <div style={{background:"linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#1d4ed8 100%)",padding:"20px 16px 18px",color:"#fff"}}>
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
+              {provData.logo_url
+                ?<img src={provData.logo_url} alt="" style={{width:56,height:56,borderRadius:16,objectFit:"cover",border:"2.5px solid rgba(255,255,255,0.3)",flexShrink:0,boxShadow:"0 4px 12px rgba(0,0,0,0.3)"}}/>
+                :<div style={{width:56,height:56,borderRadius:16,background:"linear-gradient(135deg,#25D366,#1aab52)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:900,color:"#fff",flexShrink:0,boxShadow:"0 4px 12px rgba(0,0,0,0.3)"}}>{(provData.negocio||"?")[0].toUpperCase()}</div>
+              }
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:17,fontWeight:900,color:"#fff",letterSpacing:-0.5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{provData.negocio}</div>
+                <div style={{fontSize:10,color:"rgba(255,255,255,0.5)",marginTop:1}}>{provData.email}</div>
+                {provData.tipo_negocio&&<div style={{fontSize:10,color:"#93c5fd",fontWeight:600,marginTop:3,background:"rgba(147,197,253,0.15)",display:"inline-block",padding:"2px 8px",borderRadius:20}}>{provData.tipo_negocio}</div>}
+              </div>
+              <button onClick={toggleMiEstado} style={{background:provData.activo?"rgba(37,211,102,0.2)":"rgba(239,68,68,0.2)",border:`1.5px solid ${provData.activo?"#25D366":"#ef4444"}`,borderRadius:20,padding:"7px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:6,flexShrink:0,backdropFilter:"blur(4px)"}}>
+                <span style={{width:7,height:7,borderRadius:"50%",background:provData.activo?"#25D366":"#ef4444",display:"inline-block",boxShadow:provData.activo?"0 0 6px #25D366":"0 0 6px #ef4444"}}/>
+                <span style={{fontSize:11,fontWeight:800,color:provData.activo?"#4ade80":"#f87171"}}>{provData.activo?"ABIERTO":"CERRADO"}</span>
+              </button>
             </div>
-            {/* SUSCRIPCIÓN STATUS */}
+            {/* SUSCRIPCIÓN BADGE */}
             {provData.meses_gratis_restantes>0?(
-              <div style={{background:"#f0fdf4",borderRadius:10,padding:"6px 12px",marginBottom:8,fontSize:12,color:"#15803d",display:"flex",justifyContent:"space-between"}}>
-                <span>🎁 Período gratis activo</span>
-                <span style={{fontWeight:700}}>{provData.meses_gratis_restantes} mes(es) restantes</span>
+              <div style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:12,padding:"9px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",backdropFilter:"blur(4px)"}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{fontSize:14}}>🎁</span>
+                  <span style={{fontSize:11,color:"rgba(255,255,255,0.8)",fontWeight:600}}>Período de prueba gratuito</span>
+                </div>
+                <span style={{fontSize:12,fontWeight:800,color:"#4ade80",background:"rgba(74,222,128,0.15)",padding:"3px 10px",borderRadius:20}}>{provData.meses_gratis_restantes} mes{provData.meses_gratis_restantes!==1?"es":""} restante{provData.meses_gratis_restantes!==1?"s":""}</span>
               </div>
             ):(
-              <div style={{background:provData.suscripcion_pagada?"#f0fdf4":"#fff1f2",borderRadius:10,padding:"6px 12px",marginBottom:8,fontSize:12,color:provData.suscripcion_pagada?"#15803d":"#be123c",display:"flex",justifyContent:"space-between"}}>
-                <span>{provData.suscripcion_pagada?"✓ Suscripción activa":"⚠️ Suscripción vencida"}</span>
-                <span style={{fontWeight:700}}>Vence: {provData.suscripcion_vence?.slice(0,10)}</span>
+              <div style={{background:provData.suscripcion_pagada?"rgba(37,211,102,0.08)":"rgba(239,68,68,0.1)",border:`1px solid ${provData.suscripcion_pagada?"rgba(37,211,102,0.25)":"rgba(239,68,68,0.3)"}`,borderRadius:12,padding:"9px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{fontSize:14}}>{provData.suscripcion_pagada?"✅":"⚠️"}</span>
+                  <span style={{fontSize:11,color:provData.suscripcion_pagada?"#4ade80":"#fca5a5",fontWeight:600}}>{provData.suscripcion_pagada?"Suscripción activa":"Suscripción vencida — contacta al admin"}</span>
+                </div>
+                <span style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>Vence: {provData.suscripcion_vence?.slice(0,10)}</span>
               </div>
             )}
-            <button style={s.toggleBtn(provData.activo)} onClick={toggleMiEstado}>
-              <span style={{fontSize:20}}>{provData.activo?"🟢":"🔴"}</span>
-              <div><div style={{fontSize:14,fontWeight:700,color:provData.activo?"#15803d":"#92400e"}}>{provData.activo?"ABIERTO — Recibiendo pedidos":"CERRADO — No recibo pedidos"}</div><div style={{fontSize:11,color:"#64748b"}}>Toca para {provData.activo?"cerrar":"abrir"} tu negocio</div></div>
-            </button>
           </div>
 
-          {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
+          {pmsg&&<div style={{...s.msg(pmsg.includes("✅")),margin:"8px 16px 0"}}>{pmsg}</div>}
           <div>
             {/* Si hay sección activa distinta a estado, mostrar botón volver */}
             {provTab!=="estado"&&!["prod_nuevo","prod_aprobados","prod_pendientes","prod_rechazados","promo_nueva","promo_activas","promo_pausadas","promo_pendientes","promo_rechazadas"].includes(provTab)&&(
-              <div style={{padding:"0 16px 10px"}}>
-                <button onClick={()=>setProvTab("estado")} style={{display:"flex",alignItems:"center",gap:6,background:"#f1f5f9",border:"none",borderRadius:10,padding:"8px 14px",fontSize:13,fontWeight:600,color:"#475569",cursor:"pointer"}}>
-                  ← Menú principal
+              <div style={{padding:"12px 16px 4px"}}>
+                <button onClick={()=>setProvTab("estado")} style={{display:"flex",alignItems:"center",gap:6,background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:10,padding:"8px 14px",fontSize:13,fontWeight:600,color:"#475569",cursor:"pointer"}}>
+                  ← Panel principal
                 </button>
               </div>
             )}
-            {/* MENÚ GRID — solo visible en pantalla de inicio */}
+            {/* PANEL PRINCIPAL — solo visible en estado */}
             {provTab==="estado"&&(
-              <div style={{padding:"0 16px 12px"}}>
-                {/* STATS RÁPIDAS */}
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
-                  <StatCard num={`$${myIngresoHoy.toFixed(2)}`} lbl="Ingresos hoy" color="#22c55e"/>
-                  <StatCard num={`$${myIngresoTotal.toFixed(2)}`} lbl="Total histórico"/>
-                  <StatCard num={myVentasHoy.length} lbl="Ventas hoy" color="#6366f1"/>
-                  <StatCard num={myClientes} lbl="Clientes únicos" color="#f59e0b"/>
-                </div>
-                <div style={{fontSize:12,fontWeight:700,color:"#64748b",marginBottom:8,letterSpacing:0.5}}>GESTIONA TU NEGOCIO</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              <div style={{padding:"14px 16px 12px"}}>
+                {/* STATS — 4 métricas clave */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
                   {[
-                    {k:"pedidos_rest", icon:"📋", label:"Pedidos",       color:"#1d4ed8", bg:"#eff6ff", n:misRestPedidos.filter(p=>!["entregado","cancelado","enviado"].includes(p.estado||"nuevo")).length},
-                    {k:"prod_aprobados",icon:"📦",label:"Productos",      color:"#15803d", bg:"#f0fdf4", n:0},
-                    {k:"promo_nueva",  icon:"🎉", label:"Promociones",    color:"#7e22ce", bg:"#fdf4ff", n:myPromos.filter(pr=>pr.motivo_rechazo).length},
-                    {k:"clientes",     icon:"👥", label:"Mis clientes",   color:"#0369a1", bg:"#e0f2fe", n:0},
-                    {k:"ventas",       icon:"📈", label:"Mis ventas",     color:"#92400e", bg:"#fef9c3", n:0},
-                    {k:"mi_negocio",   icon:"⚙️", label:"Mi negocio",     color:"#475569", bg:"#f8fafc", n:0},
+                    {num:`$${myIngresoHoy.toFixed(2)}`,lbl:"Ingresos hoy",icon:"💰",color:"#15803d",bg:"#f0fdf4",border:"#bbf7d0"},
+                    {num:`$${myIngresoTotal.toFixed(2)}`,lbl:"Total histórico",icon:"📊",color:"#1d4ed8",bg:"#eff6ff",border:"#bfdbfe"},
+                    {num:myVentasHoy.length,lbl:"Ventas hoy",icon:"🛒",color:"#7e22ce",bg:"#fdf4ff",border:"#e9d5ff"},
+                    {num:myClientes,lbl:"Clientes únicos",icon:"👥",color:"#b45309",bg:"#fffbeb",border:"#fde68a"},
+                  ].map((m,i)=>(
+                    <div key={i} style={{background:m.bg,border:`1px solid ${m.border}`,borderRadius:14,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}>
+                      <div style={{fontSize:26,flexShrink:0}}>{m.icon}</div>
+                      <div>
+                        <div style={{fontSize:18,fontWeight:900,color:m.color,letterSpacing:-0.5,lineHeight:1}}>{m.num}</div>
+                        <div style={{fontSize:10,color:"#64748b",marginTop:3,fontWeight:500}}>{m.lbl}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* ACCESOS DEL NEGOCIO */}
+                <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",marginBottom:10,letterSpacing:1,textTransform:"uppercase"}}>Tu tienda virtual</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                  {[
+                    {k:"pedidos_rest", icon:"📋", label:"Pedidos",     sub:"Gestiona tus pedidos", color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#1d4ed8,#3b82f6)", n:misRestPedidos.filter(p=>!["entregado","cancelado","enviado"].includes(p.estado||"nuevo")).length},
+                    {k:"prod_aprobados",icon:"📦",label:"Productos",   sub:"Tu catálogo en línea",  color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#15803d,#22c55e)", n:0},
+                    {k:"promo_nueva",  icon:"🎉", label:"Promociones", sub:"Ofertas especiales",    color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#7e22ce,#a855f7)", n:myPromos.filter(pr=>pr.motivo_rechazo).length},
+                    {k:"clientes",     icon:"👥", label:"Clientes",    sub:"Tu base de clientes",   color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#0369a1,#0ea5e9)", n:0},
+                    {k:"ventas",       icon:"📈", label:"Mis ventas",  sub:"Dashboard de ingresos", color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#b45309,#f59e0b)", n:0},
+                    {k:"mi_negocio",   icon:"⚙️", label:"Mi negocio",  sub:"Perfil y configuración",color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#374151,#6b7280)", n:0},
                   ].map(t=>(
-                    <button key={t.k} onClick={()=>{
-                      setProvTab(t.k);
-                      if(t.k==="clientes")loadMisClientes(provData.negocio);
-                    }} style={{background:t.bg,border:`1px solid ${t.bg}`,borderRadius:12,padding:"14px 12px",textAlign:"left",cursor:"pointer",position:"relative",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
-                      <div style={{fontSize:24,marginBottom:6}}>{t.icon}</div>
-                      <div style={{fontSize:12,fontWeight:700,color:t.color,lineHeight:1.2}}>{t.label}</div>
-                      {t.n>0&&<span style={{position:"absolute",top:8,right:8,background:"#ef4444",color:"#fff",borderRadius:"50%",width:20,height:20,fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>{t.n}</span>}
+                    <button key={t.k} onClick={()=>{setProvTab(t.k);if(t.k==="clientes")loadMisClientes(provData.negocio);}} style={{background:t.bg,border:"none",borderRadius:16,padding:"16px 14px",textAlign:"left",cursor:"pointer",position:"relative",boxShadow:"0 4px 12px rgba(0,0,0,0.15)",transition:"transform 0.1s"}}>
+                      <div style={{fontSize:26,marginBottom:8,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.2))"}}>{t.icon}</div>
+                      <div style={{fontSize:13,fontWeight:800,color:"#fff",letterSpacing:-0.2}}>{t.label}</div>
+                      <div style={{fontSize:10,color:"rgba(255,255,255,0.65)",marginTop:2,fontWeight:400}}>{t.sub}</div>
+                      {t.n>0&&<span style={{position:"absolute",top:10,right:10,background:"#ef4444",color:"#fff",borderRadius:"50%",width:22,height:22,fontSize:11,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 6px rgba(239,68,68,0.5)"}}>{t.n}</span>}
                     </button>
                   ))}
                 </div>
@@ -2663,7 +2687,7 @@ const VE_ESTADOS_MUNICIPIOS={
             )}
             {/* CONTENIDO DE CADA SECCIÓN */}
             {provTab!=="estado"&&(
-              <div style={{background:"#f8fafc",borderRadius:12,margin:"0 16px",padding:"14px 12px",border:"1px solid #e2e8f0"}}>
+              <div style={{background:"#fff",borderRadius:0,margin:"0",padding:"0 16px 16px",borderTop:"1px solid #f1f5f9"}}>
                 {/* Sub-menú para productos */}
                 {["productos","prod_nuevo","prod_aprobados","prod_pendientes","prod_rechazados"].includes(provTab)&&(
                   <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
