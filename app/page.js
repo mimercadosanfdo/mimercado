@@ -2338,7 +2338,7 @@ const VE_ESTADOS_MUNICIPIOS={
           <div>
             {[
               {k:"estado",      l:"📊 Inicio",         n:0},
-              {k:"pedidos_rest",l:"📋 Pedidos",         n:misRestPedidos.filter(p=>!["entregado","cancelado"].includes(p.estado||"nuevo")).length},
+              {k:"pedidos_rest",l:"📋 Pedidos",         n:misRestPedidos.filter(p=>!["entregado","cancelado","enviado"].includes(p.estado||"nuevo")).length},
               {k:"productos",   l:"📦 Productos",       n:0},
               {k:"promos",      l:"🎉 Promociones",     n:myPromos.filter(pr=>pr.motivo_rechazo).length},
               {k:"clientes",    l:"👥 Mis clientes",    n:0},
@@ -3209,7 +3209,7 @@ const VE_ESTADOS_MUNICIPIOS={
 
                     {/* UBICACIÓN — para todos los tipos */}
                     {(()=>{
-                      <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"10px 12px",marginBottom:8}}>
+                      return <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"10px 12px",marginBottom:8}}>
                         <div style={{fontSize:12,fontWeight:700,color:"#1d4ed8",marginBottom:8}}>📍 Ubicación del local</div>
                         <div style={{display:"flex",gap:8,marginBottom:6}}>
                           <div style={{flex:1}}>
@@ -3264,7 +3264,7 @@ const VE_ESTADOS_MUNICIPIOS={
                           </a>
                         )}
                       </div>
-                    })()}
+                    ;})()}
 
                     <button onClick={async()=>{
                       let new_logo_url=provData.logo_url||null;
