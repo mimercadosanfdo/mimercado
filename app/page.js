@@ -854,7 +854,7 @@ const VE_ESTADOS_MUNICIPIOS={
     if(error||!data)return setPmsg("Usuario no encontrado");
     if(data.en_pausa)return setPmsg("Tu cuenta está pausada. Contacta al administrador.");
     if(data.password_plain&&data.password_plain!==provForm.pass)return setPmsg("Contraseña incorrecta");
-    setProvData(data);setProvMode("dash");setProvTab("prod_aprobados");setPmsg("");
+    setProvData(data);setProvMode("dash");setProvTab("estado");setPmsg("");
     loadMyProds(data.id);loadMyPromos(data.id);loadMyVentas(data.id);loadMisRestPedidos(data.id,data.negocio);loadMisClientes(data.negocio);
   };
 
@@ -2605,6 +2605,13 @@ const VE_ESTADOS_MUNICIPIOS={
             {/* MENÚ GRID — solo visible en pantalla de inicio */}
             {provTab==="estado"&&(
               <div style={{padding:"0 16px 12px"}}>
+                {/* STATS RÁPIDAS */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+                  <StatCard num={`$${myIngresoHoy.toFixed(2)}`} lbl="Ingresos hoy" color="#22c55e"/>
+                  <StatCard num={`$${myIngresoTotal.toFixed(2)}`} lbl="Total histórico"/>
+                  <StatCard num={myVentasHoy.length} lbl="Ventas hoy" color="#6366f1"/>
+                  <StatCard num={myClientes} lbl="Clientes únicos" color="#f59e0b"/>
+                </div>
                 <div style={{fontSize:12,fontWeight:700,color:"#64748b",marginBottom:8,letterSpacing:0.5}}>GESTIONA TU NEGOCIO</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                   {[
@@ -2654,24 +2661,6 @@ const VE_ESTADOS_MUNICIPIOS={
                     ← Volver al menú
                   </button>
                 )}
-
-          {provTab==="estado"&&(<>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
-              <StatCard num={`$${myIngresoHoy.toFixed(2)}`} lbl="Ingresos hoy" color="#22c55e"/>
-              <StatCard num={`$${myIngresoTotal.toFixed(2)}`} lbl="Total histórico"/>
-              <StatCard num={myVentasHoy.length} lbl="Ventas hoy" color="#6366f1"/>
-              <StatCard num={myClientes} lbl="Clientes únicos" color="#f59e0b"/>
-            </div>
-            {myTopProds.length>0&&(<div style={s.pc}><div style={s.pT}>🏆 Mis más pedidos</div><BarChart data={myTopProds} max={myTopProds[0]?.[1]||1}/></div>)}
-            <div style={s.pc}>
-              <div style={s.pT}>📋 Estado de mis productos</div>
-              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                <div style={{background:"#dcfce7",borderRadius:10,padding:"8px 12px",fontSize:12}}><span style={{fontWeight:700,color:"#15803d"}}>{myProds.filter(p=>p.aprobado&&!p.rechazado).length}</span> <span style={{color:"#64748b"}}>aprobados</span></div>
-                <div style={{background:"#fef9c3",borderRadius:10,padding:"8px 12px",fontSize:12}}><span style={{fontWeight:700,color:"#854d0e"}}>{myProds.filter(p=>!p.aprobado&&!p.rechazado).length}</span> <span style={{color:"#64748b"}}>pendientes</span></div>
-                <div style={{background:"#fee2e2",borderRadius:10,padding:"8px 12px",fontSize:12}}><span style={{fontWeight:700,color:"#be123c"}}>{myProds.filter(p=>p.rechazado).length}</span> <span style={{color:"#64748b"}}>rechazados</span></div>
-              </div>
-            </div>
-          </>)}
 
           {(provTab==="productos"||provTab==="prod_nuevo"||provTab==="prod_aprobados"||provTab==="prod_pendientes"||provTab==="prod_rechazados")&&(<>
             <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}}>
