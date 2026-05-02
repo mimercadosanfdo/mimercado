@@ -379,6 +379,33 @@ const VE_ESTADOS_MUNICIPIOS={
     }
   },[form.telefono]);
 
+  // Inicializar perfilData cuando se abre Mi Negocio
+  useEffect(()=>{
+    if(provTab==="mi_negocio"&&provData){
+      setPerfilData({
+        negocio:provData.negocio||"",
+        descripcion_negocio:provData.descripcion_negocio||"",
+        whatsapp_negocio:provData.whatsapp_negocio||"",
+        telefono_principal:provData.telefono_principal||"",
+        instagram:provData.instagram||"",
+        tipo_presencia:provData.tipo_presencia||"online",
+        estado_ubicacion:provData.estado_ubicacion||"",
+        municipio:provData.municipio||"",
+        parroquia:provData.parroquia||"",
+        direccion_fisica:provData.direccion_fisica||"",
+        latitud:provData.latitud||null,
+        longitud:provData.longitud||null,
+        horario_desde:provData.horario_desde||"08:00",
+        horario_hasta:provData.horario_hasta||"18:00",
+        horario_desc:provData.horario_desc||"",
+        delivery_propio:provData.delivery_propio||false,
+        delivery_costo:provData.delivery_costo||0,
+        delivery_gratis_desde:provData.delivery_gratis_desde||15,
+        permite_retiro:provData.permite_retiro||false,
+      });
+    }
+  },[provTab]);
+
   // Redirigir sheets legacy al carrito unificado
   useEffect(()=>{
     if(["cart","cartRest","cartNegocio","checkout"].includes(sheet)){
