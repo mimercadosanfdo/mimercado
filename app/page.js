@@ -1,5 +1,5 @@
-// BUILD:1776395781
-"use client"; // Apure Market v1776307949
+// BUILD:1776600000
+"use client"; // Apure Market v1776600000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -269,7 +269,7 @@ const VE_ESTADOS_MUNICIPIOS={
     tipo:"Vehículos",titulo:"",descripcion:"",precio:"",negociable:false,categoria:"Vehículos",
     marca:"",modelo:"",anio:"",kilometraje:"",color:"",transmision:"Manual",combustible:"Gasolina",
     tipo_operacion:"Venta",habitaciones:"",banos:"",metros2:"",sector:"",
-    vendedor_nombre:"",vendedor_telefono:""
+    vendedor_nombre:"",vendedor_telefono:"",estado:"",municipio:""
   });
   const [clasifFotos,setClasifFotos]=useState([null,null,null,null]);
   const [clasifFotosPrev,setClasifFotosPrev]=useState([null,null,null,null]);
@@ -278,8 +278,8 @@ const VE_ESTADOS_MUNICIPIOS={
   const [remateSearch,setRemateSearch]=useState("");
   const [showPublicarRemate,setShowPublicarRemate]=useState(false);
   const [showPublicarServicio,setShowPublicarServicio]=useState(false);
-  const [newRemate,setNewRemate]=useState({titulo:"",descripcion:"",precio:"",categoria:REMATE_CATS[0],vendedor_nombre:"",vendedor_telefono:""});
-  const [newServicioCom,setNewServicioCom]=useState({nombre_servicio:"",descripcion:"",categoria:SERVICIO_CATS[0],precio_referencial:"",zona:"",proveedor_nombre:"",proveedor_telefono:""});
+  const [newRemate,setNewRemate]=useState({titulo:"",descripcion:"",precio:"",categoria:REMATE_CATS[0],vendedor_nombre:"",vendedor_telefono:"",estado:"",municipio:""});
+  const [newServicioCom,setNewServicioCom]=useState({nombre_servicio:"",descripcion:"",categoria:SERVICIO_CATS[0],precio_referencial:"",zona:"",proveedor_nombre:"",proveedor_telefono:"",estado:"",municipio:""});
   const [remateFoto,setRemateFoto]=useState(null);
   const [remateFotoPreview,setRemateFotoPreview]=useState(null);
   const [servComFoto,setServComFoto]=useState(null);
@@ -348,7 +348,27 @@ const VE_ESTADOS_MUNICIPIOS={
   const [notaTemp,setNotaTemp]=useState("");
   const [prodResenas,setProdResenas]=useState({});
 
-  useEffect(()=>{loadAll();loadRemates();loadServiciosCom();loadClasificados();},[]);
+  // ── GEOGRAFÍA ──────────────────────────────────────────────
+  const UBI_DEFAULT={estado:"Apure",municipio:"San Fernando"};
+  const [ubicacionUsuario,setUbicacionUsuario]=useState(()=>{
+    try{const g=typeof window!=="undefined"&&localStorage.getItem("apure_ubicacion");return g?JSON.parse(g):null;}catch{return null;}
+  });
+  const [showCiudadModal,setShowCiudadModal]=useState(false);
+  const [ciudadTemp,setCiudadTemp]=useState({estado:"",municipio:""});
+  const [zonasOperacion,setZonasOperacion]=useState([]); // tabla zonas_operacion
+  // Municipio activo resuelto (null = primera vez, aún no eligió)
+  const ubiActiva=ubicacionUsuario||UBI_DEFAULT;
+  const tieneSuper=zonasOperacion.some(z=>z.estado===ubiActiva.estado&&z.municipio===ubiActiva.municipio&&z.tiene_supermercado&&z.activa)
+    ||(ubiActiva.municipio==="San Fernando"&&ubiActiva.estado==="Apure"); // San Fernando siempre activo
+  // ──────────────────────────────────────────────────────────
+
+  useEffect(()=>{
+    loadAll();loadRemates();loadServiciosCom();loadClasificados();loadZonasOperacion();
+    // Primera visita: mostrar selector de ciudad
+    if(!ubicacionUsuario){
+      setTimeout(()=>setShowCiudadModal(true),600);
+    }
+  },[]);
 
   useEffect(()=>{
     const interval=setInterval(()=>{
@@ -359,29 +379,52 @@ const VE_ESTADOS_MUNICIPIOS={
     return ()=>clearInterval(interval);
   },[provData,provMode]);
 
+  // Re-cargar cuando cambia la ubicación
+  useEffect(()=>{
+    if(ubicacionUsuario){
+      localStorage.setItem("apure_ubicacion",JSON.stringify(ubicacionUsuario));
+      loadAll();
+    }
+  },[ubicacionUsuario]);
+
+  const loadZonasOperacion=async()=>{
+    // Intentar cargar desde tabla zonas_operacion (puede no existir aún)
+    try{
+      const{data}=await supabase.from("zonas_operacion").select("*").eq("activa",true);
+      if(data)setZonasOperacion(data);
+    }catch{/* tabla aún no existe, San Fernando siempre activo por defecto */}
+  };
+
   const loadAll=async()=>{
     const hoy=new Date().toISOString().split("T")[0];
+    const ubi=JSON.parse(typeof window!=="undefined"&&localStorage.getItem("apure_ubicacion")||"null")||UBI_DEFAULT;
+    const muni=ubi.municipio;
     const [z,sp,pp,pr,cb]=await Promise.all([
       supabase.from("zonas_delivery").select("*").eq("activa",true).order("municipio"),
       supabase.from("productos_supermercado").select("*").eq("disponible",true).order("categoria"),
-      supabase.from("productos_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc,whatsapp_negocio,telefono,suscripcion_activa,delivery_propio,delivery_costo,delivery_gratis_desde,tipo_negocio,instagram,descripcion_negocio,eta_minutos_min,eta_minutos_max,eta_texto,permite_retiro)").eq("aprobado",true).eq("disponible",true).eq("rechazado",false),
-      supabase.from("promociones_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc,whatsapp_negocio,telefono,delivery_propio,delivery_costo,delivery_gratis_desde,permite_retiro,tipo_operacion_gastro)").eq("aprobada",true).eq("activa",true),
+      supabase.from("productos_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc,whatsapp_negocio,telefono,suscripcion_activa,delivery_propio,delivery_costo,delivery_gratis_desde,tipo_negocio,instagram,descripcion_negocio,eta_minutos_min,eta_minutos_max,eta_texto,permite_retiro,municipio,estado_ubicacion)").eq("aprobado",true).eq("disponible",true).eq("rechazado",false),
+      supabase.from("promociones_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc,whatsapp_negocio,telefono,delivery_propio,delivery_costo,delivery_gratis_desde,permite_retiro,tipo_operacion_gastro,municipio,estado_ubicacion)").eq("aprobada",true).eq("activa",true),
       supabase.from("combos").select("*").eq("activa",true),
     ]);
     if(z.data)setZonas(z.data);
     if(sp.data)setSuperProds(sp.data);
-    if(pp.data)setProvProds(pp.data.filter(p=>!p.proveedores?.en_pausa&&p.proveedores?.suscripcion_activa!==false&&(p.permanente||(p.fecha===hoy&&p.stock>0))));
-    if(pr.data)setProvPromos(pr.data.filter(p=>!p.proveedores?.en_pausa&&p.proveedores?.activo!==false));
+    if(pp.data)setProvProds(pp.data.filter(p=>{
+      const pMuni=p.proveedores?.municipio||"San Fernando";
+      return pMuni===muni&&!p.proveedores?.en_pausa&&p.proveedores?.suscripcion_activa!==false&&(p.permanente||(p.fecha===hoy&&p.stock>0));
+    }));
+    if(pr.data)setProvPromos(pr.data.filter(p=>{
+      const pMuni=p.proveedores?.municipio||"San Fernando";
+      return pMuni===muni&&!p.proveedores?.en_pausa&&p.proveedores?.activo!==false;
+    }));
     if(cb.data)setCombos(cb.data);
-    // Load restaurantes list
+    // Cargar proveedores filtrados por municipio
     const{data:restList}=await supabase.from("proveedores").select("id,negocio,logo_url,activo,en_pausa,horario_desde,horario_hasta,horario_desc,telefono,whatsapp_negocio,suscripcion_activa,tipo_negocio,descripcion_negocio,delivery_propio,delivery_costo,delivery_gratis_desde,categorias,direccion_fisica,tipo_presencia,estado_ubicacion,municipio,parroquia,latitud,longitud,eta_minutos_min,eta_minutos_max,eta_texto,permite_retiro").eq("aprobado",true).eq("suscripcion_activa",true).eq("en_pausa",false).order("negocio");
     if(restList){
-      setAllRestaurantes(restList.filter(r=>r.tipo_negocio==="Restaurante / Cocina / Comida"||!r.tipo_negocio));
-      setAllNegocios(restList.filter(r=>r.tipo_negocio==="Tienda / Negocio local"));
+      // Filtrar por municipio — si proveedor no tiene municipio asignado, se asume San Fernando
+      const delMuni=restList.filter(r=>(r.municipio||"San Fernando")===muni);
+      setAllRestaurantes(delMuni.filter(r=>r.tipo_negocio==="Restaurante / Cocina / Comida"||!r.tipo_negocio));
+      setAllNegocios(delMuni.filter(r=>r.tipo_negocio==="Tienda / Negocio local"));
     }
-    // Load negocios locales (tipo_negocio not restaurante, suscripcion active)
-    const{data:negList}=await supabase.from("proveedores").select("id,negocio,logo_url,activo,en_pausa,horario_desde,horario_hasta,horario_desc,telefono,whatsapp_negocio,suscripcion_activa,tipo_negocio,descripcion_negocio,delivery_propio,delivery_costo,delivery_gratis_desde,categorias,direccion").eq("aprobado",true).eq("suscripcion_activa",true).eq("en_pausa",false).not("tipo_negocio","eq","Restaurante / Cocina / Comida").order("negocio");
-    if(negList)setAllNegocios(negList);
   };
 
   const loadMisNegPedidos=async(pid)=>{
@@ -564,6 +607,8 @@ const VE_ESTADOS_MUNICIPIOS={
       banos:c.banos?parseInt(c.banos):null,metros2:c.metros2||null,sector:c.sector||null,
       foto1_url:fotos[0],foto2_url:fotos[1],foto3_url:fotos[2],foto4_url:fotos[3],
       vendedor_nombre:c.vendedor_nombre,vendedor_telefono:c.vendedor_telefono,
+      estado:c.estado||ubiActiva.estado||"Apure",
+      municipio:c.municipio||ubiActiva.municipio||"San Fernando",
       aprobado:false,vendido:false,
     });
     setLoading(false);
@@ -589,7 +634,7 @@ const VE_ESTADOS_MUNICIPIOS={
     setLoading(true);
     let foto_url=null;
     if(remateFoto)foto_url=await upload(remateFoto,"productos",`remate_${Date.now()}`);
-    const{error}=await supabase.from("remates").insert({...newRemate,precio:parseFloat(newRemate.precio),foto_url,aprobado:false,vendido:false,vendedor_whatsapp:newRemate.vendedor_telefono});
+    const{error}=await supabase.from("remates").insert({...newRemate,precio:parseFloat(newRemate.precio),foto_url,aprobado:false,vendido:false,vendedor_whatsapp:newRemate.vendedor_telefono,estado:newRemate.estado||ubiActiva.estado||"Apure",municipio:newRemate.municipio||ubiActiva.municipio||"San Fernando"});
     setLoading(false);
     if(error){setPmsg("Error: "+error.message);return;}
     setPmsg("✅ Tu artículo fue enviado. El admin lo revisará antes de publicarlo.");
@@ -603,7 +648,7 @@ const VE_ESTADOS_MUNICIPIOS={
     setLoading(true);
     let foto_url=null;
     if(servComFoto)foto_url=await upload(servComFoto,"productos",`serv_${Date.now()}`);
-    const{error}=await supabase.from("servicios_comunidad").insert({...newServicioCom,foto_url,aprobado:false,activo:true});
+    const{error}=await supabase.from("servicios_comunidad").insert({...newServicioCom,foto_url,aprobado:false,activo:true,estado:newServicioCom.estado||ubiActiva.estado||"Apure",municipio:newServicioCom.municipio||ubiActiva.municipio||"San Fernando"});
     setLoading(false);
     if(error){setPmsg("Error: "+error.message);return;}
     setPmsg("✅ Tu servicio fue enviado. El admin lo revisará antes de publicarlo.");
@@ -1138,6 +1183,10 @@ const VE_ESTADOS_MUNICIPIOS={
                 <circle cx="20" cy="7" r="3" fill="#fff"/>
               </svg>
             </div>
+          {/* BADGE CIUDAD */}
+          <button onClick={()=>{setCiudadTemp({estado:ubiActiva.estado,municipio:ubiActiva.municipio});setShowCiudadModal(true);}} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:20,padding:"4px 10px",fontSize:11,fontWeight:700,color:"#15803d",cursor:"pointer",display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
+            📍 {ubiActiva.municipio} ▾
+          </button>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:6}}>
           {(count>0||Object.values(cartNegocio).length>0)&&<button style={s.cBtn} onClick={()=>Object.values(cartNegocio).length>0?setSheet("cartNegocio"):setSheet("cart")}>🛒 {Object.values(cartNegocio).length>0&&<span style={s.cN}>{Object.values(cartNegocio).reduce((a,i)=>a+i.qty,0)}</span>}{count>0&&Object.values(cartNegocio).length===0&&<span style={s.cN}>{count}</span>}</button>}
@@ -1155,7 +1204,8 @@ const VE_ESTADOS_MUNICIPIOS={
           </button>);
         })}
       </div>
-      {/* SECONDARY TABS */}
+      {/* SECONDARY TABS — solo visible en tabs relevantes */}
+      {!["Servicios","Proveedores"].includes(tab)&&(
       <div style={{display:"flex",background:"#f0fdf4",borderBottom:"1px solid #dcfce7",position:"sticky",top:102,zIndex:98}}>
         {SEC_TABS.map(t=>(
           <button key={t} onClick={()=>setTab(t)} style={{flex:1,padding:"6px 0",border:"none",background:"transparent",color:tab===t?P:"#64748b",fontWeight:tab===t?700:400,fontSize:10,cursor:"pointer",borderBottom:tab===t?`2px solid ${P}`:"2px solid transparent",display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
@@ -1163,28 +1213,46 @@ const VE_ESTADOS_MUNICIPIOS={
             <span>{t}</span>
           </button>
         ))}
-        <button onClick={()=>setSecTab(null)} style={{padding:"6px 12px",border:"none",background:"transparent",color:"#94a3b8",fontSize:10,cursor:"pointer"}}>✕</button>
       </div>
+      )}
 
       {/* INICIO */}
       {tab==="Inicio"&&(<>
         {/* BANNER PRINCIPAL */}
         <div style={{background:"linear-gradient(180deg,#166534 0%,#16a34a 60%,#22c55e 100%)",padding:"20px 16px 18px",color:"#fff",borderRadius:"0 0 24px 24px"}}>
           <div style={{fontSize:22,fontWeight:900,marginBottom:3,letterSpacing:-0.5}}>¡Hola! 👋</div>
-          <div style={{fontSize:13,color:"rgba(255,255,255,0.82)",marginBottom:14,fontWeight:400}}>¿Qué necesitas hoy en Apure?</div>
-          <div style={{background:"rgba(255,255,255,0.18)",borderRadius:14,padding:"12px 16px",display:"flex",alignItems:"center",gap:10,border:"1px solid rgba(255,255,255,0.25)"}} onClick={()=>{setTab("Supermercado");document.querySelector("input")?.focus();}}>
-            <span style={{fontSize:18,opacity:0.9}}>🔍</span>
-            <span style={{fontSize:14,color:"rgba(255,255,255,0.9)",fontWeight:500}}>Buscar comida, productos o servicios cerca de ti</span>
+          <div style={{fontSize:13,color:"rgba(255,255,255,0.82)",marginBottom:14,fontWeight:400}}>¿Qué necesitas hoy en {ubiActiva.municipio}?</div>
+          {/* BÚSQUEDA GLOBAL — toca y va a supermercado con foco */}
+          <div style={{background:"#fff",borderRadius:14,padding:"12px 16px",display:"flex",alignItems:"center",gap:10,boxShadow:"0 2px 8px rgba(0,0,0,0.15)"}} onClick={()=>{setTab("Supermercado");setTimeout(()=>document.querySelector("input")?.focus(),100);}}>
+            <span style={{fontSize:18,opacity:0.5}}>🔍</span>
+            <span style={{fontSize:14,color:"#94a3b8",fontWeight:500}}>Busca comida, productos o servicios…</span>
+          </div>
+        </div>
+
+        {/* ACCESOS RÁPIDOS */}
+        <div style={{padding:"14px 16px 0"}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+            {[
+              {icon:"🛒",label:"Supermercado",tab:"Supermercado",bg:"#0f172a",tc:"#fbbf24"},
+              {icon:"🍽️",label:"Restaurantes",tab:"Feria de comidas",bg:"#c2410c",tc:"#fff"},
+              {icon:"🏪",label:"Negocios",tab:"Negocios locales",bg:"#1d4ed8",tc:"#fff"},
+              {icon:"⚡",label:"Servicios",tab:"Servicios",bg:"#7c3aed",tc:"#fff"},
+            ].map(x=>(
+              <button key={x.tab} onClick={()=>setTab(x.tab)} style={{background:x.bg,borderRadius:14,padding:"12px 4px",display:"flex",flexDirection:"column",alignItems:"center",gap:5,border:"none",cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.12)"}}>
+                <span style={{fontSize:24}}>{x.icon}</span>
+                <span style={{fontSize:9,fontWeight:700,color:x.tc,textAlign:"center",lineHeight:1.2}}>{x.label}</span>
+              </button>
+            ))}
           </div>
         </div>
 
         {/* DELIVERY BADGE */}
-        <div style={{padding:"10px 16px 0"}}>
+        <div style={{padding:"12px 16px 0"}}>
           <div style={{background:"#f0fdf4",borderRadius:14,padding:"13px 15px",display:"flex",alignItems:"center",gap:13,border:"2px solid #86efac"}}>
             <span style={{fontSize:30}}>🚚</span>
             <div>
               <div style={{display:"flex",alignItems:"baseline",gap:6}}>
-                <span style={{fontSize:24,fontWeight:900,color:"#14532d",letterSpacing:-0.5}}>DELIVERY GRATIS</span>
+                <span style={{fontSize:22,fontWeight:900,color:"#14532d",letterSpacing:-0.5}}>DELIVERY GRATIS</span>
               </div>
               <div style={{fontSize:13,color:"#166534",fontWeight:700,marginTop:2}}>En el Supermercado</div>
               <div style={{fontSize:11,color:"#64748b",marginTop:1}}>Pedidos mayores a $15 · San Fernando</div>
@@ -1272,10 +1340,44 @@ const VE_ESTADOS_MUNICIPIOS={
           </div>
         </div>
 
+        {/* CTA PROVEEDOR */}
+        <div style={{padding:"0 16px 16px"}}>
+          <div onClick={()=>setTab("Proveedores")} style={{background:"linear-gradient(135deg,#1d4ed8,#4338ca)",borderRadius:16,padding:"14px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
+            <span style={{fontSize:32}}>🏪</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:15,fontWeight:900,color:"#fff",letterSpacing:-0.3}}>¿Tienes un negocio?</div>
+              <div style={{fontSize:12,color:"rgba(255,255,255,0.85)",fontWeight:500,marginTop:2}}>Únete a Apure Market · 3 meses gratis al registrarte</div>
+            </div>
+            <span style={{color:"#fff",fontSize:20}}>→</span>
+          </div>
+        </div>
+
         <div style={{height:20}}/>
       </>)}
 
       {tab==="Supermercado"&&(<>
+        {/* SUPERMERCADO — solo disponible donde hay operación activa */}
+        {!tieneSuper?(
+          <div style={{padding:"40px 24px",textAlign:"center"}}>
+            <div style={{fontSize:60,marginBottom:16}}>🛒</div>
+            <div style={{fontSize:20,fontWeight:900,color:"#0f172a",marginBottom:8}}>Próximamente en {ubiActiva.municipio}</div>
+            <div style={{fontSize:14,color:"#64748b",lineHeight:1.6,marginBottom:24}}>
+              El supermercado online de Apure Market aún no está disponible en tu municipio.<br/>
+              Estamos trabajando para llegar pronto.
+            </div>
+            <div style={{background:"#f0fdf4",border:"2px solid #86efac",borderRadius:16,padding:"18px 20px",marginBottom:20}}>
+              <div style={{fontSize:13,fontWeight:700,color:"#15803d",marginBottom:8}}>📲 ¿Quieres que lleguemos antes?</div>
+              <div style={{fontSize:12,color:"#64748b",marginBottom:12}}>Escríbenos y te avisamos cuando estemos en {ubiActiva.municipio}.</div>
+              <button onClick={()=>window.open("https://wa.me/"+WA+"?text="+encodeURIComponent("Hola Apure Market! Soy de "+ubiActiva.municipio+", "+ubiActiva.estado+". Quisiera que el supermercado llegue pronto a mi municipio 🛒"),"_blank")} style={{background:"#25D366",color:"#fff",border:"none",borderRadius:12,padding:"12px 20px",fontSize:13,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",gap:8,margin:"0 auto"}}>
+                📲 Notificarme cuando lleguen
+              </button>
+            </div>
+            <button onClick={()=>{setCiudadTemp({estado:ubiActiva.estado,municipio:ubiActiva.municipio});setShowCiudadModal(true);}} style={{fontSize:12,color:"#64748b",background:"none",border:"1px solid #e2e8f0",borderRadius:10,padding:"8px 16px",cursor:"pointer"}}>
+              📍 Cambiar mi municipio
+            </button>
+          </div>
+        ):(
+        <>
         <div style={{background:"linear-gradient(160deg,#0f172a 0%,#1e293b 60%,#334155 100%)",padding:"16px 16px 14px",color:"#fff"}}>
           <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
             <div style={{width:48,height:48,background:"#f59e0b",borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0,boxShadow:"0 2px 8px rgba(245,158,11,0.4)"}}>🛒</div>
@@ -1447,6 +1549,24 @@ const VE_ESTADOS_MUNICIPIOS={
               <input style={s.inp} placeholder="Juan Pérez" value={newRemate.vendedor_nombre} onChange={e=>setNewRemate({...newRemate,vendedor_nombre:e.target.value})}/>
               <label style={s.lbl}>Tu WhatsApp * (compradores te escribirán aquí)</label>
               <input style={s.inp} placeholder="+58 424-000-0000" value={newRemate.vendedor_telefono} onChange={e=>setNewRemate({...newRemate,vendedor_telefono:e.target.value})}/>
+              {/* UBICACIÓN */}
+              <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"10px 12px",marginBottom:10}}>
+                <div style={{fontSize:12,fontWeight:700,color:"#1d4ed8",marginBottom:8}}>📍 Ubicación del artículo</div>
+                <div style={{display:"flex",gap:8}}>
+                  <div style={{flex:1}}>
+                    <label style={s.lbl}>Estado</label>
+                    <select style={{...s.inp,marginBottom:0,background:"#fff"}} value={newRemate.estado||ubiActiva.estado} onChange={e=>setNewRemate({...newRemate,estado:e.target.value,municipio:""})}>
+                      {Object.keys(VE_ESTADOS_MUNICIPIOS).sort().map(est=><option key={est}>{est}</option>)}
+                    </select>
+                  </div>
+                  <div style={{flex:1}}>
+                    <label style={s.lbl}>Municipio</label>
+                    <select style={{...s.inp,marginBottom:0,background:"#fff"}} value={newRemate.municipio||ubiActiva.municipio} onChange={e=>setNewRemate({...newRemate,municipio:e.target.value})}>
+                      {(VE_ESTADOS_MUNICIPIOS[newRemate.estado||ubiActiva.estado]||[]).map(m=><option key={m}>{m}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </div>
               <label style={s.lbl}>📸 Foto del artículo (muy recomendada)</label>
               {remateFotoPreview&&<img src={remateFotoPreview} alt="" style={{width:"100%",height:160,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
               <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setRemateFoto(f);setRemateFotoPreview(URL.createObjectURL(f));}}}/>
@@ -1499,6 +1619,8 @@ const VE_ESTADOS_MUNICIPIOS={
             </div>
           </div>
         )}
+        </> /* end tieneSuper true branch */
+        )} {/* end tieneSuper ternary */}
       </>)}
 
       {/* NEGOCIOS LOCALES */}
@@ -1597,8 +1719,12 @@ const VE_ESTADOS_MUNICIPIOS={
                   {allNegocios.length===0&&(
                     <div style={{textAlign:"center",padding:"28px 16px",color:"#94a3b8",background:"#f8fafc",borderRadius:16,border:"1px dashed #e2e8f0",marginBottom:16}}>
                       <div style={{fontSize:40,marginBottom:8}}>🏪</div>
-                      <div style={{fontSize:13,fontWeight:600,color:"#475569",marginBottom:4}}>Muy pronto podrás explorar los negocios de tu ciudad</div>
-                      <div style={{fontSize:11,color:"#94a3b8"}}>Los negocios locales estarán disponibles aquí</div>
+                      <div style={{fontSize:13,fontWeight:600,color:"#475569",marginBottom:4}}>Sin negocios en {ubiActiva.municipio} aún</div>
+                      <div style={{fontSize:11,color:"#94a3b8",marginBottom:12}}>¿Tienes una tienda o negocio local? ¡Regístrate gratis!</div>
+                      <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
+                        <button onClick={()=>setTab("Proveedores")} style={{background:"#1d4ed8",color:"#fff",border:"none",borderRadius:10,padding:"9px 16px",fontSize:12,fontWeight:700,cursor:"pointer"}}>🏪 Registra tu negocio</button>
+                        <button onClick={()=>{setCiudadTemp({estado:ubiActiva.estado,municipio:ubiActiva.municipio});setShowCiudadModal(true);}} style={{background:"none",color:"#64748b",border:"1px solid #e2e8f0",borderRadius:10,padding:"9px 14px",fontSize:12,cursor:"pointer"}}>📍 Cambiar ciudad</button>
+                      </div>
                     </div>
                   )}
                   {allNegocios.map(n=>(
@@ -1609,7 +1735,7 @@ const VE_ESTADOS_MUNICIPIOS={
                       }
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:15,fontWeight:800,color:"#0f172a",letterSpacing:-0.2}}>{n.negocio}</div>
-                        <div style={{fontSize:11,color:"#64748b",marginTop:1}}>{(n.categorias||[]).join(" · ")} · San Fernando</div>
+                        <div style={{fontSize:11,color:"#64748b",marginTop:1}}>{(n.categorias||[]).join(" · ")} · {n.municipio||ubiActiva.municipio}</div>
                         {n.descripcion&&<div style={{fontSize:10,color:"#94a3b8",marginTop:2,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{n.descripcion}</div>}
                         <div style={{display:"flex",gap:6,marginTop:4,flexWrap:"wrap"}}>
                           <span style={{fontSize:10,fontWeight:600,color:n.activo?"#15803d":"#94a3b8",background:n.activo?"#dcfce7":"#f1f5f9",padding:"2px 7px",borderRadius:8}}>{n.activo?"● Abierto":"● Cerrado"}</span>
@@ -1787,7 +1913,7 @@ const VE_ESTADOS_MUNICIPIOS={
                 <div style={{width:48,height:48,background:"rgba(255,255,255,0.15)",borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>🍽️</div>
                 <div>
                   <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:-0.5}}>Feria de comidas</div>
-                  <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",marginTop:1}}>Restaurantes y cocinas de San Fernando</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",marginTop:1}}>Restaurantes y cocinas de {ubiActiva.municipio}</div>
                 </div>
               </div>
               <input style={{width:"100%",padding:"11px 16px",borderRadius:12,border:"none",fontSize:13,background:"rgba(255,255,255,0.15)",color:"#fff",boxSizing:"border-box",outline:"none"}} placeholder="🔍  Buscar comida o restaurantes…" value={search} onChange={e=>setSearch(e.target.value)}/>
@@ -1852,7 +1978,19 @@ const VE_ESTADOS_MUNICIPIOS={
                 </div>
               )}
               <div style={{...s.sec,paddingTop:12}}>
-                {allRestaurantes.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🍽️</div><p>Próximamente restaurantes aquí</p></div>}
+                {allRestaurantes.length===0&&(
+                  <div style={{textAlign:"center",padding:"40px 16px",color:"#94a3b8"}}>
+                    <div style={{fontSize:40,marginBottom:10}}>🍽️</div>
+                    <div style={{fontSize:15,fontWeight:700,color:"#0f172a",marginBottom:6}}>Sin restaurantes en {ubiActiva.municipio}</div>
+                    <div style={{fontSize:12,color:"#64748b",lineHeight:1.5,marginBottom:16}}>Aún no hay restaurantes registrados en tu municipio. ¿Tienes un restaurante? ¡Únete gratis!</div>
+                    <button onClick={()=>setTab("Proveedores")} style={{background:"#c2410c",color:"#fff",border:"none",borderRadius:12,padding:"11px 20px",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:10,display:"block",margin:"0 auto 10px"}}>
+                      🍽️ Registra tu restaurante
+                    </button>
+                    <button onClick={()=>{setCiudadTemp({estado:ubiActiva.estado,municipio:ubiActiva.municipio});setShowCiudadModal(true);}} style={{fontSize:12,color:"#64748b",background:"none",border:"1px solid #e2e8f0",borderRadius:10,padding:"8px 16px",cursor:"pointer"}}>
+                      📍 Cambiar municipio
+                    </button>
+                  </div>
+                )}
                 {allRestaurantes.map(r=>{
                   const opTexto=r.tipo_operacion_gastro==="cocina_oscura"?"🚚 Pedidos solo por delivery":
                     r.tipo_operacion_gastro==="restaurante"?`🍽️ Atención en local${r.delivery_propio?" · 🚚 Delivery disponible":""}`:
@@ -1900,10 +2038,17 @@ const VE_ESTADOS_MUNICIPIOS={
       {/* CLASIFICADOS */}
       {tab==="Clasificados"&&(<>
         <div style={s.banner}>
-          <p style={s.bT}>Clasificados San Fernando 🚗🏠🏍️</p>
-          <p style={s.bS}>Vehículos · Motos · Inmuebles</p>
+          <p style={s.bT}>Clasificados Venezuela 🚗🏠🏍️</p>
+          <p style={s.bS}>Vehículos · Motos · Inmuebles · Todo el país</p>
           <span style={s.bdg("#22c55e","#fff")}>✓ Gratis publicar</span>
           <span style={s.bdg(A,P)}>Hasta 4 fotos</span>
+        </div>
+        {/* FILTRO GEOGRÁFICO CLASIFICADOS */}
+        <div style={{padding:"10px 16px 0",display:"flex",alignItems:"center",gap:8}}>
+          <span style={{fontSize:11,color:"#64748b",flexShrink:0}}>📍 Mostrando:</span>
+          <button onClick={()=>{setCiudadTemp({estado:ubiActiva.estado,municipio:ubiActiva.municipio});setShowCiudadModal(true);}} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:20,padding:"5px 12px",fontSize:11,fontWeight:700,color:"#15803d",cursor:"pointer",flex:1,textAlign:"left"}}>
+            {clasificadoTipo==="Todos"?"🌎 Todo Venezuela":"📍 "+ubiActiva.municipio} ▾
+          </button>
         </div>
 
         {/* BOTÓN PUBLICAR */}
@@ -2020,6 +2165,25 @@ const VE_ESTADOS_MUNICIPIOS={
               <input style={s.inp} placeholder="Juan Pérez" value={newClasificado.vendedor_nombre} onChange={e=>setNewClasificado({...newClasificado,vendedor_nombre:e.target.value})}/>
               <label style={s.lbl}>Tu WhatsApp * (compradores te contactarán aquí)</label>
               <input style={s.inp} placeholder="+58 424-000-0000" value={newClasificado.vendedor_telefono} onChange={e=>setNewClasificado({...newClasificado,vendedor_telefono:e.target.value})}/>
+
+              {/* UBICACIÓN DEL ANUNCIO */}
+              <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"10px 12px",marginBottom:10}}>
+                <div style={{fontSize:12,fontWeight:700,color:"#1d4ed8",marginBottom:8}}>📍 ¿Dónde está ubicado?</div>
+                <div style={{display:"flex",gap:8}}>
+                  <div style={{flex:1}}>
+                    <label style={s.lbl}>Estado</label>
+                    <select style={{...s.inp,marginBottom:0,background:"#fff"}} value={newClasificado.estado||ubiActiva.estado} onChange={e=>setNewClasificado({...newClasificado,estado:e.target.value,municipio:""})}>
+                      {Object.keys(VE_ESTADOS_MUNICIPIOS).sort().map(est=><option key={est}>{est}</option>)}
+                    </select>
+                  </div>
+                  <div style={{flex:1}}>
+                    <label style={s.lbl}>Municipio</label>
+                    <select style={{...s.inp,marginBottom:0,background:"#fff"}} value={newClasificado.municipio||ubiActiva.municipio} onChange={e=>setNewClasificado({...newClasificado,municipio:e.target.value})}>
+                      {(VE_ESTADOS_MUNICIPIOS[newClasificado.estado||ubiActiva.estado]||[]).map(m=><option key={m}>{m}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </div>
 
               <button style={s.btn} onClick={publishClasificado} disabled={loading}>{loading?"Subiendo fotos...":"📤 Publicar anuncio"}</button>
             </div>
@@ -2163,6 +2327,24 @@ const VE_ESTADOS_MUNICIPIOS={
               <input style={s.inp} placeholder="Juan Pérez" value={newServicioCom.proveedor_nombre} onChange={e=>setNewServicioCom({...newServicioCom,proveedor_nombre:e.target.value})}/>
               <label style={s.lbl}>Tu WhatsApp * (clientes te escribirán aquí)</label>
               <input style={s.inp} placeholder="+58 424-000-0000" value={newServicioCom.proveedor_telefono} onChange={e=>setNewServicioCom({...newServicioCom,proveedor_telefono:e.target.value})}/>
+              {/* UBICACIÓN */}
+              <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"10px 12px",marginBottom:10}}>
+                <div style={{fontSize:12,fontWeight:700,color:"#1d4ed8",marginBottom:8}}>📍 ¿En qué municipio ofreces este servicio?</div>
+                <div style={{display:"flex",gap:8}}>
+                  <div style={{flex:1}}>
+                    <label style={s.lbl}>Estado</label>
+                    <select style={{...s.inp,marginBottom:0,background:"#fff"}} value={newServicioCom.estado||ubiActiva.estado} onChange={e=>setNewServicioCom({...newServicioCom,estado:e.target.value,municipio:""})}>
+                      {Object.keys(VE_ESTADOS_MUNICIPIOS).sort().map(est=><option key={est}>{est}</option>)}
+                    </select>
+                  </div>
+                  <div style={{flex:1}}>
+                    <label style={s.lbl}>Municipio</label>
+                    <select style={{...s.inp,marginBottom:0,background:"#fff"}} value={newServicioCom.municipio||ubiActiva.municipio} onChange={e=>setNewServicioCom({...newServicioCom,municipio:e.target.value})}>
+                      {(VE_ESTADOS_MUNICIPIOS[newServicioCom.estado||ubiActiva.estado]||[]).map(m=><option key={m}>{m}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </div>
               <label style={s.lbl}>📸 Tu foto o foto de tu trabajo (recomendada)</label>
               {servComFotoPreview&&<img src={servComFotoPreview} alt="" style={{width:"100%",height:140,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
               <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setServComFoto(f);setServComFotoPreview(URL.createObjectURL(f));}}}/>
@@ -3442,6 +3624,39 @@ const VE_ESTADOS_MUNICIPIOS={
           </div>
 
           {adminSec==="dashboard"&&(<>
+            {/* PEDIDOS DEL DÍA — banner prominente */}
+            {(()=>{
+              const hoyAdmin=new Date().toISOString().slice(0,10);
+              const pedHoy=pedidos.filter(p=>p.created_at?.slice(0,10)===hoyAdmin);
+              const pedNuevosHoy=pedHoy.filter(p=>p.estado==="nuevo");
+              const pedEntregadosHoy=pedHoy.filter(p=>p.estado==="entregado");
+              const ingresoHoyPed=pedEntregadosHoy.reduce((a,p)=>a+(p.total||0),0);
+              if(pedHoy.length===0)return null;
+              return(
+                <div style={{margin:"0 16px 12px",background:"linear-gradient(135deg,#0f172a,#1e293b)",borderRadius:16,padding:"14px 16px",color:"#fff"}}>
+                  <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>📅 HOY</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+                    <div style={{textAlign:"center"}}>
+                      <div style={{fontSize:26,fontWeight:900,color:pedNuevosHoy.length>0?"#fbbf24":"#22c55e"}}>{pedNuevosHoy.length}</div>
+                      <div style={{fontSize:10,color:"#94a3b8",marginTop:2}}>🟡 Nuevos</div>
+                    </div>
+                    <div style={{textAlign:"center"}}>
+                      <div style={{fontSize:26,fontWeight:900,color:"#22c55e"}}>{pedHoy.length}</div>
+                      <div style={{fontSize:10,color:"#94a3b8",marginTop:2}}>Total pedidos</div>
+                    </div>
+                    <div style={{textAlign:"center"}}>
+                      <div style={{fontSize:26,fontWeight:900,color:"#22c55e"}}>${ingresoHoyPed.toFixed(0)}</div>
+                      <div style={{fontSize:10,color:"#94a3b8",marginTop:2}}>💰 Entregados</div>
+                    </div>
+                  </div>
+                  {pedNuevosHoy.length>0&&(
+                    <button onClick={()=>setAdminSec("pedidos")} style={{width:"100%",background:"#fbbf24",color:"#0f172a",border:"none",borderRadius:10,padding:"9px",fontSize:12,fontWeight:800,cursor:"pointer",marginTop:10}}>
+                      ⚡ Ver {pedNuevosHoy.length} pedido{pedNuevosHoy.length!==1?"s":""} nuevo{pedNuevosHoy.length!==1?"s":""} →
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,margin:"0 16px 12px"}}>
               <StatCard num={`$${ingresoHoy.toFixed(2)}`} lbl="Ingresos hoy" color="#22c55e"/>
               <StatCard num={`$${ingresoTotal.toFixed(2)}`} lbl="Total histórico"/>
@@ -4090,13 +4305,23 @@ const VE_ESTADOS_MUNICIPIOS={
                 <div style={{marginTop:8,borderTop:"1px solid #f1f5f9",paddingTop:12}}>
                   <div style={{fontSize:13,fontWeight:800,color:"#0f172a",marginBottom:10}}>🕐 Mis pedidos anteriores</div>
                   {clienteHistorial.slice(0,5).map(ped=>{
-                    const est={nuevo:"🆕",recibido:"📥",esperando_pago:"💳",preparando:"👨‍🍳",enviado:"🚀",entregado:"✅",cancelado:"❌"}[ped.estado||"nuevo"]||"🆕";
+                    const est={
+                      nuevo:{icon:"🆕",label:"Nuevo",bg:"#eff6ff",color:"#1d4ed8"},
+                      recibido:{icon:"📥",label:"Recibido",bg:"#fef3c7",color:"#92400e"},
+                      esperando_pago:{icon:"💳",label:"Pend. pago",bg:"#fff7ed",color:"#c2410c"},
+                      preparando:{icon:"👨‍🍳",label:"Preparando",bg:"#fdf4ff",color:"#7e22ce"},
+                      en_camino:{icon:"🚀",label:"En camino",bg:"#e0f2fe",color:"#0369a1"},
+                      enviado:{icon:"🚀",label:"Enviado",bg:"#e0f2fe",color:"#0369a1"},
+                      entregado:{icon:"✅",label:"Entregado",bg:"#dcfce7",color:"#15803d"},
+                      cancelado:{icon:"❌",label:"Cancelado",bg:"#fee2e2",color:"#dc2626"},
+                    }[ped.estado||"nuevo"]||{icon:"🆕",label:"Nuevo",bg:"#eff6ff",color:"#1d4ed8"};
                     return(
                       <div key={ped.id} style={{background:"#f8fafc",borderRadius:12,padding:"10px 12px",marginBottom:8,border:"1px solid #e2e8f0"}}>
                         <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
                           <div style={{fontSize:12,fontWeight:700,color:"#0f172a"}}>{ped.proveedor_nombre||"Pedido"}</div>
-                          <span style={{fontSize:11,color:"#64748b"}}>{est} {ped.ref}</span>
+                          <span style={{fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,background:est.bg,color:est.color}}>{est.icon} {est.label}</span>
                         </div>
+                        <div style={{fontSize:10,color:"#94a3b8",marginBottom:4}}>{ped.ref}</div>
                         <div style={{fontSize:11,color:"#64748b",marginBottom:6}}>
                           {(ped.items||[]).map(i=>`${i.nombre} x${i.qty||1}`).join(" · ")}
                         </div>
@@ -4478,6 +4703,75 @@ const VE_ESTADOS_MUNICIPIOS={
 
       {/* SHEET RESEÑA */}
       {sheet==="resena"&&(<div style={s.ov} onClick={()=>setSheet(null)}><div style={s.sh} onClick={e=>e.stopPropagation()}><div style={s.hnd}/><div style={s.shT}>⭐ Dejar reseña</div>{resenaMsj&&<div style={s.msg(resenaMsj.includes("✅"))}>{resenaMsj}</div>}<label style={s.lbl}>Tu nombre *</label><input style={s.inp} placeholder="María González" value={resena.nombre} onChange={e=>setResena({...resena,nombre:e.target.value})}/><label style={s.lbl}>Calificación *</label><div style={s.stars}>{[1,2,3,4,5].map(n=><span key={n} style={s.star(resena.estrellas>=n)} onClick={()=>setResena({...resena,estrellas:n})}>★</span>)}</div><label style={s.lbl}>Comentario (opcional)</label><input style={s.inp} placeholder="¿Cómo estuvo el producto?" value={resena.comentario} onChange={e=>setResena({...resena,comentario:e.target.value})}/><button style={s.btn} onClick={enviarResena}>Enviar reseña</button><button style={s.btnG} onClick={()=>setSheet(null)}>Cancelar</button></div></div>)}
+
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* MODAL SELECTOR DE CIUDAD                               */}
+      {/* ═══════════════════════════════════════════════════════ */}
+      {showCiudadModal&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:300,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+          <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:430,padding:"24px 20px 32px",boxShadow:"0 -4px 24px rgba(0,0,0,0.15)"}}>
+            <div style={{width:40,height:4,background:"#e2e8f0",borderRadius:2,margin:"0 auto 20px"}}/>
+            {/* Primera vez */}
+            {!ubicacionUsuario?(
+              <>
+                <div style={{textAlign:"center",marginBottom:20}}>
+                  <div style={{fontSize:40,marginBottom:10}}>📍</div>
+                  <div style={{fontSize:20,fontWeight:900,color:"#0f172a",marginBottom:6}}>¿Dónde estás?</div>
+                  <div style={{fontSize:13,color:"#64748b",lineHeight:1.5}}>Selecciona tu municipio para ver lo que está disponible cerca de ti.</div>
+                </div>
+              </>
+            ):(
+              <div style={{fontSize:17,fontWeight:800,color:"#0f172a",marginBottom:16}}>📍 Cambiar mi municipio</div>
+            )}
+            {/* SELECTOR */}
+            <div style={{marginBottom:14}}>
+              <label style={s.lbl}>Estado</label>
+              <select style={{...s.inp,background:"#fff",marginBottom:10}} value={ciudadTemp.estado||"Apure"} onChange={e=>setCiudadTemp({estado:e.target.value,municipio:""})}>
+                <option value="">Selecciona un estado...</option>
+                {Object.keys(VE_ESTADOS_MUNICIPIOS).sort().map(est=>(
+                  <option key={est} value={est}>{est}</option>
+                ))}
+              </select>
+              <label style={s.lbl}>Municipio</label>
+              <select style={{...s.inp,background:"#fff"}} value={ciudadTemp.municipio} onChange={e=>setCiudadTemp(c=>({...c,municipio:e.target.value}))}>
+                <option value="">Selecciona un municipio...</option>
+                {(VE_ESTADOS_MUNICIPIOS[ciudadTemp.estado]||[]).map(m=>(
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
+            {/* AVISO SUPERMERCADO */}
+            {ciudadTemp.municipio&&ciudadTemp.municipio!=="San Fernando"&&(
+              <div style={{background:"#fff7ed",border:"1px solid #fed7aa",borderRadius:10,padding:"10px 12px",marginBottom:12,fontSize:12,color:"#92400e"}}>
+                ⚠️ El supermercado online aún no está disponible en <strong>{ciudadTemp.municipio}</strong>. Los restaurantes, negocios y clasificados sí pueden estar disponibles si hay proveedores registrados en tu municipio.
+              </div>
+            )}
+            {ciudadTemp.municipio==="San Fernando"&&ciudadTemp.estado==="Apure"&&(
+              <div style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:10,padding:"10px 12px",marginBottom:12,fontSize:12,color:"#15803d"}}>
+                ✅ San Fernando de Apure tiene operación completa: supermercado, restaurantes, negocios y más.
+              </div>
+            )}
+            <button
+              disabled={!ciudadTemp.estado||!ciudadTemp.municipio}
+              onClick={()=>{
+                const nueva={estado:ciudadTemp.estado,municipio:ciudadTemp.municipio};
+                setUbicacionUsuario(nueva);
+                setShowCiudadModal(false);
+              }}
+              style={{...s.btn,marginTop:4,opacity:(!ciudadTemp.estado||!ciudadTemp.municipio)?0.5:1,cursor:(!ciudadTemp.estado||!ciudadTemp.municipio)?"not-allowed":"pointer"}}>
+              ✅ Confirmar mi ubicación
+            </button>
+            {ubicacionUsuario&&(
+              <button onClick={()=>setShowCiudadModal(false)} style={s.btnG}>Cancelar</button>
+            )}
+            {!ubicacionUsuario&&(
+              <button onClick={()=>{setUbicacionUsuario(UBI_DEFAULT);setShowCiudadModal(false);}} style={{...s.btnG,fontSize:12,color:"#94a3b8"}}>
+                Continuar como San Fernando de Apure
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       <div style={{height:80}}/>
     </div>
