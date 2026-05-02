@@ -2372,17 +2372,21 @@ export default function App() {
 
           <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
             {[
-              {k:"estado",  l:"📊 Stats"},
-              {k:"pedidos_rest", l:`📋 Pedidos${misRestPedidos.filter(p=>!["entregado","cancelado"].includes(p.estado)).length>0?` (${misRestPedidos.filter(p=>!["entregado","cancelado"].includes(p.estado)).length})`:""}` },
-              {k:"productos",l:"📦 Productos"},
-              {k:"promos",  l:myPromos.filter(pr=>pr.motivo_rechazo).length>0?`🎉 Promos ⚠️`:"🎉 Promos"},
-              {k:"clientes",l:"👥 Clientes"},
-              {k:"ventas",  l:"💰 Ventas"},
+              {k:"estado",     l:"📊 Inicio"},
+              {k:"pedidos_rest",l:`📋 Pedidos${misRestPedidos.filter(p=>!["entregado","cancelado"].includes(p.estado)).length>0?` (${misRestPedidos.filter(p=>!["entregado","cancelado"].includes(p.estado)).length})`:""}`},
+              {k:"productos",  l:"📦 Productos"},
+              {k:"promos",     l:myPromos.filter(pr=>pr.motivo_rechazo).length>0?"🎉 Promos ⚠️":"🎉 Promos"},
+              {k:"clientes",   l:"👥 Clientes"},
+              {k:"ventas",     l:"📈 Ventas"},
+              {k:"mi_negocio", l:"⚙️ Mi negocio"},
             ].map(t=>{
-              const isPromoTab=t.k==="promos"&&(provTab==="promo_nueva"||provTab==="promo_activas"||provTab==="promo_pausadas"||provTab==="promo_pendientes"||provTab==="promo_rechazadas");
-              const isProdTab=t.k==="productos"&&(provTab==="productos"||provTab==="prod_nuevo"||provTab==="prod_aprobados"||provTab==="prod_pendientes"||provTab==="prod_rechazados");
+              const isPromoTab=t.k==="promos"&&["promo_nueva","promo_activas","promo_pausadas","promo_pendientes","promo_rechazadas"].includes(provTab);
+              const isProdTab=t.k==="productos"&&["productos","prod_nuevo","prod_aprobados","prod_pendientes","prod_rechazados"].includes(provTab);
               const isActive=provTab===t.k||isPromoTab||isProdTab;
-              return(<button key={t.k} onClick={()=>{setProvTab(t.k==="promos"?"promo_nueva":t.k==="productos"?"prod_aprobados":t.k);if(t.k==="clientes")loadMisClientes(provData.negocio);}} style={{flexShrink:0,padding:"8px 12px",borderRadius:10,border:"none",background:isActive?P:"#f1f5f9",color:isActive?"#fff":"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t.l}</button>);
+              return(<button key={t.k} onClick={()=>{
+                setProvTab(t.k==="promos"?"promo_nueva":t.k==="productos"?"prod_aprobados":t.k);
+                if(t.k==="clientes")loadMisClientes(provData.negocio);
+              }} style={{flexShrink:0,padding:"8px 12px",borderRadius:10,border:"none",background:isActive?P:"#f1f5f9",color:isActive?"#fff":"#64748b",fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>{t.l}</button>);
             })}
           </div>
           {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
@@ -3102,229 +3106,231 @@ export default function App() {
             </div>
           )}
 
-          {provTab==="ventas"&&(<div style={s.pc}><div style={s.pT}>💰 Mis ventas recientes</div>{myVentas.length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>Aún no tienes ventas registradas</div>}{myVentas.slice(0,20).map(v=>(<div key={v.id} style={{padding:"8px 0",borderBottom:"1px solid #f1f5f9",fontSize:12}}><div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontWeight:600}}>{v.producto_nombre}</span><span style={{fontWeight:700,color:"#22c55e"}}>${(v.total_item||0).toFixed(2)}</span></div><div style={{color:"#94a3b8"}}>{v.cliente_nombre} · x{v.cantidad} · {v.fecha?.slice(0,10)}</div></div>))}</div>)}
-
-          {/* MÉTODOS DE PAGO */}
-          <div style={{background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:14,padding:"14px",marginBottom:12}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:editandoPagos?10:0}}>
-              <div>
-                <div style={{fontSize:13,fontWeight:800,color:"#0f172a"}}>💳 Métodos de pago</div>
-                {!editandoPagos&&(
-                  <div style={{fontSize:11,color:"#64748b",marginTop:2}}>
-                    {provData.pago_movil_banco?`Pago Móvil: ${provData.pago_movil_banco}`:"Sin métodos configurados"}
-                    {provData.acepta_zelle?" · Zelle":""}
-                    {provData.acepta_efectivo?" · Efectivo":""}
+          {provTab==="ventas"&&(()=>{
+            const pedidosEntregados=misRestPedidos.filter(p=>p.estado==="entregado");
+            const pedidosCancelados=misRestPedidos.filter(p=>p.estado==="cancelado");
+            const pedidosTodos=misRestPedidos;
+            const fechaLocalV=(d)=>new Date(new Date(d).getTime()-new Date(d).getTimezoneOffset()*60000).toISOString().slice(0,10);
+            const hoyV=fechaLocalV(new Date());
+            const sem=fechaLocalV(new Date(Date.now()-7*86400000));
+            const mes=fechaLocalV(new Date(Date.now()-30*86400000));
+            const [filtroV,setFiltroV]=React.useState("todo");
+            const pedFiltV=pedidosEntregados.filter(p=>{
+              const f=fechaLocalV(p.created_at);
+              return filtroV==="hoy"?f===hoyV:filtroV==="semana"?f>=sem:filtroV==="mes"?f>=mes:true;
+            });
+            const totalVendido=pedFiltV.reduce((a,p)=>a+(p.total||0),0);
+            const ticketProm=pedFiltV.length>0?totalVendido/pedFiltV.length:0;
+            return(
+              <div style={s.pc}>
+                <div style={s.pT}>📈 Dashboard de ventas</div>
+                {/* FILTROS */}
+                <div style={{display:"flex",gap:6,marginBottom:12}}>
+                  {[["todo","Todo"],["mes","30 días"],["semana","7 días"],["hoy","Hoy"]].map(([v,l])=>(
+                    <button key={v} onClick={()=>setFiltroV(v)} style={{flex:1,padding:"6px 4px",borderRadius:10,border:"none",fontSize:11,fontWeight:700,cursor:"pointer",background:filtroV===v?P:"#f1f5f9",color:filtroV===v?"#fff":"#64748b"}}>{l}</button>
+                  ))}
+                </div>
+                {/* KPIs */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+                  <div style={{...s.statCard,gridColumn:"1/-1"}}>
+                    <div style={{...s.statNum,fontSize:28,color:"#22c55e"}}>${totalVendido.toFixed(2)}</div>
+                    <div style={s.statLbl}>💰 Total vendido (entregados)</div>
                   </div>
-                )}
-              </div>
-              <button onClick={()=>{setPagoData({pago_movil_banco:provData.pago_movil_banco||"",pago_movil_telefono:provData.pago_movil_telefono||"",pago_movil_cedula:provData.pago_movil_cedula||"",pago_movil_nombre:provData.pago_movil_nombre||"",acepta_efectivo:provData.acepta_efectivo||false,acepta_zelle:provData.acepta_zelle||false,zelle_cuenta:provData.zelle_cuenta||"",acepta_divisas:provData.acepta_divisas||false});setEditandoPagos(!editandoPagos);}} style={{fontSize:11,background:editandoPagos?"#f1f5f9":"#f0fdf4",color:editandoPagos?"#64748b":"#15803d",border:"none",borderRadius:8,padding:"5px 12px",fontWeight:700,cursor:"pointer"}}>
-                {editandoPagos?"Cancelar":"✏️ Editar"}
-              </button>
-            </div>
-            {editandoPagos&&(
-              <div>
-                <div style={{fontSize:12,fontWeight:700,color:"#1e40af",marginBottom:8,background:"#dbeafe",padding:"6px 10px",borderRadius:8}}>📱 Pago Móvil</div>
-                <label style={s.lbl}>Banco</label>
-                <input style={s.inp} placeholder="Ej: Banesco, Provincial, BDV..." value={pagoData.pago_movil_banco} onChange={e=>setPagoData({...pagoData,pago_movil_banco:e.target.value})}/>
-                <label style={s.lbl}>Teléfono</label>
-                <input style={s.inp} placeholder="04XX-XXXXXXX" value={pagoData.pago_movil_telefono} onChange={e=>setPagoData({...pagoData,pago_movil_telefono:e.target.value})}/>
-                <label style={s.lbl}>Cédula</label>
-                <input style={s.inp} placeholder="V-XXXXXXXX" value={pagoData.pago_movil_cedula} onChange={e=>setPagoData({...pagoData,pago_movil_cedula:e.target.value})}/>
-                <label style={s.lbl}>Nombre del titular</label>
-                <input style={s.inp} placeholder="Nombre completo" value={pagoData.pago_movil_nombre} onChange={e=>setPagoData({...pagoData,pago_movil_nombre:e.target.value})}/>
-                <div style={{fontSize:12,fontWeight:700,color:"#15803d",marginBottom:8,marginTop:4,background:"#f0fdf4",padding:"6px 10px",borderRadius:8}}>💵 Otros métodos</div>
-                <label style={{display:"flex",alignItems:"center",gap:10,marginBottom:8,cursor:"pointer"}}>
-                  <input type="checkbox" checked={pagoData.acepta_efectivo} onChange={e=>setPagoData({...pagoData,acepta_efectivo:e.target.checked})} style={{width:16,height:16,accentColor:"#25D366"}}/>
-                  <span style={{fontSize:12,fontWeight:600}}>Acepto efectivo USD</span>
-                </label>
-                <label style={{display:"flex",alignItems:"center",gap:10,marginBottom:8,cursor:"pointer"}}>
-                  <input type="checkbox" checked={pagoData.acepta_divisas} onChange={e=>setPagoData({...pagoData,acepta_divisas:e.target.checked})} style={{width:16,height:16,accentColor:"#25D366"}}/>
-                  <span style={{fontSize:12,fontWeight:600}}>Acepto otras divisas</span>
-                </label>
-                <label style={{display:"flex",alignItems:"center",gap:10,marginBottom:8,cursor:"pointer"}}>
-                  <input type="checkbox" checked={pagoData.acepta_zelle} onChange={e=>setPagoData({...pagoData,acepta_zelle:e.target.checked})} style={{width:16,height:16,accentColor:"#25D366"}}/>
-                  <span style={{fontSize:12,fontWeight:600}}>Acepto Zelle</span>
-                </label>
-                {pagoData.acepta_zelle&&(
-                  <input style={s.inp} placeholder="Email o teléfono de Zelle" value={pagoData.zelle_cuenta} onChange={e=>setPagoData({...pagoData,zelle_cuenta:e.target.value})}/>
-                )}
-                <label style={{display:"flex",alignItems:"center",gap:10,marginBottom:8,cursor:"pointer"}}>
-                  <input type="checkbox" checked={pagoData.acepta_binance} onChange={e=>setPagoData({...pagoData,acepta_binance:e.target.checked})} style={{width:16,height:16,accentColor:"#F0B90B"}}/>
-                  <span style={{fontSize:12,fontWeight:600}}>Acepto Binance Pay</span>
-                </label>
-                {pagoData.acepta_binance&&(
-                  <input style={s.inp} placeholder="ID o email de Binance Pay" value={pagoData.binance_cuenta} onChange={e=>setPagoData({...pagoData,binance_cuenta:e.target.value})}/>
-                )}
-                <button onClick={async()=>{
-                  await supabase.from("proveedores").update({
-                    pago_movil_banco:pagoData.pago_movil_banco,
-                    pago_movil_telefono:pagoData.pago_movil_telefono,
-                    pago_movil_cedula:pagoData.pago_movil_cedula,
-                    pago_movil_nombre:pagoData.pago_movil_nombre,
-                    acepta_efectivo:pagoData.acepta_efectivo,
-                    acepta_zelle:pagoData.acepta_zelle,
-                    zelle_cuenta:pagoData.zelle_cuenta,
-                    acepta_divisas:pagoData.acepta_divisas,
-                    acepta_binance:pagoData.acepta_binance,
-                    binance_cuenta:pagoData.binance_cuenta,
-                  }).eq("id",provData.id);
-                  setProvData({...provData,...pagoData});
-                  setEditandoPagos(false);
-                  setPmsg("✅ Métodos de pago actualizados");
-                }} style={{...s.btnGreen,width:"100%",borderRadius:10,padding:"10px",fontSize:13,marginTop:4}}>
-                  💾 Guardar métodos de pago
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* EDITAR PERFIL */}
-          {!editandoPerfil&&!cambiandoClave&&(
-            <div style={{display:"flex",gap:8,marginTop:8}}>
-              <button style={{...s.btnG,flex:1,marginTop:0}} onClick={()=>{setPerfilData({descripcion_negocio:provData.descripcion_negocio||"",whatsapp_negocio:provData.whatsapp_negocio||provData.telefono||"",telefono_principal:provData.telefono_principal||"",instagram:provData.instagram||"",direccion_fisica:provData.direccion_fisica||"",categorias:[...(provData.categorias||[])],tipo_operacion_gastro:provData.tipo_operacion_gastro||"",
-      permite_retiro:provData.permite_retiro||false,horario_desde:provData.horario_desde||"08:00",horario_hasta:provData.horario_hasta||"18:00",horario_desc:provData.horario_desc||"",delivery_propio:provData.delivery_propio||false,delivery_costo:provData.delivery_costo||0,delivery_gratis_desde:provData.delivery_gratis_desde||15});setEditandoPerfil(true);}}>✏️ Editar perfil</button>
-              <button style={{...s.btnG,flex:1,marginTop:0}} onClick={()=>{setClaveForm({actual:"",nueva:"",confirmar:""});setCambiandoClave(true);}}>🔑 Cambiar clave</button>
-            </div>
-          )}
-          {editandoPerfil&&(
-            <div style={{background:"#f8fafc",borderRadius:12,padding:"14px",marginTop:8,border:"1px solid #e2e8f0"}}>
-              <div style={{fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:10}}>✏️ Editar mi perfil</div>
-              <label style={s.lbl}>Descripción del negocio</label>
-              <input style={s.inp} placeholder="Tortas y dulces · Delivery disponible" value={perfilData.descripcion_negocio} onChange={e=>setPerfilData({...perfilData,descripcion_negocio:e.target.value})}/>
-              <label style={s.lbl}>WhatsApp de pedidos</label>
-              <input style={s.inp} placeholder="04243232671" value={perfilData.whatsapp_negocio} onChange={e=>setPerfilData({...perfilData,whatsapp_negocio:e.target.value})}/>
-              <label style={s.lbl}>Teléfono principal</label>
-              <input style={s.inp} placeholder="04143232671" value={perfilData.telefono_principal} onChange={e=>setPerfilData({...perfilData,telefono_principal:e.target.value})}/>
-              <label style={s.lbl}>Instagram (opcional)</label>
-              <input style={s.inp} placeholder="@minegocio" value={perfilData.instagram} onChange={e=>setPerfilData({...perfilData,instagram:e.target.value})}/>
-              <label style={s.lbl}>Dirección física</label>
-              <input style={s.inp} placeholder="Calle Comercio #47..." value={perfilData.direccion_fisica} onChange={e=>setPerfilData({...perfilData,direccion_fisica:e.target.value})}/>
-              {provData.tipo_negocio==="Restaurante / Cocina / Comida"&&(
-                <>
-                  <label style={s.lbl}>¿Cómo funciona tu negocio?</label>
-                  <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:10}}>
-                    {TIPOS_OPERACION_GASTRO.map(t=>(
-                      <div key={t.value} onClick={()=>setPerfilData(pd=>({...pd,tipo_operacion_gastro:t.value}))} style={{display:"flex",alignItems:"flex-start",gap:10,background:perfilData.tipo_operacion_gastro===t.value?"#eff6ff":"#fff",border:`2px solid ${perfilData.tipo_operacion_gastro===t.value?"#3b82f6":"#e2e8f0"}`,borderRadius:10,padding:"9px 12px",cursor:"pointer"}}>
-                        <div style={{width:18,height:18,borderRadius:"50%",background:perfilData.tipo_operacion_gastro===t.value?"#3b82f6":"#e2e8f0",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",marginTop:1}}>{perfilData.tipo_operacion_gastro===t.value&&<span style={{color:"#fff",fontSize:11}}>✓</span>}</div>
-                        <div><div style={{fontSize:12,fontWeight:600,color:perfilData.tipo_operacion_gastro===t.value?"#1d4ed8":"#374151"}}>{t.label}</div></div>
+                  <div style={s.statCard}><div style={{...s.statNum,color:"#6366f1"}}>{pedFiltV.length}</div><div style={s.statLbl}>Pedidos entregados</div></div>
+                  <div style={s.statCard}><div style={{...s.statNum,color:"#f59e0b"}}>${ticketProm.toFixed(2)}</div><div style={s.statLbl}>Ticket promedio</div></div>
+                  <div style={s.statCard}><div style={{...s.statNum,color:"#ef4444"}}>{pedidosCancelados.length}</div><div style={s.statLbl}>Cancelados</div></div>
+                  <div style={s.statCard}><div style={{...s.statNum,color:"#64748b"}}>{pedidosTodos.length}</div><div style={s.statLbl}>Total pedidos</div></div>
+                </div>
+                {/* LISTA DE VENTAS */}
+                <div style={{fontSize:12,fontWeight:700,color:"#64748b",marginBottom:8}}>Pedidos entregados</div>
+                {pedFiltV.length===0
+                  ?<div style={{textAlign:"center",padding:"20px 0",color:"#94a3b8",fontSize:13}}>No hay ventas en este período</div>
+                  :pedFiltV.map(ped=>(
+                    <div key={ped.id} style={{padding:"10px 0",borderBottom:"1px solid #f1f5f9"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                        <div style={{fontSize:12,fontWeight:700,color:"#0f172a"}}>{ped.ref} — {ped.cliente_nombre}</div>
+                        <span style={{fontSize:13,fontWeight:800,color:"#22c55e"}}>${(ped.total||0).toFixed(2)}</span>
                       </div>
-                    ))}
-                  </div>
-                </>
-              )}
-              <label style={s.lbl}>Horario de atención</label>
-              <div style={{display:"flex",gap:8,marginBottom:6}}>
-                <div style={{flex:1}}><label style={{...s.lbl,marginBottom:2}}>Abre</label><input style={s.inp} type="time" value={perfilData.horario_desde||"08:00"} onChange={e=>setPerfilData({...perfilData,horario_desde:e.target.value})}/></div>
-                <div style={{flex:1}}><label style={{...s.lbl,marginBottom:2}}>Cierra</label><input style={s.inp} type="time" value={perfilData.horario_hasta||"18:00"} onChange={e=>setPerfilData({...perfilData,horario_hasta:e.target.value})}/></div>
-              </div>
-              <input style={s.inp} placeholder="Ej: Solo fines de semana..." value={perfilData.horario_desc||""} onChange={e=>setPerfilData({...perfilData,horario_desc:e.target.value})}/>
-              <label style={s.lbl}>¿Cómo entregas los pedidos? (puedes marcar ambas)</label>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
-                <button type="button" onClick={()=>setPerfilData(pd=>({...pd,delivery_propio:!pd.delivery_propio}))} style={{padding:"12px 8px",borderRadius:12,border:`2px solid ${perfilData.delivery_propio?"#15803d":"#e2e8f0"}`,background:perfilData.delivery_propio?"#f0fdf4":"#fff",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                  <span style={{fontSize:22}}>🛵</span>
-                  <span style={{fontSize:12,fontWeight:700,color:perfilData.delivery_propio?"#15803d":"#374151"}}>Delivery</span>
-                  <span style={{fontSize:10,color:perfilData.delivery_propio?"#15803d":"#94a3b8"}}>Entrego a domicilio</span>
-                  <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${perfilData.delivery_propio?"#15803d":"#d1d5db"}`,background:perfilData.delivery_propio?"#15803d":"#fff",display:"flex",alignItems:"center",justifyContent:"center",marginTop:2}}>{perfilData.delivery_propio&&<span style={{color:"#fff",fontSize:11,fontWeight:900}}>✓</span>}</div>
-                </button>
-                <button type="button" onClick={()=>setPerfilData(pd=>({...pd,permite_retiro:!pd.permite_retiro}))} style={{padding:"12px 8px",borderRadius:12,border:`2px solid ${perfilData.permite_retiro?"#3b82f6":"#e2e8f0"}`,background:perfilData.permite_retiro?"#eff6ff":"#fff",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                  <span style={{fontSize:22}}>🏪</span>
-                  <span style={{fontSize:12,fontWeight:700,color:perfilData.permite_retiro?"#1d4ed8":"#374151"}}>Retiro en local</span>
-                  <span style={{fontSize:10,color:perfilData.permite_retiro?"#3b82f6":"#94a3b8"}}>El cliente recoge</span>
-                  <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${perfilData.permite_retiro?"#3b82f6":"#d1d5db"}`,background:perfilData.permite_retiro?"#3b82f6":"#fff",display:"flex",alignItems:"center",justifyContent:"center",marginTop:2}}>{perfilData.permite_retiro&&<span style={{color:"#fff",fontSize:11,fontWeight:900}}>✓</span>}</div>
-                </button>
-              </div>
-              {perfilData.delivery_propio&&(
-                <div style={{background:"#f0fdf4",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #bbf7d0"}}>
-                  <div style={{fontSize:11,fontWeight:700,color:"#15803d",marginBottom:8}}>Configura tu delivery</div>
-                  <div style={{display:"flex",gap:8}}>
-                    <div style={{flex:1}}>
-                      <label style={s.lbl}>Costo del delivery $</label>
-                      <input style={s.inp} type="number" placeholder="1.50" value={perfilData.delivery_costo||0} onChange={e=>setPerfilData({...perfilData,delivery_costo:parseFloat(e.target.value)||0})}/>
+                      <div style={{fontSize:11,color:"#94a3b8"}}>{ped.created_at?.slice(0,10)} · {(ped.items||[]).map(i=>`${i.nombre} x${i.qty||1}`).join(", ")}</div>
                     </div>
-                    <div style={{flex:1}}>
-                      <label style={s.lbl}>Delivery gratis desde $</label>
-                      <input style={s.inp} type="number" placeholder="15" value={perfilData.delivery_gratis_desde||15} onChange={e=>setPerfilData({...perfilData,delivery_gratis_desde:parseFloat(e.target.value)||15})}/>
-                    </div>
+                  ))
+                }
+              </div>
+            );
+          })()}
+
+
+          {/* ═══ TAB MI NEGOCIO ═══ */}
+          {provTab==="mi_negocio"&&(()=>{
+            const [seccion,setSeccion]=React.useState("perfil");
+            const notifPagoWa=(cambio)=>{
+              const raw=(provData.whatsapp_negocio||provData.telefono||"").replace(/\D/g,"");
+              const num=raw.startsWith("0")?"58"+raw.slice(1):raw.startsWith("58")?raw:"58"+raw;
+              if(!num)return;
+              const msg=`⚙️ *Apure Market — Cambio en tu cuenta*\n\nHola ${provData.negocio} 👋\n\n${cambio}\n\nSi no realizaste este cambio, contáctanos de inmediato.`;
+              window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank");
+            };
+            return(
+              <div style={s.pc}>
+                <div style={s.pT}>⚙️ Mi negocio</div>
+                {/* SUB-MENÚ */}
+                <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:4}}>
+                  {[
+                    {k:"perfil",  l:"👤 Perfil"},
+                    {k:"horario", l:"🕐 Horario"},
+                    {k:"delivery",l:"🛵 Delivery"},
+                    {k:"pagos",   l:"💳 Pagos"},
+                    {k:"eta",     l:"⏱️ Tiempo entrega"},
+                    {k:"clave",   l:"🔑 Clave"},
+                  ].map(s2=>(
+                    <button key={s2.k} onClick={()=>setSeccion(s2.k)} style={{flexShrink:0,padding:"6px 12px",borderRadius:20,border:"none",fontSize:11,fontWeight:700,cursor:"pointer",background:seccion===s2.k?"#0f172a":"#f1f5f9",color:seccion===s2.k?"#fff":"#64748b",whiteSpace:"nowrap"}}>
+                      {s2.l}
+                    </button>
+                  ))}
+                </div>
+
+                {/* ── PERFIL ── */}
+                {seccion==="perfil"&&(
+                  <div>
+                    <div style={{fontSize:11,color:"#94a3b8",marginBottom:10}}>Tu correo de acceso: <strong style={{color:"#0f172a"}}>{provData.email}</strong> (no editable)</div>
+                    <label style={s.lbl}>Nombre del negocio</label>
+                    <input style={s.inp} value={perfilData.negocio||provData.negocio||""} onChange={e=>setPerfilData({...perfilData,negocio:e.target.value})} placeholder="Nombre de tu negocio"/>
+                    <label style={s.lbl}>Descripción</label>
+                    <input style={s.inp} value={perfilData.descripcion_negocio||provData.descripcion_negocio||""} onChange={e=>setPerfilData({...perfilData,descripcion_negocio:e.target.value})} placeholder="Describe tu negocio..."/>
+                    <label style={s.lbl}>WhatsApp de pedidos *</label>
+                    <input style={s.inp} value={perfilData.whatsapp_negocio||provData.whatsapp_negocio||""} onChange={e=>setPerfilData({...perfilData,whatsapp_negocio:e.target.value})} placeholder="04XX-XXXXXXX"/>
+                    <label style={s.lbl}>Instagram</label>
+                    <input style={s.inp} value={perfilData.instagram||provData.instagram||""} onChange={e=>setPerfilData({...perfilData,instagram:e.target.value})} placeholder="@minegocio"/>
+                    <label style={s.lbl}>Dirección física</label>
+                    <input style={s.inp} value={perfilData.direccion_fisica||provData.direccion_fisica||""} onChange={e=>setPerfilData({...perfilData,direccion_fisica:e.target.value})} placeholder="Calle, edificio..."/>
+                    <button onClick={async()=>{
+                      await supabase.from("proveedores").update({
+                        negocio:perfilData.negocio||provData.negocio,
+                        descripcion_negocio:perfilData.descripcion_negocio,
+                        whatsapp_negocio:perfilData.whatsapp_negocio,
+                        telefono:perfilData.whatsapp_negocio,
+                        instagram:perfilData.instagram,
+                        direccion_fisica:perfilData.direccion_fisica,
+                      }).eq("id",provData.id);
+                      setProvData({...provData,...perfilData});
+                      setPmsg("✅ Perfil actualizado");loadAll();
+                    }} style={{...s.btnGreen,width:"100%",borderRadius:10,padding:"10px",marginTop:4}}>💾 Guardar perfil</button>
                   </div>
-                  <div style={{fontSize:10,color:"#15803d",marginTop:4}}>💡 Pedidos mayores a ${perfilData.delivery_gratis_desde||15} tendrán delivery gratis</div>
-                </div>
-              )}
-              <label style={s.lbl}>Categorías</label>
-              {(()=>{
-                const esComida=provData.tipo_negocio==="Restaurante / Cocina / Comida";
-                const cats=esComida?TIPOS_COMIDA:provData.tipo_negocio==="Tienda / Negocio local"?NEGOCIO_CATS.map(c=>c.cat):provData.tipo_negocio==="Transporte y encomiendas"?NEGOCIO_CATS_TRANSPORTE:[...NEGOCIO_CATS.map(c=>c.cat),...NEGOCIO_CATS_RESTAURANTE];
-                return(<div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>{cats.map(c=>(<button key={c} onClick={()=>setPerfilData(pd=>({...pd,categorias:pd.categorias.includes(c)?pd.categorias.filter(x=>x!==c):[...pd.categorias,c]}))} style={{padding:"5px 10px",borderRadius:20,fontSize:11,cursor:"pointer",background:perfilData.categorias?.includes(c)?P:"#f1f5f9",color:perfilData.categorias?.includes(c)?"#fff":"#64748b",border:"none",fontWeight:500}}>{c}</button>))}</div>);
-              })()}
-              <label style={s.lbl}>Logo del negocio</label>
-              <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
-                <div style={{width:56,height:56,borderRadius:"50%",background:"#f1f5f9",border:"1px solid #e2e8f0",overflow:"hidden",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  {editLogoPreview
-                    ?<img src={editLogoPreview} alt="" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
-                    :provData.logo_url
-                    ?<img src={provData.logo_url} alt="" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
-                    :<span style={{fontSize:24}}>🏪</span>
-                  }
-                </div>
-                <div>
-                  <label style={{display:"block",background:P,color:"#fff",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:4}}>
-                    📷 Cambiar logo
-                    <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){setEditLogoFile(f);setEditLogoPreview(URL.createObjectURL(f));}}}/>
-                  </label>
-                  <div style={{fontSize:10,color:"#94a3b8"}}>PNG con fondo blanco o transparente</div>
-                  {editLogoPreview&&<div style={{fontSize:10,color:"#15803d",fontWeight:600}}>✓ Nuevo logo listo para guardar</div>}
+                )}
+
+                {/* ── HORARIO ── */}
+                {seccion==="horario"&&(
+                  <div>
+                    <div style={{display:"flex",gap:8,marginBottom:8}}>
+                      <div style={{flex:1}}><label style={s.lbl}>Abre</label><input style={s.inp} type="time" value={perfilData.horario_desde||provData.horario_desde||"08:00"} onChange={e=>setPerfilData({...perfilData,horario_desde:e.target.value})}/></div>
+                      <div style={{flex:1}}><label style={s.lbl}>Cierra</label><input style={s.inp} type="time" value={perfilData.horario_hasta||provData.horario_hasta||"18:00"} onChange={e=>setPerfilData({...perfilData,horario_hasta:e.target.value})}/></div>
+                    </div>
+                    <label style={s.lbl}>Nota de horario (opcional)</label>
+                    <input style={s.inp} placeholder="Ej: Solo fines de semana" value={perfilData.horario_desc||provData.horario_desc||""} onChange={e=>setPerfilData({...perfilData,horario_desc:e.target.value})}/>
+                    <button onClick={async()=>{
+                      await supabase.from("proveedores").update({horario_desde:perfilData.horario_desde||provData.horario_desde,horario_hasta:perfilData.horario_hasta||provData.horario_hasta,horario_desc:perfilData.horario_desc||provData.horario_desc}).eq("id",provData.id);
+                      setProvData({...provData,...perfilData});setPmsg("✅ Horario actualizado");
+                    }} style={{...s.btnGreen,width:"100%",borderRadius:10,padding:"10px",marginTop:4}}>💾 Guardar horario</button>
+                  </div>
+                )}
+
+                {/* ── DELIVERY ── */}
+                {seccion==="delivery"&&(
+                  <div>
+                    <label style={{display:"flex",alignItems:"center",gap:10,marginBottom:12,cursor:"pointer"}}>
+                      <input type="checkbox" checked={perfilData.delivery_propio??provData.delivery_propio??false} onChange={e=>setPerfilData({...perfilData,delivery_propio:e.target.checked})} style={{width:18,height:18,accentColor:"#25D366"}}/>
+                      <span style={{fontSize:13,fontWeight:700}}>🛵 Ofrezco delivery a domicilio</span>
+                    </label>
+                    <label style={s.lbl}>Costo de delivery ($)</label>
+                    <input style={s.inp} type="number" placeholder="1.00" value={perfilData.delivery_costo??provData.delivery_costo??0} onChange={e=>setPerfilData({...perfilData,delivery_costo:parseFloat(e.target.value)||0})}/>
+                    <label style={s.lbl}>Delivery gratis desde ($)</label>
+                    <input style={s.inp} type="number" placeholder="15.00" value={perfilData.delivery_gratis_desde??provData.delivery_gratis_desde??15} onChange={e=>setPerfilData({...perfilData,delivery_gratis_desde:parseFloat(e.target.value)||0})}/>
+                    <label style={{display:"flex",alignItems:"center",gap:10,marginBottom:8,cursor:"pointer"}}>
+                      <input type="checkbox" checked={perfilData.permite_retiro??provData.permite_retiro??false} onChange={e=>setPerfilData({...perfilData,permite_retiro:e.target.checked})} style={{width:18,height:18,accentColor:"#25D366"}}/>
+                      <span style={{fontSize:13,fontWeight:700}}>🏃 Permito retiro en local</span>
+                    </label>
+                    <button onClick={async()=>{
+                      await supabase.from("proveedores").update({delivery_propio:perfilData.delivery_propio??provData.delivery_propio,delivery_costo:perfilData.delivery_costo??provData.delivery_costo,delivery_gratis_desde:perfilData.delivery_gratis_desde??provData.delivery_gratis_desde,permite_retiro:perfilData.permite_retiro??provData.permite_retiro}).eq("id",provData.id);
+                      setProvData({...provData,...perfilData});setPmsg("✅ Delivery actualizado");loadAll();
+                    }} style={{...s.btnGreen,width:"100%",borderRadius:10,padding:"10px",marginTop:4}}>💾 Guardar delivery</button>
+                  </div>
+                )}
+
+                {/* ── PAGOS ── */}
+                {seccion==="pagos"&&(
+                  <div>
+                    <div style={{fontSize:12,fontWeight:700,color:"#1e40af",background:"#dbeafe",padding:"6px 10px",borderRadius:8,marginBottom:10}}>📱 Pago Móvil</div>
+                    <label style={s.lbl}>Banco</label>
+                    <input style={s.inp} placeholder="Ej: Banesco, BDV..." value={pagoData.pago_movil_banco||provData.pago_movil_banco||""} onChange={e=>setPagoData({...pagoData,pago_movil_banco:e.target.value})}/>
+                    <label style={s.lbl}>Teléfono</label>
+                    <input style={s.inp} placeholder="04XX-XXXXXXX" value={pagoData.pago_movil_telefono||provData.pago_movil_telefono||""} onChange={e=>setPagoData({...pagoData,pago_movil_telefono:e.target.value})}/>
+                    <label style={s.lbl}>Cédula</label>
+                    <input style={s.inp} placeholder="V-XXXXXXXX" value={pagoData.pago_movil_cedula||provData.pago_movil_cedula||""} onChange={e=>setPagoData({...pagoData,pago_movil_cedula:e.target.value})}/>
+                    <label style={s.lbl}>Nombre del titular</label>
+                    <input style={s.inp} placeholder="Nombre completo" value={pagoData.pago_movil_nombre||provData.pago_movil_nombre||""} onChange={e=>setPagoData({...pagoData,pago_movil_nombre:e.target.value})}/>
+                    <div style={{fontSize:12,fontWeight:700,color:"#15803d",background:"#f0fdf4",padding:"6px 10px",borderRadius:8,marginBottom:10,marginTop:4}}>💵 Otros métodos</div>
+                    <label style={{display:"flex",alignItems:"center",gap:10,marginBottom:8,cursor:"pointer"}}><input type="checkbox" checked={pagoData.acepta_efectivo??provData.acepta_efectivo??false} onChange={e=>setPagoData({...pagoData,acepta_efectivo:e.target.checked})} style={{width:16,height:16,accentColor:"#25D366"}}/><span style={{fontSize:12,fontWeight:600}}>Acepto efectivo USD</span></label>
+                    <label style={{display:"flex",alignItems:"center",gap:10,marginBottom:8,cursor:"pointer"}}><input type="checkbox" checked={pagoData.acepta_divisas??provData.acepta_divisas??false} onChange={e=>setPagoData({...pagoData,acepta_divisas:e.target.checked})} style={{width:16,height:16,accentColor:"#25D366"}}/><span style={{fontSize:12,fontWeight:600}}>Acepto otras divisas</span></label>
+                    <label style={{display:"flex",alignItems:"center",gap:10,marginBottom:8,cursor:"pointer"}}><input type="checkbox" checked={pagoData.acepta_zelle??provData.acepta_zelle??false} onChange={e=>setPagoData({...pagoData,acepta_zelle:e.target.checked})} style={{width:16,height:16,accentColor:"#25D366"}}/><span style={{fontSize:12,fontWeight:600}}>Acepto Zelle</span></label>
+                    {(pagoData.acepta_zelle??provData.acepta_zelle)&&<input style={s.inp} placeholder="Email o teléfono Zelle" value={pagoData.zelle_cuenta||provData.zelle_cuenta||""} onChange={e=>setPagoData({...pagoData,zelle_cuenta:e.target.value})}/>}
+                    <label style={{display:"flex",alignItems:"center",gap:10,marginBottom:8,cursor:"pointer"}}><input type="checkbox" checked={pagoData.acepta_binance??provData.acepta_binance??false} onChange={e=>setPagoData({...pagoData,acepta_binance:e.target.checked})} style={{width:16,height:16,accentColor:"#F0B90B"}}/><span style={{fontSize:12,fontWeight:600}}>Acepto Binance Pay</span></label>
+                    {(pagoData.acepta_binance??provData.acepta_binance)&&<input style={s.inp} placeholder="ID o email Binance Pay" value={pagoData.binance_cuenta||provData.binance_cuenta||""} onChange={e=>setPagoData({...pagoData,binance_cuenta:e.target.value})}/>}
+                    <button onClick={async()=>{
+                      const nuevosPagos={pago_movil_banco:pagoData.pago_movil_banco||provData.pago_movil_banco||"",pago_movil_telefono:pagoData.pago_movil_telefono||provData.pago_movil_telefono||"",pago_movil_cedula:pagoData.pago_movil_cedula||provData.pago_movil_cedula||"",pago_movil_nombre:pagoData.pago_movil_nombre||provData.pago_movil_nombre||"",acepta_efectivo:pagoData.acepta_efectivo??provData.acepta_efectivo??false,acepta_zelle:pagoData.acepta_zelle??provData.acepta_zelle??false,zelle_cuenta:pagoData.zelle_cuenta||provData.zelle_cuenta||"",acepta_divisas:pagoData.acepta_divisas??provData.acepta_divisas??false,acepta_binance:pagoData.acepta_binance??provData.acepta_binance??false,binance_cuenta:pagoData.binance_cuenta||provData.binance_cuenta||""};
+                      await supabase.from("proveedores").update(nuevosPagos).eq("id",provData.id);
+                      setProvData({...provData,...nuevosPagos});setPmsg("✅ Métodos de pago actualizados");
+                      // Notificar por WhatsApp
+                      const resumen=[nuevosPagos.pago_movil_banco?`• Pago Móvil: ${nuevosPagos.pago_movil_banco} / ${nuevosPagos.pago_movil_telefono}`:"",nuevosPagos.acepta_zelle?`• Zelle: ${nuevosPagos.zelle_cuenta}`:"",nuevosPagos.acepta_binance?`• Binance Pay: ${nuevosPagos.binance_cuenta}`:"",nuevosPagos.acepta_efectivo?"• Efectivo USD: Sí":"",nuevosPagos.acepta_divisas?"• Otras divisas: Sí":""].filter(Boolean).join("\n");
+                      notifPagoWa(`✅ Tus métodos de pago fueron actualizados:\n\n${resumen}`);
+                    }} style={{...s.btnGreen,width:"100%",borderRadius:10,padding:"10px",marginTop:4}}>💾 Guardar y notificarme</button>
+                  </div>
+                )}
+
+                {/* ── ETA ── */}
+                {seccion==="eta"&&(
+                  <div>
+                    <div style={{fontSize:12,color:"#64748b",marginBottom:12,lineHeight:1.5}}>Define cuánto tiempo tarda tu negocio en preparar y entregar un pedido. Se mostrará a los clientes en tu tienda y en el carrito.</div>
+                    <div style={{display:"flex",gap:8,marginBottom:8}}>
+                      <div style={{flex:1}}><label style={s.lbl}>Tiempo mínimo (min)</label><input style={s.inp} type="number" placeholder="20" value={etaData.eta_minutos_min||provData.eta_minutos_min||""} onChange={e=>setEtaData({...etaData,eta_minutos_min:e.target.value})}/></div>
+                      <div style={{flex:1}}><label style={s.lbl}>Tiempo máximo (min)</label><input style={s.inp} type="number" placeholder="40" value={etaData.eta_minutos_max||provData.eta_minutos_max||""} onChange={e=>setEtaData({...etaData,eta_minutos_max:e.target.value})}/></div>
+                    </div>
+                    <label style={s.lbl}>O escribe texto libre</label>
+                    <input style={s.inp} placeholder="Ej: 25–35 min / A confirmar / Mismo día" value={etaData.eta_texto||provData.eta_texto||""} onChange={e=>setEtaData({...etaData,eta_texto:e.target.value})}/>
+                    <div style={{fontSize:11,color:"#64748b",marginBottom:8}}>Vista previa: <strong>⏱️ {etaData.eta_texto||provData.eta_texto||(etaData.eta_minutos_min&&etaData.eta_minutos_max?`${etaData.eta_minutos_min}–${etaData.eta_minutos_max} min`:"No configurado")}</strong></div>
+                    <button onClick={async()=>{
+                      await supabase.from("proveedores").update({eta_minutos_min:etaData.eta_minutos_min||provData.eta_minutos_min||null,eta_minutos_max:etaData.eta_minutos_max||provData.eta_minutos_max||null,eta_texto:etaData.eta_texto||provData.eta_texto||null}).eq("id",provData.id);
+                      setProvData({...provData,...etaData});setPmsg("✅ Tiempo de entrega actualizado");
+                    }} style={{...s.btnGreen,width:"100%",borderRadius:10,padding:"10px",marginTop:4}}>💾 Guardar tiempo</button>
+                  </div>
+                )}
+
+                {/* ── CLAVE ── */}
+                {seccion==="clave"&&(
+                  <div>
+                    <label style={s.lbl}>Clave actual</label>
+                    <input style={s.inp} type="password" placeholder="••••••••" value={claveForm.actual} onChange={e=>setClaveForm({...claveForm,actual:e.target.value})}/>
+                    <label style={s.lbl}>Nueva clave</label>
+                    <input style={s.inp} type="password" placeholder="••••••••" value={claveForm.nueva} onChange={e=>setClaveForm({...claveForm,nueva:e.target.value})}/>
+                    <label style={s.lbl}>Confirmar nueva clave</label>
+                    <input style={s.inp} type="password" placeholder="••••••••" value={claveForm.confirmar} onChange={e=>setClaveForm({...claveForm,confirmar:e.target.value})}/>
+                    <button onClick={async()=>{
+                      if(!claveForm.actual||!claveForm.nueva||!claveForm.confirmar)return setPmsg("Completa todos los campos");
+                      if(claveForm.nueva!==claveForm.confirmar)return setPmsg("Las claves no coinciden");
+                      if(claveForm.actual!==provData.password_plain)return setPmsg("La clave actual es incorrecta");
+                      if(claveForm.nueva.length<6)return setPmsg("La nueva clave debe tener al menos 6 caracteres");
+                      await supabase.from("proveedores").update({password_plain:claveForm.nueva}).eq("id",provData.id);
+                      setPmsg("✅ Clave actualizada");setClaveForm({actual:"",nueva:"",confirmar:""});
+                    }} style={{...s.btnGreen,width:"100%",borderRadius:10,padding:"10px",marginTop:4}}>🔑 Cambiar clave</button>
+                  </div>
+                )}
+
+                <div style={{marginTop:16,paddingTop:12,borderTop:"1px solid #f1f5f9"}}>
+                  <button style={{...s.btnG,width:"100%"}} onClick={()=>{setProvMode("login");setProvData(null);setMyProds([]);setMyPromos([]);setMyVentas([]);setPmsg("");setEditandoPerfil(false);setCambiandoClave(false);}}>🚪 Cerrar sesión</button>
                 </div>
               </div>
-              <div style={{display:"flex",gap:8}}>
-                <button onClick={async()=>{
-                  let logo_url=provData.logo_url;
-                  if(editLogoFile){logo_url=await upload(editLogoFile,"logos",`${provData.email?.split("@")[0]||provData.usuario}_logo_${Date.now()}`);}
-                  await supabase.from("proveedores").update({logo_url,
-                    descripcion_negocio:perfilData.descripcion_negocio,
-                    whatsapp_negocio:perfilData.whatsapp_negocio,
-                    telefono:perfilData.whatsapp_negocio,
-                    telefono_principal:perfilData.telefono_principal,
-                    instagram:perfilData.instagram,
-                    direccion_fisica:perfilData.direccion_fisica,
-                    categorias:perfilData.categorias,
-                    tipo_operacion_gastro:perfilData.tipo_operacion_gastro||null,
-                    horario_desde:perfilData.horario_desde,
-                    horario_hasta:perfilData.horario_hasta,
-                    horario_desc:perfilData.horario_desc,
-                    delivery_propio:perfilData.delivery_propio,
-                    permite_retiro:perfilData.permite_retiro||false,
-                    delivery_costo:perfilData.delivery_costo,
-                    delivery_gratis_desde:perfilData.delivery_gratis_desde,
-                  }).eq("id",provData.id);
-                  setProvData({...provData,...perfilData,telefono:perfilData.whatsapp_negocio});
-                  setEditandoPerfil(false);setEditLogoFile(null);setEditLogoPreview(null);setPmsg("✅ Perfil actualizado");loadAll();
-                }} style={{...s.btnGreen,flex:1,borderRadius:10,padding:"9px",fontSize:12}}>Guardar cambios</button>
-                <button onClick={()=>{setEditandoPerfil(false);setEditLogoFile(null);setEditLogoPreview(null);}} style={{...s.btnG,flex:1,marginTop:0,borderRadius:10,padding:"9px",fontSize:12}}>Cancelar</button>
-              </div>
-            </div>
-          )}
-          {cambiandoClave&&(
-            <div style={{background:"#f8fafc",borderRadius:12,padding:"14px",marginTop:8,border:"1px solid #e2e8f0"}}>
-              <div style={{fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:10}}>🔑 Cambiar contraseña</div>
-              <label style={s.lbl}>Clave actual</label>
-              <input style={s.inp} type="password" placeholder="••••••••" value={claveForm.actual} onChange={e=>setClaveForm({...claveForm,actual:e.target.value})}/>
-              <label style={s.lbl}>Nueva clave</label>
-              <input style={s.inp} type="password" placeholder="••••••••" value={claveForm.nueva} onChange={e=>setClaveForm({...claveForm,nueva:e.target.value})}/>
-              <label style={s.lbl}>Confirmar nueva clave</label>
-              <input style={s.inp} type="password" placeholder="••••••••" value={claveForm.confirmar} onChange={e=>setClaveForm({...claveForm,confirmar:e.target.value})}/>
-              <div style={{display:"flex",gap:8}}>
-                <button onClick={async()=>{
-                  if(claveForm.actual!==provData.password_plain)return setPmsg("La clave actual no es correcta");
-                  if(claveForm.nueva.length<6)return setPmsg("La nueva clave debe tener al menos 6 caracteres");
-                  if(claveForm.nueva!==claveForm.confirmar)return setPmsg("Las claves no coinciden");
-                  await supabase.from("proveedores").update({password_plain:claveForm.nueva}).eq("id",provData.id);
-                  setProvData({...provData,password_plain:claveForm.nueva});
-                  setCambiandoClave(false);setPmsg("✅ Contraseña actualizada");
-                }} style={{...s.btnGreen,flex:1,borderRadius:10,padding:"9px",fontSize:12}}>Guardar</button>
-                <button onClick={()=>setCambiandoClave(false)} style={{...s.btnG,flex:1,marginTop:0,borderRadius:10,padding:"9px",fontSize:12}}>Cancelar</button>
-              </div>
-            </div>
-          )}
-          <button style={{...s.btnG,marginTop:8}} onClick={()=>{setProvMode("login");setProvData(null);setMyProds([]);setMyPromos([]);setMyVentas([]);setPmsg("");setEditandoPerfil(false);setCambiandoClave(false);}}>Cerrar sesión</button>
+            );
+          })()}
+
         </>)}
 
         {/* ADMIN */}
