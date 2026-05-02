@@ -265,6 +265,7 @@ const VE_ESTADOS_MUNICIPIOS={
   const [clasificadoSeleccionado,setClasificadoSeleccionado]=useState(null);
   const [showPublicarClasificado,setShowPublicarClasificado]=useState(false);
   const [pendClasificados,setPendClasificados]=useState([]);
+  const [clasificadoGeoFiltro,setClasificadoGeoFiltro]=useState("todo"); // "todo" | "miMunicipio"
   const [newClasificado,setNewClasificado]=useState({
     tipo:"Vehículos",titulo:"",descripcion:"",precio:"",negociable:false,categoria:"Vehículos",
     marca:"",modelo:"",anio:"",kilometraje:"",color:"",transmision:"Manual",combustible:"Gasolina",
@@ -2046,9 +2047,14 @@ const VE_ESTADOS_MUNICIPIOS={
         {/* FILTRO GEOGRÁFICO CLASIFICADOS */}
         <div style={{padding:"10px 16px 0",display:"flex",alignItems:"center",gap:8}}>
           <span style={{fontSize:11,color:"#64748b",flexShrink:0}}>📍 Mostrando:</span>
-          <button onClick={()=>{setCiudadTemp({estado:ubiActiva.estado,municipio:ubiActiva.municipio});setShowCiudadModal(true);}} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:20,padding:"5px 12px",fontSize:11,fontWeight:700,color:"#15803d",cursor:"pointer",flex:1,textAlign:"left"}}>
-            {clasificadoTipo==="Todos"?"🌎 Todo Venezuela":"📍 "+ubiActiva.municipio} ▾
-          </button>
+          <div style={{display:"flex",gap:6,flex:1}}>
+            <button onClick={()=>setClasificadoGeoFiltro("todo")} style={{flex:1,padding:"6px 10px",borderRadius:20,border:"none",fontSize:11,fontWeight:700,cursor:"pointer",background:clasificadoGeoFiltro==="todo"?"#0f172a":"#f1f5f9",color:clasificadoGeoFiltro==="todo"?"#fff":"#64748b"}}>
+              🌎 Todo Venezuela
+            </button>
+            <button onClick={()=>setClasificadoGeoFiltro("miMunicipio")} style={{flex:1,padding:"6px 10px",borderRadius:20,border:"none",fontSize:11,fontWeight:700,cursor:"pointer",background:clasificadoGeoFiltro==="miMunicipio"?"#25D366":"#f1f5f9",color:clasificadoGeoFiltro==="miMunicipio"?"#fff":"#64748b"}}>
+              📍 {ubiActiva.municipio}
+            </button>
+          </div>
         </div>
 
         {/* BOTÓN PUBLICAR */}
@@ -2251,38 +2257,50 @@ const VE_ESTADOS_MUNICIPIOS={
         {/* LISTA DE CLASIFICADOS */}
         {!showPublicarClasificado&&!clasificadoSeleccionado&&(
           <div style={{...s.sec,paddingTop:8}}>
-            {clasificados.filter(c=>clasificadoTipo==="Todos"||c.tipo===clasificadoTipo).length===0&&(
-              <div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}>
-                <div style={{fontSize:40}}>{clasificadoTipo==="Motos"?"🏍️":clasificadoTipo==="Inmuebles"?"🏠":"🚗"}</div>
-                <p>No hay anuncios en esta categoría</p>
-                <button onClick={()=>setShowPublicarClasificado(true)} style={{...s.btn,maxWidth:260,margin:"12px auto 0"}}>Publicar el primero</button>
-              </div>
-            )}
-            {clasificados.filter(c=>clasificadoTipo==="Todos"||c.tipo===clasificadoTipo).map(c=>(
-              <div key={c.id} onClick={()=>setClasificadoSeleccionado(c)} style={{background:"#fff",borderRadius:14,marginBottom:12,border:"1px solid #f1f5f9",overflow:"hidden",cursor:"pointer"}}>
-                {/* FOTO PRINCIPAL */}
-                {c.foto1_url?<img src={c.foto1_url} alt={c.titulo} style={{width:"100%",height:160,objectFit:"cover"}}/>:<div style={{height:100,background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:40}}>{c.tipo==="Motos"?"🏍️":c.tipo==="Inmuebles"?"🏠":"🚗"}</div>}
-                {/* INFO */}
-                <div style={{padding:"10px 12px"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
-                    <div style={{fontSize:11,color:"#7e22ce",fontWeight:700}}>{c.tipo==="Vehículos"?"🚗":c.tipo==="Motos"?"🏍️":"🏠"} {c.tipo}{c.tipo_operacion?` · ${c.tipo_operacion}`:""}</div>
-                    {[c.foto1_url,c.foto2_url,c.foto3_url,c.foto4_url].filter(Boolean).length>1&&<div style={{fontSize:10,color:"#94a3b8"}}>📷 {[c.foto1_url,c.foto2_url,c.foto3_url,c.foto4_url].filter(Boolean).length} fotos</div>}
+            {(()=>{
+              const listFiltrada=clasificados.filter(c=>{
+                const matchTipo=clasificadoTipo==="Todos"||c.tipo===clasificadoTipo;
+                const matchGeo=clasificadoGeoFiltro==="todo"||(c.municipio||"San Fernando")===ubiActiva.municipio;
+                return matchTipo&&matchGeo;
+              });
+              return(<>
+                {listFiltrada.length===0&&(
+                  <div style={{textAlign:"center",padding:"40px 16px",color:"#94a3b8"}}>
+                    <div style={{fontSize:40,marginBottom:8}}>{clasificadoTipo==="Motos"?"🏍️":clasificadoTipo==="Inmuebles"?"🏠":"🚗"}</div>
+                    <div style={{fontSize:14,fontWeight:600,color:"#475569",marginBottom:4}}>
+                      {clasificadoGeoFiltro==="miMunicipio"?`Sin anuncios en ${ubiActiva.municipio}`:"No hay anuncios en esta categoría"}
+                    </div>
+                    {clasificadoGeoFiltro==="miMunicipio"&&(
+                      <button onClick={()=>setClasificadoGeoFiltro("todo")} style={{fontSize:12,color:"#25D366",background:"none",border:"1px solid #86efac",borderRadius:10,padding:"7px 16px",cursor:"pointer",marginBottom:10}}>
+                        🌎 Ver todos en Venezuela
+                      </button>
+                    )}
+                    <button onClick={()=>setShowPublicarClasificado(true)} style={{...s.btn,maxWidth:260,margin:"8px auto 0"}}>Publicar el primero</button>
                   </div>
-                  <div style={{fontSize:15,fontWeight:700,color:P,marginBottom:4}}>{c.titulo}</div>
-                  <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:6}}>
-                    {c.marca&&<span style={{fontSize:11,background:"#f1f5f9",color:"#64748b",padding:"2px 8px",borderRadius:20}}>{c.marca}</span>}
-                    {c.anio&&<span style={{fontSize:11,background:"#f1f5f9",color:"#64748b",padding:"2px 8px",borderRadius:20}}>{c.anio}</span>}
+                )}
+                {listFiltrada.map(c=>(
+                  <div key={c.id} onClick={()=>setClasificadoSeleccionado(c)} style={{background:"#fff",borderRadius:14,marginBottom:12,border:"1px solid #f1f5f9",overflow:"hidden",cursor:"pointer"}}>
+                    {c.foto1_url?<img src={c.foto1_url} alt={c.titulo} style={{width:"100%",height:160,objectFit:"cover"}}/>:<div style={{height:100,background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:40}}>{c.tipo==="Motos"?"🏍️":c.tipo==="Inmuebles"?"🏠":"🚗"}</div>}
+                    <div style={{padding:"10px 12px"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
+                        <div style={{fontSize:11,color:"#7e22ce",fontWeight:700}}>{c.tipo==="Vehículos"?"🚗":c.tipo==="Motos"?"🏍️":"🏠"} {c.tipo}{c.tipo_operacion?` · ${c.tipo_operacion}`:""}</div>
+                        <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                          {(c.municipio||c.estado)&&<span style={{fontSize:10,color:"#94a3b8"}}>📍 {c.municipio||c.estado}</span>}
+                          {[c.foto1_url,c.foto2_url,c.foto3_url,c.foto4_url].filter(Boolean).length>1&&<div style={{fontSize:10,color:"#94a3b8"}}>📷 {[c.foto1_url,c.foto2_url,c.foto3_url,c.foto4_url].filter(Boolean).length}</div>}
+                        </div>
+                      </div>
                     {c.kilometraje&&<span style={{fontSize:11,background:"#f1f5f9",color:"#64748b",padding:"2px 8px",borderRadius:20}}>{c.kilometraje}</span>}
                     {c.habitaciones&&<span style={{fontSize:11,background:"#f1f5f9",color:"#64748b",padding:"2px 8px",borderRadius:20}}>{c.habitaciones} hab.</span>}
                     {c.sector&&<span style={{fontSize:11,background:"#f1f5f9",color:"#64748b",padding:"2px 8px",borderRadius:20}}>📍 {c.sector}</span>}
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}}>
+                      <div><span style={{fontSize:18,fontWeight:700,color:"#22c55e"}}>${parseFloat(c.precio).toLocaleString()}</span>{c.negociable&&<span style={{fontSize:11,color:"#f59e0b",fontWeight:600,marginLeft:6}}>Negociable</span>}</div>
+                      <span style={{fontSize:12,color:P,fontWeight:600}}>Ver más →</span>
+                    </div>
                   </div>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                    <div><span style={{fontSize:18,fontWeight:700,color:"#22c55e"}}>${parseFloat(c.precio).toLocaleString()}</span>{c.negociable&&<span style={{fontSize:11,color:"#f59e0b",fontWeight:600,marginLeft:6}}>Negociable</span>}</div>
-                    <span style={{fontSize:12,color:P,fontWeight:600}}>Ver más →</span>
                   </div>
-                </div>
-              </div>
-            ))}
+                ))}
+              </>);
+            })()}
           </div>
         )}
       </>)}
