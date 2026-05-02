@@ -1521,7 +1521,7 @@ export default function App() {
             </div>
             {Object.values(cartNegocio).length>0&&(
               <div style={{position:"fixed",bottom:80,left:"50%",transform:"translateX(-50%)",zIndex:150,width:"calc(100% - 32px)",maxWidth:398}}>
-                <button style={{...s.btn,margin:0,display:"flex",justifyContent:"space-between",alignItems:"center",background:"#22c55e"}} onClick={()=>setSheet("cartNegocio")}>
+                <button style={{...s.btn,margin:0,display:"flex",justifyContent:"space-between",alignItems:"center",background:"#22c55e"}} onClick={()=>setSheet("cartGlobal")}>
                   <span>🛒 Ver pedido ({Object.values(cartNegocio).reduce((a,i)=>a+i.qty,0)})</span>
                   <span>${Object.values(cartNegocio).reduce((a,i)=>a+i.price*i.qty,0).toFixed(2)}</span>
                 </button>
@@ -1730,7 +1730,7 @@ export default function App() {
             {/* CARRITO RESTAURANTE FLOTANTE */}
             {Object.values(cartRest).length>0&&(
               <div style={{position:"fixed",bottom:16,left:"50%",transform:"translateX(-50%)",zIndex:150,width:"calc(100% - 32px)",maxWidth:398}}>
-                <button style={{...s.btn,margin:0,display:"flex",justifyContent:"space-between",alignItems:"center",background:"#22c55e"}} onClick={()=>setSheet("cartRest")}>
+                <button style={{...s.btn,margin:0,display:"flex",justifyContent:"space-between",alignItems:"center",background:"#22c55e"}} onClick={()=>setSheet("cartGlobal")}>
                   <span>🛒 Ver pedido ({Object.values(cartRest).reduce((a,i)=>a+i.qty,0)})</span>
                   <span>${Object.values(cartRest).reduce((a,i)=>a+i.price*i.qty,0).toFixed(2)}</span>
                 </button>
@@ -2843,22 +2843,33 @@ export default function App() {
               "entregado":       {label:"✅ Entregado",          bg:"#dcfce7",color:"#15803d"},
               "cancelado":       {label:"❌ Cancelado",          bg:"#fee2e2",color:"#991b1b"},
             };
+            // Construir bloque de métodos de pago del proveedor
+            const bloqPago=(()=>{
+              const pm=provData.pago_movil_banco?`\n\n📱 *Pago Móvil:*\nBanco: ${provData.pago_movil_banco}\nTeléfono: ${provData.pago_movil_telefono||""}\nCédula: ${provData.pago_movil_cedula||""}\nNombre: ${provData.pago_movil_nombre||""}`:"";
+              const zelle=provData.acepta_zelle&&provData.zelle_cuenta?`\n\n💵 *Zelle:* ${provData.zelle_cuenta}`:"";
+              const binance=provData.acepta_binance&&provData.binance_cuenta?`\n\n🟡 *Binance Pay:* ${provData.binance_cuenta}`:"";
+              const efectivo=provData.acepta_efectivo?"\n\n💵 *Efectivo USD:* Aceptamos efectivo":"";
+              const divisas=provData.acepta_divisas?"\n\n💱 *Otras divisas:* Aceptamos":"";
+              return pm||zelle||binance||efectivo||divisas
+                ?`💳 *Métodos de pago disponibles:*${pm}${zelle}${binance}${efectivo}${divisas}`
+                :"_(El proveedor aún no ha configurado sus métodos de pago)_";
+            })();
             const MSGS_ESTADO={
+              // RECIBIDO: resumen completo + datos de pago + solicitud de comprobante
               "recibido": (ped)=>{
-                const items=(ped.items||[]).map(i=>`• ${i.nombre} x${i.qty||1} — $${((i.precio||0)*(i.qty||1)).toFixed(2)}`).join("\n");
-                const total=`💵 *Total a pagar: $${(ped.total||0).toFixed(2)}*`;
-                const pm=provData.pago_movil_banco?`\n\n📱 *Pago Móvil:*\nBanco: ${provData.pago_movil_banco}\nTeléfono: ${provData.pago_movil_telefono||""}\nCédula: ${provData.pago_movil_cedula||""}\nNombre: ${provData.pago_movil_nombre||""}`:"";
-                const zelle=provData.acepta_zelle&&provData.zelle_cuenta?`\n\n💵 *Zelle:* ${provData.zelle_cuenta}`:"";
-                const binance=provData.acepta_binance&&provData.binance_cuenta?`\n\n🟡 *Binance Pay:* ${provData.binance_cuenta}`:"";
-                const efectivo=provData.acepta_efectivo?"\n\n💵 *Efectivo USD:* Aceptamos efectivo":"";
-                const divisas=provData.acepta_divisas?"\n\n💱 *Otras divisas:* Aceptamos":"";
-                return `Hola ${ped.cliente_nombre} 👋\n\n✅ *Recibimos tu pedido ${ped.ref}*\n\n🛒 *Tu pedido:*\n${items}\n\n🚚 Delivery: $${(ped.delivery||0).toFixed(2)}\n${total}\n\n💳 *Para completar tu pedido, realiza el pago:*${pm}${zelle}${binance}${efectivo}${divisas}\n\n📸 Envíanos el comprobante de pago para procesar tu pedido. ¡Gracias! 🙏`;
+                const items=(ped.items||[]).map(i=>`  • ${i.nombre} x${i.qty||1} — $${((i.precio||0)*(i.qty||1)).toFixed(2)}`).join("\n");
+                return `Hola ${ped.cliente_nombre} 👋\n\n✅ *Recibimos tu pedido ${ped.ref}*\n\n🛒 *Resumen:*\n${items}\n🚚 Delivery: $${(ped.delivery||0).toFixed(2)}\n💵 *Total: $${(ped.total||0).toFixed(2)}*\n\n${bloqPago}\n\n📸 Por favor realiza el pago y envíanos el comprobante para procesar tu pedido.\n\n¡Gracias por tu preferencia! 🙏`;
               },
-              "esperando_pago": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n💳 Estamos esperando tu comprobante de pago para el pedido *${ped.ref}* por un total de *$${(ped.total||0).toFixed(2)}*.\n\nCuando realices el pago, envíanos la captura y comenzamos a preparar tu pedido. ¡Gracias!`,
-              "preparando": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n👨‍🍳 ¡Pago confirmado! Tu pedido *${ped.ref}* está siendo preparado.\n\nTe avisaremos cuando esté listo para enviar. ¡Ya casi! 😊`,
-              "enviado": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n🚀 Tu pedido *${ped.ref}* ya va en camino hacia tu dirección.\n\n📍 ${ped.cliente_direccion||""}\n\n¡Pronto llega! Mantente atento(a).`,
-              "entregado": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n🎉 Tu pedido *${ped.ref}* fue entregado exitosamente.\n\n¡Gracias por tu preferencia! Esperamos verte pronto. 😊`,
-              "cancelado": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n😔 Lamentamos informarte que tu pedido *${ped.ref}* fue cancelado.\n\nPor favor contáctanos para más información. Disculpa los inconvenientes.`,
+              // ESPERANDO PAGO: recordatorio simple, sin repetir datos
+              "esperando_pago": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n⏳ Aún estamos esperando tu comprobante de pago del pedido *${ped.ref}*.\n\n💵 *Total pendiente: $${(ped.total||0).toFixed(2)}*\n\nCuando realices el pago, envíanos la captura y comenzamos a preparar tu pedido enseguida. ¡Gracias! 🙏`,
+              // PREPARANDO: confirma pago recibido
+              "preparando": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n✅ *¡Pago confirmado!*\n\nTu pedido *${ped.ref}* está siendo preparado con cariño. 👨‍🍳\n\nTe avisaremos cuando esté listo para enviarse. ¡Ya casi llega! 😊`,
+              // ENVIADO: en camino con dirección
+              "enviado": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n🚀 *Tu pedido ${ped.ref} ya va en camino.*\n\n📍 Dirección: ${ped.cliente_direccion||"(dirección registrada)"}\n\nMantente atento(a), ¡pronto llega! 🛵`,
+              // ENTREGADO: cierre amigable
+              "entregado": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n🎉 *Tu pedido ${ped.ref} fue entregado.*\n\n¡Gracias por elegirnos! Si tienes algún comentario o inconveniente, no dudes en escribirnos. Esperamos verte pronto. 😊`,
+              // CANCELADO
+              "cancelado": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n😔 Lamentamos informarte que tu pedido *${ped.ref}* fue cancelado.\n\nPor favor contáctanos si tienes alguna pregunta. Disculpa los inconvenientes.`,
             };
             const actualizarEstado=async(pedId,nuevoEstado,ped)=>{
               const{error}=await supabase.from("pedidos").update({
@@ -2881,18 +2892,23 @@ export default function App() {
               }
             };
             // Filtros
-            const hoy=new Date().toISOString().slice(0,10);
-            const ayer=new Date(Date.now()-86400000).toISOString().slice(0,10);
-            const semana=new Date(Date.now()-7*86400000).toISOString().slice(0,10);
+            // Usar fecha local Venezuela (UTC-4) para evitar desfase
+            const fechaLocal=(d)=>new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+            const hoy=fechaLocal(new Date());
+            const ayer=fechaLocal(new Date(Date.now()-86400000));
+            const semana=fechaLocal(new Date(Date.now()-7*86400000));
+            // Fecha del pedido también en local
+            const fechaPed=(created_at)=>created_at?fechaLocal(new Date(created_at)):"";
             // filtroPed y filtroEstado están en el estado del componente principal
             const pedFiltrados=misRestPedidos.filter(p=>{
-              const fecha=p.created_at?.slice(0,10);
+              const fecha=fechaPed(p.created_at);
               const pasaFecha=filtroPed==="hoy"?fecha===hoy:filtroPed==="ayer"?fecha===ayer:filtroPed==="semana"?fecha>=semana:true;
               const pasaEstado=filtroEstado==="todos"||p.estado===filtroEstado;
               return pasaFecha&&pasaEstado;
             });
             // Stats
-            const totalHoy=misRestPedidos.filter(p=>p.created_at?.slice(0,10)===hoy);
+            const fechaLocal2=(d)=>new Date(new Date(d).getTime()-new Date(d).getTimezoneOffset()*60000).toISOString().slice(0,10);
+            const totalHoy=misRestPedidos.filter(p=>fechaLocal2(p.created_at)===hoy);
             const ingreso=misRestPedidos.filter(p=>p.estado==="entregado").reduce((a,p)=>a+(p.total||0),0);
             const pendientes=misRestPedidos.filter(p=>!["entregado","cancelado"].includes(p.estado||"nuevo"));
             return(
@@ -3688,7 +3704,7 @@ export default function App() {
       {/* FLOATING CART BUTTON */}
       {(()=>{
         const totalItems=Object.values(cart).reduce((a,i)=>a+i.qty,0)+Object.values(cartRest).reduce((a,i)=>a+i.qty,0)+Object.values(cartNegocio).reduce((a,i)=>a+i.qty,0);
-        if(totalItems===0||["cart","cartRest","cartNegocio","cartGlobal"].includes(sheet))return null;
+        if(totalItems===0||["cart","cartRest","cartNegocio","cartGlobal","checkout"].includes(sheet))return null;
         // Contar proveedores activos
         const gruposRest={};Object.values(cartRest).forEach(i=>{const k=i.kitchen||"Sin proveedor";if(!gruposRest[k])gruposRest[k]=true;});
         const gruposNeg=cartNegocioNombre?{[cartNegocioNombre]:true}:{};
@@ -3902,7 +3918,7 @@ export default function App() {
       })()}
 
       {/* SHEET CARRITO NEGOCIO LOCAL */}
-      {sheet==="cartNegocio"&&(<div style={s.ov} onClick={()=>setSheet(null)}><div style={s.sh} onClick={e=>e.stopPropagation()}>
+      {sheet==="cartNegocio"&&(setSheet("cartGlobal"),null)}{false&&sheet==="cartNegocio_disabled"&&(<div style={s.ov} onClick={()=>setSheet(null)}><div style={s.sh} onClick={e=>e.stopPropagation()}>
         <div style={s.hnd}/>
         <div style={s.shT}>Pedido — {cartNegocioNombre}</div>
         <div style={s.ib}>
@@ -3972,7 +3988,7 @@ export default function App() {
       </div></div>)}
 
       {/* SHEET CARRITO RESTAURANTE — MULTI-PROVEEDOR v2 */}
-      {sheet==="cartRest"&&(()=>{
+      {sheet==="cartRest"&&(setSheet("cartGlobal"),null)}{false&&sheet==="cartRest_disabled"&&(()=>{
         const allRestItems=Object.values(cartRest);
         if(allRestItems.length===0)return null;
         // Agrupar por proveedor
