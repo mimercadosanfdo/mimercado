@@ -3505,74 +3505,69 @@ const VE_ESTADOS_MUNICIPIOS={
                     </div>
 
                     <label style={s.lbl}>Nombre del negocio</label>
-                    <input style={s.inp} value={perfilData.negocio||provData.negocio||""} onChange={e=>setPerfilData({...perfilData,negocio:e.target.value})} placeholder="Nombre de tu negocio"/>
+                    <input style={s.inp} value={perfilData.negocio||""} onChange={e=>{const v=e.target.value;setPerfilData(p=>({...p,negocio:v}));}} placeholder="Nombre de tu negocio"/>
                     <label style={s.lbl}>Descripción</label>
-                    <input style={s.inp} value={perfilData.descripcion_negocio||provData.descripcion_negocio||""} onChange={e=>setPerfilData({...perfilData,descripcion_negocio:e.target.value})} placeholder="Describe tu negocio..."/>
+                    <input style={s.inp} value={perfilData.descripcion_negocio||""} onChange={e=>{const v=e.target.value;setPerfilData(p=>({...p,descripcion_negocio:v}));}} placeholder="Describe tu negocio..."/>
                     <label style={s.lbl}>WhatsApp de pedidos *</label>
-                    <input style={s.inp} value={perfilData.whatsapp_negocio||provData.whatsapp_negocio||""} onChange={e=>setPerfilData({...perfilData,whatsapp_negocio:e.target.value})} placeholder="04XX-XXXXXXX"/>
+                    <input style={s.inp} value={perfilData.whatsapp_negocio||""} onChange={e=>{const v=e.target.value;setPerfilData(p=>({...p,whatsapp_negocio:v}));}} placeholder="04XX-XXXXXXX"/>
                     <label style={s.lbl}>Teléfono administrativo</label>
-                    <input style={s.inp} value={perfilData.telefono_principal||provData.telefono_principal||""} onChange={e=>setPerfilData({...perfilData,telefono_principal:e.target.value})} placeholder="Para facturación y soporte"/>
+                    <input style={s.inp} value={perfilData.telefono_principal||""} onChange={e=>{const v=e.target.value;setPerfilData(p=>({...p,telefono_principal:v}));}} placeholder="Para facturación y soporte"/>
                     <label style={s.lbl}>Instagram</label>
-                    <input style={s.inp} value={perfilData.instagram||provData.instagram||""} onChange={e=>setPerfilData({...perfilData,instagram:e.target.value})} placeholder="@minegocio"/>
+                    <input style={s.inp} value={perfilData.instagram||""} onChange={e=>{const v=e.target.value;setPerfilData(p=>({...p,instagram:v}));}} placeholder="@minegocio"/>
 
-                    {/* UBICACIÓN — para todos los tipos */}
-                    {(()=>{
-                      return <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"10px 12px",marginBottom:8}}>
-                        <div style={{fontSize:12,fontWeight:700,color:"#1d4ed8",marginBottom:8}}>📍 Ubicación del local</div>
-                        <div style={{display:"flex",gap:8,marginBottom:6}}>
-                          <div style={{flex:1}}>
-                            <label style={s.lbl}>Estado</label>
-                            <select style={{...s.inp,background:"#fff"}} value={perfilData.estado_ubicacion||provData.estado_ubicacion||""} onChange={e=>{setPerfilData({...perfilData,estado_ubicacion:e.target.value,municipio:""});}}>
-                              <option value="">Selecciona estado...</option>
-                              {Object.keys(VE_ESTADOS_MUNICIPIOS).sort().map(est=><option key={est} value={est}>{est}</option>)}
-                            </select>
-                          </div>
-                          <div style={{flex:1}}>
-                            <label style={s.lbl}>Municipio</label>
-                            <select style={{...s.inp,background:"#fff"}} value={perfilData.municipio||provData.municipio||""} onChange={e=>setPerfilData({...perfilData,municipio:e.target.value})}>
-                              <option value="">Selecciona municipio...</option>
-                              {(VE_ESTADOS_MUNICIPIOS[perfilData.estado_ubicacion||provData.estado_ubicacion||""]||[]).map(m=><option key={m} value={m}>{m}</option>)}
-                            </select>
-                          </div>
+                    {/* UBICACIÓN */}
+                    <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"10px 12px",marginBottom:8}}>
+                      <div style={{fontSize:12,fontWeight:700,color:"#1d4ed8",marginBottom:8}}>📍 Ubicación del local</div>
+                      <div style={{display:"flex",gap:8,marginBottom:6}}>
+                        <div style={{flex:1}}>
+                          <label style={s.lbl}>Estado</label>
+                          <select style={{...s.inp,background:"#fff"}} value={perfilData.estado_ubicacion||""} onChange={e=>setPerfilData(p=>({...p,estado_ubicacion:e.target.value,municipio:""}))}>
+                            <option value="">Selecciona estado...</option>
+                            {Object.keys(VE_ESTADOS_MUNICIPIOS).sort().map(est=><option key={est} value={est}>{est}</option>)}
+                          </select>
                         </div>
-                        <label style={s.lbl}>Parroquia</label>
-                        <input style={s.inp} value={perfilData.parroquia||provData.parroquia||""} onChange={e=>setPerfilData({...perfilData,parroquia:e.target.value})} placeholder="Parroquia San Fernando"/>
-                        <label style={s.lbl}>Dirección exacta</label>
-                        <input style={s.inp} value={perfilData.direccion_fisica||provData.direccion_fisica||""} onChange={e=>setPerfilData({...perfilData,direccion_fisica:e.target.value})} placeholder="Calle Bolívar #23, frente al parque..."/>
-
-                        {/* COORDENADAS GPS */}
-                        <label style={s.lbl}>Coordenadas GPS</label>
-                        <div style={{display:"flex",gap:6,marginBottom:6}}>
-                          <input style={{...s.inp,flex:1,marginBottom:0}} type="number" step="0.000001" placeholder="Latitud" value={perfilData.latitud||provData.latitud||""} onChange={e=>setPerfilData({...perfilData,latitud:parseFloat(e.target.value)||null})}/>
-                          <input style={{...s.inp,flex:1,marginBottom:0}} type="number" step="0.000001" placeholder="Longitud" value={perfilData.longitud||provData.longitud||""} onChange={e=>setPerfilData({...perfilData,longitud:parseFloat(e.target.value)||null})}/>
+                        <div style={{flex:1}}>
+                          <label style={s.lbl}>Municipio</label>
+                          <select style={{...s.inp,background:"#fff"}} value={perfilData.municipio||""} onChange={e=>setPerfilData(p=>({...p,municipio:e.target.value}))}>
+                            <option value="">Selecciona municipio...</option>
+                            {(VE_ESTADOS_MUNICIPIOS[perfilData.estado_ubicacion||""]||[]).map(m=><option key={m} value={m}>{m}</option>)}
+                          </select>
                         </div>
-                        <button onClick={()=>{
-                          if(!navigator.geolocation)return setPmsg("⚠️ Tu navegador no soporta geolocalización");
-                          setPmsg("📡 Obteniendo ubicación...");
-                          navigator.geolocation.getCurrentPosition(
-                            (pos)=>{
-                              const lat=parseFloat(pos.coords.latitude.toFixed(6));
-                              const lng=parseFloat(pos.coords.longitude.toFixed(6));
-                              setPerfilData(p=>({...p,latitud:lat,longitud:lng}));
-                              setPmsg(`✅ Ubicación obtenida: ${lat}, ${lng}`);
-                            },
-                            (err)=>{
-                              if(err.code===1)setPmsg("⚠️ Permiso de ubicación denegado. Actívalo en tu navegador.");
-                              else setPmsg("⚠️ No se pudo obtener la ubicación. Intenta de nuevo.");
-                            },
-                            {enableHighAccuracy:true,timeout:10000}
-                          );
-                        }} style={{width:"100%",background:"#1d4ed8",color:"#fff",border:"none",borderRadius:10,padding:"10px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                          📍 Obtener mi ubicación actual (GPS)
-                        </button>
-                        {(perfilData.latitud||provData.latitud)&&(perfilData.longitud||provData.longitud)&&(
-                          <a href={`https://maps.google.com/?q=${perfilData.latitud||provData.latitud},${perfilData.longitud||provData.longitud}`} target="_blank" rel="noreferrer"
-                            style={{display:"block",textAlign:"center",fontSize:11,color:"#1d4ed8",marginTop:6,textDecoration:"underline"}}>
-                            🗺️ Ver en Google Maps
-                          </a>
-                        )}
                       </div>
-                    ;})()}
+                      <label style={s.lbl}>Parroquia</label>
+                      <input style={s.inp} value={perfilData.parroquia||""} onChange={e=>{const v=e.target.value;setPerfilData(p=>({...p,parroquia:v}));}} placeholder="Parroquia San Fernando"/>
+                      <label style={s.lbl}>Dirección exacta</label>
+                      <input style={s.inp} value={perfilData.direccion_fisica||""} onChange={e=>{const v=e.target.value;setPerfilData(p=>({...p,direccion_fisica:v}));}} placeholder="Calle Bolívar #23, frente al parque..."/>
+                      <label style={s.lbl}>Coordenadas GPS</label>
+                      <div style={{display:"flex",gap:6,marginBottom:6}}>
+                        <input style={{...s.inp,flex:1,marginBottom:0}} type="number" step="0.000001" placeholder="Latitud" value={perfilData.latitud||""} onChange={e=>{const v=parseFloat(e.target.value)||null;setPerfilData(p=>({...p,latitud:v}));}}/>
+                        <input style={{...s.inp,flex:1,marginBottom:0}} type="number" step="0.000001" placeholder="Longitud" value={perfilData.longitud||""} onChange={e=>{const v=parseFloat(e.target.value)||null;setPerfilData(p=>({...p,longitud:v}));}}/>
+                      </div>
+                      <button onClick={()=>{
+                        if(!navigator.geolocation)return setPmsg("⚠️ Tu navegador no soporta geolocalización");
+                        setPmsg("📡 Obteniendo ubicación...");
+                        navigator.geolocation.getCurrentPosition(
+                          (pos)=>{
+                            const lat=parseFloat(pos.coords.latitude.toFixed(6));
+                            const lng=parseFloat(pos.coords.longitude.toFixed(6));
+                            setPerfilData(p=>({...p,latitud:lat,longitud:lng}));
+                            setPmsg(`✅ Ubicación obtenida: ${lat}, ${lng}`);
+                          },
+                          (err)=>{
+                            if(err.code===1)setPmsg("⚠️ Permiso de ubicación denegado.");
+                            else setPmsg("⚠️ No se pudo obtener la ubicación.");
+                          },
+                          {enableHighAccuracy:true,timeout:10000}
+                        );
+                      }} style={{width:"100%",background:"#1d4ed8",color:"#fff",border:"none",borderRadius:10,padding:"10px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                        📍 Obtener mi ubicación actual (GPS)
+                      </button>
+                      {perfilData.latitud&&perfilData.longitud&&(
+                        <a href={`https://maps.google.com/?q=${perfilData.latitud},${perfilData.longitud}`} target="_blank" rel="noreferrer" style={{display:"block",textAlign:"center",fontSize:11,color:"#1d4ed8",marginTop:6,textDecoration:"underline"}}>
+                          🗺️ Ver en Google Maps
+                        </a>
+                      )}
+                    </div>
 
                     <button onClick={async()=>{
                       if(!provData?.id){alert("Error: no hay sesión activa");return;}
