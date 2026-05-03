@@ -1,5 +1,5 @@
-// BUILD:1777851574
-"use client"; // Apure Market v1777851574
+// BUILD:1777851793
+"use client"; // Apure Market v1777851793
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1098,6 +1098,18 @@ const VE_ESTADOS_MUNICIPIOS={
   const togglePausa=async(id,enPausa)=>{await supabase.from("proveedores").update({en_pausa:!enPausa}).eq("id",id);loadAdmin();loadAll();};
   const deleteProveedor=(id)=>{setConfirmModal({msg:"¿Eliminar este proveedor? No se puede deshacer.",onOk:async()=>{await supabase.from("productos_proveedor").delete().eq("proveedor_id",id);await supabase.from("proveedores").delete().eq("id",id);loadAdmin();loadAll();}});};
   const toggleMiEstado=async()=>{const n=!provData.activo;await supabase.from("proveedores").update({activo:n}).eq("id",provData.id);setProvData({...provData,activo:n});loadAll();};
+  const estaAbiertoAhora=(desde,hasta,activoManual)=>{
+    if(activoManual===false)return false; // forzado cerrado manualmente
+    if(!desde||!hasta)return activoManual!==false; // sin horario = depende solo del manual
+    const ahora=new Date();
+    const [dh,dm]=desde.split(":").map(Number);
+    const [hh,hm]=hasta.split(":").map(Number);
+    const minAhora=ahora.getHours()*60+ahora.getMinutes();
+    const minDesde=dh*60+dm;
+    const minHasta=hh*60+hm;
+    if(minHasta>minDesde)return minAhora>=minDesde&&minAhora<=minHasta;
+    return minAhora>=minDesde||minAhora<=minHasta; // cruza medianoche
+  };
 
   const publishProd=async()=>{
     if(!newProd.nombre||!newProd.precio)return setPmsg("Completa nombre y precio");
@@ -2597,7 +2609,7 @@ const VE_ESTADOS_MUNICIPIOS={
                 <div style={{fontSize:36,filter:"drop-shadow(0 2px 6px rgba(0,0,0,0.3))"}}>{categoriaServicio.icon}</div>
                 <div>
                   <div style={{fontSize:20,fontWeight:900,letterSpacing:-0.5}}>{categoriaServicio.label}</div>
-                  <div style={{fontSize:11,color:"rgba(255,255,255,0.7)"}}>{ubiActiva.municipio} · {proveedoresServicio.length} proveedor{proveedoresServicio.length!==1?"es":""} disponible{proveedoresServicio.length!==1?"s":""}</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.7)"}}>{ubiActiva.municipio} · {(()=>{const ab=proveedoresServicio.filter(p=>estaAbiertoAhora(p.horario_desde,p.horario_hasta,p.activo)).length;const tot=proveedoresServicio.length;return ab>0?`${ab} disponible${ab!==1?"s":""} ahora · ${tot} en total`:`${tot} proveedor${tot!==1?"es":""}`;})()}</div>
                 </div>
               </div>
             </div>
@@ -2625,11 +2637,17 @@ const VE_ESTADOS_MUNICIPIOS={
                       {proveedorServicioActivo.direccion_fisica&&<span style={{background:"#f8fafc",color:"#475569",fontSize:11,padding:"4px 10px",borderRadius:20,border:"1px solid #e2e8f0"}}>🏢 {proveedorServicioActivo.direccion_fisica}</span>}
                       {proveedorServicioActivo.instagram&&<a href={`https://instagram.com/${proveedorServicioActivo.instagram.replace("@","")}`} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} style={{background:"#fdf2f8",color:"#9d174d",fontSize:11,padding:"4px 10px",borderRadius:20,border:"1px solid #fbcfe8",textDecoration:"none",fontWeight:600}}>📸 {proveedorServicioActivo.instagram}</a>}
                     </div>
-                    {(proveedorServicioActivo.horarios_atencion||proveedorServicioActivo.horario_desde)&&(
-                      <div style={{background:"#eff6ff",borderRadius:10,padding:"8px 12px",fontSize:12,color:"#1d4ed8",fontWeight:600,display:"flex",alignItems:"center",gap:6}}>
-                        🕐 {proveedorServicioActivo.horarios_atencion||(proveedorServicioActivo.horario_desde&&proveedorServicioActivo.horario_hasta?`${proveedorServicioActivo.horario_desde} – ${proveedorServicioActivo.horario_hasta}${proveedorServicioActivo.horario_desc?" ("+proveedorServicioActivo.horario_desc+")":""}`:"")}
-                      </div>
-                    )}
+                    {(()=>{
+                      const ab=estaAbiertoAhora(proveedorServicioActivo.horario_desde,proveedorServicioActivo.horario_hasta,proveedorServicioActivo.activo);
+                      const horTxt=proveedorServicioActivo.horarios_atencion||(proveedorServicioActivo.horario_desde&&proveedorServicioActivo.horario_hasta?`${proveedorServicioActivo.horario_desde} – ${proveedorServicioActivo.horario_hasta}${proveedorServicioActivo.horario_desc?" ("+proveedorServicioActivo.horario_desc+")":""}`:null);
+                      return(<>
+                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:horTxt?4:0}}>
+                          <span style={{background:ab?"#dcfce7":"#fee2e2",color:ab?"#15803d":"#dc2626",fontSize:11,fontWeight:700,padding:"4px 12px",borderRadius:20,border:`1px solid ${ab?"#86efac":"#fca5a5"}`}}>{ab?"● Abierto ahora":"● Cerrado ahora"}</span>
+                          {!ab&&horTxt&&<span style={{fontSize:11,color:"#64748b"}}>Atiende: {horTxt}</span>}
+                        </div>
+                        {ab&&horTxt&&<div style={{background:"#eff6ff",borderRadius:10,padding:"6px 12px",fontSize:11,color:"#1d4ed8",fontWeight:600,display:"flex",alignItems:"center",gap:6,marginTop:4}}>🕐 {horTxt}</div>}
+                      </>);
+                    })()}
                   </div>
 
                   {/* DATOS DEL CLIENTE */}
@@ -2812,7 +2830,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
                       </button>
                     </div>
                   ):(
-                    (proveedoresServicio.filter(p=>!searchServicios||(p.negocio+p.especialidad+p.descripcion_negocio).toLowerCase().includes(searchServicios.toLowerCase()))).map(prov=>(
+                    ([...proveedoresServicio].filter(p=>!searchServicios||(p.negocio+(p.especialidad||"")+(p.descripcion_negocio||"")).toLowerCase().includes(searchServicios.toLowerCase())).sort((a,b)=>estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo)-estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo))).map(prov=>(
                       /* TARJETA CLICKEABLE — abre detalle del proveedor */
                       <div key={prov.id} onClick={()=>setProveedorServicioActivo(prov)} style={{background:"#fff",borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.08)",border:"1px solid #f1f5f9",cursor:"pointer",transition:"box-shadow 0.15s"}}>
                         <div style={{display:"flex",gap:12,alignItems:"center"}}>
@@ -2829,9 +2847,11 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
                             {prov.descripcion_negocio&&<div style={{fontSize:11,color:"#94a3b8",marginTop:2,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{prov.descripcion_negocio}</div>}
                           </div>
                           <div style={{flexShrink:0,textAlign:"center"}}>
-                            <div style={{width:10,height:10,borderRadius:"50%",background:prov.activo?"#22c55e":"#94a3b8",display:"inline-block",boxShadow:prov.activo?"0 0 6px #22c55e":"none",marginBottom:2}}/>
-                            <div style={{fontSize:9,color:prov.activo?"#15803d":"#94a3b8",fontWeight:600,display:"block"}}>{prov.activo?"Disponible":"Cerrado"}</div>
-                            <div style={{fontSize:10,color:"#94a3b8",marginTop:4}}>Ver →</div>
+                            {(()=>{const ab=estaAbiertoAhora(prov.horario_desde,prov.horario_hasta,prov.activo);return(<>
+                            <span style={{background:ab?"#dcfce7":"#fee2e2",color:ab?"#15803d":"#dc2626",fontSize:9,fontWeight:700,padding:"3px 7px",borderRadius:10,display:"block",textAlign:"center",marginBottom:4}}>{ab?"● Abierto":"● Cerrado"}</span>
+                            {!ab&&(prov.horario_desde)&&<div style={{fontSize:9,color:"#94a3b8",textAlign:"center",lineHeight:1.3}}>🕐 {prov.horario_desde}–{prov.horario_hasta}</div>}
+                            <div style={{fontSize:10,color:"#94a3b8",marginTop:4,textAlign:"center"}}>Ver →</div>
+                          </>);})()}
                           </div>
                         </div>
                         {(prov.precio_consulta||prov.tarifa_referencial)&&(
