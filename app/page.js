@@ -1,5 +1,5 @@
-// BUILD:1776600000
-"use client"; // Apure Market v1776600000
+// BUILD:1777843987
+"use client"; // Apure Market v1777843987
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
