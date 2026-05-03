@@ -1,5 +1,5 @@
-// BUILD:1777844889
-"use client"; // Apure Market v1777844889
+// BUILD:1777847901
+"use client"; // Apure Market v1777847901
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1027,8 +1027,8 @@ const VE_ESTADOS_MUNICIPIOS={
       examenes:provForm.examenes||null,
       municipio:provForm.municipio||ubiActiva.municipio||"San Fernando",
       estado_ubicacion:provForm.estado_ubicacion||ubiActiva.estado||"Apure",
-      suscripcion_activa:true,meses_gratis_restantes:3,
-      suscripcion_vence:new Date(Date.now()+90*24*60*60*1000).toISOString().split("T")[0]
+      suscripcion_activa:true,meses_gratis_restantes:1,
+      suscripcion_vence:new Date(Date.now()+45*24*60*60*1000).toISOString().split("T")[0]
     });
     setLoading(false);
     if(error)return setPmsg(error.message.includes("unique")?"Ese correo ya está registrado":"Error al registrarse: "+error.message);
@@ -1547,7 +1547,7 @@ const VE_ESTADOS_MUNICIPIOS={
             <div style={{width:44,height:44,borderRadius:12,background:"rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🏪</div>
             <div style={{flex:1}}>
               <div style={{fontSize:14,fontWeight:900,color:"#fff",letterSpacing:-0.3}}>¿Tienes un negocio?</div>
-              <div style={{fontSize:11,color:"rgba(255,255,255,0.75)",fontWeight:400,marginTop:2}}>Únete gratis · 3 meses de prueba sin costo</div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.75)",fontWeight:400,marginTop:2}}>Únete gratis · 45 días de prueba sin costo</div>
             </div>
             <span style={{color:"rgba(255,255,255,0.6)",fontSize:20}}>›</span>
           </div>
@@ -3000,7 +3000,7 @@ const VE_ESTADOS_MUNICIPIOS={
                 </div>
               </>);
             })()}
-            <div style={{...s.ib,background:"#f0fdf4",marginBottom:8}}><div style={{fontSize:12,color:"#15803d"}}>🎁 Los primeros 3 meses son completamente gratis. Después $8/mes.</div></div>
+            <div style={{...s.ib,background:"#f0fdf4",marginBottom:8}}><div style={{fontSize:12,color:"#15803d"}}>🎁 45 días gratis sin compromiso. Después $5/mes (restaurantes y negocios) o $3/mes (servicios).</div></div>
             <label style={s.lbl}>Logo del negocio</label>
             {logoPreview&&<img src={logoPreview} alt="" style={{width:60,height:60,borderRadius:"50%",objectFit:"cover",marginBottom:8}}/>}
             <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setLogoFile(f);setLogoPreview(URL.createObjectURL(f));}}}/>
@@ -3046,7 +3046,7 @@ const VE_ESTADOS_MUNICIPIOS={
                   <span style={{fontSize:14}}>🎁</span>
                   <span style={{fontSize:11,color:"rgba(255,255,255,0.8)",fontWeight:600}}>Período de prueba gratuito</span>
                 </div>
-                <span style={{fontSize:12,fontWeight:800,color:"#4ade80",background:"rgba(74,222,128,0.15)",padding:"3px 10px",borderRadius:20}}>{provData.meses_gratis_restantes} mes{provData.meses_gratis_restantes!==1?"es":""} restante{provData.meses_gratis_restantes!==1?"s":""}</span>
+                <span style={{fontSize:12,fontWeight:800,color:"#4ade80",background:"rgba(74,222,128,0.15)",padding:"3px 10px",borderRadius:20}}>{provData.meses_gratis_restantes===1?"~45 días":provData.meses_gratis_restantes+" meses"} restante{provData.meses_gratis_restantes!==1?"s":""}</span>
               </div>
             ):(
               <div style={{background:provData.suscripcion_pagada?"rgba(37,211,102,0.08)":"rgba(239,68,68,0.1)",border:`1px solid ${provData.suscripcion_pagada?"rgba(37,211,102,0.25)":"rgba(239,68,68,0.3)"}`,borderRadius:12,padding:"9px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
