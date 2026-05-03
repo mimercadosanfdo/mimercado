@@ -3254,7 +3254,7 @@ const VE_ESTADOS_MUNICIPIOS={
                     <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                       <button onClick={()=>{setEditingProdId(`mod_${p.id}`);setNewProd({nombre:p.nombre||"",marca:p.marca||"",presentacion:p.presentacion||"",descripcion:p.descripcion||"",precio:String(p.precio||""),unidad:p.unidad||"porción",categoria:p.categoria||"Comida preparada",stock:p.stock||1,hi:p.horario_inicio||"08:00",hf:p.horario_fin||"18:00",permanente:p.permanente||false});}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#eff6ff",color:"#1d4ed8"}}>✏️ Modificar</button>
                       <button onClick={()=>toggleDisp(p.id,p.disponible)} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:p.disponible?"#fff7ed":"#f0fdf4",color:p.disponible?"#c2410c":"#15803d"}}>{p.disponible?"⏸️ Pausar":"▶️ Activar"}</button>
-                      <button onClick={()=>setConfirmModal({msg:"¿Eliminar este producto? Esta acción no se puede deshacer.",onOk:async()=>{await supabase.from("productos_proveedor").delete().eq("id",p.id);loadMyProds(provData.id);loadAll();}})} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fee2e2",color:"#be123c"}}>🗑️ Eliminar</button>
+                      <button onClick={()=>setConfirmModal({msg:"¿Eliminar este producto? Esta acción no se puede deshacer.",onOk:async()=>{await supabase.from("productos_proveedor").delete().eq("id",p.id);setMyProds(prev=>prev.filter(x=>x.id!==p.id));loadAll();}})} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fee2e2",color:"#be123c"}}>🗑️ Eliminar</button>
                     </div>
                     )}
                   </div>
@@ -4800,6 +4800,7 @@ const VE_ESTADOS_MUNICIPIOS={
               <div style={{fontSize:17,fontWeight:800,color:"#0f172a",marginBottom:4}}>
                 {esMultiple?`🛒 Tu carrito — ${proveedores.length} tiendas`:"🛒 Tu pedido"}
               </div>
+              {pmsg&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"9px 12px",marginBottom:10,fontSize:13,color:"#dc2626",fontWeight:600}}>{pmsg}</div>}
               {esMultiple&&(
                 <div style={{fontSize:12,color:"#64748b",background:"#f8fafc",borderRadius:10,padding:"8px 12px",marginBottom:12,lineHeight:1.5}}>
                   Cada tienda recibirá su pedido de forma independiente.
@@ -4912,13 +4913,13 @@ const VE_ESTADOS_MUNICIPIOS={
                           {!zonaSel&&<div style={{fontSize:11,color:"#c2410c",background:"#fff7ed",borderRadius:8,padding:"6px 10px",marginTop:8}}>⚠️ Selecciona tu zona de entrega arriba para continuar</div>}
                           <button
                             style={{width:"100%",background:datosOk&&zonaSel?"#f59e0b":"#94a3b8",color:datosOk&&zonaSel?"#0f172a":"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:13,fontWeight:800,cursor:datosOk&&zonaSel?"pointer":"not-allowed",marginTop:10,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}
-                            onClick={()=>enviarProveedor(prov,numPed)}>
+                            onClick={()=>{if(!datosOk){setPmsg("⚠️ Completa tu nombre y teléfono antes de enviar el pedido");return;}if(!zonaSel){setPmsg("⚠️ Selecciona tu zona de entrega para continuar");return;}enviarProveedor(prov,numPed);}}>
                             📲 Enviar pedido al Supermercado
                           </button>
                         </>
                         :!prov.wa
                           ?<div style={{...s.msg(false),marginTop:8}}>⚠️ {prov.nombre} no tiene WhatsApp configurado</div>
-                          :<button style={{width:"100%",background:datosOk?"#25D366":"#94a3b8",color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:13,fontWeight:800,cursor:datosOk?"pointer":"not-allowed",marginTop:10,display:"flex",alignItems:"center",justifyContent:"center",gap:6}} onClick={()=>enviarProveedor(prov,numPed)}>
+                          :<button style={{width:"100%",background:datosOk?"#25D366":"#94a3b8",color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:13,fontWeight:800,cursor:datosOk?"pointer":"not-allowed",marginTop:10,display:"flex",alignItems:"center",justifyContent:"center",gap:6}} onClick={()=>{if(!datosOk){setPmsg("⚠️ Completa tu nombre y teléfono antes de enviar el pedido");return;}enviarProveedor(prov,numPed);}}>
                             📲 Pedir a {prov.nombre}
                           </button>
                     }
@@ -5097,6 +5098,7 @@ const VE_ESTADOS_MUNICIPIOS={
               <div style={{fontSize:17,fontWeight:800,color:"#0f172a",marginBottom:4}}>
                 {esMultiple?"🛒 Pedidos con varios proveedores":"🛒 Tu pedido"}
               </div>
+              {pmsg&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"9px 12px",marginBottom:10,fontSize:13,color:"#dc2626",fontWeight:600}}>{pmsg}</div>}
               {esMultiple&&(
                 <div style={{fontSize:12,color:"#64748b",background:"#f8fafc",borderRadius:10,padding:"8px 12px",marginBottom:12,lineHeight:1.5}}>
                   Tienes pedidos con <strong>{proveedores.length} proveedores</strong>. Cada uno recibirá su pedido de forma independiente.
@@ -5214,7 +5216,7 @@ const VE_ESTADOS_MUNICIPIOS={
                       ?<div style={{...s.msg(false),marginTop:8}}>⚠️ {prov.nombre} no tiene WhatsApp configurado aún</div>
                       :<button
                         style={{width:"100%",background:datosOk?"#25D366":"#94a3b8",color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:13,fontWeight:800,cursor:datosOk?"pointer":"not-allowed",marginTop:10,display:"flex",alignItems:"center",justifyContent:"center",gap:6,transition:"background 0.2s"}}
-                        onClick={()=>enviarAProveedor(prov)}>
+                        onClick={()=>{if(!datosOk){setPmsg("⚠️ Completa tu nombre y teléfono antes de enviar el pedido");return;}enviarAProveedor(prov);}}>
                         📲 Pedir a {prov.nombre}
                       </button>
                     }
