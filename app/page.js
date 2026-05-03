@@ -1,5 +1,5 @@
-// BUILD:1777847901
-"use client"; // Apure Market v1777847901
+// BUILD:1777848889
+"use client"; // Apure Market v1777848889
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -325,6 +325,7 @@ const VE_ESTADOS_MUNICIPIOS={
   const [clasifFotosPrev,setClasifFotosPrev]=useState([null,null,null,null]);
   const [serviciosCom,setServiciosCom]=useState([]);
   const [categoriaServicio,setCategoriaServicio]=useState(null); // categoria activa en servicios
+  const [searchServicios,setSearchServicios]=useState("");
   const [proveedoresServicio,setProveedoresServicio]=useState([]); // proveedores filtrados por categoria
   const [rutasTransporte,setRutasTransporte]=useState([]); // rutas interurbanas
   const [proveedorServicioActivo,setProveedorServicioActivo]=useState(null); // proveedor seleccionado
@@ -2522,7 +2523,7 @@ const VE_ESTADOS_MUNICIPIOS={
               <div style={{fontSize:10,fontWeight:800,color:"#94a3b8",letterSpacing:1.5,marginBottom:10,textTransform:"uppercase"}}>🚗 Transporte</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
                 {SERVICIO_CATEGORIAS.filter(c=>c.tipo==="transporte").map(cat=>(
-                  <button key={cat.id} onClick={()=>{setCategoriaServicio(cat);setProveedoresServicio([]);if(cat.id==="rutas")loadRutasTransporte();else loadProveedoresServicio(cat.id);}}
+                  <button key={cat.id} onClick={()=>{setCategoriaServicio(cat);setProveedoresServicio([]);setSearchServicios("");if(cat.id==="rutas")loadRutasTransporte();else loadProveedoresServicio(cat.id);}}
                     style={{background:cat.bg,border:"none",borderRadius:16,padding:"16px 12px",textAlign:"left",cursor:"pointer",boxShadow:"0 4px 12px rgba(0,0,0,0.15)",position:"relative",minHeight:90}}>
                     <div style={{fontSize:28,marginBottom:8,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.2))"}}>{cat.icon}</div>
                     <div style={{fontSize:13,fontWeight:800,color:"#fff",letterSpacing:-0.2}}>{cat.label}</div>
@@ -2536,7 +2537,7 @@ const VE_ESTADOS_MUNICIPIOS={
               <div style={{fontSize:10,fontWeight:800,color:"#94a3b8",letterSpacing:1.5,marginBottom:10,textTransform:"uppercase"}}>🏥 Salud</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
                 {SERVICIO_CATEGORIAS.filter(c=>c.tipo==="salud").map(cat=>(
-                  <button key={cat.id} onClick={()=>{setCategoriaServicio(cat);setProveedoresServicio([]);loadProveedoresServicio(cat.id);}}
+                  <button key={cat.id} onClick={()=>{setCategoriaServicio(cat);setProveedoresServicio([]);setSearchServicios("");loadProveedoresServicio(cat.id);}}
                     style={{background:cat.bg,border:"none",borderRadius:16,padding:"16px 12px",textAlign:"left",cursor:"pointer",boxShadow:"0 4px 12px rgba(0,0,0,0.15)",position:"relative",minHeight:90}}>
                     <div style={{fontSize:28,marginBottom:8,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.2))"}}>{cat.icon}</div>
                     <div style={{fontSize:13,fontWeight:800,color:"#fff",letterSpacing:-0.2}}>{cat.label}</div>
@@ -2550,7 +2551,7 @@ const VE_ESTADOS_MUNICIPIOS={
               <div style={{fontSize:10,fontWeight:800,color:"#94a3b8",letterSpacing:1.5,marginBottom:10,textTransform:"uppercase"}}>🔧 Otros servicios</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
                 {SERVICIO_CATEGORIAS.filter(c=>c.tipo==="hogar").map(cat=>(
-                  <button key={cat.id} onClick={()=>{setCategoriaServicio(cat);setProveedoresServicio([]);loadProveedoresServicio(cat.id);}}
+                  <button key={cat.id} onClick={()=>{setCategoriaServicio(cat);setProveedoresServicio([]);setSearchServicios("");loadProveedoresServicio(cat.id);}}
                     style={{background:cat.bg,border:"none",borderRadius:16,padding:"16px 12px",textAlign:"left",cursor:"pointer",boxShadow:"0 4px 12px rgba(0,0,0,0.15)",position:"relative",minHeight:90}}>
                     <div style={{fontSize:28,marginBottom:8,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.2))"}}>{cat.icon}</div>
                     <div style={{fontSize:13,fontWeight:800,color:"#fff",letterSpacing:-0.2}}>{cat.label}</div>
@@ -2648,7 +2649,13 @@ const VE_ESTADOS_MUNICIPIOS={
               {/* LISTA PROVEEDORES — para todas las demás categorías */}
               {categoriaServicio.id!=="rutas"&&(
                 <>
-                  {proveedoresServicio.length===0?(
+                  <input
+                    style={{width:"100%",padding:"10px 14px",borderRadius:12,border:"1px solid #e2e8f0",fontSize:13,marginBottom:12,boxSizing:"border-box",outline:"none"}}
+                    placeholder={`Buscar ${categoriaServicio.label.toLowerCase()}... (nombre, especialidad)`}
+                    value={searchServicios||""}
+                    onChange={e=>setSearchServicios(e.target.value)}
+                  />
+                  {(proveedoresServicio.filter(p=>!searchServicios||(p.negocio+p.especialidad+p.descripcion_negocio).toLowerCase().includes(searchServicios.toLowerCase()))).length===0?(
                     <div style={{textAlign:"center",padding:"40px 20px",color:"#94a3b8"}}>
                       <div style={{fontSize:48,marginBottom:12}}>{categoriaServicio.icon}</div>
                       <div style={{fontSize:15,fontWeight:700,color:"#374151",marginBottom:6}}>Próximamente en {ubiActiva.municipio}</div>
@@ -2658,7 +2665,7 @@ const VE_ESTADOS_MUNICIPIOS={
                       </button>
                     </div>
                   ):(
-                    proveedoresServicio.map(prov=>(
+                    (proveedoresServicio.filter(p=>!searchServicios||(p.negocio+p.especialidad+p.descripcion_negocio).toLowerCase().includes(searchServicios.toLowerCase()))).map(prov=>(
                       <div key={prov.id} style={{background:"#fff",borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.08)",border:"1px solid #f1f5f9"}}>
                         {/* HEADER PROVEEDOR */}
                         <div style={{display:"flex",gap:12,alignItems:"flex-start",marginBottom:12}}>
@@ -2668,10 +2675,10 @@ const VE_ESTADOS_MUNICIPIOS={
                           }
                           <div style={{flex:1,minWidth:0}}>
                             <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                              <div style={{fontSize:15,fontWeight:800,color:"#0f172a"}}>{prov.negocio}</div>
+                              <div style={{fontSize:16,fontWeight:800,color:"#0f172a"}}>{prov.negocio}</div>
                               <span style={{background:"#dcfce7",color:"#15803d",fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20}}>✓ Verificado</span>
                             </div>
-                            {prov.especialidad&&<div style={{fontSize:11,color:"#6366f1",fontWeight:600,marginTop:2}}>{prov.especialidad}</div>}
+                            {prov.especialidad&&<div style={{fontSize:12,color:"#475569",fontWeight:600,marginTop:3}}>{prov.especialidad}</div>}
                             {prov.descripcion_negocio&&<div style={{fontSize:11,color:"#64748b",marginTop:3,lineHeight:1.4}}>{prov.descripcion_negocio}</div>}
                           </div>
                           <div style={{flexShrink:0,textAlign:"right"}}>
@@ -2964,8 +2971,10 @@ const VE_ESTADOS_MUNICIPIOS={
                 </div>
               )}
             </>)}
+            {["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provForm.tipo_negocio)&&(<>
             <label style={s.lbl}>Dirección física</label>
             <input style={s.inp} placeholder="Calle Comercio #47, Local 3..." value={provForm.direccion_fisica||""} onChange={e=>setProvForm({...provForm,direccion_fisica:e.target.value})}/>
+            </>)}
 
             {/* UBICACIÓN OBLIGATORIA */}
             <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:"12px",marginBottom:8}}>
@@ -3164,10 +3173,13 @@ const VE_ESTADOS_MUNICIPIOS={
                 <input style={s.inp} placeholder="Ingredientes, sabor..." value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
                 <label style={s.lbl}>Categoría *</label>
                 {(()=>{
+                  const SERV_CATS={"Médico / Consultorio":["Consulta médica","Procedimiento","Examen","Certificado médico","Otro"],"Laboratorio clínico":["Hematología","Bioquímica","Orina y heces","Hormonas","Microbiología","Perfil completo","Otros exámenes"],"Odontología":["Consulta","Limpieza dental","Extracción","Ortodoncia","Blanqueamiento","Radiografía","Otro"],"Enfermería a domicilio":["Cuidado diario","Inyección","Curación","Toma de presión","Otro"],"Farmacia":["Medicamentos","Suplementos","Insumos médicos","Otro"],"Peluquería / Barbería":["Corte caballero","Corte dama","Tinte","Tratamiento","Manicure","Pedicure","Otro"],"Manicure / Pedicure":["Manicure","Pedicure","Uñas acrílicas","Nail art","Otro"],"Maquillaje y estética":["Maquillaje","Depilación","Facial","Otro"],"Plomería":["Reparación","Instalación","Destape","Diagnóstico","Otro"],"Electricidad":["Reparación","Instalación","Diagnóstico","Mantenimiento","Otro"],"Pintura y construcción":["Pintura interior","Pintura exterior","Remodelación","Otro"],"Limpieza del hogar":["Limpieza básica","Limpieza profunda","Limpieza de oficina","Otro"],"Carpintería / Herrería":["Fabricación","Reparación","Instalación","Otro"],"Clases y tutorías":["Matemáticas","Física","Química","Inglés","Otra materia"],"Idiomas":["Inglés","Francés","Otro idioma"],"Mecánica automotriz":["Cambio de aceite","Frenos","Motor","Suspensión","Diagnóstico","Otro"],"Electricidad automotriz":["Diagnóstico","Reparación","Instalación de accesorios","Otro"],"Lavandería":["Lavado básico","Lavado y planchado","Ropa de cama","Otro"],"Fotografía / Video":["Sesión fotográfica","Video evento","Edición","Otro"],"Mototaxi":["Traslado de persona","Delivery","Encomienda","Otro"],"Taxi":["Traslado local","Traslado interurbano","Aeropuerto","Otro"],"Transporte interurbano (rutas)":["Pasaje","Encomienda","Ruta especial","Otro"],"Encomiendas y mudanzas":["Encomienda local","Encomienda foránea","Mudanza","Otro"],"Otro":["Servicio principal","Servicio adicional","Consulta","Otro"]};
                   const prodCats=provData.tipo_negocio==="Tienda / Negocio local"
                     ?(provData.categorias?.length>0?provData.categorias:NEGOCIO_CATS.map(c=>c.cat))
                     :provData.tipo_negocio==="Restaurante / Cocina / Comida"
                     ?(provData.categorias?.length>0?provData.categorias:NEGOCIO_CATS_RESTAURANTE)
+                    :SERV_CATS[provData.tipo_negocio]
+                    ?(SERV_CATS[provData.tipo_negocio])
                     :(provData.categorias?.length>0?provData.categorias:PROV_CATS);
                   return(<select style={{...s.inp,background:"#fff"}} value={newProd.categoria} onChange={e=>setNewProd({...newProd,categoria:e.target.value})}>{prodCats.map(c=><option key={c}>{c}</option>)}</select>);
                 })()}
