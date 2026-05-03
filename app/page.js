@@ -393,6 +393,7 @@ const VE_ESTADOS_MUNICIPIOS={
   const [pmsg,setPmsg]=useState("");
   const [provTab,setProvTab]=useState("estado");
   const [adminSec,setAdminSec]=useState("dashboard");
+  const [confirmModal,setConfirmModal]=useState(null); // {msg,onOk}
   const [newSP,setNewSP]=useState({nombre:"",marca:"",presentacion:"",descripcion:"",precio:"",unidad:"kg",emoji:"🛒",categoria:SUPER_CATS[0],es_oferta:false});
   const [editingSPId,setEditingSPId]=useState(null);
   const [editSPData,setEditSPData]=useState({});
@@ -885,8 +886,7 @@ const VE_ESTADOS_MUNICIPIOS={
     const{error}=await supabase.from("pedidos").insert(payload);
     if(error){
       console.error("Error guardando pedido supermercado:",error.message);
-      // Mostrar error visible para diagnóstico
-      alert("⚠️ Error al registrar pedido: "+error.message);
+      setPmsg("⚠️ Error al registrar el pedido. Intenta de nuevo.");
     }
   };
   // ---------------------------------------------------------
@@ -958,7 +958,7 @@ const VE_ESTADOS_MUNICIPIOS={
   };
 
   const confirm=async()=>{
-    if(!form.nombre||!form.telefono||!zonaSelId)return alert("Completa nombre, teléfono y zona");
+    if(!form.nombre||!form.telefono||!zonaSelId){setPmsg("Completa tu nombre, teléfono y zona de entrega para continuar");return;}
     const ref=generarRef();setPedidoRef(ref);
     await saveCliente();setSheet("resumen");
   };
@@ -1082,7 +1082,7 @@ const VE_ESTADOS_MUNICIPIOS={
   };
 
   const togglePausa=async(id,enPausa)=>{await supabase.from("proveedores").update({en_pausa:!enPausa}).eq("id",id);loadAdmin();loadAll();};
-  const deleteProveedor=async(id)=>{if(!window.confirm("¿Eliminar este proveedor? No se puede deshacer."))return;await supabase.from("productos_proveedor").delete().eq("proveedor_id",id);await supabase.from("proveedores").delete().eq("id",id);loadAdmin();loadAll();};
+  const deleteProveedor=(id)=>{setConfirmModal({msg:"¿Eliminar este proveedor? No se puede deshacer.",onOk:async()=>{await supabase.from("productos_proveedor").delete().eq("proveedor_id",id);await supabase.from("proveedores").delete().eq("id",id);loadAdmin();loadAll();}});};
   const toggleMiEstado=async()=>{const n=!provData.activo;await supabase.from("proveedores").update({activo:n}).eq("id",provData.id);setProvData({...provData,activo:n});loadAll();};
 
   const publishProd=async()=>{
@@ -1362,6 +1362,17 @@ const VE_ESTADOS_MUNICIPIOS={
 
   return(
     <div style={s.app}>
+      {confirmModal&&(
+        <div onClick={()=>setConfirmModal(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 24px"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:16,padding:"24px 20px",maxWidth:320,width:"100%",boxShadow:"0 8px 32px rgba(0,0,0,0.18)"}}>
+            <p style={{margin:"0 0 20px",fontSize:15,color:DARK,lineHeight:1.5,textAlign:"center"}}>{confirmModal.msg}</p>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>setConfirmModal(null)} style={{flex:1,padding:"10px",borderRadius:10,border:"1px solid #e2e8f0",background:"#f8fafc",color:DARK,fontSize:14,fontWeight:600,cursor:"pointer"}}>Cancelar</button>
+              <button onClick={()=>{confirmModal.onOk();setConfirmModal(null);}} style={{flex:1,padding:"10px",borderRadius:10,border:"none",background:"#ef4444",color:"#fff",fontSize:14,fontWeight:600,cursor:"pointer"}}>Confirmar</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div style={s.hdr}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -3243,7 +3254,7 @@ const VE_ESTADOS_MUNICIPIOS={
                     <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                       <button onClick={()=>{setEditingProdId(`mod_${p.id}`);setNewProd({nombre:p.nombre||"",marca:p.marca||"",presentacion:p.presentacion||"",descripcion:p.descripcion||"",precio:String(p.precio||""),unidad:p.unidad||"porción",categoria:p.categoria||"Comida preparada",stock:p.stock||1,hi:p.horario_inicio||"08:00",hf:p.horario_fin||"18:00",permanente:p.permanente||false});}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#eff6ff",color:"#1d4ed8"}}>✏️ Modificar</button>
                       <button onClick={()=>toggleDisp(p.id,p.disponible)} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:p.disponible?"#fff7ed":"#f0fdf4",color:p.disponible?"#c2410c":"#15803d"}}>{p.disponible?"⏸️ Pausar":"▶️ Activar"}</button>
-                      <button onClick={async()=>{if(window.confirm("¿Eliminar este producto?"))await supabase.from("productos_proveedor").delete().eq("id",p.id);loadMyProds(provData.id);loadAll();}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fee2e2",color:"#be123c"}}>🗑️ Eliminar</button>
+                      <button onClick={()=>setConfirmModal({msg:"¿Eliminar este producto? Esta acción no se puede deshacer.",onOk:async()=>{await supabase.from("productos_proveedor").delete().eq("id",p.id);loadMyProds(provData.id);loadAll();}})} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fee2e2",color:"#be123c"}}>🗑️ Eliminar</button>
                     </div>
                     )}
                   </div>
@@ -3393,7 +3404,7 @@ const VE_ESTADOS_MUNICIPIOS={
                     </div>
                     <div style={{display:"flex",gap:6}}>
                       <button onClick={async()=>{await supabase.from("promociones_proveedor").update({activa:true}).eq("id",pr.id);loadMyPromos(provData.id);loadAll();}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#f0fdf4",color:"#15803d"}}>▶️ Reactivar</button>
-                      <button onClick={async()=>{if(!window.confirm("¿Eliminar esta promoción?"))return;await supabase.from("promociones_proveedor").delete().eq("id",pr.id);loadMyPromos(provData.id);loadAll();}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fee2e2",color:"#be123c"}}>🗑️ Eliminar</button>
+                      <button onClick={()=>setConfirmModal({msg:"¿Eliminar esta promoción?",onOk:async()=>{await supabase.from("promociones_proveedor").delete().eq("id",pr.id);loadMyPromos(provData.id);loadAll();}})} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fee2e2",color:"#be123c"}}>🗑️ Eliminar</button>
                     </div>
                   </div>
                 ))}
@@ -3439,7 +3450,7 @@ const VE_ESTADOS_MUNICIPIOS={
                       <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>
                         <button onClick={()=>{setEditandoHorario(`edit_promo_${pr.id}`);setNewPromo({nombre:pr.nombre||"",descripcion:pr.descripcion||"",precio:String(pr.precio||""),fecha_inicio:pr.fecha_inicio||"",fecha_fin:pr.fecha_fin||""});}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#eff6ff",color:"#1d4ed8"}}>✏️ Modificar</button>
                         <button onClick={async()=>{await supabase.from("promociones_proveedor").update({activa:false}).eq("id",pr.id);loadMyPromos(provData.id);loadAll();}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fff7ed",color:"#c2410c"}}>⏸️ Pausar</button>
-                        <button onClick={async()=>{if(!window.confirm("¿Eliminar esta promoción?"))return;await supabase.from("promociones_proveedor").delete().eq("id",pr.id);loadMyPromos(provData.id);loadAll();}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fee2e2",color:"#be123c"}}>🗑️ Eliminar</button>
+                        <button onClick={()=>setConfirmModal({msg:"¿Eliminar esta promoción?",onOk:async()=>{await supabase.from("promociones_proveedor").delete().eq("id",pr.id);loadMyPromos(provData.id);loadAll();}})} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fee2e2",color:"#be123c"}}>🗑️ Eliminar</button>
                       </div>
                     )}
                     <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:"8px 10px",marginTop:2}}>
@@ -3474,7 +3485,7 @@ const VE_ESTADOS_MUNICIPIOS={
                       <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:8,background:"#f1f5f9",color:"#64748b",flexShrink:0,marginLeft:8}}>⏸️ Pausada</span>
                     </div>
                     <button onClick={async()=>{await supabase.from("promociones_proveedor").update({activa:true}).eq("id",pr.id);loadMyPromos(provData.id);loadAll();}} style={{...s.btnGreen,width:"100%",borderRadius:10,padding:"8px",fontSize:12,marginTop:0}}>▶️ Activar promoción</button>
-                    <button onClick={async()=>{if(!window.confirm("¿Eliminar esta promoción?"))return;await supabase.from("promociones_proveedor").delete().eq("id",pr.id);loadMyPromos(provData.id);loadAll();}} style={{...s.btnRed,width:"100%",borderRadius:10,padding:"8px",fontSize:12,marginTop:6}}>🗑️ Eliminar</button>
+                    <button onClick={()=>setConfirmModal({msg:"¿Eliminar esta promoción?",onOk:async()=>{await supabase.from("promociones_proveedor").delete().eq("id",pr.id);loadMyPromos(provData.id);loadAll();}})} style={{...s.btnRed,width:"100%",borderRadius:10,padding:"8px",fontSize:12,marginTop:6}}>🗑️ Eliminar</button>
                   </div>
                 ))}
               </div>
@@ -4030,7 +4041,6 @@ const VE_ESTADOS_MUNICIPIOS={
                         longitud:perfilData.longitud!=null&&perfilData.longitud!==""?parseFloat(String(perfilData.longitud)):null,
                         logo_url:new_logo_url,
                       };
-                      console.log("Guardando:",{parroquia:payload.parroquia,direccion:payload.direccion_fisica});
                       const{error}=await supabase.from("proveedores").update(payload).eq("id",provData.id);
                       if(error){alert("Error al guardar: "+error.message);return;}
                       // Recargar datos del proveedor desde la DB para confirmar
@@ -4467,7 +4477,7 @@ const VE_ESTADOS_MUNICIPIOS={
                     <div style={{fontSize:11,color:"#64748b",marginBottom:10}}>👤 {r.vendedor_nombre} · 📱 {r.vendedor_telefono}</div>
                     <div style={{display:"flex",gap:8}}>
                       <button onClick={async()=>{setPendRemates(prev=>prev.filter(x=>x.id!==r.id));await supabase.from("remates").update({aprobado:true}).eq("id",r.id);loadRemates();await loadAdmin();}} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Aprobar</button>
-                      <button onClick={async()=>{if(!window.confirm("¿Rechazar este remate?"))return;setPendRemates(prev=>prev.filter(x=>x.id!==r.id));await supabase.from("remates").delete().eq("id",r.id);await loadAdmin();}} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Rechazar</button>
+                      <button onClick={()=>setConfirmModal({msg:"¿Rechazar este remate?",onOk:async()=>{setPendRemates(prev=>prev.filter(x=>x.id!==r.id));await supabase.from("remates").delete().eq("id",r.id);await loadAdmin();}})} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Rechazar</button>
                     </div>
                   </div>
                 ))}
@@ -4491,7 +4501,7 @@ const VE_ESTADOS_MUNICIPIOS={
                     <div style={{fontSize:11,color:"#64748b",marginBottom:10}}>👤 {sv.proveedor_nombre} · 📱 {sv.proveedor_telefono}</div>
                     <div style={{display:"flex",gap:8}}>
                       <button onClick={async()=>{setPendServiciosCom(prev=>prev.filter(x=>x.id!==sv.id));await supabase.from("servicios_comunidad").update({aprobado:true}).eq("id",sv.id);loadServiciosCom();await loadAdmin();}} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Aprobar</button>
-                      <button onClick={async()=>{if(!window.confirm("¿Rechazar este servicio?"))return;setPendServiciosCom(prev=>prev.filter(x=>x.id!==sv.id));await supabase.from("servicios_comunidad").delete().eq("id",sv.id);await loadAdmin();}} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Rechazar</button>
+                      <button onClick={()=>setConfirmModal({msg:"¿Rechazar este servicio?",onOk:async()=>{setPendServiciosCom(prev=>prev.filter(x=>x.id!==sv.id));await supabase.from("servicios_comunidad").delete().eq("id",sv.id);await loadAdmin();}})} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Rechazar</button>
                     </div>
                   </div>
                 ))}
@@ -4621,7 +4631,7 @@ const VE_ESTADOS_MUNICIPIOS={
                     <div style={{fontSize:11,color:"#64748b",marginBottom:10}}>👤 {c.vendedor_nombre} · 📱 {c.vendedor_telefono}</div>
                     <div style={{display:"flex",gap:8}}>
                       <button onClick={async()=>{setPendClasificados(prev=>prev.filter(x=>x.id!==c.id));await supabase.from("clasificados").update({aprobado:true}).eq("id",c.id);loadClasificados();await loadAdmin();}} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Aprobar</button>
-                      <button onClick={async()=>{if(!window.confirm("¿Rechazar este clasificado?"))return;setPendClasificados(prev=>prev.filter(x=>x.id!==c.id));await supabase.from("clasificados").delete().eq("id",c.id);await loadAdmin();}} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Rechazar</button>
+                      <button onClick={()=>setConfirmModal({msg:"¿Rechazar este clasificado?",onOk:async()=>{setPendClasificados(prev=>prev.filter(x=>x.id!==c.id));await supabase.from("clasificados").delete().eq("id",c.id);await loadAdmin();}})} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Rechazar</button>
                     </div>
                   </div>
                 ))}
@@ -4730,10 +4740,10 @@ const VE_ESTADOS_MUNICIPIOS={
         const dirCliente=[zonaSel?.zona,addr.calle,addr.referencia].filter(Boolean).join(", ");
         if(proveedores.length===0&&clienteHistorial.length===0)return null;
         const enviarProveedor=async(prov,numPed)=>{
-          if(!datosOk)return alert("Completa tu nombre y teléfono antes de enviar");
+          if(!datosOk){setPmsg("Completa tu nombre y teléfono antes de enviar");return;}
           if(prov.tipo==="super"){
             // Supermercado: guardar y enviar por WhatsApp al número admin
-            if(!zonaSel)return alert("Selecciona tu zona de entrega primero");
+            if(!zonaSel){setPmsg("Selecciona tu zona de entrega primero");return;}
             const sub=prov.items.reduce((a,i)=>a+i.price*i.qty,0);
             const delCosto=zonaSel?.costo_delivery||2;
             const freeMin=zonaSel?.delivery_gratis_super||18;
@@ -5029,7 +5039,7 @@ const VE_ESTADOS_MUNICIPIOS={
             )}
             <div style={{...s.ib,background:"#fffbeb"}}><div style={{fontSize:12,color:"#92400e"}}>⚡ Tu pedido irá directo al WhatsApp de {cartNegocioNombre}</div></div>
             <button style={s.btnWa} onClick={async()=>{
-              if(!form.nombre||!form.telefono)return alert("Completa nombre y teléfono");
+              if(!form.nombre||!form.telefono){setPmsg("Completa tu nombre y teléfono para continuar");return;}
               if(!negWaNum)return alert("Este negocio no tiene WhatsApp configurado. Contacta al administrador.");
               const deliveryTexto=!negTieneDelivery?"Solo retiro en tienda":negDelGratis?"GRATIS 🎉":"$"+negDel.toFixed(2);
               const msg=`🏪 *Nuevo pedido - ${APP_NAME}*\n📋 Ref: ${negRef}\n----------------------------\n${negItems.map(i=>`• ${i.name} x${i.qty} — $${(i.price*i.qty).toFixed(2)}`).join("\n")}\n----------------------------\nSubtotal: $${negSub.toFixed(2)}\nDelivery: ${deliveryTexto}\n*TOTAL: $${negTotal.toFixed(2)}*\n----------------------------\n👤 ${form.nombre}\n📱 ${form.telefono}\n📍 ${zonaSel?.zona||"San Fernando"}, ${addr.calle||"(sin dirección)"}`;
@@ -5059,7 +5069,7 @@ const VE_ESTADOS_MUNICIPIOS={
         const dirCliente=[zonaSel?.zona,addr.calle,addr.referencia].filter(Boolean).join(", ");
         // consentPromo está en el estado del componente principal
         const enviarAProveedor=(prov)=>{
-          if(!datosOk)return alert("Completa tu nombre y teléfono antes de enviar");
+          if(!datosOk){setPmsg("Completa tu nombre y teléfono antes de enviar");return;}
           if(!prov.wa){alert(`${prov.nombre} no tiene WhatsApp configurado. Contacta al administrador.`);return;}
           const sub=prov.items.reduce((a,i)=>a+i.price*i.qty,0);
           const del=prov.delivery?(sub>=prov.gratis?0:prov.costo):0;
