@@ -91,9 +91,24 @@ const TIPO_GASTRO_LABEL = {
 const NEGOCIO_CATS_TRANSPORTE = ["Mototaxi","Taxi","Línea de transporte","Encomiendas"];
 const SERVICIO_CATS = ["Plomería","Electricidad","Mecánica","Belleza y estética","Costura y modistería","Clases y tutorías","Limpieza","Construcción","Transporte","Salud","Otros"];
 
+const SERVICIO_CATEGORIAS = [
+  {id:"mototaxi",     label:"Mototaxi",          icon:"🛵", color:"#92400e", bg:"linear-gradient(135deg,#78350f,#d97706)", desc:"Traslados rápidos en moto", tipo:"transporte"},
+  {id:"taxi",         label:"Taxi",               icon:"🚕", color:"#1e40af", bg:"linear-gradient(135deg,#1e3a8a,#2563eb)", desc:"Viajes cómodos y seguros",   tipo:"transporte"},
+  {id:"rutas",        label:"Rutas interurbanas", icon:"🚌", color:"#065f46", bg:"linear-gradient(135deg,#064e3b,#059669)", desc:"Viajes entre ciudades",       tipo:"transporte"},
+  {id:"encomiendas",  label:"Encomiendas",        icon:"📦", color:"#9a3412", bg:"linear-gradient(135deg,#7c2d12,#ea580c)", desc:"Envíos y paquetes",           tipo:"transporte"},
+  {id:"medicos",      label:"Médicos",            icon:"👨‍⚕️", color:"#1e40af", bg:"linear-gradient(135deg,#1e3a8a,#3b82f6)", desc:"Consultas médicas",           tipo:"salud"},
+  {id:"enfermeria",   label:"Enfermería",         icon:"💉", color:"#be123c", bg:"linear-gradient(135deg,#9f1239,#e11d48)", desc:"Atención a domicilio",        tipo:"salud"},
+  {id:"laboratorios", label:"Laboratorios",       icon:"🔬", color:"#5b21b6", bg:"linear-gradient(135deg,#4c1d95,#7c3aed)", desc:"Exámenes y análisis",         tipo:"salud"},
+  {id:"odontologia",  label:"Odontología",        icon:"🦷", color:"#0e7490", bg:"linear-gradient(135deg,#164e63,#0891b2)", desc:"Salud dental",                tipo:"salud"},
+  {id:"belleza",      label:"Belleza",            icon:"💇", color:"#9d174d", bg:"linear-gradient(135deg,#831843,#db2777)", desc:"Peluquería y estética",       tipo:"hogar"},
+  {id:"hogar",        label:"Hogar",              icon:"🔧", color:"#374151", bg:"linear-gradient(135deg,#1f2937,#4b5563)", desc:"Plomería, electricidad...",   tipo:"hogar"},
+  {id:"educacion",    label:"Educación",          icon:"📚", color:"#1e40af", bg:"linear-gradient(135deg,#1e3a8a,#4f46e5)", desc:"Clases y tutorías",           tipo:"hogar"},
+  {id:"mecanica",     label:"Mecánica",           icon:"🔩", color:"#92400e", bg:"linear-gradient(135deg,#78350f,#b45309)", desc:"Autos y motos",              tipo:"hogar"},
+];
+
 const SVCS = [
   {id:"s1",name:"Mototaxi",emoji:"🛵",desc:"Te llevamos a donde necesites",price:"Desde $1.00",bg:"#fef3c7",tc:"#92400e"},
-  {id:"s2",name:"Taxi",emoji:"🚗",desc:"Viajes cómodos y seguros en SF",price:"Desde $2.00",bg:"#e0f2fe",tc:"#0369a1"},
+  {id:"s2",name:"Taxi",emoji:"🚕",desc:"Viajes cómodos y seguros en SF",price:"Desde $2.00",bg:"#e0f2fe",tc:"#0369a1"},
   {id:"s3",name:"Lavandería",emoji:"👕",desc:"Recogemos y entregamos limpia",price:"Desde $3.00/kg",bg:"#f0fdf4",tc:"#15803d"},
   {id:"s4",name:"Limpieza del hogar",emoji:"🧹",desc:"Personal de confianza para tu casa",price:"Desde $10.00/día",bg:"#fdf4ff",tc:"#7e22ce"},
   {id:"s5",name:"Enfermería a domicilio",emoji:"💉",desc:"Atención profesional en tu hogar",price:"Desde $5.00",bg:"#fff1f2",tc:"#be123c"},
@@ -275,6 +290,12 @@ const VE_ESTADOS_MUNICIPIOS={
   const [clasifFotos,setClasifFotos]=useState([null,null,null,null]);
   const [clasifFotosPrev,setClasifFotosPrev]=useState([null,null,null,null]);
   const [serviciosCom,setServiciosCom]=useState([]);
+  const [categoriaServicio,setCategoriaServicio]=useState(null); // categoria activa en servicios
+  const [proveedoresServicio,setProveedoresServicio]=useState([]); // proveedores filtrados por categoria
+  const [rutasTransporte,setRutasTransporte]=useState([]); // rutas interurbanas
+  const [proveedorServicioActivo,setProveedorServicioActivo]=useState(null); // proveedor seleccionado
+  const [showSolicitudServicio,setShowSolicitudServicio]=useState(false);
+  const [solicitudData,setSolicitudData]=useState({descripcion:"",fecha:"",hora:""});
   const [remateCat,setRemateCat]=useState("Todos");
   const [remateSearch,setRemateSearch]=useState("");
   const [showPublicarRemate,setShowPublicarRemate]=useState(false);
@@ -674,6 +695,52 @@ const VE_ESTADOS_MUNICIPIOS={
   const loadServiciosCom=async()=>{
     const{data}=await supabase.from("servicios_comunidad").select("*").eq("aprobado",true).eq("activo",true).order("created_at",{ascending:false});
     if(data)setServiciosCom(data);
+  };
+
+  const loadProveedoresServicio=async(subcategoria)=>{
+    // Buscar proveedores cuyo tipo_negocio sea de servicios y subcategoria_servicio coincida
+    // También buscar por tipo_negocio legacy
+    const mapaTipoNegocio={
+      "mototaxi":["Transporte y encomiendas"],
+      "taxi":["Transporte y encomiendas"],
+      "rutas":["Transporte y encomiendas","Línea de transporte"],
+      "encomiendas":["Transporte y encomiendas"],
+      "medicos":["Otro servicio","Salud"],
+      "enfermeria":["Otro servicio","Salud"],
+      "laboratorios":["Otro servicio","Salud"],
+      "odontologia":["Otro servicio","Salud"],
+      "belleza":["Otro servicio","Lavandería"],
+      "hogar":["Otro servicio"],
+      "educacion":["Otro servicio"],
+      "mecanica":["Otro servicio"],
+    };
+    const municipio=ubiActiva.municipio||"San Fernando";
+    // Buscar por subcategoria_servicio primero
+    const{data:bySub}=await supabase.from("proveedores")
+      .select("*")
+      .eq("aprobado",true)
+      .eq("suscripcion_activa",true)
+      .eq("subcategoria_servicio",subcategoria)
+      .eq("municipio",municipio);
+    // Buscar también por tipo_negocio para los existentes
+    const tipos=mapaTipoNegocio[subcategoria]||[];
+    let byTipo=[];
+    if(tipos.length>0){
+      const{data:d}=await supabase.from("proveedores")
+        .select("*")
+        .eq("aprobado",true)
+        .eq("suscripcion_activa",true)
+        .in("tipo_negocio",tipos);
+      byTipo=d||[];
+    }
+    const todos=[...(bySub||[]),...byTipo];
+    const unique=Object.values(todos.reduce((acc,p)=>({...acc,[p.id]:p}),{}));
+    setProveedoresServicio(unique);
+  };
+
+  const loadRutasTransporte=async()=>{
+    const{data}=await supabase.from("rutas_transporte").select("*,proveedores(negocio,logo_url,whatsapp_negocio,telefono,disponible_ahora)").eq("activa",true).order("hora_salida");
+    if(data)setRutasTransporte(data);
   };
 
   const publishRemate=async()=>{
@@ -1295,7 +1362,7 @@ const VE_ESTADOS_MUNICIPIOS={
           const ac=activeColors[t];
           const isActive=tab===t;
           return(
-            <button key={t} style={{flex:1,padding:"8px 2px 6px",border:"none",background:isActive?ac.bg:"transparent",borderBottom:isActive?`3px solid ${ac.border}`:"3px solid transparent",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,transition:"all 0.15s",minWidth:0}} onClick={()=>setTab(t)}>
+            <button key={t} style={{flex:1,padding:"8px 2px 6px",border:"none",background:isActive?ac.bg:"transparent",borderBottom:isActive?`3px solid ${ac.border}`:"3px solid transparent",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,transition:"all 0.15s",minWidth:0}} onClick={()=>{setTab(t);if(t!=="Servicios")setCategoriaServicio(null);}}>
               <span style={{fontSize:isActive?24:18,transition:"all 0.2s",filter:isActive?"none":"grayscale(60%)",display:"block"}}>{icons[t]}</span>
               <span style={{fontSize:8,lineHeight:1.2,textAlign:"center",fontWeight:isActive?700:400,color:isActive?ac.text:"#94a3b8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",width:"100%",paddingX:2}}>{t==="Negocios locales"?"Negocios":t==="Feria de comidas"?"Restaurantes":t}</span>
             </button>
@@ -2382,98 +2449,245 @@ const VE_ESTADOS_MUNICIPIOS={
         )}
       </>)}
 
-      {/* SERVICIOS */}
+      {/* SERVICIOS — Directorio Local Digital */}
       {tab==="Servicios"&&(<>
-        <div style={{...s.banner,paddingBottom:14}}>
-          <p style={s.bT}>Servicios en {CITY} ⚡</p>
-          <p style={{fontSize:12,color:"rgba(255,255,255,0.7)",margin:0}}>Servicios propios + comunidad</p>
-        </div>
+        {!categoriaServicio?(
+          // ── PANTALLA PRINCIPAL: GRID DE CATEGORÍAS ──
+          <>
+            {/* HEADER */}
+            <div style={{background:"linear-gradient(135deg,#1e1b4b 0%,#3730a3 60%,#4f46e5 100%)",padding:"20px 16px 18px",color:"#fff"}}>
+              <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.5)",letterSpacing:2,marginBottom:4}}>APURE MARKET</div>
+              <div style={{fontSize:22,fontWeight:900,letterSpacing:-0.5,marginBottom:4}}>Directorio de Servicios</div>
+              <div style={{fontSize:12,color:"rgba(255,255,255,0.7)"}}>Encuentra profesionales verificados en {ubiActiva.municipio}</div>
+            </div>
 
-        {/* SERVICIOS FIJOS */}
-        <div style={{...s.sec,marginTop:14}}>
-          <div style={s.sT}>⚡ Servicios disponibles</div>
-          {SVCS.map(sv=>(<div key={sv.id} style={{background:"#fff",borderRadius:14,padding:14,border:"1px solid #f1f5f9",display:"flex",gap:12,alignItems:"flex-start",marginBottom:10}}><div style={{fontSize:28,width:44,height:44,background:sv.bg,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{sv.emoji}</div><div style={{flex:1}}><div style={{fontSize:14,fontWeight:700}}>{sv.name}</div><div style={{fontSize:12,color:"#64748b",margin:"2px 0 6px"}}>{sv.desc}</div><span style={{fontSize:11,fontWeight:600,color:sv.tc,background:sv.bg,padding:"2px 8px",borderRadius:8}}>{sv.price}</span></div><button style={{background:P,color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer"}} onClick={()=>{setSelSvc(sv);setSheet("service");}}>Solicitar</button></div>))}
-        </div>
-
-        {/* SERVICIOS DE LA COMUNIDAD */}
-        <div style={{...s.sec,paddingTop:0}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 8px"}}>
-            <div style={s.sT}>👥 Servicios de la comunidad</div>
-            <button onClick={()=>setShowPublicarServicio(!showPublicarServicio)} style={{fontSize:11,fontWeight:700,color:showPublicarServicio?"#64748b":P,background:showPublicarServicio?"#f1f5f9":"#fef3c7",border:"none",borderRadius:8,padding:"5px 10px",cursor:"pointer"}}>{showPublicarServicio?"✕ Cancelar":"➕ Ofrecer mi servicio"}</button>
-          </div>
-
-          {/* FORMULARIO SERVICIO COMUNIDAD */}
-          {showPublicarServicio&&(
-            <div style={s.pc}>
-              <div style={s.pT}>🛠️ Registrar mi servicio</div>
-              <div style={{...s.ib,background:"#f0fdf4",marginBottom:12}}><div style={{fontSize:12,color:"#15803d"}}>✓ Gratis · El admin revisa antes de publicar · Los clientes te contactan directo</div></div>
-              {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
-              <label style={s.lbl}>¿Qué servicio ofreces? *</label>
-              <input style={s.inp} placeholder="Plomero, Electricista, Costurera..." value={newServicioCom.nombre_servicio} onChange={e=>setNewServicioCom({...newServicioCom,nombre_servicio:e.target.value})}/>
-              <label style={s.lbl}>Categoría *</label>
-              <select style={{...s.inp,background:"#fff"}} value={newServicioCom.categoria} onChange={e=>setNewServicioCom({...newServicioCom,categoria:e.target.value})}>{SERVICIO_CATS.map(c=><option key={c}>{c}</option>)}</select>
-              <label style={s.lbl}>Descripción * (qué haces, experiencia)</label>
-              <input style={s.inp} placeholder="10 años de experiencia, trabajo en toda la ciudad..." value={newServicioCom.descripcion} onChange={e=>setNewServicioCom({...newServicioCom,descripcion:e.target.value})}/>
-              <label style={s.lbl}>Precio referencial</label>
-              <input style={s.inp} placeholder="Desde $5, Consultar, $10/hora..." value={newServicioCom.precio_referencial} onChange={e=>setNewServicioCom({...newServicioCom,precio_referencial:e.target.value})}/>
-              <label style={s.lbl}>Zona donde trabajas</label>
-              <input style={s.inp} placeholder="Toda la ciudad, Zona Norte, Centro..." value={newServicioCom.zona} onChange={e=>setNewServicioCom({...newServicioCom,zona:e.target.value})}/>
-              <label style={s.lbl}>Tu nombre *</label>
-              <input style={s.inp} placeholder="Juan Pérez" value={newServicioCom.proveedor_nombre} onChange={e=>setNewServicioCom({...newServicioCom,proveedor_nombre:e.target.value})}/>
-              <label style={s.lbl}>Tu WhatsApp * (clientes te escribirán aquí)</label>
-              <input style={s.inp} placeholder="+58 424-000-0000" value={newServicioCom.proveedor_telefono} onChange={e=>setNewServicioCom({...newServicioCom,proveedor_telefono:e.target.value})}/>
-              {/* UBICACIÓN */}
-              <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"10px 12px",marginBottom:10}}>
-                <div style={{fontSize:12,fontWeight:700,color:"#1d4ed8",marginBottom:8}}>📍 ¿En qué municipio ofreces este servicio?</div>
-                <div style={{display:"flex",gap:8}}>
-                  <div style={{flex:1}}>
-                    <label style={s.lbl}>Estado</label>
-                    <select style={{...s.inp,marginBottom:0,background:"#fff"}} value={newServicioCom.estado||ubiActiva.estado} onChange={e=>setNewServicioCom({...newServicioCom,estado:e.target.value,municipio:""})}>
-                      {Object.keys(VE_ESTADOS_MUNICIPIOS).sort().map(est=><option key={est}>{est}</option>)}
-                    </select>
-                  </div>
-                  <div style={{flex:1}}>
-                    <label style={s.lbl}>Municipio</label>
-                    <select style={{...s.inp,marginBottom:0,background:"#fff"}} value={newServicioCom.municipio||ubiActiva.municipio} onChange={e=>setNewServicioCom({...newServicioCom,municipio:e.target.value})}>
-                      {(VE_ESTADOS_MUNICIPIOS[newServicioCom.estado||ubiActiva.estado]||[]).map(m=><option key={m}>{m}</option>)}
-                    </select>
-                  </div>
-                </div>
+            {/* SECCIÓN TRANSPORTE */}
+            <div style={{padding:"16px 16px 0"}}>
+              <div style={{fontSize:10,fontWeight:800,color:"#94a3b8",letterSpacing:1.5,marginBottom:10,textTransform:"uppercase"}}>🚗 Transporte</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+                {SERVICIO_CATEGORIAS.filter(c=>c.tipo==="transporte").map(cat=>(
+                  <button key={cat.id} onClick={()=>{setCategoriaServicio(cat);setProveedoresServicio([]);if(cat.id==="rutas")loadRutasTransporte();else loadProveedoresServicio(cat.id);}}
+                    style={{background:cat.bg,border:"none",borderRadius:16,padding:"16px 12px",textAlign:"left",cursor:"pointer",boxShadow:"0 4px 12px rgba(0,0,0,0.15)",position:"relative",minHeight:90}}>
+                    <div style={{fontSize:28,marginBottom:8,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.2))"}}>{cat.icon}</div>
+                    <div style={{fontSize:13,fontWeight:800,color:"#fff",letterSpacing:-0.2}}>{cat.label}</div>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,0.65)",marginTop:2}}>{cat.desc}</div>
+                    <div style={{position:"absolute",top:10,right:10,background:"rgba(255,255,255,0.15)",borderRadius:20,padding:"2px 8px",fontSize:9,color:"rgba(255,255,255,0.8)",fontWeight:600}}>Ver →</div>
+                  </button>
+                ))}
               </div>
-              <label style={s.lbl}>📸 Tu foto o foto de tu trabajo (recomendada)</label>
-              {servComFotoPreview&&<img src={servComFotoPreview} alt="" style={{width:"100%",height:140,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
-              <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setServComFoto(f);setServComFotoPreview(URL.createObjectURL(f));}}}/>
-              <button style={s.btn} onClick={publishServicioCom} disabled={loading}>{loading?"Enviando...":"📤 Enviar para publicación"}</button>
-            </div>
-          )}
 
-          {/* LISTA SERVICIOS COMUNIDAD */}
-          {!showPublicarServicio&&serviciosCom.length===0&&(
-            <div style={{textAlign:"center",padding:"24px 0",color:"#94a3b8"}}>
-              <div style={{fontSize:36}}>🛠️</div>
-              <p style={{fontSize:13,margin:"8px 0"}}>Aún no hay servicios de la comunidad</p>
-              <button onClick={()=>setShowPublicarServicio(true)} style={{...s.btn,maxWidth:240,margin:"8px auto 0",fontSize:13}}>Sé el primero</button>
-            </div>
-          )}
-          {!showPublicarServicio&&serviciosCom.map(sv=>(
-            <div key={sv.id} style={{background:"#fff",borderRadius:14,padding:14,border:"1px solid #f1f5f9",marginBottom:10}}>
-              <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
-                {sv.foto_url?<img src={sv.foto_url} alt="" style={{width:52,height:52,borderRadius:10,objectFit:"cover",flexShrink:0}}/>:<div style={{width:52,height:52,background:"#f1f5f9",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🛠️</div>}
+              {/* SECCIÓN SALUD */}
+              <div style={{fontSize:10,fontWeight:800,color:"#94a3b8",letterSpacing:1.5,marginBottom:10,textTransform:"uppercase"}}>🏥 Salud</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+                {SERVICIO_CATEGORIAS.filter(c=>c.tipo==="salud").map(cat=>(
+                  <button key={cat.id} onClick={()=>{setCategoriaServicio(cat);setProveedoresServicio([]);loadProveedoresServicio(cat.id);}}
+                    style={{background:cat.bg,border:"none",borderRadius:16,padding:"16px 12px",textAlign:"left",cursor:"pointer",boxShadow:"0 4px 12px rgba(0,0,0,0.15)",position:"relative",minHeight:90}}>
+                    <div style={{fontSize:28,marginBottom:8,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.2))"}}>{cat.icon}</div>
+                    <div style={{fontSize:13,fontWeight:800,color:"#fff",letterSpacing:-0.2}}>{cat.label}</div>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,0.65)",marginTop:2}}>{cat.desc}</div>
+                    <div style={{position:"absolute",top:10,right:10,background:"rgba(255,255,255,0.15)",borderRadius:20,padding:"2px 8px",fontSize:9,color:"rgba(255,255,255,0.8)",fontWeight:600}}>Ver →</div>
+                  </button>
+                ))}
+              </div>
+
+              {/* SECCIÓN OTROS SERVICIOS */}
+              <div style={{fontSize:10,fontWeight:800,color:"#94a3b8",letterSpacing:1.5,marginBottom:10,textTransform:"uppercase"}}>🔧 Otros servicios</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+                {SERVICIO_CATEGORIAS.filter(c=>c.tipo==="hogar").map(cat=>(
+                  <button key={cat.id} onClick={()=>{setCategoriaServicio(cat);setProveedoresServicio([]);loadProveedoresServicio(cat.id);}}
+                    style={{background:cat.bg,border:"none",borderRadius:16,padding:"16px 12px",textAlign:"left",cursor:"pointer",boxShadow:"0 4px 12px rgba(0,0,0,0.15)",position:"relative",minHeight:90}}>
+                    <div style={{fontSize:28,marginBottom:8,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.2))"}}>{cat.icon}</div>
+                    <div style={{fontSize:13,fontWeight:800,color:"#fff",letterSpacing:-0.2}}>{cat.label}</div>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,0.65)",marginTop:2}}>{cat.desc}</div>
+                    <div style={{position:"absolute",top:10,right:10,background:"rgba(255,255,255,0.15)",borderRadius:20,padding:"2px 8px",fontSize:9,color:"rgba(255,255,255,0.8)",fontWeight:600}}>Ver →</div>
+                  </button>
+                ))}
+              </div>
+
+              {/* CTA REGISTRO PROVEEDOR */}
+              <div style={{background:"linear-gradient(135deg,#0f172a,#1e293b)",borderRadius:16,padding:"16px",marginBottom:20,display:"flex",alignItems:"center",gap:14}} onClick={()=>setTab("Proveedores")}>
+                <div style={{width:44,height:44,borderRadius:12,background:"rgba(255,255,255,0.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🏅</div>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:14,fontWeight:700}}>{sv.nombre_servicio}</div>
-                  <div style={{fontSize:11,color:"#7e22ce",fontWeight:600,marginBottom:2}}>{sv.categoria}</div>
-                  <div style={{fontSize:12,color:"#64748b"}}>{sv.descripcion}</div>
-                  {sv.precio_referencial&&<div style={{fontSize:11,fontWeight:600,color:"#15803d",marginTop:3}}>💰 {sv.precio_referencial}</div>}
-                  {sv.zona&&<div style={{fontSize:11,color:"#94a3b8"}}>📍 {sv.zona}</div>}
-                  <div style={{fontSize:11,color:"#64748b",marginTop:2}}>👤 {sv.proveedor_nombre}</div>
+                  <div style={{fontSize:13,fontWeight:800,color:"#fff"}}>¿Ofreces un servicio?</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.6)",marginTop:2}}>Regístrate gratis · Llega a más clientes</div>
+                </div>
+                <span style={{color:"rgba(255,255,255,0.4)",fontSize:20}}>›</span>
+              </div>
+            </div>
+          </>
+        ):(
+          // ── PANTALLA DE CATEGORÍA: LISTA DE PROVEEDORES ──
+          <>
+            {/* HEADER CATEGORÍA */}
+            <div style={{background:categoriaServicio.bg,padding:"16px",color:"#fff",position:"relative"}}>
+              <button onClick={()=>{setCategoriaServicio(null);setProveedorServicioActivo(null);setShowSolicitudServicio(false);}} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,padding:"6px 12px",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
+                ← Volver
+              </button>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{fontSize:36,filter:"drop-shadow(0 2px 6px rgba(0,0,0,0.3))"}}>{categoriaServicio.icon}</div>
+                <div>
+                  <div style={{fontSize:20,fontWeight:900,letterSpacing:-0.5}}>{categoriaServicio.label}</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.7)"}}>{ubiActiva.municipio} · {proveedoresServicio.length} proveedor{proveedoresServicio.length!==1?"es":""} disponible{proveedoresServicio.length!==1?"s":""}</div>
                 </div>
               </div>
-              <button onClick={()=>{const _n=(sv.proveedor_telefono||"").replace(/\D/g,"");window.location.href="https://wa.me/"+_n+"?text="+encodeURIComponent("Hola "+sv.proveedor_nombre+", vi tu servicio de *"+sv.nombre_servicio+"* en MiMercado. ¿Podrías ayudarme?");}} style={{...s.btnWa,marginTop:10,padding:"8px",fontSize:12}}>
-                📲 Contactar
-              </button>
             </div>
-          ))}
-        </div>
+
+            <div style={{padding:"14px 16px"}}>
+              {/* RUTAS INTERURBANAS — diseño especial */}
+              {categoriaServicio.id==="rutas"&&(
+                <>
+                  {rutasTransporte.length===0?(
+                    <div style={{textAlign:"center",padding:"40px 20px",color:"#94a3b8"}}>
+                      <div style={{fontSize:48,marginBottom:12}}>🚌</div>
+                      <div style={{fontSize:15,fontWeight:700,color:"#374151",marginBottom:6}}>No hay rutas publicadas hoy</div>
+                      <div style={{fontSize:12}}>Los transportistas aún no han publicado salidas para hoy</div>
+                    </div>
+                  ):(
+                    rutasTransporte.map(ruta=>(
+                      <div key={ruta.id} style={{background:"#fff",borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.08)",border:"1px solid #f1f5f9"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+                          {ruta.proveedores?.logo_url
+                            ?<img src={ruta.proveedores.logo_url} style={{width:44,height:44,borderRadius:12,objectFit:"cover",border:"2px solid #f1f5f9"}}/>
+                            :<div style={{width:44,height:44,borderRadius:12,background:"linear-gradient(135deg,#064e3b,#059669)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,color:"#fff",fontWeight:900,flexShrink:0}}>{(ruta.proveedores?.negocio||"T")[0]}</div>
+                          }
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:14,fontWeight:800,color:"#0f172a"}}>{ruta.proveedores?.negocio||"Transportista"}</div>
+                            <div style={{fontSize:11,color:"#64748b",marginTop:2}}>🚌 {ruta.origen} → {ruta.destino}</div>
+                          </div>
+                          <div style={{textAlign:"right"}}>
+                            <div style={{fontSize:18,fontWeight:900,color:"#059669"}}>${ruta.precio}</div>
+                            <div style={{fontSize:10,color:"#94a3b8"}}>por persona</div>
+                          </div>
+                        </div>
+                        <div style={{display:"flex",gap:8,marginBottom:12}}>
+                          <div style={{flex:1,background:"#f8fafc",borderRadius:10,padding:"8px 12px",textAlign:"center"}}>
+                            <div style={{fontSize:18,fontWeight:900,color:"#0f172a"}}>{ruta.hora_salida?.slice(0,5)}</div>
+                            <div style={{fontSize:10,color:"#64748b"}}>Hora salida</div>
+                          </div>
+                          <div style={{flex:1,background:"#f8fafc",borderRadius:10,padding:"8px 12px",textAlign:"center"}}>
+                            <div style={{fontSize:18,fontWeight:900,color:ruta.puestos_disponibles>0?"#059669":"#ef4444"}}>{ruta.puestos_disponibles}</div>
+                            <div style={{fontSize:10,color:"#64748b"}}>Puestos disp.</div>
+                          </div>
+                          {ruta.acepta_encomiendas&&(
+                            <div style={{flex:1,background:"#fff7ed",borderRadius:10,padding:"8px 12px",textAlign:"center"}}>
+                              <div style={{fontSize:18}}>📦</div>
+                              <div style={{fontSize:9,color:"#c2410c",fontWeight:600}}>Encomiendas</div>
+                            </div>
+                          )}
+                        </div>
+                        <button onClick={()=>{
+                          const wa=(ruta.proveedores?.whatsapp_negocio||ruta.proveedores?.telefono||"").replace(/\D/g,"");
+                          const num=wa.startsWith("0")?"58"+wa.slice(1):wa.startsWith("58")?wa:"58"+wa;
+                          const msg=`🚌 *Reserva de puesto — Apure Market*\n\nHola, quiero reservar un puesto para:\n\n📍 Ruta: *${ruta.origen} → ${ruta.destino}*\n🕐 Salida: *${ruta.hora_salida?.slice(0,5)}*\n💰 Precio: *$${ruta.precio}*\n\n👤 Mi nombre: ${form.nombre||"(escribe tu nombre)"}\n📱 Mi teléfono: ${form.telefono||"(escribe tu teléfono)"}\n\n¿Está disponible el puesto?`;
+                          window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank");
+                        }} style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                          📲 Reservar puesto por WhatsApp
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </>
+              )}
+
+              {/* LISTA PROVEEDORES — para todas las demás categorías */}
+              {categoriaServicio.id!=="rutas"&&(
+                <>
+                  {proveedoresServicio.length===0?(
+                    <div style={{textAlign:"center",padding:"40px 20px",color:"#94a3b8"}}>
+                      <div style={{fontSize:48,marginBottom:12}}>{categoriaServicio.icon}</div>
+                      <div style={{fontSize:15,fontWeight:700,color:"#374151",marginBottom:6}}>Próximamente en {ubiActiva.municipio}</div>
+                      <div style={{fontSize:12,marginBottom:16}}>Aún no hay proveedores registrados en esta categoría</div>
+                      <div style={{background:"#f0fdf4",borderRadius:12,padding:"12px",fontSize:12,color:"#15803d",fontWeight:600}}>
+                        ¿Ofreces este servicio? Regístrate gratis →
+                      </div>
+                    </div>
+                  ):(
+                    proveedoresServicio.map(prov=>(
+                      <div key={prov.id} style={{background:"#fff",borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.08)",border:"1px solid #f1f5f9"}}>
+                        {/* HEADER PROVEEDOR */}
+                        <div style={{display:"flex",gap:12,alignItems:"flex-start",marginBottom:12}}>
+                          {prov.logo_url
+                            ?<img src={prov.logo_url} style={{width:56,height:56,borderRadius:14,objectFit:"cover",border:"2px solid #f1f5f9",flexShrink:0}}/>
+                            :<div style={{width:56,height:56,borderRadius:14,background:categoriaServicio.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,color:"#fff",fontWeight:900,flexShrink:0}}>{(prov.negocio||"?")[0]}</div>
+                          }
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                              <div style={{fontSize:15,fontWeight:800,color:"#0f172a"}}>{prov.negocio}</div>
+                              <span style={{background:"#dcfce7",color:"#15803d",fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20}}>✓ Verificado</span>
+                            </div>
+                            {prov.especialidad&&<div style={{fontSize:11,color:"#6366f1",fontWeight:600,marginTop:2}}>{prov.especialidad}</div>}
+                            {prov.descripcion_negocio&&<div style={{fontSize:11,color:"#64748b",marginTop:3,lineHeight:1.4}}>{prov.descripcion_negocio}</div>}
+                          </div>
+                          <div style={{flexShrink:0,textAlign:"right"}}>
+                            <div style={{width:10,height:10,borderRadius:"50%",background:prov.activo?"#22c55e":"#94a3b8",display:"inline-block",boxShadow:prov.activo?"0 0 6px #22c55e":"none",marginBottom:4}}/>
+                            <div style={{fontSize:9,color:prov.activo?"#15803d":"#94a3b8",fontWeight:600}}>{prov.activo?"Disponible":"No disponible"}</div>
+                          </div>
+                        </div>
+
+                        {/* INFO ADICIONAL */}
+                        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>
+                          {prov.precio_consulta&&(
+                            <span style={{background:"#f0fdf4",color:"#15803d",fontSize:10,fontWeight:700,padding:"4px 10px",borderRadius:20,border:"1px solid #bbf7d0"}}>
+                              💰 Consulta: ${prov.precio_consulta}
+                            </span>
+                          )}
+                          {prov.tarifa_referencial&&(
+                            <span style={{background:"#eff6ff",color:"#1d4ed8",fontSize:10,fontWeight:700,padding:"4px 10px",borderRadius:20,border:"1px solid #bfdbfe"}}>
+                              💲 {prov.tarifa_referencial}
+                            </span>
+                          )}
+                          {prov.zona_cobertura&&(
+                            <span style={{background:"#f8fafc",color:"#475569",fontSize:10,fontWeight:600,padding:"4px 10px",borderRadius:20,border:"1px solid #e2e8f0"}}>
+                              📍 {prov.zona_cobertura}
+                            </span>
+                          )}
+                          {prov.direccion_fisica&&(
+                            <span style={{background:"#fafaf9",color:"#57534e",fontSize:10,padding:"4px 10px",borderRadius:20,border:"1px solid #e7e5e4"}}>
+                              🏢 {prov.direccion_fisica}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* HORARIOS si existen */}
+                        {prov.horarios_atencion&&(
+                          <div style={{background:"#f8fafc",borderRadius:10,padding:"8px 12px",marginBottom:12,fontSize:11,color:"#475569"}}>
+                            🕐 <strong>Horario:</strong> {typeof prov.horarios_atencion === 'string' ? prov.horarios_atencion : JSON.stringify(prov.horarios_atencion)}
+                          </div>
+                        )}
+
+                        {/* EXÁMENES para laboratorios */}
+                        {categoriaServicio.id==="laboratorios"&&prov.examenes&&(
+                          <div style={{background:"#fdf4ff",borderRadius:10,padding:"10px 12px",marginBottom:12}}>
+                            <div style={{fontSize:11,fontWeight:700,color:"#7e22ce",marginBottom:6}}>🔬 Exámenes disponibles:</div>
+                            <div style={{fontSize:11,color:"#475569"}}>
+                              {typeof prov.examenes === 'string' ? prov.examenes : JSON.stringify(prov.examenes)}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* BOTÓN CONTACTO */}
+                        <button onClick={()=>{
+                          const wa=(prov.whatsapp_negocio||prov.telefono||"").replace(/\D/g,"");
+                          const num=wa.startsWith("0")?"58"+wa.slice(1):wa.startsWith("58")?wa:"58"+wa;
+                          const esMedico=["medicos","enfermeria","laboratorios","odontologia"].includes(categoriaServicio.id);
+                          let msg="";
+                          if(esMedico){
+                            msg=`👨‍⚕️ *Solicitud de cita — Apure Market*\n\nHola ${prov.negocio}, vi su perfil en Apure Market y me gustaría solicitar una cita.\n\n👤 Mi nombre: ${form.nombre||"(escribe tu nombre)"}\n📱 Mi teléfono: ${form.telefono||"(escribe tu teléfono)"}\n\n¿Cuál es la próxima disponibilidad?`;
+                          } else {
+                            msg=`🔧 *Solicitud de servicio — Apure Market*\n\nHola ${prov.negocio}, vi tu perfil en Apure Market.\n\n*Servicio:* ${categoriaServicio.label}\n\n👤 Mi nombre: ${form.nombre||"(escribe tu nombre)"}\n📱 Mi teléfono: ${form.telefono||"(escribe tu teléfono)"}\n📍 Mi dirección: ${form.direccion||"(escribe tu dirección)"}\n\n¿Cuándo puedes atenderme?`;
+                          }
+                          window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank");
+                        }} style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                          📲 {["medicos","enfermeria","laboratorios","odontologia"].includes(categoriaServicio.id)?"Solicitar cita":"Contactar ahora"}
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </>
+              )}
+            </div>
+          </>
+        )}
       </>)}
 
       {/* PROVEEDORES */}
