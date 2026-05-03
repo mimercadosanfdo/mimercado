@@ -353,7 +353,7 @@ const VE_ESTADOS_MUNICIPIOS={
   // ---------------------------------------------------------
 
   const [provMode,setProvMode]=useState("login");
-  const [provForm,setProvForm]=useState({email:"",nombre:"",negocio:"",whatsapp_negocio:"",telefono_principal:"",instagram:"",categorias:[],pass:"",tipo_negocio:"Restaurante / Cocina / Comida",tipo_operacion_gastro:"",descripcion_negocio:"",delivery_propio:false,permite_retiro:false,delivery_costo:0,delivery_gratis_desde:15,direccion_fisica:"",horario_desde:"08:00",horario_hasta:"18:00",horario_desc:"",subcategoria_servicio:"",especialidad:"",matricula_prof:"",precio_consulta:"",horarios_atencion:"",zona_cobertura:"",tarifa_referencial:"",examenes:""});
+  const [provForm,setProvForm]=useState({email:"",nombre:"",negocio:"",whatsapp_negocio:"",telefono_principal:"",instagram:"",categorias:[],pass:"",tipo_negocio:"Restaurante / Cocina / Comida",tipo_operacion_gastro:"",descripcion_negocio:"",delivery_propio:false,permite_retiro:false,delivery_costo:0,delivery_gratis_desde:15,direccion_fisica:"",horario_desde:"08:00",horario_hasta:"18:00",horario_desc:"",subcategoria_servicio:"",especialidad:"",matricula_prof:"",precio_consulta:"",horarios_atencion:"",zona_cobertura:"",tarifa_referencial:"",examenes:"",estado_ubicacion:"",municipio:""});
   const [provData,setProvData]=useState(null);
   const [myProds,setMyProds]=useState([]);
   const [myPromos,setMyPromos]=useState([]);
@@ -992,6 +992,7 @@ const VE_ESTADOS_MUNICIPIOS={
 
   const handleRegister=async()=>{
     if(!provForm.email||!provForm.nombre||!provForm.negocio||!provForm.whatsapp_negocio||!provForm.pass)return setPmsg("Completa todos los campos obligatorios (*)");
+    if(!provForm.estado_ubicacion||!provForm.municipio)return setPmsg("⚠️ Selecciona el Estado y Municipio donde ofreces tu servicio");
     setLoading(true);
     const{data:existing}=await supabase.from("proveedores").select("id").eq("email",provForm.email).single();
     if(existing){setLoading(false);return setPmsg("Ya existe una cuenta con ese correo");}
@@ -2954,6 +2955,28 @@ const VE_ESTADOS_MUNICIPIOS={
             </>)}
             <label style={s.lbl}>Dirección física</label>
             <input style={s.inp} placeholder="Calle Comercio #47, Local 3..." value={provForm.direccion_fisica||""} onChange={e=>setProvForm({...provForm,direccion_fisica:e.target.value})}/>
+
+            {/* UBICACIÓN OBLIGATORIA */}
+            <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:"12px",marginBottom:8}}>
+              <div style={{fontSize:12,fontWeight:700,color:"#1d4ed8",marginBottom:8}}>📍 Ubicación del servicio <span style={{color:"#ef4444"}}>*</span></div>
+              <div style={{fontSize:11,color:"#64748b",marginBottom:10}}>Tus clientes te encontrarán según su ciudad</div>
+              <div style={{display:"flex",gap:8,marginBottom:8}}>
+                <div style={{flex:1}}>
+                  <label style={s.lbl}>Estado <span style={{color:"#ef4444"}}>*</span></label>
+                  <select style={{...s.inp,background:"#fff",marginBottom:0}} value={provForm.estado_ubicacion||""} onChange={e=>setProvForm(f=>({...f,estado_ubicacion:e.target.value,municipio:""}))}>
+                    <option value="">Selecciona...</option>
+                    {Object.keys(VE_ESTADOS_MUNICIPIOS).sort().map(est=><option key={est} value={est}>{est}</option>)}
+                  </select>
+                </div>
+                <div style={{flex:1}}>
+                  <label style={s.lbl}>Municipio <span style={{color:"#ef4444"}}>*</span></label>
+                  <select style={{...s.inp,background:"#fff",marginBottom:0}} value={provForm.municipio||""} onChange={e=>setProvForm(f=>({...f,municipio:e.target.value}))}>
+                    <option value="">Selecciona...</option>
+                    {(VE_ESTADOS_MUNICIPIOS[provForm.estado_ubicacion||""]||[]).map(m=><option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
             {/* CATEGORÍAS — solo para comida y tiendas */}
             {["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provForm.tipo_negocio)&&(()=>{
               const esComida=provForm.tipo_negocio==="Restaurante / Cocina / Comida";
