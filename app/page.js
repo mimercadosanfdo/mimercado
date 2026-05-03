@@ -46,7 +46,41 @@ const TRANSMISION = ["Manual","Automático"];
 const COMBUSTIBLE = ["Gasolina","Diesel","Eléctrico","Híbrido"];
 const TIPO_OPERACION = ["Venta","Alquiler"];
 const REMATE_CATS = ["Electrodomésticos","Ropa y calzado","Muebles","Electrónica","Repuestos","Herramientas","Hogar","Juguetes","Otros"];
-const TIPO_NEGOCIO = ["Restaurante / Cocina / Comida","Tienda / Negocio local","Transporte y encomiendas","Lavandería","Otro servicio"];
+const TIPO_NEGOCIO = [
+  "Restaurante / Cocina / Comida",
+  "Tienda / Negocio local",
+  // TRANSPORTE
+  "Mototaxi",
+  "Taxi",
+  "Transporte interurbano (rutas)",
+  "Encomiendas y mudanzas",
+  // SALUD
+  "Médico / Consultorio",
+  "Enfermería a domicilio",
+  "Laboratorio clínico",
+  "Odontología",
+  "Farmacia",
+  // BELLEZA
+  "Peluquería / Barbería",
+  "Manicure / Pedicure",
+  "Maquillaje y estética",
+  // HOGAR Y CONSTRUCCIÓN
+  "Plomería",
+  "Electricidad",
+  "Pintura y construcción",
+  "Limpieza del hogar",
+  "Carpintería / Herrería",
+  // EDUCACIÓN
+  "Clases y tutorías",
+  "Idiomas",
+  // MECÁNICA
+  "Mecánica automotriz",
+  "Electricidad automotriz",
+  // OTROS
+  "Lavandería",
+  "Fotografía / Video",
+  "Otro",
+];
 const NEGOCIO_LOCAL_CATS = [
   {cat:"Ropa y calzado",emoji:"👗",color:"#fce7f3",tc:"#be185d"},
   {cat:"Accesorios y joyería",emoji:"💍",color:"#fef3c7",tc:"#92400e"},
@@ -319,7 +353,7 @@ const VE_ESTADOS_MUNICIPIOS={
   // ---------------------------------------------------------
 
   const [provMode,setProvMode]=useState("login");
-  const [provForm,setProvForm]=useState({email:"",nombre:"",negocio:"",whatsapp_negocio:"",telefono_principal:"",instagram:"",categorias:[],pass:"",tipo_negocio:"Restaurante / Cocina / Comida",tipo_operacion_gastro:"",descripcion_negocio:"",delivery_propio:false,permite_retiro:false,delivery_costo:0,delivery_gratis_desde:15,direccion_fisica:"",horario_desde:"08:00",horario_hasta:"18:00",horario_desc:""});
+  const [provForm,setProvForm]=useState({email:"",nombre:"",negocio:"",whatsapp_negocio:"",telefono_principal:"",instagram:"",categorias:[],pass:"",tipo_negocio:"Restaurante / Cocina / Comida",tipo_operacion_gastro:"",descripcion_negocio:"",delivery_propio:false,permite_retiro:false,delivery_costo:0,delivery_gratis_desde:15,direccion_fisica:"",horario_desde:"08:00",horario_hasta:"18:00",horario_desc:"",subcategoria_servicio:"",especialidad:"",matricula_prof:"",precio_consulta:"",horarios_atencion:"",zona_cobertura:"",tarifa_referencial:"",examenes:""});
   const [provData,setProvData]=useState(null);
   const [myProds,setMyProds]=useState([]);
   const [myPromos,setMyPromos]=useState([]);
@@ -701,18 +735,18 @@ const VE_ESTADOS_MUNICIPIOS={
     // Buscar proveedores cuyo tipo_negocio sea de servicios y subcategoria_servicio coincida
     // También buscar por tipo_negocio legacy
     const mapaTipoNegocio={
-      "mototaxi":["Transporte y encomiendas"],
-      "taxi":["Transporte y encomiendas"],
-      "rutas":["Transporte y encomiendas","Línea de transporte"],
-      "encomiendas":["Transporte y encomiendas"],
-      "medicos":["Otro servicio","Salud"],
-      "enfermeria":["Otro servicio","Salud"],
-      "laboratorios":["Otro servicio","Salud"],
-      "odontologia":["Otro servicio","Salud"],
-      "belleza":["Otro servicio","Lavandería"],
-      "hogar":["Otro servicio"],
-      "educacion":["Otro servicio"],
-      "mecanica":["Otro servicio"],
+      "mototaxi":["Mototaxi"],
+      "taxi":["Taxi"],
+      "rutas":["Transporte interurbano (rutas)","Transporte y encomiendas"],
+      "encomiendas":["Encomiendas y mudanzas","Transporte y encomiendas"],
+      "medicos":["Médico / Consultorio"],
+      "enfermeria":["Enfermería a domicilio"],
+      "laboratorios":["Laboratorio clínico"],
+      "odontologia":["Odontología"],
+      "belleza":["Peluquería / Barbería","Manicure / Pedicure","Maquillaje y estética","Lavandería"],
+      "hogar":["Plomería","Electricidad","Pintura y construcción","Limpieza del hogar","Carpintería / Herrería"],
+      "educacion":["Clases y tutorías","Idiomas"],
+      "mecanica":["Mecánica automotriz","Electricidad automotriz"],
     };
     const municipio=ubiActiva.municipio||"San Fernando";
     // Buscar por subcategoria_servicio primero
@@ -982,6 +1016,16 @@ const VE_ESTADOS_MUNICIPIOS={
       delivery_costo:provForm.delivery_costo||0,
       delivery_gratis_desde:provForm.delivery_gratis_desde||15,
       direccion_fisica:provForm.direccion_fisica||null,
+      subcategoria_servicio:provForm.subcategoria_servicio||null,
+      especialidad:provForm.especialidad||null,
+      matricula_prof:provForm.matricula_prof||null,
+      precio_consulta:provForm.precio_consulta?parseFloat(provForm.precio_consulta):null,
+      horarios_atencion:provForm.horarios_atencion||null,
+      zona_cobertura:provForm.zona_cobertura||null,
+      tarifa_referencial:provForm.tarifa_referencial||null,
+      examenes:provForm.examenes||null,
+      municipio:provForm.municipio||ubiActiva.municipio||"San Fernando",
+      estado_ubicacion:provForm.estado_ubicacion||ubiActiva.estado||"Apure",
       suscripcion_activa:true,meses_gratis_restantes:3,
       suscripcion_vence:new Date(Date.now()+90*24*60*60*1000).toISOString().split("T")[0]
     });
@@ -2712,8 +2756,55 @@ const VE_ESTADOS_MUNICIPIOS={
             <input style={s.inp} placeholder="04143232671" value={provForm.telefono_principal} onChange={e=>setProvForm({...provForm,telefono_principal:e.target.value})}/>
             <label style={s.lbl}>Instagram (opcional)</label>
             <input style={s.inp} placeholder="@cosmeticosdorcas" value={provForm.instagram||""} onChange={e=>setProvForm({...provForm,instagram:e.target.value})}/>
-            <label style={s.lbl}>Tipo de negocio *</label>
-            <select style={{...s.inp,background:"#fff"}} value={provForm.tipo_negocio} onChange={e=>setProvForm({...provForm,tipo_negocio:e.target.value,categorias:[],tipo_operacion_gastro:""})}>{TIPO_NEGOCIO.map(t=><option key={t}>{t}</option>)}</select>
+            <label style={s.lbl}>Tipo de negocio o servicio *</label>
+            <select style={{...s.inp,background:"#fff"}} value={provForm.tipo_negocio} onChange={e=>setProvForm({...provForm,tipo_negocio:e.target.value,categorias:[],tipo_operacion_gastro:"",subcategoria_servicio:""})}>
+              <option value="">— Selecciona —</option>
+              <optgroup label="🍽️ Comida y comercio">
+                <option>Restaurante / Cocina / Comida</option>
+                <option>Tienda / Negocio local</option>
+              </optgroup>
+              <optgroup label="🚗 Transporte">
+                <option>Mototaxi</option>
+                <option>Taxi</option>
+                <option>Transporte interurbano (rutas)</option>
+                <option>Encomiendas y mudanzas</option>
+              </optgroup>
+              <optgroup label="🏥 Salud">
+                <option>Médico / Consultorio</option>
+                <option>Enfermería a domicilio</option>
+                <option>Laboratorio clínico</option>
+                <option>Odontología</option>
+                <option>Farmacia</option>
+              </optgroup>
+              <optgroup label="💇 Belleza">
+                <option>Peluquería / Barbería</option>
+                <option>Manicure / Pedicure</option>
+                <option>Maquillaje y estética</option>
+              </optgroup>
+              <optgroup label="🏠 Hogar y construcción">
+                <option>Plomería</option>
+                <option>Electricidad</option>
+                <option>Pintura y construcción</option>
+                <option>Limpieza del hogar</option>
+                <option>Carpintería / Herrería</option>
+              </optgroup>
+              <optgroup label="📚 Educación">
+                <option>Clases y tutorías</option>
+                <option>Idiomas</option>
+              </optgroup>
+              <optgroup label="🔩 Mecánica">
+                <option>Mecánica automotriz</option>
+                <option>Electricidad automotriz</option>
+              </optgroup>
+              <optgroup label="✦ Otros">
+                <option>Lavandería</option>
+                <option>Fotografía / Video</option>
+                <option>Otro</option>
+              </optgroup>
+            </select>
+
+            {/* CAMPOS ESPECÍFICOS SEGÚN TIPO */}
+            {/* RESTAURANTE */}
             {provForm.tipo_negocio==="Restaurante / Cocina / Comida"&&(
               <div style={{background:"#f8fafc",borderRadius:14,padding:"12px",marginBottom:4,border:"1px solid #e2e8f0"}}>
                 <div style={{fontSize:12,fontWeight:700,color:"#374151",marginBottom:8}}>¿Cómo funciona tu negocio? *</div>
@@ -2721,13 +2812,203 @@ const VE_ESTADOS_MUNICIPIOS={
                   {TIPOS_OPERACION_GASTRO.map(t=>(
                     <div key={t.value} onClick={()=>setProvForm(f=>({...f,tipo_operacion_gastro:t.value}))} style={{display:"flex",alignItems:"flex-start",gap:10,background:provForm.tipo_operacion_gastro===t.value?"#eff6ff":"#fff",border:`2px solid ${provForm.tipo_operacion_gastro===t.value?"#3b82f6":"#e2e8f0"}`,borderRadius:10,padding:"10px 12px",cursor:"pointer"}}>
                       <div style={{width:20,height:20,borderRadius:"50%",background:provForm.tipo_operacion_gastro===t.value?"#3b82f6":"#e2e8f0",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",marginTop:1}}>{provForm.tipo_operacion_gastro===t.value&&<span style={{color:"#fff",fontSize:12,fontWeight:900}}>✓</span>}</div>
-                      <div>
-                        <div style={{fontSize:13,fontWeight:700,color:provForm.tipo_operacion_gastro===t.value?"#1d4ed8":"#374151"}}>{t.label}</div>
-                        <div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>{t.desc}</div>
-                      </div>
+                      <div><div style={{fontSize:13,fontWeight:700,color:provForm.tipo_operacion_gastro===t.value?"#1d4ed8":"#374151"}}>{t.label}</div><div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>{t.desc}</div></div>
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* MÉDICO / CONSULTORIO */}
+            {["Médico / Consultorio","Enfermería a domicilio","Odontología"].includes(provForm.tipo_negocio)&&(
+              <div style={{background:"#eff6ff",borderRadius:12,padding:"12px",marginBottom:4,border:"1px solid #bfdbfe"}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#1d4ed8",marginBottom:8}}>👨‍⚕️ Datos profesionales</div>
+                <label style={s.lbl}>Especialidad *</label>
+                <input style={s.inp} placeholder={provForm.tipo_negocio==="Médico / Consultorio"?"Ej: Medicina general, Pediatría, Cardiología...":provForm.tipo_negocio==="Odontología"?"Ej: Odontología general, Ortodoncia...":"Ej: Enfermería clínica, Cuidados domiciliarios..."} value={provForm.especialidad||""} onChange={e=>setProvForm(f=>({...f,especialidad:e.target.value}))}/>
+                <label style={s.lbl}>Precio por consulta ($)</label>
+                <input style={s.inp} type="number" placeholder="15.00" value={provForm.precio_consulta||""} onChange={e=>setProvForm(f=>({...f,precio_consulta:e.target.value}))}/>
+                <label style={s.lbl}>Matrícula MPPS (opcional)</label>
+                <input style={s.inp} placeholder="MPPS-00000" value={provForm.matricula_prof||""} onChange={e=>setProvForm(f=>({...f,matricula_prof:e.target.value}))}/>
+                <label style={s.lbl}>Dirección del consultorio / zona de atención</label>
+                <input style={s.inp} placeholder="Ej: Calle Bolívar, frente al hospital / A domicilio" value={provForm.zona_cobertura||""} onChange={e=>setProvForm(f=>({...f,zona_cobertura:e.target.value}))}/>
+              </div>
+            )}
+
+            {/* LABORATORIO */}
+            {provForm.tipo_negocio==="Laboratorio clínico"&&(
+              <div style={{background:"#fdf4ff",borderRadius:12,padding:"12px",marginBottom:4,border:"1px solid #e9d5ff"}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#7e22ce",marginBottom:8}}>🔬 Catálogo de exámenes</div>
+                <label style={s.lbl}>Exámenes disponibles y precios *</label>
+                <textarea style={{...s.inp,minHeight:90,resize:"vertical"}} placeholder={"Hemograma completo $8\nGlucosa en ayunas $5\nPerfil 20 $25\nPrueba de embarazo $4\nCoronavirus $10..."} value={provForm.examenes||""} onChange={e=>setProvForm(f=>({...f,examenes:e.target.value}))}/>
+                <label style={s.lbl}>Horario de atención</label>
+                <input style={s.inp} placeholder="Lun-Vie 7AM-12PM · Sáb 7AM-10AM" value={provForm.horarios_atencion||""} onChange={e=>setProvForm(f=>({...f,horarios_atencion:e.target.value}))}/>
+              </div>
+            )}
+
+            {/* BELLEZA */}
+            {["Peluquería / Barbería","Manicure / Pedicure","Maquillaje y estética"].includes(provForm.tipo_negocio)&&(
+              <div style={{background:"#fdf2f8",borderRadius:12,padding:"12px",marginBottom:4,border:"1px solid #fbcfe8"}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#9d174d",marginBottom:8}}>💇 Servicios y tarifas</div>
+                <label style={s.lbl}>Servicios que ofreces</label>
+                <input style={s.inp} placeholder="Ej: Corte dama $8, Corte caballero $5, Tinte $20..." value={provForm.especialidad||""} onChange={e=>setProvForm(f=>({...f,especialidad:e.target.value}))}/>
+                <label style={s.lbl}>¿Atiendes a domicilio?</label>
+                <div style={{display:"flex",gap:8,marginBottom:4}}>
+                  {["Sí, a domicilio","Solo en local","Ambas opciones"].map(op=>(
+                    <button key={op} type="button" onClick={()=>setProvForm(f=>({...f,zona_cobertura:op}))} style={{flex:1,padding:"8px 4px",borderRadius:10,border:`2px solid ${provForm.zona_cobertura===op?"#db2777":"#e2e8f0"}`,background:provForm.zona_cobertura===op?"#fdf2f8":"#fff",fontSize:10,fontWeight:700,color:provForm.zona_cobertura===op?"#db2777":"#64748b",cursor:"pointer"}}>{op}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TRANSPORTE */}
+            {["Mototaxi","Taxi","Transporte interurbano (rutas)","Encomiendas y mudanzas"].includes(provForm.tipo_negocio)&&(
+              <div style={{background:"#f0fdf4",borderRadius:12,padding:"12px",marginBottom:4,border:"1px solid #bbf7d0"}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#15803d",marginBottom:8}}>🚗 Detalles del servicio</div>
+                <label style={s.lbl}>Tarifa referencial</label>
+                <input style={s.inp} placeholder={provForm.tipo_negocio==="Mototaxi"?"Ej: Desde $1 dentro de SF":provForm.tipo_negocio==="Taxi"?"Ej: Desde $2, $15 aeropuerto":provForm.tipo_negocio==="Transporte interurbano (rutas)"?"Ej: SF→Valencia $15, SF→Caracas $25":"Ej: $3 dentro de SF, consultar para envíos foráneos"} value={provForm.tarifa_referencial||""} onChange={e=>setProvForm(f=>({...f,tarifa_referencial:e.target.value}))}/>
+                {provForm.tipo_negocio==="Transporte interurbano (rutas)"&&(
+                  <>
+                    <label style={s.lbl}>Rutas que cubre</label>
+                    <input style={s.inp} placeholder="Ej: SF ↔ Valencia · SF ↔ Caracas · SF ↔ Barinas" value={provForm.zona_cobertura||""} onChange={e=>setProvForm(f=>({...f,zona_cobertura:e.target.value}))}/>
+                  </>
+                )}
+                {["Mototaxi","Taxi"].includes(provForm.tipo_negocio)&&(
+                  <>
+                    <label style={s.lbl}>Zona de cobertura</label>
+                    <input style={s.inp} placeholder="Ej: Todo San Fernando · Biruaca · Zona industrial" value={provForm.zona_cobertura||""} onChange={e=>setProvForm(f=>({...f,zona_cobertura:e.target.value}))}/>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* EDUCACIÓN */}
+            {["Clases y tutorías","Idiomas"].includes(provForm.tipo_negocio)&&(
+              <div style={{background:"#eff6ff",borderRadius:12,padding:"12px",marginBottom:4,border:"1px solid #bfdbfe"}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#1d4ed8",marginBottom:8}}>📚 Detalles académicos</div>
+                <label style={s.lbl}>Materias o áreas que enseñas *</label>
+                <input style={s.inp} placeholder="Ej: Matemáticas, Física, Inglés avanzado..." value={provForm.especialidad||""} onChange={e=>setProvForm(f=>({...f,especialidad:e.target.value}))}/>
+                <label style={s.lbl}>Tarifa por hora</label>
+                <input style={s.inp} placeholder="Ej: $8/hora, $30/4 clases" value={provForm.tarifa_referencial||""} onChange={e=>setProvForm(f=>({...f,tarifa_referencial:e.target.value}))}/>
+                <label style={s.lbl}>Modalidad</label>
+                <div style={{display:"flex",gap:8}}>
+                  {["Presencial","Online","Ambas"].map(op=>(
+                    <button key={op} type="button" onClick={()=>setProvForm(f=>({...f,zona_cobertura:op}))} style={{flex:1,padding:"8px 4px",borderRadius:10,border:`2px solid ${provForm.zona_cobertura===op?"#1d4ed8":"#e2e8f0"}`,background:provForm.zona_cobertura===op?"#eff6ff":"#fff",fontSize:11,fontWeight:700,color:provForm.zona_cobertura===op?"#1d4ed8":"#64748b",cursor:"pointer"}}>{op}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* MECÁNICA / HOGAR / CONSTRUCCIÓN */}
+            {["Mecánica automotriz","Electricidad automotriz","Plomería","Electricidad","Pintura y construcción","Limpieza del hogar","Carpintería / Herrería"].includes(provForm.tipo_negocio)&&(
+              <div style={{background:"#f8fafc",borderRadius:12,padding:"12px",marginBottom:4,border:"1px solid #e2e8f0"}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#374151",marginBottom:8}}>🔧 Detalles del servicio</div>
+                <label style={s.lbl}>Servicios específicos que ofreces</label>
+                <input style={s.inp} placeholder="Ej: Reparación de frenos, cambio de aceite, diagnóstico..." value={provForm.especialidad||""} onChange={e=>setProvForm(f=>({...f,especialidad:e.target.value}))}/>
+                <label style={s.lbl}>Tarifa referencial</label>
+                <input style={s.inp} placeholder="Ej: Desde $10, Presupuesto según trabajo..." value={provForm.tarifa_referencial||""} onChange={e=>setProvForm(f=>({...f,tarifa_referencial:e.target.value}))}/>
+                <label style={s.lbl}>Zona de cobertura</label>
+                <input style={s.inp} placeholder="Ej: Todo San Fernando, solo zona centro..." value={provForm.zona_cobertura||""} onChange={e=>setProvForm(f=>({...f,zona_cobertura:e.target.value}))}/>
+              </div>
+            )}
+              <div style={{background:"#f8fafc",borderRadius:14,padding:"14px",marginBottom:4,border:"1px solid #e2e8f0"}}>
+                <div style={{fontSize:12,fontWeight:700,color:"#374151",marginBottom:10}}>¿Qué tipo de servicio ofreces? *</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+                  {[
+                    {id:"medicos",     icon:"👨‍⚕️", label:"Médico"},
+                    {id:"enfermeria",  icon:"💉",  label:"Enfermería"},
+                    {id:"laboratorios",icon:"🔬",  label:"Laboratorio"},
+                    {id:"odontologia", icon:"🦷",  label:"Odontología"},
+                    {id:"belleza",     icon:"💇",  label:"Belleza"},
+                    {id:"educacion",   icon:"📚",  label:"Educación"},
+                    {id:"mecanica",    icon:"🔩",  label:"Mecánica"},
+                    {id:"hogar",       icon:"🔧",  label:"Hogar"},
+                  ].map(sc=>(
+                    <button key={sc.id} type="button" onClick={()=>setProvForm(f=>({...f,subcategoria_servicio:sc.id}))}
+                      style={{padding:"10px 8px",borderRadius:12,border:`2px solid ${provForm.subcategoria_servicio===sc.id?"#4f46e5":"#e2e8f0"}`,background:provForm.subcategoria_servicio===sc.id?"#eff6ff":"#fff",cursor:"pointer",display:"flex",alignItems:"center",gap:8,transition:"all 0.15s"}}>
+                      <span style={{fontSize:20}}>{sc.icon}</span>
+                      <span style={{fontSize:12,fontWeight:700,color:provForm.subcategoria_servicio===sc.id?"#4f46e5":"#374151"}}>{sc.label}</span>
+                      {provForm.subcategoria_servicio===sc.id&&<span style={{marginLeft:"auto",color:"#4f46e5",fontSize:14}}>✓</span>}
+                    </button>
+                  ))}
+                </div>
+
+                {/* CAMPOS MÉDICO / ENFERMERÍA / ODONTOLOGÍA */}
+                {["medicos","enfermeria","odontologia"].includes(provForm.subcategoria_servicio)&&(
+                  <>
+                    <label style={s.lbl}>Especialidad *</label>
+                    <input style={s.inp} placeholder={provForm.subcategoria_servicio==="medicos"?"Ej: Medicina general, Pediatría, Cardiología...":provForm.subcategoria_servicio==="odontologia"?"Ej: Odontología general, Ortodoncia...":"Ej: Enfermería clínica, Cuidados domiciliarios..."} value={provForm.especialidad||""} onChange={e=>setProvForm(f=>({...f,especialidad:e.target.value}))}/>
+                    <label style={s.lbl}>Precio por consulta ($)</label>
+                    <input style={s.inp} type="number" placeholder="15.00" value={provForm.precio_consulta||""} onChange={e=>setProvForm(f=>({...f,precio_consulta:e.target.value}))}/>
+                    <label style={s.lbl}>Matrícula profesional (opcional)</label>
+                    <input style={s.inp} placeholder="MPPS-00000" value={provForm.matricula_prof||""} onChange={e=>setProvForm(f=>({...f,matricula_prof:e.target.value}))}/>
+                    <label style={s.lbl}>Zona de atención</label>
+                    <input style={s.inp} placeholder="Ej: Consultorio Centro, Visitas a domicilio..." value={provForm.zona_cobertura||""} onChange={e=>setProvForm(f=>({...f,zona_cobertura:e.target.value}))}/>
+                  </>
+                )}
+
+                {/* CAMPOS LABORATORIO */}
+                {provForm.subcategoria_servicio==="laboratorios"&&(
+                  <>
+                    <label style={s.lbl}>Exámenes disponibles y precios *</label>
+                    <textarea style={{...s.inp,minHeight:80,resize:"vertical"}} placeholder={"Hemograma completo $8\nGlucosa en ayunas $5\nPerfil 20 $25\nPrueba de embarazo $4..."} value={provForm.examenes||""} onChange={e=>setProvForm(f=>({...f,examenes:e.target.value}))}/>
+                    <label style={s.lbl}>Horario de atención</label>
+                    <input style={s.inp} placeholder="Lun-Vie 7AM-12PM · Sáb 7AM-10AM" value={provForm.horarios_atencion||""} onChange={e=>setProvForm(f=>({...f,horarios_atencion:e.target.value}))}/>
+                  </>
+                )}
+
+                {/* CAMPOS BELLEZA */}
+                {provForm.subcategoria_servicio==="belleza"&&(
+                  <>
+                    <label style={s.lbl}>Servicios que ofreces</label>
+                    <input style={s.inp} placeholder="Ej: Corte, Color, Manicure, Maquillaje..." value={provForm.especialidad||""} onChange={e=>setProvForm(f=>({...f,especialidad:e.target.value}))}/>
+                    <label style={s.lbl}>Tarifa referencial</label>
+                    <input style={s.inp} placeholder="Ej: Corte desde $5, Manicure $8..." value={provForm.tarifa_referencial||""} onChange={e=>setProvForm(f=>({...f,tarifa_referencial:e.target.value}))}/>
+                    <label style={s.lbl}>¿Atiendes a domicilio?</label>
+                    <div style={{display:"flex",gap:8,marginBottom:8}}>
+                      {["Sí, a domicilio","Solo en local","Ambas opciones"].map(op=>(
+                        <button key={op} type="button" onClick={()=>setProvForm(f=>({...f,zona_cobertura:op}))} style={{flex:1,padding:"8px 4px",borderRadius:10,border:`2px solid ${provForm.zona_cobertura===op?"#db2777":"#e2e8f0"}`,background:provForm.zona_cobertura===op?"#fdf2f8":"#fff",fontSize:10,fontWeight:700,color:provForm.zona_cobertura===op?"#db2777":"#64748b",cursor:"pointer"}}>{op}</button>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {/* CAMPOS EDUCACIÓN */}
+                {provForm.subcategoria_servicio==="educacion"&&(
+                  <>
+                    <label style={s.lbl}>Materias o áreas que enseñas *</label>
+                    <input style={s.inp} placeholder="Ej: Matemáticas, Inglés, Física, Informática..." value={provForm.especialidad||""} onChange={e=>setProvForm(f=>({...f,especialidad:e.target.value}))}/>
+                    <label style={s.lbl}>Tarifa por hora ($)</label>
+                    <input style={s.inp} placeholder="Ej: $8/hora, $30/mes..." value={provForm.tarifa_referencial||""} onChange={e=>setProvForm(f=>({...f,tarifa_referencial:e.target.value}))}/>
+                    <label style={s.lbl}>Modalidad</label>
+                    <div style={{display:"flex",gap:8,marginBottom:8}}>
+                      {["Presencial","Online","Ambas"].map(op=>(
+                        <button key={op} type="button" onClick={()=>setProvForm(f=>({...f,zona_cobertura:op}))} style={{flex:1,padding:"8px 4px",borderRadius:10,border:`2px solid ${provForm.zona_cobertura===op?"#4f46e5":"#e2e8f0"}`,background:provForm.zona_cobertura===op?"#eff6ff":"#fff",fontSize:11,fontWeight:700,color:provForm.zona_cobertura===op?"#4f46e5":"#64748b",cursor:"pointer"}}>{op}</button>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {/* CAMPOS MECÁNICA / HOGAR */}
+                {["mecanica","hogar"].includes(provForm.subcategoria_servicio)&&(
+                  <>
+                    <label style={s.lbl}>Servicios que ofreces *</label>
+                    <input style={s.inp} placeholder={provForm.subcategoria_servicio==="mecanica"?"Ej: Mecánica general, Electricidad automotriz...":"Ej: Plomería, Electricidad, Pintura, Albañilería..."} value={provForm.especialidad||""} onChange={e=>setProvForm(f=>({...f,especialidad:e.target.value}))}/>
+                    <label style={s.lbl}>Tarifa referencial</label>
+                    <input style={s.inp} placeholder="Ej: Desde $10, Presupuesto según trabajo..." value={provForm.tarifa_referencial||""} onChange={e=>setProvForm(f=>({...f,tarifa_referencial:e.target.value}))}/>
+                    <label style={s.lbl}>Zona de cobertura</label>
+                    <input style={s.inp} placeholder="Ej: Todo San Fernando, Zona Norte..." value={provForm.zona_cobertura||""} onChange={e=>setProvForm(f=>({...f,zona_cobertura:e.target.value}))}/>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* CAMPOS ESPECÍFICOS PARA TRANSPORTE */}
+            {provForm.tipo_negocio==="Transporte y encomiendas"&&(
+              <div style={{background:"#f0fdf4",borderRadius:12,padding:"12px",marginBottom:4,border:"1px solid #bbf7d0"}}>
+                <label style={s.lbl}>Tarifa referencial</label>
+                <input style={s.inp} placeholder="Ej: Desde $1, $15 por ruta SF-Valencia..." value={provForm.tarifa_referencial||""} onChange={e=>setProvForm(f=>({...f,tarifa_referencial:e.target.value}))}/>
+                <label style={s.lbl}>Zona de cobertura / Rutas</label>
+                <input style={s.inp} placeholder="Ej: Todo San Fernando / SF → Valencia → Caracas" value={provForm.zona_cobertura||""} onChange={e=>setProvForm(f=>({...f,zona_cobertura:e.target.value}))}/>
               </div>
             )}
             <label style={s.lbl}>Horario de atención</label>
@@ -2736,51 +3017,47 @@ const VE_ESTADOS_MUNICIPIOS={
               <div style={{flex:1}}><label style={{...s.lbl,marginBottom:2}}>Cierra</label><input style={s.inp} type="time" value={provForm.horario_hasta} onChange={e=>setProvForm({...provForm,horario_hasta:e.target.value})}/></div>
             </div>
             <input style={s.inp} placeholder="Ej: Solo fines de semana, Lun-Vie..." value={provForm.horario_desc} onChange={e=>setProvForm({...provForm,horario_desc:e.target.value})}/>
-            <label style={s.lbl}>¿Cómo entregas los pedidos? (puedes marcar ambas)</label>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
-              <button type="button" onClick={()=>setProvForm({...provForm,delivery_propio:!provForm.delivery_propio})} style={{padding:"12px 8px",borderRadius:12,border:`2px solid ${provForm.delivery_propio?"#15803d":"#e2e8f0"}`,background:provForm.delivery_propio?"#f0fdf4":"#fff",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                <span style={{fontSize:22}}>🛵</span>
-                <span style={{fontSize:12,fontWeight:700,color:provForm.delivery_propio?"#15803d":"#374151"}}>Delivery</span>
-                <span style={{fontSize:10,color:provForm.delivery_propio?"#15803d":"#94a3b8"}}>Entrego a domicilio</span>
-                <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${provForm.delivery_propio?"#15803d":"#d1d5db"}`,background:provForm.delivery_propio?"#15803d":"#fff",display:"flex",alignItems:"center",justifyContent:"center",marginTop:2}}>{provForm.delivery_propio&&<span style={{color:"#fff",fontSize:11,fontWeight:900}}>✓</span>}</div>
-              </button>
-              <button type="button" onClick={()=>setProvForm({...provForm,permite_retiro:!provForm.permite_retiro})} style={{padding:"12px 8px",borderRadius:12,border:`2px solid ${provForm.permite_retiro?"#3b82f6":"#e2e8f0"}`,background:provForm.permite_retiro?"#eff6ff":"#fff",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                <span style={{fontSize:22}}>🏪</span>
-                <span style={{fontSize:12,fontWeight:700,color:provForm.permite_retiro?"#1d4ed8":"#374151"}}>Retiro en local</span>
-                <span style={{fontSize:10,color:provForm.permite_retiro?"#3b82f6":"#94a3b8"}}>El cliente recoge</span>
-                <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${provForm.permite_retiro?"#3b82f6":"#d1d5db"}`,background:provForm.permite_retiro?"#3b82f6":"#fff",display:"flex",alignItems:"center",justifyContent:"center",marginTop:2}}>{provForm.permite_retiro&&<span style={{color:"#fff",fontSize:11,fontWeight:900}}>✓</span>}</div>
-              </button>
-            </div>
-            {provForm.delivery_propio&&(
-              <div style={{background:"#f0fdf4",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #bbf7d0"}}>
-                <div style={{fontSize:11,fontWeight:700,color:"#15803d",marginBottom:8}}>Configura tu delivery</div>
-                <div style={{display:"flex",gap:8}}>
-                  <div style={{flex:1}}><label style={s.lbl}>Costo del delivery $</label><input style={s.inp} type="number" placeholder="1.50" value={provForm.delivery_costo} onChange={e=>setProvForm({...provForm,delivery_costo:parseFloat(e.target.value)||0})}/></div>
-                  <div style={{flex:1}}><label style={s.lbl}>Delivery gratis desde $</label><input style={s.inp} type="number" placeholder="15" value={provForm.delivery_gratis_desde} onChange={e=>setProvForm({...provForm,delivery_gratis_desde:parseFloat(e.target.value)||15})}/></div>
-                </div>
-                <div style={{fontSize:10,color:"#15803d",marginTop:4}}>💡 Pedidos mayores a ${provForm.delivery_gratis_desde||15} tendrán delivery gratis</div>
+            {/* DELIVERY — solo para comida y negocios */}
+            {["Restaurante / Cocina / Comida","Tienda / Negocio local","Farmacia","Lavandería"].includes(provForm.tipo_negocio)&&(<>
+              <label style={s.lbl}>¿Cómo entregas los pedidos?</label>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+                <button type="button" onClick={()=>setProvForm({...provForm,delivery_propio:!provForm.delivery_propio})} style={{padding:"12px 8px",borderRadius:12,border:`2px solid ${provForm.delivery_propio?"#15803d":"#e2e8f0"}`,background:provForm.delivery_propio?"#f0fdf4":"#fff",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                  <span style={{fontSize:22}}>🛵</span>
+                  <span style={{fontSize:12,fontWeight:700,color:provForm.delivery_propio?"#15803d":"#374151"}}>Delivery</span>
+                  <span style={{fontSize:10,color:provForm.delivery_propio?"#15803d":"#94a3b8"}}>Entrego a domicilio</span>
+                  <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${provForm.delivery_propio?"#15803d":"#d1d5db"}`,background:provForm.delivery_propio?"#15803d":"#fff",display:"flex",alignItems:"center",justifyContent:"center",marginTop:2}}>{provForm.delivery_propio&&<span style={{color:"#fff",fontSize:11,fontWeight:900}}>✓</span>}</div>
+                </button>
+                <button type="button" onClick={()=>setProvForm({...provForm,permite_retiro:!provForm.permite_retiro})} style={{padding:"12px 8px",borderRadius:12,border:`2px solid ${provForm.permite_retiro?"#3b82f6":"#e2e8f0"}`,background:provForm.permite_retiro?"#eff6ff":"#fff",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                  <span style={{fontSize:22}}>🏪</span>
+                  <span style={{fontSize:12,fontWeight:700,color:provForm.permite_retiro?"#1d4ed8":"#374151"}}>Retiro en local</span>
+                  <span style={{fontSize:10,color:provForm.permite_retiro?"#3b82f6":"#94a3b8"}}>El cliente recoge</span>
+                  <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${provForm.permite_retiro?"#3b82f6":"#d1d5db"}`,background:provForm.permite_retiro?"#3b82f6":"#fff",display:"flex",alignItems:"center",justifyContent:"center",marginTop:2}}>{provForm.permite_retiro&&<span style={{color:"#fff",fontSize:11,fontWeight:900}}>✓</span>}</div>
+                </button>
               </div>
-            )}
+              {provForm.delivery_propio&&(
+                <div style={{background:"#f0fdf4",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #bbf7d0"}}>
+                  <div style={{fontSize:11,fontWeight:700,color:"#15803d",marginBottom:8}}>Configura tu delivery</div>
+                  <div style={{display:"flex",gap:8}}>
+                    <div style={{flex:1}}><label style={s.lbl}>Costo $</label><input style={s.inp} type="number" placeholder="1.50" value={provForm.delivery_costo} onChange={e=>setProvForm({...provForm,delivery_costo:parseFloat(e.target.value)||0})}/></div>
+                    <div style={{flex:1}}><label style={s.lbl}>Gratis desde $</label><input style={s.inp} type="number" placeholder="15" value={provForm.delivery_gratis_desde} onChange={e=>setProvForm({...provForm,delivery_gratis_desde:parseFloat(e.target.value)||15})}/></div>
+                  </div>
+                </div>
+              )}
+            </>)}
             <label style={s.lbl}>Dirección física</label>
             <input style={s.inp} placeholder="Calle Comercio #47, Local 3..." value={provForm.direccion_fisica||""} onChange={e=>setProvForm({...provForm,direccion_fisica:e.target.value})}/>
-            {(()=>{
-  const esComida=provForm.tipo_negocio==="Restaurante / Cocina / Comida";
-  const regCats=esComida?TIPOS_COMIDA:
-    provForm.tipo_negocio==="Transporte y encomiendas"||provForm.tipo_negocio==="Lavandería"?NEGOCIO_CATS_TRANSPORTE:
-    provForm.tipo_negocio==="Tienda / Negocio local"?NEGOCIO_CATS.map(c=>c.cat):
-    [...NEGOCIO_CATS.map(c=>c.cat),...NEGOCIO_CATS_RESTAURANTE];
-  const catLabel=esComida?"Tipos de comida que ofreces (selecciona varios)":
-    provForm.tipo_negocio==="Tienda / Negocio local"?"Categorías de tu negocio":
-    provForm.tipo_negocio==="Transporte y encomiendas"||provForm.tipo_negocio==="Lavandería"?"Tipo de servicio":
-    "Categorías";
-  return(<>
-
-    <label style={s.lbl}>{catLabel} {provForm.categorias.length>0&&<span style={{color:P,fontWeight:700}}>({provForm.categorias.length} seleccionadas)</span>}</label>
-    <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
-      {regCats.map(c=>(<button key={c} onClick={()=>setProvForm(f=>({...f,categorias:f.categorias.includes(c)?f.categorias.filter(x=>x!==c):[...f.categorias,c]}))} style={{padding:"6px 12px",borderRadius:20,fontSize:12,cursor:"pointer",background:provForm.categorias.includes(c)?P:"#f1f5f9",color:provForm.categorias.includes(c)?"#fff":"#64748b",border:provForm.categorias.includes(c)?`2px solid ${P}`:"2px solid transparent",fontWeight:provForm.categorias.includes(c)?700:500,transition:"all 0.15s"}}>{c}</button>))}
-    </div>
-  </>);
-})()}
+            {/* CATEGORÍAS — solo para comida y tiendas */}
+            {["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provForm.tipo_negocio)&&(()=>{
+              const esComida=provForm.tipo_negocio==="Restaurante / Cocina / Comida";
+              const regCats=esComida?TIPOS_COMIDA:NEGOCIO_CATS.map(c=>c.cat);
+              const catLabel=esComida?"Tipos de comida que ofreces":"Categorías de tu negocio";
+              return(<>
+                <label style={s.lbl}>{catLabel} {provForm.categorias.length>0&&<span style={{color:P,fontWeight:700}}>({provForm.categorias.length} seleccionadas)</span>}</label>
+                <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
+                  {regCats.map(c=>(<button key={c} onClick={()=>setProvForm(f=>({...f,categorias:f.categorias.includes(c)?f.categorias.filter(x=>x!==c):[...f.categorias,c]}))} style={{padding:"6px 12px",borderRadius:20,fontSize:12,cursor:"pointer",background:provForm.categorias.includes(c)?P:"#f1f5f9",color:provForm.categorias.includes(c)?"#fff":"#64748b",border:provForm.categorias.includes(c)?`2px solid ${P}`:"2px solid transparent",fontWeight:provForm.categorias.includes(c)?700:500,transition:"all 0.15s"}}>{c}</button>))}
+                </div>
+              </>);
+            })()}
             <div style={{...s.ib,background:"#f0fdf4",marginBottom:8}}><div style={{fontSize:12,color:"#15803d"}}>🎁 Los primeros 3 meses son completamente gratis. Después $8/mes.</div></div>
             <label style={s.lbl}>Logo del negocio</label>
             {logoPreview&&<img src={logoPreview} alt="" style={{width:60,height:60,borderRadius:"50%",objectFit:"cover",marginBottom:8}}/>}
