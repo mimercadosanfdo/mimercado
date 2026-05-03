@@ -1,5 +1,5 @@
-// BUILD:1777843987
-"use client"; // Apure Market v1777843987
+// BUILD:1777844889
+"use client"; // Apure Market v1777844889
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -3254,7 +3254,7 @@ const VE_ESTADOS_MUNICIPIOS={
                     <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                       <button onClick={()=>{setEditingProdId(`mod_${p.id}`);setNewProd({nombre:p.nombre||"",marca:p.marca||"",presentacion:p.presentacion||"",descripcion:p.descripcion||"",precio:String(p.precio||""),unidad:p.unidad||"porción",categoria:p.categoria||"Comida preparada",stock:p.stock||1,hi:p.horario_inicio||"08:00",hf:p.horario_fin||"18:00",permanente:p.permanente||false});}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#eff6ff",color:"#1d4ed8"}}>✏️ Modificar</button>
                       <button onClick={()=>toggleDisp(p.id,p.disponible)} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:p.disponible?"#fff7ed":"#f0fdf4",color:p.disponible?"#c2410c":"#15803d"}}>{p.disponible?"⏸️ Pausar":"▶️ Activar"}</button>
-                      <button onClick={()=>setConfirmModal({msg:"¿Eliminar este producto? Esta acción no se puede deshacer.",onOk:async()=>{await supabase.from("productos_proveedor").delete().eq("id",p.id);setMyProds(prev=>prev.filter(x=>x.id!==p.id));loadAll();}})} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fee2e2",color:"#be123c"}}>🗑️ Eliminar</button>
+                      <button onClick={()=>setConfirmModal({msg:"¿Eliminar este producto? Esta acción no se puede deshacer.",onOk:async()=>{const{error}=await supabase.from("productos_proveedor").delete().eq("id",p.id);if(error){setPmsg("❌ Error al eliminar: "+error.message);return;}setMyProds(prev=>prev.filter(x=>x.id!==p.id));setPmsg("✅ Producto eliminado");}})} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fee2e2",color:"#be123c"}}>🗑️ Eliminar</button>
                     </div>
                     )}
                   </div>
