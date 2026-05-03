@@ -1,5 +1,5 @@
-// BUILD:1777850034
-"use client"; // Apure Market v1777850034
+// BUILD:1777851574
+"use client"; // Apure Market v1777851574
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1116,20 +1116,20 @@ const VE_ESTADOS_MUNICIPIOS={
       unidad:newProd.unidad,
       categoria:newProd.categoria,
       foto_url:foto_url||null,
-      stock:parseInt(newProd.stock)||1,
-      horario_inicio:newProd.hi,
-      horario_fin:newProd.hf,
+      stock:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?999:(parseInt(newProd.stock)||1),
+      horario_inicio:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?null:newProd.hi,
+      horario_fin:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?null:newProd.hf,
       aprobado:auto,
       disponible:true,
-      permanente:newProd.permanente,
-      es_oferta:newProd.es_oferta||false,
+      permanente:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?true:newProd.permanente,
+      es_oferta:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?false:(newProd.es_oferta||false),
       primera_aprobacion:auto,
       rechazado:false,
       fecha:new Date().toISOString().split("T")[0],
     });
     setLoading(false);
     if(error){setPmsg("Error: "+error.message);return;}
-    setPmsg(auto?"✅ Producto publicado directamente":"✅ Enviado al admin para aprobación");
+    const esServ=!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio);setPmsg(auto?(esServ?"✅ Servicio publicado":"✅ Producto publicado"):(esServ?"✅ Servicio enviado al admin para aprobación":"✅ Enviado al admin para aprobación"));
     setNewProd({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false,es_oferta:false});
     setFotoFile(null);setFotoPreview(null);
     loadMyProds(provData.id);loadAll();
@@ -2623,6 +2623,7 @@ const VE_ESTADOS_MUNICIPIOS={
                     <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
                       {proveedorServicioActivo.zona_cobertura&&<span style={{background:"#f8fafc",color:"#475569",fontSize:11,padding:"4px 10px",borderRadius:20,border:"1px solid #e2e8f0"}}>📍 {proveedorServicioActivo.zona_cobertura}</span>}
                       {proveedorServicioActivo.direccion_fisica&&<span style={{background:"#f8fafc",color:"#475569",fontSize:11,padding:"4px 10px",borderRadius:20,border:"1px solid #e2e8f0"}}>🏢 {proveedorServicioActivo.direccion_fisica}</span>}
+                      {proveedorServicioActivo.instagram&&<a href={`https://instagram.com/${proveedorServicioActivo.instagram.replace("@","")}`} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} style={{background:"#fdf2f8",color:"#9d174d",fontSize:11,padding:"4px 10px",borderRadius:20,border:"1px solid #fbcfe8",textDecoration:"none",fontWeight:600}}>📸 {proveedorServicioActivo.instagram}</a>}
                     </div>
                     {(proveedorServicioActivo.horarios_atencion||proveedorServicioActivo.horario_desde)&&(
                       <div style={{background:"#eff6ff",borderRadius:10,padding:"8px 12px",fontSize:12,color:"#1d4ed8",fontWeight:600,display:"flex",alignItems:"center",gap:6}}>
@@ -3197,11 +3198,11 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
                 </div>
 
                 {/* ACCESOS DEL NEGOCIO */}
-                <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",marginBottom:10,letterSpacing:1,textTransform:"uppercase"}}>Tu tienda virtual</div>
+                <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",marginBottom:10,letterSpacing:1,textTransform:"uppercase"}}>{!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Tu directorio de servicios":"Tu tienda virtual"}</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                   {[
                     {k:"pedidos_rest", icon:"📋", label:"Pedidos",     sub:"Gestiona tus pedidos", color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#1d4ed8,#3b82f6)", n:misRestPedidos.filter(p=>!["entregado","cancelado","enviado"].includes(p.estado||"nuevo")).length},
-                    {k:"prod_aprobados",icon:"📦",label:"Productos",   sub:"Tu catálogo en línea",  color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#15803d,#22c55e)", n:0},
+                    {k:"prod_aprobados",icon:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"🩺":"📦",label:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Mis servicios":"Productos",sub:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Servicios que ofrezco":"Tu catálogo en línea",color:"#fff",textColor:"#0f172a",bg:"linear-gradient(135deg,#15803d,#22c55e)",n:0},
                     {k:"promo_nueva",  icon:"🎉", label:"Promociones", sub:"Ofertas especiales",    color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#7e22ce,#a855f7)", n:myPromos.filter(pr=>pr.motivo_rechazo).length},
                     {k:"clientes",     icon:"👥", label:"Clientes",    sub:"Tu base de clientes",   color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#0369a1,#0ea5e9)", n:0},
                     {k:"ventas",       icon:"📈", label:"Mis ventas",  sub:"Dashboard de ingresos", color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#b45309,#f59e0b)", n:0},
@@ -3259,15 +3260,15 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
 
             {provTab==="prod_nuevo"&&(
               <div style={s.pc}>
-                <div style={s.pT}>➕ Publicar producto</div>
-                <label style={s.lbl}>Nombre *</label>
-                <input style={s.inp} placeholder="Torta de zanahoria" value={newProd.nombre} onChange={e=>setNewProd({...newProd,nombre:e.target.value})}/>
-                <label style={s.lbl}>Marca (opcional)</label>
+                <div style={s.pT}>{!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"➕ Agregar servicio":"➕ Publicar producto"}</div>
+                <label style={s.lbl}>Nombre del servicio *</label>
+                <input style={s.inp} placeholder={!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Ej: Consulta médica, Corte de cabello...":"Torta de zanahoria"} value={newProd.nombre} onChange={e=>setNewProd({...newProd,nombre:e.target.value})}/>
+                {!!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)&&<><label style={s.lbl}>Marca (opcional)</label>
                 <input style={s.inp} placeholder="Casero, artesanal..." value={newProd.marca} onChange={e=>setNewProd({...newProd,marca:e.target.value})}/>
                 <label style={s.lbl}>Presentación (opcional)</label>
-                <input style={s.inp} placeholder="500g, 1L..." value={newProd.presentacion} onChange={e=>setNewProd({...newProd,presentacion:e.target.value})}/>
-                <label style={s.lbl}>Descripción (opcional)</label>
-                <input style={s.inp} placeholder="Ingredientes, sabor..." value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
+                <input style={s.inp} placeholder="500g, 1L..." value={newProd.presentacion} onChange={e=>setNewProd({...newProd,presentacion:e.target.value})}/></>}
+                <label style={s.lbl}>Descripción {!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"(opcional — qué incluye este servicio)":"(opcional)"}</label>
+                <input style={s.inp} placeholder={!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Ej: Incluye examen físico y diagnóstico...":"Ingredientes, sabor..."} value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
                 <label style={s.lbl}>Categoría *</label>
                 {(()=>{
                   const SERV_CATS={"Médico / Consultorio":["Consulta médica","Procedimiento","Examen","Certificado médico","Otro"],"Laboratorio clínico":["Hematología","Bioquímica","Orina y heces","Hormonas","Microbiología","Perfil completo","Otros exámenes"],"Odontología":["Consulta","Limpieza dental","Extracción","Ortodoncia","Blanqueamiento","Radiografía","Otro"],"Enfermería a domicilio":["Cuidado diario","Inyección","Curación","Toma de presión","Otro"],"Farmacia":["Medicamentos","Suplementos","Insumos médicos","Otro"],"Peluquería / Barbería":["Corte caballero","Corte dama","Tinte","Tratamiento","Manicure","Pedicure","Otro"],"Manicure / Pedicure":["Manicure","Pedicure","Uñas acrílicas","Nail art","Otro"],"Maquillaje y estética":["Maquillaje","Depilación","Facial","Otro"],"Plomería":["Reparación","Instalación","Destape","Diagnóstico","Otro"],"Electricidad":["Reparación","Instalación","Diagnóstico","Mantenimiento","Otro"],"Pintura y construcción":["Pintura interior","Pintura exterior","Remodelación","Otro"],"Limpieza del hogar":["Limpieza básica","Limpieza profunda","Limpieza de oficina","Otro"],"Carpintería / Herrería":["Fabricación","Reparación","Instalación","Otro"],"Clases y tutorías":["Matemáticas","Física","Química","Inglés","Otra materia"],"Idiomas":["Inglés","Francés","Otro idioma"],"Mecánica automotriz":["Cambio de aceite","Frenos","Motor","Suspensión","Diagnóstico","Otro"],"Electricidad automotriz":["Diagnóstico","Reparación","Instalación de accesorios","Otro"],"Lavandería":["Lavado básico","Lavado y planchado","Ropa de cama","Otro"],"Fotografía / Video":["Sesión fotográfica","Video evento","Edición","Otro"],"Mototaxi":["Traslado de persona","Delivery","Encomienda","Otro"],"Taxi":["Traslado local","Traslado interurbano","Aeropuerto","Otro"],"Transporte interurbano (rutas)":["Pasaje","Encomienda","Ruta especial","Otro"],"Encomiendas y mudanzas":["Encomienda local","Encomienda foránea","Mudanza","Otro"],"Otro":["Servicio principal","Servicio adicional","Consulta","Otro"]};
@@ -3282,6 +3283,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
                 })()}
                 <label style={s.lbl}>Precio ($) *</label>
                 <input style={s.inp} type="number" placeholder="3.50" value={newProd.precio} onChange={e=>setNewProd({...newProd,precio:e.target.value})}/>
+                {!!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)&&<>
                 <label style={s.lbl}>Unidad *</label>
                 <input style={s.inp} placeholder="porción, kg..." value={newProd.unidad} onChange={e=>setNewProd({...newProd,unidad:e.target.value})}/>
                 <label style={s.lbl}>Cantidad disponible *</label>
@@ -3291,18 +3293,20 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
                   <label htmlFor="perm" style={{fontSize:13,cursor:"pointer"}}>🔁 Disponible hasta agotar stock</label>
                 </div>
                 {!newProd.permanente&&(<div style={{display:"flex",gap:10}}><div style={{flex:1}}><label style={s.lbl}>Desde</label><input style={s.inp} type="time" value={newProd.hi} onChange={e=>setNewProd({...newProd,hi:e.target.value})}/></div><div style={{flex:1}}><label style={s.lbl}>Hasta</label><input style={s.inp} type="time" value={newProd.hf} onChange={e=>setNewProd({...newProd,hf:e.target.value})}/></div></div>)}
-                <label style={s.lbl}>Foto del producto</label>
+                <div onClick={()=>setNewProd({...newProd,es_oferta:!newProd.es_oferta})} style={{display:"flex",alignItems:"center",gap:10,background:newProd.es_oferta?"#fff7ed":"#f8fafc",border:`1px solid ${newProd.es_oferta?"#fed7aa":"#e2e8f0"}`,borderRadius:12,padding:"10px 14px",marginBottom:10,cursor:"pointer"}}><span style={{fontSize:20}}>{newProd.es_oferta?"🏷️":"⬜"}</span><div><div style={{fontSize:13,fontWeight:700,color:newProd.es_oferta?"#c2410c":"#64748b"}}>Destacar como oferta en Inicio</div><div style={{fontSize:11,color:"#94a3b8",marginTop:1}}>Aparecerá en Promociones activas de la home</div></div></div>
+                </>}
+                <label style={s.lbl}>Foto {!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"del profesional (opcional)":"del producto"}</label>
                 {fotoPreview&&<img src={fotoPreview} alt="" style={{width:"100%",height:110,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
                 <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setFotoFile(f);setFotoPreview(URL.createObjectURL(f));}}}/>
                 <div style={{...s.ib,background:"#fef9c3"}}><div style={{fontSize:12,color:"#854d0e"}}>ℹ️ Primera publicación requiere aprobación del admin.</div></div>
-                <div onClick={()=>setNewProd({...newProd,es_oferta:!newProd.es_oferta})} style={{display:"flex",alignItems:"center",gap:10,background:newProd.es_oferta?"#fff7ed":"#f8fafc",border:`1px solid ${newProd.es_oferta?"#fed7aa":"#e2e8f0"}`,borderRadius:12,padding:"10px 14px",marginBottom:10,cursor:"pointer"}}><span style={{fontSize:20}}>{newProd.es_oferta?"🏷️":"⬜"}</span><div><div style={{fontSize:13,fontWeight:700,color:newProd.es_oferta?"#c2410c":"#64748b"}}>Destacar como oferta en Inicio</div><div style={{fontSize:11,color:"#94a3b8",marginTop:1}}>Aparecerá en Promociones activas de la home</div></div></div><button style={s.btn} onClick={publishProd} disabled={loading}>{loading?"Subiendo...":"Publicar producto"}</button>
+                <button style={s.btn} onClick={publishProd} disabled={loading}>{loading?"Subiendo...":!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Agregar servicio":"Publicar producto"}</button>
               </div>
             )}
 
             {provTab==="prod_aprobados"&&(
               <div style={s.pc}>
-                <div style={s.pT}>✅ Productos en tienda</div>
-                {myProds.filter(p=>p.aprobado&&!p.rechazado).length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>Aún no tienes productos aprobados</div>}
+                <div style={s.pT}>{!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"✅ Mis servicios":"✅ Productos en tienda"}</div>
+                {myProds.filter(p=>p.aprobado&&!p.rechazado).length===0&&<div style={{fontSize:13,color:"#94a3b8"}}>{!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Aún no has agregado servicios":"Aún no tienes productos aprobados"}</div>}
                 {myProds.filter(p=>p.aprobado&&!p.rechazado).map(p=>(
                   <div key={p.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
                     <div style={{display:"flex",gap:8,marginBottom:8}}>
