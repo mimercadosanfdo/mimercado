@@ -1,5 +1,5 @@
-// BUILD:1777848889
-"use client"; // Apure Market v1777848889
+// BUILD:1777850034
+"use client"; // Apure Market v1777850034
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -327,6 +327,7 @@ const VE_ESTADOS_MUNICIPIOS={
   const [categoriaServicio,setCategoriaServicio]=useState(null); // categoria activa en servicios
   const [searchServicios,setSearchServicios]=useState("");
   const [proveedoresServicio,setProveedoresServicio]=useState([]); // proveedores filtrados por categoria
+  const [provProductosServicio,setProvProductosServicio]=useState({}); // {provId:[productos]}
   const [rutasTransporte,setRutasTransporte]=useState([]); // rutas interurbanas
   const [proveedorServicioActivo,setProveedorServicioActivo]=useState(null); // proveedor seleccionado
   const [showSolicitudServicio,setShowSolicitudServicio]=useState(false);
@@ -756,6 +757,7 @@ const VE_ESTADOS_MUNICIPIOS={
       .select("*")
       .eq("aprobado",true)
       .eq("suscripcion_activa",true)
+      .eq("en_pausa",false)
       .eq("subcategoria_servicio",subcategoria)
       .eq("municipio",municipio);
     // Buscar también por tipo_negocio para los existentes
@@ -766,12 +768,23 @@ const VE_ESTADOS_MUNICIPIOS={
         .select("*")
         .eq("aprobado",true)
         .eq("suscripcion_activa",true)
+        .eq("en_pausa",false)
         .in("tipo_negocio",tipos);
       byTipo=d||[];
     }
     const todos=[...(bySub||[]),...byTipo];
     const unique=Object.values(todos.reduce((acc,p)=>({...acc,[p.id]:p}),{}));
     setProveedoresServicio(unique);
+    // Cargar productos/servicios de cada proveedor
+    if(unique.length>0){
+      const ids=unique.map(p=>p.id);
+      const{data:prods}=await supabase.from("productos_proveedor").select("id,proveedor_id,nombre,descripcion,precio,categoria,disponible").in("proveedor_id",ids).eq("aprobado",true).eq("disponible",true).eq("rechazado",false);
+      if(prods){
+        const mapa={};
+        prods.forEach(p=>{if(!mapa[p.proveedor_id])mapa[p.proveedor_id]=[];mapa[p.proveedor_id].push(p);});
+        setProvProductosServicio(mapa);
+      }
+    }
   };
 
   const loadRutasTransporte=async()=>{
@@ -2573,11 +2586,11 @@ const VE_ESTADOS_MUNICIPIOS={
             </div>
           </>
         ):(
-          // ── PANTALLA DE CATEGORÍA: LISTA DE PROVEEDORES ──
+          // ── PANTALLA DE CATEGORÍA O DETALLE DE PROVEEDOR ──
           <>
             {/* HEADER CATEGORÍA */}
             <div style={{background:categoriaServicio.bg,padding:"16px",color:"#fff",position:"relative"}}>
-              <button onClick={()=>{setCategoriaServicio(null);setProveedorServicioActivo(null);setShowSolicitudServicio(false);}} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,padding:"6px 12px",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
+              <button onClick={()=>{if(proveedorServicioActivo){setProveedorServicioActivo(null);}else{setCategoriaServicio(null);setShowSolicitudServicio(false);}}} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,padding:"6px 12px",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
                 ← Volver
               </button>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -2590,6 +2603,139 @@ const VE_ESTADOS_MUNICIPIOS={
             </div>
 
             <div style={{padding:"14px 16px"}}>
+
+              {/* ── DETALLE DEL PROVEEDOR DE SERVICIO ── */}
+              {proveedorServicioActivo?(
+                <div>
+                  {/* INFO PROVEEDOR */}
+                  <div style={{background:"#fff",borderRadius:16,padding:16,marginBottom:12,border:"1px solid #f1f5f9",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+                    <div style={{display:"flex",gap:12,alignItems:"center",marginBottom:12}}>
+                      {proveedorServicioActivo.logo_url
+                        ?<img src={proveedorServicioActivo.logo_url} style={{width:64,height:64,borderRadius:16,objectFit:"cover",border:"2px solid #f1f5f9",flexShrink:0}}/>
+                        :<div style={{width:64,height:64,borderRadius:16,background:categoriaServicio.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,color:"#fff",fontWeight:900,flexShrink:0}}>{(proveedorServicioActivo.negocio||"?")[0]}</div>
+                      }
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:17,fontWeight:800,color:"#0f172a"}}>{proveedorServicioActivo.negocio}</div>
+                        {proveedorServicioActivo.especialidad&&<div style={{fontSize:13,color:"#475569",fontWeight:600,marginTop:2}}>{proveedorServicioActivo.especialidad}</div>}
+                        {proveedorServicioActivo.descripcion_negocio&&<div style={{fontSize:12,color:"#64748b",marginTop:4,lineHeight:1.4}}>{proveedorServicioActivo.descripcion_negocio}</div>}
+                      </div>
+                    </div>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
+                      {proveedorServicioActivo.zona_cobertura&&<span style={{background:"#f8fafc",color:"#475569",fontSize:11,padding:"4px 10px",borderRadius:20,border:"1px solid #e2e8f0"}}>📍 {proveedorServicioActivo.zona_cobertura}</span>}
+                      {proveedorServicioActivo.direccion_fisica&&<span style={{background:"#f8fafc",color:"#475569",fontSize:11,padding:"4px 10px",borderRadius:20,border:"1px solid #e2e8f0"}}>🏢 {proveedorServicioActivo.direccion_fisica}</span>}
+                    </div>
+                    {(proveedorServicioActivo.horarios_atencion||proveedorServicioActivo.horario_desde)&&(
+                      <div style={{background:"#eff6ff",borderRadius:10,padding:"8px 12px",fontSize:12,color:"#1d4ed8",fontWeight:600,display:"flex",alignItems:"center",gap:6}}>
+                        🕐 {proveedorServicioActivo.horarios_atencion||(proveedorServicioActivo.horario_desde&&proveedorServicioActivo.horario_hasta?`${proveedorServicioActivo.horario_desde} – ${proveedorServicioActivo.horario_hasta}${proveedorServicioActivo.horario_desc?" ("+proveedorServicioActivo.horario_desc+")":""}`:"")}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* DATOS DEL CLIENTE */}
+                  {(!form.nombre||!form.telefono)&&(
+                    <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:"12px 14px",marginBottom:12}}>
+                      <div style={{fontSize:12,fontWeight:700,color:"#15803d",marginBottom:8}}>👤 Tus datos de contacto</div>
+                      {!form.nombre&&<input style={{width:"100%",padding:"9px 12px",borderRadius:8,border:"1px solid #e2e8f0",fontSize:13,marginBottom:8,boxSizing:"border-box"}} placeholder="Tu nombre y apellido" onChange={e=>setForm(f=>({...f,nombre:e.target.value}))}/>}
+                      {!form.telefono&&<input style={{width:"100%",padding:"9px 12px",borderRadius:8,border:"1px solid #e2e8f0",fontSize:13,boxSizing:"border-box"}} placeholder="Tu WhatsApp (04XX-XXXXXXX)" onChange={e=>setForm(f=>({...f,telefono:e.target.value}))}/>}
+                    </div>
+                  )}
+
+                  {/* LISTA DE SERVICIOS DEL PROVEEDOR */}
+                  {provProductosServicio[proveedorServicioActivo.id]?.length>0?(
+                    <div>
+                      <div style={{fontSize:13,fontWeight:700,color:"#374151",marginBottom:10}}>📋 Servicios disponibles</div>
+                      {provProductosServicio[proveedorServicioActivo.id].map(sp=>{
+                        const wa=(proveedorServicioActivo.whatsapp_negocio||proveedorServicioActivo.telefono||"").replace(/\D/g,"");
+                        const num=wa.startsWith("0")?"58"+wa.slice(1):wa.startsWith("58")?wa:"58"+wa;
+                        const esMedico=["medicos","enfermeria","laboratorios","odontologia"].includes(categoriaServicio.id);
+                        const clienteNombre=form.nombre||"(tu nombre)";
+                        const clienteTel=form.telefono||"(tu teléfono)";
+                        const msg=esMedico
+                          ?`👨‍⚕️ *Solicitud de cita — Apure Market*
+
+Hola ${proveedorServicioActivo.negocio}, vi su perfil en Apure Market.
+
+🩺 *Servicio:* ${sp.nombre}
+💰 *Precio:* $${sp.precio}
+
+👤 *Paciente:* ${clienteNombre}
+📱 *Teléfono:* ${clienteTel}
+
+¿Cuál es la próxima disponibilidad?`
+                          :`🔧 *Solicitud de servicio — Apure Market*
+
+Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
+
+*Servicio:* ${sp.nombre}
+*Precio:* $${sp.precio}
+
+👤 *Nombre:* ${clienteNombre}
+📱 *Teléfono:* ${clienteTel}
+
+¿Cuándo puedes atenderme?`;
+                        return(
+                          <div key={sp.id} style={{background:"#fff",borderRadius:14,padding:"14px",marginBottom:10,border:"1px solid #f1f5f9",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
+                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+                              <div style={{flex:1}}>
+                                <div style={{fontSize:14,fontWeight:700,color:"#0f172a"}}>{sp.nombre}</div>
+                                {sp.descripcion&&<div style={{fontSize:12,color:"#64748b",marginTop:3,lineHeight:1.4}}>{sp.descripcion}</div>}
+                              </div>
+                              <div style={{fontSize:16,fontWeight:800,color:"#25D366",flexShrink:0,marginLeft:12}}>${sp.precio}</div>
+                            </div>
+                            <button onClick={()=>window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank")} style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:10,padding:"10px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                              📲 {esMedico?"Solicitar cita":"Contactar por este servicio"}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ):(
+                    /* Sin productos: botón general de contacto */
+                    <div style={{background:"#fff",borderRadius:14,padding:"14px",border:"1px solid #f1f5f9"}}>
+                      {proveedorServicioActivo.examenes&&(
+                        <div style={{background:"#fdf4ff",borderRadius:10,padding:"10px 12px",marginBottom:12}}>
+                          <div style={{fontSize:11,fontWeight:700,color:"#7e22ce",marginBottom:6}}>📋 Servicios disponibles:</div>
+                          <div style={{fontSize:12,color:"#475569",whiteSpace:"pre-line"}}>{proveedorServicioActivo.examenes}</div>
+                        </div>
+                      )}
+                      {proveedorServicioActivo.tarifa_referencial&&(
+                        <div style={{background:"#eff6ff",borderRadius:10,padding:"10px 12px",marginBottom:12,fontSize:12,color:"#1d4ed8",fontWeight:600}}>
+                          💲 {proveedorServicioActivo.tarifa_referencial}
+                        </div>
+                      )}
+                      <button onClick={()=>{
+                        const wa=(proveedorServicioActivo.whatsapp_negocio||proveedorServicioActivo.telefono||"").replace(/\D/g,"");
+                        const num=wa.startsWith("0")?"58"+wa.slice(1):wa.startsWith("58")?wa:"58"+wa;
+                        const esMedico=["medicos","enfermeria","laboratorios","odontologia"].includes(categoriaServicio.id);
+                        const msg=esMedico
+                          ?`👨‍⚕️ *Solicitud de cita — Apure Market*
+
+Hola ${proveedorServicioActivo.negocio}, vi su perfil en Apure Market y me gustaría solicitar una cita.
+
+👤 *Paciente:* ${form.nombre||"(tu nombre)"}
+📱 *Teléfono:* ${form.telefono||"(tu teléfono)"}
+
+¿Cuál es la próxima disponibilidad?`
+                          :`🔧 *Solicitud de servicio — Apure Market*
+
+Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
+
+*Servicio:* ${categoriaServicio.label}
+
+👤 *Nombre:* ${form.nombre||"(tu nombre)"}
+📱 *Teléfono:* ${form.telefono||"(tu teléfono)"}
+
+¿Cuándo puedes atenderme?`;
+                        window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank");
+                      }} style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:10,padding:"12px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                        📲 {["medicos","enfermeria","laboratorios","odontologia"].includes(categoriaServicio.id)?"Solicitar cita":"Contactar ahora"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ):(
+                <>{/* ── LISTA DE PROVEEDORES ── */}
+
               {/* RUTAS INTERURBANAS — diseño especial */}
               {categoriaServicio.id==="rutas"&&(
                 <>
@@ -2666,88 +2812,39 @@ const VE_ESTADOS_MUNICIPIOS={
                     </div>
                   ):(
                     (proveedoresServicio.filter(p=>!searchServicios||(p.negocio+p.especialidad+p.descripcion_negocio).toLowerCase().includes(searchServicios.toLowerCase()))).map(prov=>(
-                      <div key={prov.id} style={{background:"#fff",borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.08)",border:"1px solid #f1f5f9"}}>
-                        {/* HEADER PROVEEDOR */}
-                        <div style={{display:"flex",gap:12,alignItems:"flex-start",marginBottom:12}}>
+                      /* TARJETA CLICKEABLE — abre detalle del proveedor */
+                      <div key={prov.id} onClick={()=>setProveedorServicioActivo(prov)} style={{background:"#fff",borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.08)",border:"1px solid #f1f5f9",cursor:"pointer",transition:"box-shadow 0.15s"}}>
+                        <div style={{display:"flex",gap:12,alignItems:"center"}}>
                           {prov.logo_url
                             ?<img src={prov.logo_url} style={{width:56,height:56,borderRadius:14,objectFit:"cover",border:"2px solid #f1f5f9",flexShrink:0}}/>
                             :<div style={{width:56,height:56,borderRadius:14,background:categoriaServicio.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,color:"#fff",fontWeight:900,flexShrink:0}}>{(prov.negocio||"?")[0]}</div>
                           }
                           <div style={{flex:1,minWidth:0}}>
                             <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                              <div style={{fontSize:16,fontWeight:800,color:"#0f172a"}}>{prov.negocio}</div>
+                              <div style={{fontSize:15,fontWeight:800,color:"#0f172a"}}>{prov.negocio}</div>
                               <span style={{background:"#dcfce7",color:"#15803d",fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20}}>✓ Verificado</span>
                             </div>
-                            {prov.especialidad&&<div style={{fontSize:12,color:"#475569",fontWeight:600,marginTop:3}}>{prov.especialidad}</div>}
-                            {prov.descripcion_negocio&&<div style={{fontSize:11,color:"#64748b",marginTop:3,lineHeight:1.4}}>{prov.descripcion_negocio}</div>}
+                            {prov.especialidad&&<div style={{fontSize:12,color:"#475569",fontWeight:600,marginTop:2}}>{prov.especialidad}</div>}
+                            {prov.descripcion_negocio&&<div style={{fontSize:11,color:"#94a3b8",marginTop:2,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{prov.descripcion_negocio}</div>}
                           </div>
-                          <div style={{flexShrink:0,textAlign:"right"}}>
-                            <div style={{width:10,height:10,borderRadius:"50%",background:prov.activo?"#22c55e":"#94a3b8",display:"inline-block",boxShadow:prov.activo?"0 0 6px #22c55e":"none",marginBottom:4}}/>
-                            <div style={{fontSize:9,color:prov.activo?"#15803d":"#94a3b8",fontWeight:600}}>{prov.activo?"Disponible":"No disponible"}</div>
+                          <div style={{flexShrink:0,textAlign:"center"}}>
+                            <div style={{width:10,height:10,borderRadius:"50%",background:prov.activo?"#22c55e":"#94a3b8",display:"inline-block",boxShadow:prov.activo?"0 0 6px #22c55e":"none",marginBottom:2}}/>
+                            <div style={{fontSize:9,color:prov.activo?"#15803d":"#94a3b8",fontWeight:600,display:"block"}}>{prov.activo?"Disponible":"Cerrado"}</div>
+                            <div style={{fontSize:10,color:"#94a3b8",marginTop:4}}>Ver →</div>
                           </div>
                         </div>
-
-                        {/* INFO ADICIONAL */}
-                        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>
-                          {prov.precio_consulta&&(
-                            <span style={{background:"#f0fdf4",color:"#15803d",fontSize:10,fontWeight:700,padding:"4px 10px",borderRadius:20,border:"1px solid #bbf7d0"}}>
-                              💰 Consulta: ${prov.precio_consulta}
-                            </span>
-                          )}
-                          {prov.tarifa_referencial&&(
-                            <span style={{background:"#eff6ff",color:"#1d4ed8",fontSize:10,fontWeight:700,padding:"4px 10px",borderRadius:20,border:"1px solid #bfdbfe"}}>
-                              💲 {prov.tarifa_referencial}
-                            </span>
-                          )}
-                          {prov.zona_cobertura&&(
-                            <span style={{background:"#f8fafc",color:"#475569",fontSize:10,fontWeight:600,padding:"4px 10px",borderRadius:20,border:"1px solid #e2e8f0"}}>
-                              📍 {prov.zona_cobertura}
-                            </span>
-                          )}
-                          {prov.direccion_fisica&&(
-                            <span style={{background:"#fafaf9",color:"#57534e",fontSize:10,padding:"4px 10px",borderRadius:20,border:"1px solid #e7e5e4"}}>
-                              🏢 {prov.direccion_fisica}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* HORARIOS si existen */}
-                        {prov.horarios_atencion&&(
-                          <div style={{background:"#f8fafc",borderRadius:10,padding:"8px 12px",marginBottom:12,fontSize:11,color:"#475569"}}>
-                            🕐 <strong>Horario:</strong> {typeof prov.horarios_atencion === 'string' ? prov.horarios_atencion : JSON.stringify(prov.horarios_atencion)}
+                        {(prov.precio_consulta||prov.tarifa_referencial)&&(
+                          <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:10}}>
+                            {prov.precio_consulta&&<span style={{background:"#f0fdf4",color:"#15803d",fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:20,border:"1px solid #bbf7d0"}}>💰 Consulta: ${prov.precio_consulta}</span>}
+                            {prov.tarifa_referencial&&<span style={{background:"#eff6ff",color:"#1d4ed8",fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:20,border:"1px solid #bfdbfe"}}>💲 {prov.tarifa_referencial}</span>}
                           </div>
                         )}
-
-                        {/* EXÁMENES para laboratorios */}
-                        {categoriaServicio.id==="laboratorios"&&prov.examenes&&(
-                          <div style={{background:"#fdf4ff",borderRadius:10,padding:"10px 12px",marginBottom:12}}>
-                            <div style={{fontSize:11,fontWeight:700,color:"#7e22ce",marginBottom:6}}>🔬 Exámenes disponibles:</div>
-                            <div style={{fontSize:11,color:"#475569"}}>
-                              {typeof prov.examenes === 'string' ? prov.examenes : JSON.stringify(prov.examenes)}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* BOTÓN CONTACTO */}
-                        <button onClick={()=>{
-                          const wa=(prov.whatsapp_negocio||prov.telefono||"").replace(/\D/g,"");
-                          const num=wa.startsWith("0")?"58"+wa.slice(1):wa.startsWith("58")?wa:"58"+wa;
-                          const esMedico=["medicos","enfermeria","laboratorios","odontologia"].includes(categoriaServicio.id);
-                          let msg="";
-                          if(esMedico){
-                            msg=`👨‍⚕️ *Solicitud de cita — Apure Market*\n\nHola ${prov.negocio}, vi su perfil en Apure Market y me gustaría solicitar una cita.\n\n👤 Mi nombre: ${form.nombre||"(escribe tu nombre)"}\n📱 Mi teléfono: ${form.telefono||"(escribe tu teléfono)"}\n\n¿Cuál es la próxima disponibilidad?`;
-                          } else {
-                            msg=`🔧 *Solicitud de servicio — Apure Market*\n\nHola ${prov.negocio}, vi tu perfil en Apure Market.\n\n*Servicio:* ${categoriaServicio.label}\n\n👤 Mi nombre: ${form.nombre||"(escribe tu nombre)"}\n📱 Mi teléfono: ${form.telefono||"(escribe tu teléfono)"}\n📍 Mi dirección: ${form.direccion||"(escribe tu dirección)"}\n\n¿Cuándo puedes atenderme?`;
-                          }
-                          window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank");
-                        }} style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                          📲 {["medicos","enfermeria","laboratorios","odontologia"].includes(categoriaServicio.id)?"Solicitar cita":"Contactar ahora"}
-                        </button>
                       </div>
                     ))
                   )}
                 </>
               )}
+              </>)}
             </div>
           </>
         )}
