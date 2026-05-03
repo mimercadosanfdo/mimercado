@@ -2505,7 +2505,7 @@ const VE_ESTADOS_MUNICIPIOS={
               </div>
 
               {/* CTA REGISTRO PROVEEDOR */}
-              <div style={{background:"linear-gradient(135deg,#0f172a,#1e293b)",borderRadius:16,padding:"16px",marginBottom:20,display:"flex",alignItems:"center",gap:14}} onClick={()=>setTab("Proveedores")}>
+              <div style={{background:"linear-gradient(135deg,#0f172a,#1e293b)",borderRadius:16,padding:"16px",marginBottom:20,display:"flex",alignItems:"center",gap:14,cursor:"pointer"}} onClick={()=>setTab("Proveedores")}>
                 <div style={{width:44,height:44,borderRadius:12,background:"rgba(255,255,255,0.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🏅</div>
                 <div style={{flex:1}}>
                   <div style={{fontSize:13,fontWeight:800,color:"#fff"}}>¿Ofreces un servicio?</div>
@@ -2597,9 +2597,9 @@ const VE_ESTADOS_MUNICIPIOS={
                       <div style={{fontSize:48,marginBottom:12}}>{categoriaServicio.icon}</div>
                       <div style={{fontSize:15,fontWeight:700,color:"#374151",marginBottom:6}}>Próximamente en {ubiActiva.municipio}</div>
                       <div style={{fontSize:12,marginBottom:16}}>Aún no hay proveedores registrados en esta categoría</div>
-                      <div style={{background:"#f0fdf4",borderRadius:12,padding:"12px",fontSize:12,color:"#15803d",fontWeight:600}}>
-                        ¿Ofreces este servicio? Regístrate gratis →
-                      </div>
+                      <button onClick={()=>{setTab("Proveedores");setCategoriaServicio(null);}} style={{background:"linear-gradient(135deg,#15803d,#22c55e)",color:"#fff",border:"none",borderRadius:12,padding:"12px 20px",fontSize:13,fontWeight:700,cursor:"pointer",width:"100%"}}>
+                        🏅 ¿Ofreces este servicio? Regístrate gratis →
+                      </button>
                     </div>
                   ):(
                     proveedoresServicio.map(prov=>(
