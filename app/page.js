@@ -1,5 +1,5 @@
-// BUILD:1777864283
-"use client"; // Apure Market v1777864283
+// BUILD:1777864656
+"use client"; // Lokl v1777864283
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1649,13 +1649,13 @@ const VE_ESTADOS_MUNICIPIOS={
             <div style={{fontSize:60,marginBottom:16}}>🛒</div>
             <div style={{fontSize:20,fontWeight:900,color:"#0f172a",marginBottom:8}}>Próximamente en {ubiActiva.municipio}</div>
             <div style={{fontSize:14,color:"#64748b",lineHeight:1.6,marginBottom:24}}>
-              El supermercado online de Apure Market aún no está disponible en tu municipio.<br/>
+              El supermercado online de Lokl aún no está disponible en tu municipio.<br/>
               Estamos trabajando para llegar pronto.
             </div>
             <div style={{background:"#f0fdf4",border:"2px solid #86efac",borderRadius:16,padding:"18px 20px",marginBottom:20}}>
               <div style={{fontSize:13,fontWeight:700,color:"#15803d",marginBottom:8}}>📲 ¿Quieres que lleguemos antes?</div>
               <div style={{fontSize:12,color:"#64748b",marginBottom:12}}>Escríbenos y te avisamos cuando estemos en {ubiActiva.municipio}.</div>
-              <button onClick={()=>window.open("https://wa.me/"+WA+"?text="+encodeURIComponent("Hola Apure Market! Soy de "+ubiActiva.municipio+", "+ubiActiva.estado+". Quisiera que el supermercado llegue pronto a mi municipio 🛒"),"_blank")} style={{background:"#25D366",color:"#fff",border:"none",borderRadius:12,padding:"12px 20px",fontSize:13,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",gap:8,margin:"0 auto"}}>
+              <button onClick={()=>window.open("https://wa.me/"+WA+"?text="+encodeURIComponent("Hola Lokl! Soy de "+ubiActiva.municipio+", "+ubiActiva.estado+". Quisiera que el supermercado llegue pronto a mi municipio 🛒"),"_blank")} style={{background:"#25D366",color:"#fff",border:"none",borderRadius:12,padding:"12px 20px",fontSize:13,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",gap:8,margin:"0 auto"}}>
                 📲 Notificarme cuando lleguen
               </button>
             </div>
@@ -1939,7 +1939,7 @@ const VE_ESTADOS_MUNICIPIOS={
               </div>
               {/* CTA WHATSAPP */}
               {(negocioActivo.whatsapp_negocio||negocioActivo.telefono)&&(
-                <button onClick={()=>{const num=((negocioActivo.whatsapp_negocio||negocioActivo.telefono)||"").replace(/\D/g,"");const n=num.startsWith("0")?"58"+num.slice(1):num.startsWith("58")?num:"58"+num;window.location.href="https://wa.me/"+n+"?text="+encodeURIComponent("Hola, vi tu tienda "+negocioActivo.negocio+" en Apure Market y quiero consultar algo");}} style={{width:"100%",background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:10,padding:"9px",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <button onClick={()=>{const num=((negocioActivo.whatsapp_negocio||negocioActivo.telefono)||"").replace(/\D/g,"");const n=num.startsWith("0")?"58"+num.slice(1):num.startsWith("58")?num:"58"+num;window.location.href="https://wa.me/"+n+"?text="+encodeURIComponent("Hola, vi tu tienda "+negocioActivo.negocio+" en Lokl y quiero consultar algo");}} style={{width:"100%",background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:10,padding:"9px",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                   💬 Consultar por WhatsApp
                 </button>
               )}
@@ -2039,7 +2039,7 @@ const VE_ESTADOS_MUNICIPIOS={
                   <span style={{fontSize:30}}>🏬</span>
                   <div style={{flex:1}}>
                     <div style={{fontSize:13,fontWeight:800,color:"#fff",letterSpacing:-0.2}}>¿Tienes un negocio en San Fernando?</div>
-                    <div style={{fontSize:11,color:"rgba(255,255,255,0.75)",marginTop:2}}>Abre tu tienda en Apure Market y muestra tus productos</div>
+                    <div style={{fontSize:11,color:"rgba(255,255,255,0.75)",marginTop:2}}>Abre tu tienda en Lokl y muestra tus productos</div>
                   </div>
                   <div style={{background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"6px 10px",fontSize:11,color:"#fff",fontWeight:700,whiteSpace:"nowrap"}}>Abrir tienda →</div>
                 </div>
@@ -2730,9 +2730,9 @@ const VE_ESTADOS_MUNICIPIOS={
                         const clienteNombre=form.nombre||"(tu nombre)";
                         const clienteTel=form.telefono||"(tu teléfono)";
                         const msg=esMedico
-                          ?`👨‍⚕️ *Solicitud de cita — Apure Market*
+                          ?`👨‍⚕️ *Solicitud de cita — Lokl*
 
-Hola ${proveedorServicioActivo.negocio}, vi su perfil en Apure Market.
+Hola ${proveedorServicioActivo.negocio}, vi su perfil en Lokl.
 
 🩺 *Servicio:* ${sp.nombre}
 💰 *Precio:* $${sp.precio}
@@ -2741,9 +2741,9 @@ Hola ${proveedorServicioActivo.negocio}, vi su perfil en Apure Market.
 📱 *Teléfono:* ${clienteTel}
 
 ¿Cuál es la próxima disponibilidad?`
-                          :`🔧 *Solicitud de servicio — Apure Market*
+                          :`🔧 *Solicitud de servicio — Lokl*
 
-Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
+Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
 
 *Servicio:* ${sp.nombre}
 *Precio:* $${sp.precio}
@@ -2790,17 +2790,17 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
                         const num=wa.startsWith("0")?"58"+wa.slice(1):wa.startsWith("58")?wa:"58"+wa;
                         const esMedico=["medicos","enfermeria","laboratorios","odontologia"].includes(categoriaServicio.id);
                         const msg=esMedico
-                          ?`👨‍⚕️ *Solicitud de cita — Apure Market*
+                          ?`👨‍⚕️ *Solicitud de cita — Lokl*
 
-Hola ${proveedorServicioActivo.negocio}, vi su perfil en Apure Market y me gustaría solicitar una cita.
+Hola ${proveedorServicioActivo.negocio}, vi su perfil en Lokl y me gustaría solicitar una cita.
 
 👤 *Paciente:* ${form.nombre||"(tu nombre)"}
 📱 *Teléfono:* ${form.telefono||"(tu teléfono)"}
 
 ¿Cuál es la próxima disponibilidad?`
-                          :`🔧 *Solicitud de servicio — Apure Market*
+                          :`🔧 *Solicitud de servicio — Lokl*
 
-Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
+Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
 
 *Servicio:* ${categoriaServicio.label}
 
@@ -2863,7 +2863,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
                         <button onClick={()=>{
                           const wa=(ruta.proveedores?.whatsapp_negocio||ruta.proveedores?.telefono||"").replace(/\D/g,"");
                           const num=wa.startsWith("0")?"58"+wa.slice(1):wa.startsWith("58")?wa:"58"+wa;
-                          const msg=`🚌 *Reserva de puesto — Apure Market*\n\nHola, quiero reservar un puesto para:\n\n📍 Ruta: *${ruta.origen} → ${ruta.destino}*\n🕐 Salida: *${ruta.hora_salida?.slice(0,5)}*\n💰 Precio: *$${ruta.precio}*\n\n👤 Mi nombre: ${form.nombre||"(escribe tu nombre)"}\n📱 Mi teléfono: ${form.telefono||"(escribe tu teléfono)"}\n\n¿Está disponible el puesto?`;
+                          const msg=`🚌 *Reserva de puesto — Lokl*\n\nHola, quiero reservar un puesto para:\n\n📍 Ruta: *${ruta.origen} → ${ruta.destino}*\n🕐 Salida: *${ruta.hora_salida?.slice(0,5)}*\n💰 Precio: *$${ruta.precio}*\n\n👤 Mi nombre: ${form.nombre||"(escribe tu nombre)"}\n📱 Mi teléfono: ${form.telefono||"(escribe tu teléfono)"}\n\n¿Está disponible el puesto?`;
                           window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank");
                         }} style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
                           📲 Reservar puesto por WhatsApp
@@ -3205,7 +3205,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
               const correo=provForm.email;
               if(!correo)return setPmsg("Escribe tu correo primero");
               const num=WA.startsWith("0")?"58"+WA.slice(1):WA;
-              window.location.href="https://wa.me/"+num+"?text="+encodeURIComponent("Hola Apure Market, olvidé mi contraseña. Mi correo registrado es: "+correo);
+              window.location.href="https://wa.me/"+num+"?text="+encodeURIComponent("Hola Lokl, olvidé mi contraseña. Mi correo registrado es: "+correo);
             }}>¿Olvidaste tu contraseña?</button>
           )}
         </div>)}
@@ -4099,7 +4099,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
               const raw=(provData.whatsapp_negocio||provData.telefono||"").replace(/\D/g,"");
               const num=raw.startsWith("0")?"58"+raw.slice(1):raw.startsWith("58")?raw:"58"+raw;
               if(!num)return;
-              const msg=`⚙️ *Apure Market — Cambio en tu cuenta*\n\nHola ${provData.negocio} 👋\n\n${cambio}\n\nSi no realizaste este cambio, contáctanos de inmediato.`;
+              const msg=`⚙️ *Lokl — Cambio en tu cuenta*\n\nHola ${provData.negocio} 👋\n\n${cambio}\n\nSi no realizaste este cambio, contáctanos de inmediato.`;
               window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank");
             };
             return(
