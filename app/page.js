@@ -1,5 +1,5 @@
-// BUILD:1777863989
-"use client"; // Apure Market v1777863989
+// BUILD:1777864283
+"use client"; // Apure Market v1777864283
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1493,12 +1493,38 @@ const VE_ESTADOS_MUNICIPIOS={
               style={{flex:1,border:"none",outline:"none",fontSize:14,padding:"10px 0",background:"transparent",color:"#0f172a"}}
               placeholder="Busca comida, productos o servicios…"
               value={search}
-              onChange={e=>{setSearch(e.target.value);if(e.target.value.trim())setTab("Supermercado");}}
-              onFocus={()=>{if(!search.trim())setTab("Supermercado");}}
+              onChange={e=>setSearch(e.target.value)}
             />
             {search&&<button onClick={()=>setSearch("")} style={{background:"none",border:"none",fontSize:16,color:"#94a3b8",cursor:"pointer",flexShrink:0,padding:"4px"}}>✕</button>}
           </div>
         </div>
+
+        {/* RESULTADOS DE BÚSQUEDA GLOBAL */}
+        {search.trim()&&(
+          <div style={{padding:"8px 16px 0"}}>
+            <div style={{fontSize:12,color:"#64748b",marginBottom:8,fontWeight:600}}>
+              {(()=>{const r=allProdsConMargen.filter(p=>p.name.toLowerCase().includes(search.toLowerCase()));return r.length+" resultado"+(r.length!==1?"s":"")+" para \""+search+"\"";})()}
+            </div>
+            {allProdsConMargen.filter(p=>p.name.toLowerCase().includes(search.toLowerCase())).length===0
+              ?<div style={{textAlign:"center",padding:"20px 0",color:"#94a3b8",fontSize:13}}>Sin resultados para "{search}"</div>
+              :allProdsConMargen.filter(p=>p.name.toLowerCase().includes(search.toLowerCase())).slice(0,6).map(p=>(
+                <div key={p.id} onClick={()=>{setCat(p.cat==="Supermercado"?"Supermercado":p.cat);setTab(p.cat==="Supermercado"?"Supermercado":"Feria de comidas");}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9",cursor:"pointer"}}>
+                  {p.foto?<img src={p.foto} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}}/>:<div style={{width:40,height:40,borderRadius:8,background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{p.emoji||"🛒"}</div>}
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:13,fontWeight:600,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</div>
+                    <div style={{fontSize:11,color:"#94a3b8"}}>{p.kitchen||p.cat}</div>
+                  </div>
+                  <div style={{fontSize:13,fontWeight:700,color:"#0f9b6e",flexShrink:0}}>${p.price.toFixed(2)}</div>
+                </div>
+              ))
+            }
+            {allProdsConMargen.filter(p=>p.name.toLowerCase().includes(search.toLowerCase())).length>6&&(
+              <button onClick={()=>setTab("Supermercado")} style={{width:"100%",padding:"10px",background:"#f0fdf4",border:"1px solid #86efac",borderRadius:10,fontSize:12,fontWeight:600,color:"#15803d",cursor:"pointer",marginTop:6}}>
+                Ver todos los resultados →
+              </button>
+            )}
+          </div>
+        )}
 
         {/* ACCESOS RÁPIDOS — 6 secciones */}
         <div style={{padding:"14px 16px 0"}}>
