@@ -1,5 +1,5 @@
-// BUILD:1777863615
-"use client"; // Apure Market v1777863615
+// BUILD:1777863810
+"use client"; // Apure Market v1777863810
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1424,34 +1424,29 @@ const VE_ESTADOS_MUNICIPIOS={
         </div>
       )}
       <div style={s.hdr}>
+        {/* LOGO */}
         <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                {/* Ícono: círculo oscuro con pin verde */}
-                <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                  <rect width="36" height="36" rx="10" fill="#0f172a"/>
-                  <circle cx="18" cy="15" r="8" fill="#25D366"/>
-                  <circle cx="18" cy="15" r="4" fill="#0f172a"/>
-                  <path d="M18 23 L13 33 L18 30 L23 33 Z" fill="#25D366"/>
-                  <circle cx="18" cy="15" r="2" fill="#25D366"/>
-                </svg>
-                {/* Texto lokl con punto naranja en la o */}
-                <div style={{display:"flex",alignItems:"baseline",gap:0}}>
-                  <span style={{fontFamily:"'Arial Black',Impact,sans-serif",fontWeight:900,fontSize:22,color:"#0f172a",letterSpacing:-1}}>l</span>
-                  <span style={{position:"relative",display:"inline-block"}}>
-                    <span style={{fontFamily:"'Arial Black',Impact,sans-serif",fontWeight:900,fontSize:22,color:"#0f172a",letterSpacing:-1}}>o</span>
-                    <span style={{position:"absolute",top:1,right:-1,width:6,height:6,borderRadius:"50%",background:"#FB8C00",display:"block"}}/>
-                  </span>
-                  <span style={{fontFamily:"'Arial Black',Impact,sans-serif",fontWeight:900,fontSize:22,color:"#0f172a",letterSpacing:-1}}>kl</span>
-                </div>
-              </div>
-            </div>
-          {/* BADGE CIUDAD */}
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <rect width="36" height="36" rx="10" fill="#0f172a"/>
+            <circle cx="18" cy="15" r="8" fill="#25D366"/>
+            <circle cx="18" cy="15" r="4" fill="#0f172a"/>
+            <path d="M18 23 L13 33 L18 30 L23 33 Z" fill="#25D366"/>
+            <circle cx="18" cy="15" r="2" fill="#25D366"/>
+          </svg>
+          <div style={{display:"flex",alignItems:"baseline",gap:0}}>
+            <span style={{fontFamily:"'Arial Black',Impact,sans-serif",fontWeight:900,fontSize:22,color:"#0f172a",letterSpacing:-1}}>l</span>
+            <span style={{position:"relative",display:"inline-block"}}>
+              <span style={{fontFamily:"'Arial Black',Impact,sans-serif",fontWeight:900,fontSize:22,color:"#0f172a",letterSpacing:-1}}>o</span>
+              <span style={{position:"absolute",top:1,right:-1,width:6,height:6,borderRadius:"50%",background:"#FB8C00",display:"block"}}/>
+            </span>
+            <span style={{fontFamily:"'Arial Black',Impact,sans-serif",fontWeight:900,fontSize:22,color:"#0f172a",letterSpacing:-1}}>kl</span>
+          </div>
+        </div>
+        {/* DERECHA: ciudad + carrito + perfil */}
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
           <button onClick={()=>{setCiudadTemp({estado:ubiActiva.estado||"Apure",municipio:ubiActiva.municipio||""});setShowCiudadModal(true);}} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:20,padding:"4px 10px",fontSize:11,fontWeight:700,color:"#15803d",cursor:"pointer",display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
             📍 {ubiActiva.municipio} ▾
           </button>
-        </div>
-        <div style={{display:"flex",alignItems:"center",gap:6}}>
           {(count>0||Object.values(cartRest).length>0||Object.values(cartNegocio).length>0)&&(
             <button style={s.cBtn} onClick={()=>setSheet("cartGlobal")}>
               🛒
@@ -1489,14 +1484,8 @@ const VE_ESTADOS_MUNICIPIOS={
       {tab==="Inicio"&&(<>
         {/* BANNER PRINCIPAL */}
         <div style={{background:"linear-gradient(180deg,#166534 0%,#16a34a 60%,#22c55e 100%)",padding:"20px 16px 18px",color:"#fff",borderRadius:"0 0 24px 24px"}}>
-          <div style={{fontSize:22,fontWeight:900,marginBottom:2,letterSpacing:-0.5}}>¡Hola! 👋</div>
-          <div style={{fontSize:13,color:"rgba(255,255,255,0.82)",marginBottom:4,fontWeight:400}}>¿Qué necesitas hoy en {ubiActiva.municipio}?</div>
-          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:14}}>
-            {["Encuentra","Conecta","Compra"].map((w,i)=>(<span key={w} style={{display:"flex",alignItems:"center",gap:6}}>
-              <span style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.9)",letterSpacing:1,textTransform:"uppercase"}}>{w}</span>
-              {i<2&&<span style={{width:3,height:3,borderRadius:"50%",background:"rgba(255,255,255,0.4)",display:"inline-block"}}/>}
-            </span>))}
-          </div>
+          <div style={{fontSize:21,fontWeight:900,marginBottom:3,letterSpacing:-0.5}}>¿Qué necesitas hoy? 👋</div>
+          <div style={{fontSize:11,color:"rgba(255,255,255,0.6)",marginBottom:14,letterSpacing:1.5,textTransform:"uppercase",fontWeight:500}}>Encuentra · Conecta · Compra</div>
           {/* BÚSQUEDA GLOBAL — toca y va a supermercado con foco */}
           <div style={{background:"#fff",borderRadius:14,padding:"12px 16px",display:"flex",alignItems:"center",gap:10,boxShadow:"0 2px 8px rgba(0,0,0,0.15)"}} onClick={()=>{setTab("Supermercado");setTimeout(()=>document.querySelector("input")?.focus(),100);}}>
             <span style={{fontSize:18,opacity:0.5}}>🔍</span>
