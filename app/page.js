@@ -1,5 +1,5 @@
-// BUILD:1777859992
-"use client"; // Apure Market v1777859992
+// BUILD:1777860598
+"use client"; // Apure Market v1777860598
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -769,6 +769,7 @@ const VE_ESTADOS_MUNICIPIOS={
         .eq("aprobado",true)
         .eq("suscripcion_activa",true)
         .eq("en_pausa",false)
+        .eq("municipio",municipio)
         .in("tipo_negocio",tipos);
       byTipo=d||[];
     }
