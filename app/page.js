@@ -1,5 +1,5 @@
-// BUILD:1777856255
-"use client"; // Apure Market v1777856255
+// BUILD:1777859992
+"use client"; // Apure Market v1777859992
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -4064,7 +4064,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
                     {k:"eta",     icon:"⏱️", l:"Tiempos"},
                     {k:"clave",   icon:"🔑", l:"Seguridad"},
                   ].map(s2=>(
-                    <button key={s2.k} onClick={()=>{setSeccion(s2.k);if(s2.k==="perfil")setPerfilData({negocio:provData.negocio||"",descripcion_negocio:provData.descripcion_negocio||"",whatsapp_negocio:provData.whatsapp_negocio||"",telefono_principal:provData.telefono_principal||"",instagram:provData.instagram||"",tipo_presencia:provData.tipo_presencia||"online",estado_ubicacion:provData.estado_ubicacion||"",municipio:provData.municipio||"",parroquia:provData.parroquia||"",direccion_fisica:provData.direccion_fisica||"",latitud:provData.latitud||null,longitud:provData.longitud||null});}}
+                    <button key={s2.k} onClick={()=>{setSeccion(s2.k);if(s2.k==="perfil")setPerfilData({negocio:provData.negocio||"",descripcion_negocio:provData.descripcion_negocio||"",especialidad:provData.especialidad||"",whatsapp_negocio:provData.whatsapp_negocio||"",telefono_principal:provData.telefono_principal||"",instagram:provData.instagram||"",tipo_presencia:provData.tipo_presencia||"online",estado_ubicacion:provData.estado_ubicacion||"",municipio:provData.municipio||"",parroquia:provData.parroquia||"",direccion_fisica:provData.direccion_fisica||"",latitud:provData.latitud||null,longitud:provData.longitud||null});}}
                       style={{flexShrink:0,padding:"12px 14px 10px",border:"none",background:"transparent",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,borderBottom:seccion===s2.k?"3px solid #1d4ed8":"3px solid transparent",transition:"all 0.15s"}}>
                       <span style={{fontSize:16,filter:seccion===s2.k?"none":"grayscale(40%)",opacity:seccion===s2.k?1:0.6}}>{s2.icon}</span>
                       <span style={{fontSize:9,fontWeight:seccion===s2.k?700:500,color:seccion===s2.k?"#1d4ed8":"#94a3b8",whiteSpace:"nowrap",letterSpacing:0.3}}>{s2.l.toUpperCase()}</span>
@@ -4108,6 +4108,10 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
                     <input style={s.inp} value={perfilData.negocio||""} onChange={e=>{const v=e.target.value;setPerfilData(p=>({...p,negocio:v}));}} placeholder="Nombre de tu negocio"/>
                     <label style={s.lbl}>Descripción</label>
                     <input style={s.inp} value={perfilData.descripcion_negocio||""} onChange={e=>{const v=e.target.value;setPerfilData(p=>({...p,descripcion_negocio:v}));}} placeholder="Describe tu negocio..."/>
+                    {!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)&&(<>
+                    <label style={s.lbl}>Especialidad / Servicios que ofreces</label>
+                    <input style={s.inp} value={perfilData.especialidad||""} onChange={e=>{const v=e.target.value;setPerfilData(p=>({...p,especialidad:v}));}} placeholder="Ej: Cardiología, Uñas acrílicas, Mecánica general..."/>
+                    </>)}
                     <label style={s.lbl}>WhatsApp de pedidos *</label>
                     <input style={s.inp} value={perfilData.whatsapp_negocio||""} onChange={e=>{const v=e.target.value;setPerfilData(p=>({...p,whatsapp_negocio:v}));}} placeholder="04XX-XXXXXXX"/>
                     <label style={s.lbl}>Teléfono administrativo</label>
@@ -4176,6 +4180,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
                       const payload={
                         negocio:perfilData.negocio||provData.negocio,
                         descripcion_negocio:perfilData.descripcion_negocio,
+                        especialidad:perfilData.especialidad||null,
                         whatsapp_negocio:perfilData.whatsapp_negocio,
                         telefono:perfilData.whatsapp_negocio,
                         telefono_principal:perfilData.telefono_principal,
