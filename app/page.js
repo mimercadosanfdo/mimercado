@@ -1,5 +1,5 @@
-// BUILD:1777851793
-"use client"; // Apure Market v1777851793
+// BUILD:1777853484
+"use client"; // Apure Market v1777853484
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -2652,17 +2652,17 @@ const VE_ESTADOS_MUNICIPIOS={
 
                   {/* DATOS DEL CLIENTE */}
                   {(!form.nombre||!form.telefono)&&(
-                    <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:"12px 14px",marginBottom:12}}>
-                      <div style={{fontSize:12,fontWeight:700,color:"#15803d",marginBottom:8}}>👤 Tus datos de contacto</div>
-                      {!form.nombre&&<input style={{width:"100%",padding:"9px 12px",borderRadius:8,border:"1px solid #e2e8f0",fontSize:13,marginBottom:8,boxSizing:"border-box"}} placeholder="Tu nombre y apellido" onChange={e=>setForm(f=>({...f,nombre:e.target.value}))}/>}
-                      {!form.telefono&&<input style={{width:"100%",padding:"9px 12px",borderRadius:8,border:"1px solid #e2e8f0",fontSize:13,boxSizing:"border-box"}} placeholder="Tu WhatsApp (04XX-XXXXXXX)" onChange={e=>setForm(f=>({...f,telefono:e.target.value}))}/>}
+                    <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:12,padding:"12px 14px",marginBottom:12}}>
+                      <div style={{fontSize:12,fontWeight:600,color:"#374151",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>👤 <span>Tus datos para el mensaje</span></div>
+                      {!form.nombre&&<input style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"1px solid #e2e8f0",fontSize:13,marginBottom:8,boxSizing:"border-box",background:"#fff"}} placeholder="Tu nombre y apellido" onChange={e=>setForm(f=>({...f,nombre:e.target.value}))}/>}
+                      {!form.telefono&&<input style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"1px solid #e2e8f0",fontSize:13,boxSizing:"border-box",background:"#fff"}} placeholder="Tu WhatsApp (04XX-XXXXXXX)" onChange={e=>setForm(f=>({...f,telefono:e.target.value}))}/>}
                     </div>
                   )}
 
                   {/* LISTA DE SERVICIOS DEL PROVEEDOR */}
                   {provProductosServicio[proveedorServicioActivo.id]?.length>0?(
                     <div>
-                      <div style={{fontSize:13,fontWeight:700,color:"#374151",marginBottom:10}}>📋 Servicios disponibles</div>
+                      <div style={{fontSize:13,fontWeight:600,color:"#374151",marginBottom:10,paddingBottom:8,borderBottom:"1px solid #f1f5f9"}}>Servicios disponibles</div>
                       {provProductosServicio[proveedorServicioActivo.id].map(sp=>{
                         const wa=(proveedorServicioActivo.whatsapp_negocio||proveedorServicioActivo.telefono||"").replace(/\D/g,"");
                         const num=wa.startsWith("0")?"58"+wa.slice(1):wa.startsWith("58")?wa:"58"+wa;
@@ -2701,7 +2701,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
                               </div>
                               <div style={{fontSize:16,fontWeight:800,color:"#25D366",flexShrink:0,marginLeft:12}}>${sp.precio}</div>
                             </div>
-                            <button onClick={()=>window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank")} style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:10,padding:"10px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                            <button onClick={()=>window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank")} style={{width:"100%",background:"#0f9b6e",color:"#fff",border:"none",borderRadius:10,padding:"11px",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,letterSpacing:0.2}}>
                               📲 {esMedico?"Solicitar cita":"Contactar por este servicio"}
                             </button>
                           </div>
@@ -2746,7 +2746,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
 
 ¿Cuándo puedes atenderme?`;
                         window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank");
-                      }} style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:10,padding:"12px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                      }} style={{width:"100%",background:"#0f9b6e",color:"#fff",border:"none",borderRadius:10,padding:"12px",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,letterSpacing:0.2}}>
                         📲 {["medicos","enfermeria","laboratorios","odontologia"].includes(categoriaServicio.id)?"Solicitar cita":"Contactar ahora"}
                       </button>
                     </div>
@@ -3161,10 +3161,15 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
                 <div style={{fontSize:10,color:"rgba(255,255,255,0.5)",marginTop:1}}>{provData.email}</div>
                 {provData.tipo_negocio&&<div style={{fontSize:10,color:"#93c5fd",fontWeight:600,marginTop:3,background:"rgba(147,197,253,0.15)",display:"inline-block",padding:"2px 8px",borderRadius:20}}>{provData.tipo_negocio}</div>}
               </div>
-              <button onClick={toggleMiEstado} style={{background:provData.activo?"rgba(37,211,102,0.2)":"rgba(239,68,68,0.2)",border:`1.5px solid ${provData.activo?"#25D366":"#ef4444"}`,borderRadius:20,padding:"7px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:6,flexShrink:0,backdropFilter:"blur(4px)"}}>
-                <span style={{width:7,height:7,borderRadius:"50%",background:provData.activo?"#25D366":"#ef4444",display:"inline-block",boxShadow:provData.activo?"0 0 6px #25D366":"0 0 6px #ef4444"}}/>
-                <span style={{fontSize:11,fontWeight:800,color:provData.activo?"#4ade80":"#f87171"}}>{provData.activo?"ABIERTO":"CERRADO"}</span>
-              </button>
+              {(()=>{
+                const abAhora=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,provData.activo);
+                return(
+                  <button onClick={toggleMiEstado} style={{background:abAhora?"rgba(37,211,102,0.2)":"rgba(239,68,68,0.2)",border:`1.5px solid ${abAhora?"#25D366":"#ef4444"}`,borderRadius:20,padding:"7px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:6,flexShrink:0,backdropFilter:"blur(4px)"}}>
+                    <span style={{width:7,height:7,borderRadius:"50%",background:abAhora?"#25D366":"#ef4444",display:"inline-block",boxShadow:abAhora?"0 0 6px #25D366":"0 0 6px #ef4444"}}/>
+                    <span style={{fontSize:11,fontWeight:800,color:abAhora?"#4ade80":"#f87171"}}>{abAhora?"ABIERTO":"CERRADO"}</span>
+                  </button>
+                );
+              })()}
             </div>
             {/* SUSCRIPCIÓN BADGE */}
             {provData.meses_gratis_restantes>0?(
