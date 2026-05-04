@@ -1,5 +1,5 @@
-// BUILD:1777860598
-"use client"; // Apure Market v1777860598
+// BUILD:1777861193
+"use client"; // Apure Market v1777861193
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -5535,6 +5535,9 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
               onClick={()=>{
                 const nueva={estado:ciudadTemp.estado,municipio:ciudadTemp.municipio};
                 setUbicacionUsuario(nueva);
+                setProveedoresServicio([]);
+                setProveedorServicioActivo(null);
+                setCategoriaServicio(null);
                 setShowCiudadModal(false);
               }}
               style={{...s.btn,marginTop:4,opacity:(!ciudadTemp.estado||!ciudadTemp.municipio)?0.5:1,cursor:(!ciudadTemp.estado||!ciudadTemp.municipio)?"not-allowed":"pointer"}}>
@@ -5544,7 +5547,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
               <button onClick={()=>setShowCiudadModal(false)} style={s.btnG}>Cancelar</button>
             )}
             {!ubicacionUsuario&&(
-              <button onClick={()=>{setUbicacionUsuario(UBI_DEFAULT);setShowCiudadModal(false);}} style={{...s.btnG,fontSize:12,color:"#94a3b8"}}>
+              <button onClick={()=>{setUbicacionUsuario(UBI_DEFAULT);setProveedoresServicio([]);setProveedorServicioActivo(null);setCategoriaServicio(null);setShowCiudadModal(false);}} style={{...s.btnG,fontSize:12,color:"#94a3b8"}}>
                 Continuar como San Fernando de Apure
               </button>
             )}
