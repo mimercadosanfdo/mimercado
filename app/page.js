@@ -1,5 +1,5 @@
-// BUILD:1777863810
-"use client"; // Apure Market v1777863810
+// BUILD:1777863989
+"use client"; // Apure Market v1777863989
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1487,9 +1487,16 @@ const VE_ESTADOS_MUNICIPIOS={
           <div style={{fontSize:21,fontWeight:900,marginBottom:3,letterSpacing:-0.5}}>¿Qué necesitas hoy? 👋</div>
           <div style={{fontSize:11,color:"rgba(255,255,255,0.6)",marginBottom:14,letterSpacing:1.5,textTransform:"uppercase",fontWeight:500}}>Encuentra · Conecta · Compra</div>
           {/* BÚSQUEDA GLOBAL — toca y va a supermercado con foco */}
-          <div style={{background:"#fff",borderRadius:14,padding:"12px 16px",display:"flex",alignItems:"center",gap:10,boxShadow:"0 2px 8px rgba(0,0,0,0.15)"}} onClick={()=>{setTab("Supermercado");setTimeout(()=>document.querySelector("input")?.focus(),100);}}>
-            <span style={{fontSize:18,opacity:0.5}}>🔍</span>
-            <span style={{fontSize:14,color:"#94a3b8",fontWeight:500}}>Busca comida, productos o servicios…</span>
+          <div style={{background:"#fff",borderRadius:14,padding:"4px 14px",display:"flex",alignItems:"center",gap:10,boxShadow:"0 2px 8px rgba(0,0,0,0.15)"}}>
+            <span style={{fontSize:16,opacity:0.5,flexShrink:0}}>🔍</span>
+            <input
+              style={{flex:1,border:"none",outline:"none",fontSize:14,padding:"10px 0",background:"transparent",color:"#0f172a"}}
+              placeholder="Busca comida, productos o servicios…"
+              value={search}
+              onChange={e=>{setSearch(e.target.value);if(e.target.value.trim())setTab("Supermercado");}}
+              onFocus={()=>{if(!search.trim())setTab("Supermercado");}}
+            />
+            {search&&<button onClick={()=>setSearch("")} style={{background:"none",border:"none",fontSize:16,color:"#94a3b8",cursor:"pointer",flexShrink:0,padding:"4px"}}>✕</button>}
           </div>
         </div>
 
