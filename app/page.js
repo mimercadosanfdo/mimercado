@@ -1,5 +1,5 @@
-// BUILD:1777854991
-"use client"; // Apure Market v1777854991
+// BUILD:1777856255
+"use client"; // Apure Market v1777856255
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -778,7 +778,7 @@ const VE_ESTADOS_MUNICIPIOS={
     // Cargar productos/servicios de cada proveedor
     if(unique.length>0){
       const ids=unique.map(p=>p.id);
-      const{data:prods}=await supabase.from("productos_proveedor").select("id,proveedor_id,nombre,descripcion,precio,categoria,disponible").in("proveedor_id",ids).eq("aprobado",true).eq("disponible",true).eq("rechazado",false);
+      const{data:prods}=await supabase.from("productos_proveedor").select("id,proveedor_id,nombre,descripcion,precio,categoria,disponible,foto_url").in("proveedor_id",ids).eq("aprobado",true).eq("disponible",true).eq("rechazado",false);
       if(prods){
         const mapa={};
         prods.forEach(p=>{if(!mapa[p.proveedor_id])mapa[p.proveedor_id]=[];mapa[p.proveedor_id].push(p);});
