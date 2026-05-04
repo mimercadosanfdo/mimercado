@@ -1,5 +1,5 @@
-// BUILD:1777853484
-"use client"; // Apure Market v1777853484
+// BUILD:1777854246
+"use client"; // Apure Market v1777854246
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -2693,17 +2693,20 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
 
 ¿Cuándo puedes atenderme?`;
                         return(
-                          <div key={sp.id} style={{background:"#fff",borderRadius:14,padding:"14px",marginBottom:10,border:"1px solid #f1f5f9",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
-                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
-                              <div style={{flex:1}}>
-                                <div style={{fontSize:14,fontWeight:700,color:"#0f172a"}}>{sp.nombre}</div>
-                                {sp.descripcion&&<div style={{fontSize:12,color:"#64748b",marginTop:3,lineHeight:1.4}}>{sp.descripcion}</div>}
+                          <div key={sp.id} style={{background:"#fff",borderRadius:14,marginBottom:10,border:"1px solid #f1f5f9",boxShadow:"0 1px 4px rgba(0,0,0,0.05)",overflow:"hidden"}}>
+                            {sp.foto_url&&<img src={sp.foto_url} alt={sp.nombre} style={{width:"100%",height:160,objectFit:"cover",display:"block"}}/>}
+                            <div style={{padding:"12px 14px"}}>
+                              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+                                <div style={{flex:1}}>
+                                  <div style={{fontSize:14,fontWeight:700,color:"#0f172a"}}>{sp.nombre}</div>
+                                  {sp.descripcion&&<div style={{fontSize:12,color:"#64748b",marginTop:3,lineHeight:1.4}}>{sp.descripcion}</div>}
+                                </div>
+                                <div style={{fontSize:16,fontWeight:800,color:"#0f9b6e",flexShrink:0,marginLeft:12}}>${sp.precio}</div>
                               </div>
-                              <div style={{fontSize:16,fontWeight:800,color:"#25D366",flexShrink:0,marginLeft:12}}>${sp.precio}</div>
+                              <button onClick={()=>window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank")} style={{width:"100%",background:"#0f9b6e",color:"#fff",border:"none",borderRadius:10,padding:"11px",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,letterSpacing:0.2}}>
+                                📲 {esMedico?"Solicitar cita":"Contactar por este servicio"}
+                              </button>
                             </div>
-                            <button onClick={()=>window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank")} style={{width:"100%",background:"#0f9b6e",color:"#fff",border:"none",borderRadius:10,padding:"11px",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,letterSpacing:0.2}}>
-                              📲 {esMedico?"Solicitar cita":"Contactar por este servicio"}
-                            </button>
                           </div>
                         );
                       })}
