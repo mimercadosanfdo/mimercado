@@ -1,5 +1,5 @@
-// BUILD:1777861692
-"use client"; // Apure Market v1777861692
+// BUILD:1777863261
+"use client"; // Apure Market v1777863261
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -9,7 +9,7 @@ const supabase = createClient(
 );
 
 const CITY = "San Fernando";
-const APP_NAME = "Apure Market";
+const APP_NAME = "Lokl";
 const WA = "584243232671";
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "mimercado2024";
@@ -990,7 +990,29 @@ const VE_ESTADOS_MUNICIPIOS={
   const sendSvcWa=()=>{const m=`*Solicitud: ${selSvc.name}* — ${APP_NAME}\n\nNombre: ${svcForm.nombre}\nTeléfono: ${svcForm.telefono}\nDirección: ${svcForm.direccion}\nDetalle: ${svcForm.detalle}`;window.location.href=`https://wa.me/${WA}?text=${encodeURIComponent(m)}`;setSheet(null);setSelSvc(null);};
   const enviarResena=async()=>{if(!resena.estrellas||!resena.nombre)return setResenaMsj("Pon tu nombre y calificación");await supabase.from("resenas").insert({producto_id:resenaSheet,cliente_nombre:resena.nombre,cliente_telefono:resena.telefono,estrellas:resena.estrellas,comentario:resena.comentario,aprobada:false});setResenaMsj("✅ Gracias por tu reseña.");setTimeout(()=>{setSheet(null);setResenaSheet(null);setResena({estrellas:0,comentario:"",nombre:"",telefono:""});setResenaMsj("");},2000);};
 
-  const upload=async(file,bucket,path)=>{await supabase.storage.from(bucket).upload(path,file,{upsert:true});return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;};
+  const comprimirImagen=async(file,maxW=1200,calidad=0.82)=>{
+    return new Promise(resolve=>{
+      const img=new Image();
+      const url=URL.createObjectURL(file);
+      img.onload=()=>{
+        URL.revokeObjectURL(url);
+        const ratio=Math.min(1,maxW/Math.max(img.width,img.height));
+        const w=Math.round(img.width*ratio);
+        const h=Math.round(img.height*ratio);
+        const canvas=document.createElement("canvas");
+        canvas.width=w;canvas.height=h;
+        canvas.getContext("2d").drawImage(img,0,0,w,h);
+        canvas.toBlob(blob=>resolve(blob||file),"image/jpeg",calidad);
+      };
+      img.onerror=()=>{URL.revokeObjectURL(url);resolve(file);};
+      img.src=url;
+    });
+  };
+  const upload=async(file,bucket,path)=>{
+    const comprimido=await comprimirImagen(file);
+    await supabase.storage.from(bucket).upload(path,comprimido,{upsert:true,contentType:"image/jpeg"});
+    return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+  };
 
   const handleLogin=async()=>{
     if(!provForm.email||!provForm.pass)return setPmsg("Completa correo y contraseña");
@@ -1404,17 +1426,25 @@ const VE_ESTADOS_MUNICIPIOS={
       <div style={s.hdr}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
-              <div style={{display:"flex",flexDirection:"column",lineHeight:1}}>
-                <span style={{fontFamily:"Poppins,system-ui,sans-serif",fontWeight:800,fontSize:18,color:"#1a5c2a",letterSpacing:-0.5}}>Apure</span>
-                <span style={{fontFamily:"Poppins,system-ui,sans-serif",fontWeight:800,fontSize:18,color:"#25D366",letterSpacing:-0.5}}>Market</span>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                {/* Ícono: círculo oscuro con pin verde */}
+                <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                  <rect width="36" height="36" rx="10" fill="#0f172a"/>
+                  <circle cx="18" cy="15" r="8" fill="#25D366"/>
+                  <circle cx="18" cy="15" r="4" fill="#0f172a"/>
+                  <path d="M18 23 L13 33 L18 30 L23 33 Z" fill="#25D366"/>
+                  <circle cx="18" cy="15" r="2" fill="#25D366"/>
+                </svg>
+                {/* Texto lokl con punto naranja en la o */}
+                <div style={{display:"flex",alignItems:"baseline",gap:0}}>
+                  <span style={{fontFamily:"'Arial Black',Impact,sans-serif",fontWeight:900,fontSize:22,color:"#0f172a",letterSpacing:-1}}>l</span>
+                  <span style={{position:"relative",display:"inline-block"}}>
+                    <span style={{fontFamily:"'Arial Black',Impact,sans-serif",fontWeight:900,fontSize:22,color:"#0f172a",letterSpacing:-1}}>o</span>
+                    <span style={{position:"absolute",top:1,right:-1,width:6,height:6,borderRadius:"50%",background:"#FB8C00",display:"block"}}/>
+                  </span>
+                  <span style={{fontFamily:"'Arial Black',Impact,sans-serif",fontWeight:900,fontSize:22,color:"#0f172a",letterSpacing:-1}}>kl</span>
+                </div>
               </div>
-              <svg width="32" height="38" viewBox="0 0 32 38" fill="none">
-                <path d="M20 2 L12 6 L4 2 L4 28 L12 24 L20 28 L28 24 L28 2 L20 2Z" fill="none" stroke="#25D366" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>
-                <path d="M12 6 L12 24" stroke="#25D366" strokeWidth="2" strokeLinecap="round" fill="none"/>
-                <path d="M20 2 L20 12" stroke="#25D366" strokeWidth="2" strokeLinecap="round" fill="none"/>
-                <path d="M20 0 C16 0 13 3 13 7 C13 12 20 18 20 18 C20 18 27 12 27 7 C27 3 24 0 20 0Z" fill="#25D366"/>
-                <circle cx="20" cy="7" r="3" fill="#fff"/>
-              </svg>
             </div>
           {/* BADGE CIUDAD */}
           <button onClick={()=>{setCiudadTemp({estado:ubiActiva.estado||"Apure",municipio:ubiActiva.municipio||""});setShowCiudadModal(true);}} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:20,padding:"4px 10px",fontSize:11,fontWeight:700,color:"#15803d",cursor:"pointer",display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
