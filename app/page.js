@@ -1,5 +1,5 @@
-// BUILD:1777863261
-"use client"; // Apure Market v1777863261
+// BUILD:1777863615
+"use client"; // Apure Market v1777863615
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1489,8 +1489,14 @@ const VE_ESTADOS_MUNICIPIOS={
       {tab==="Inicio"&&(<>
         {/* BANNER PRINCIPAL */}
         <div style={{background:"linear-gradient(180deg,#166534 0%,#16a34a 60%,#22c55e 100%)",padding:"20px 16px 18px",color:"#fff",borderRadius:"0 0 24px 24px"}}>
-          <div style={{fontSize:22,fontWeight:900,marginBottom:3,letterSpacing:-0.5}}>¡Hola! 👋</div>
-          <div style={{fontSize:13,color:"rgba(255,255,255,0.82)",marginBottom:14,fontWeight:400}}>¿Qué necesitas hoy en {ubiActiva.municipio}?</div>
+          <div style={{fontSize:22,fontWeight:900,marginBottom:2,letterSpacing:-0.5}}>¡Hola! 👋</div>
+          <div style={{fontSize:13,color:"rgba(255,255,255,0.82)",marginBottom:4,fontWeight:400}}>¿Qué necesitas hoy en {ubiActiva.municipio}?</div>
+          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:14}}>
+            {["Encuentra","Conecta","Compra"].map((w,i)=>(<span key={w} style={{display:"flex",alignItems:"center",gap:6}}>
+              <span style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.9)",letterSpacing:1,textTransform:"uppercase"}}>{w}</span>
+              {i<2&&<span style={{width:3,height:3,borderRadius:"50%",background:"rgba(255,255,255,0.4)",display:"inline-block"}}/>}
+            </span>))}
+          </div>
           {/* BÚSQUEDA GLOBAL — toca y va a supermercado con foco */}
           <div style={{background:"#fff",borderRadius:14,padding:"12px 16px",display:"flex",alignItems:"center",gap:10,boxShadow:"0 2px 8px rgba(0,0,0,0.15)"}} onClick={()=>{setTab("Supermercado");setTimeout(()=>document.querySelector("input")?.focus(),100);}}>
             <span style={{fontSize:18,opacity:0.5}}>🔍</span>
