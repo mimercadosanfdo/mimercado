@@ -1,5 +1,5 @@
-// BUILD:1777854246
-"use client"; // Apure Market v1777854246
+// BUILD:1777854991
+"use client"; // Apure Market v1777854991
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1116,8 +1116,9 @@ const VE_ESTADOS_MUNICIPIOS={
     setLoading(true);setPmsg("");
     let foto_url=null;
     if(fotoFile)foto_url=await upload(fotoFile,"productos",`${provData.id}_${Date.now()}`);
-    const{data:existing}=await supabase.from("productos_proveedor").select("id").eq("proveedor_id",provData.id).eq("nombre",newProd.nombre).eq("primera_aprobacion",true).limit(1);
-    const auto=existing&&existing.length>0;
+    const esServicio=!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio);
+    const{data:existing}=await supabase.from("productos_proveedor").select("id").eq("proveedor_id",provData.id).eq("primera_aprobacion",true).limit(1);
+    const auto=esServicio?(existing&&existing.length>0):(existing&&existing.length>0);
     const{error}=await supabase.from("productos_proveedor").insert({
       proveedor_id:provData.id,
       nombre:newProd.nombre,
@@ -3362,34 +3363,40 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Apure Market.
                     </div>
                     {editingProdId===`mod_${p.id}`?(
                       <div style={{background:"#f8fafc",borderRadius:10,padding:12,border:"1px solid #e2e8f0",marginBottom:8}}>
-                        <div style={{fontSize:12,fontWeight:700,color:P,marginBottom:8}}>✏️ Modificar producto</div>
+                        <div style={{fontSize:12,fontWeight:700,color:P,marginBottom:8}}>{!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"✏️ Modificar servicio":"✏️ Modificar producto"}</div>
                         <label style={s.lbl}>Nombre *</label>
                         <input style={s.inp} value={newProd.nombre} onChange={e=>setNewProd({...newProd,nombre:e.target.value})}/>
-                        <label style={s.lbl}>Marca</label>
+                        {!!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)&&<><label style={s.lbl}>Marca</label>
                         <input style={s.inp} value={newProd.marca} onChange={e=>setNewProd({...newProd,marca:e.target.value})}/>
                         <label style={s.lbl}>Presentación</label>
-                        <input style={s.inp} value={newProd.presentacion} onChange={e=>setNewProd({...newProd,presentacion:e.target.value})}/>
-                        <label style={s.lbl}>Descripción</label>
+                        <input style={s.inp} value={newProd.presentacion} onChange={e=>setNewProd({...newProd,presentacion:e.target.value})}/></>}
+                        <label style={s.lbl}>Descripción {!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"(qué incluye este servicio)":""}</label>
                         <input style={s.inp} value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
                         <label style={s.lbl}>Precio ($) *</label>
                         <input style={s.inp} type="number" value={newProd.precio} onChange={e=>setNewProd({...newProd,precio:e.target.value})}/>
-                        <label style={s.lbl}>Unidad</label>
-                        <input style={s.inp} value={newProd.unidad} onChange={e=>setNewProd({...newProd,unidad:e.target.value})}/>
+                        {!!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)&&<><label style={s.lbl}>Unidad</label>
+                        <input style={s.inp} value={newProd.unidad} onChange={e=>setNewProd({...newProd,unidad:e.target.value})}/></>}
+                        <label style={s.lbl}>Foto {!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"del servicio (opcional)":"del producto (opcional)"}</label>
+                        {(fotoPreview||p.foto_url)&&<img src={fotoPreview||p.foto_url} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:8,marginBottom:6}}/>}
+                        <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setFotoFile(f);setFotoPreview(URL.createObjectURL(f));}}}/>
                         <div style={{...s.ib,background:"#fef9c3"}}><div style={{fontSize:12,color:"#854d0e"}}>ℹ️ Al guardar va a revisión del admin antes de publicarse.</div></div>
                         <button style={s.btn} disabled={loading} onClick={async()=>{
                           if(!newProd.nombre||!newProd.precio)return setPmsg("Completa nombre y precio");
                           setLoading(true);
+                          let nueva_foto=p.foto_url||null;
+                          if(fotoFile)nueva_foto=await upload(fotoFile,"productos",`${provData.id}_${Date.now()}`);
                           await supabase.from("productos_proveedor").update({
                             nombre:newProd.nombre,marca:newProd.marca||null,
                             presentacion:newProd.presentacion||null,descripcion:newProd.descripcion||null,
                             precio:parseFloat(newProd.precio),unidad:newProd.unidad,
+                            foto_url:nueva_foto,
                             aprobado:false,rechazado:false,motivo_rechazo:null,
                           }).eq("id",p.id);
-                          setLoading(false);setEditingProdId(null);
+                          setLoading(false);setEditingProdId(null);setFotoFile(null);setFotoPreview(null);
                           setPmsg("✅ Enviado a revisión del admin");
                           loadMyProds(provData.id);loadAll();
                         }}>{loading?"Guardando...":"📤 Guardar y enviar a revisión"}</button>
-                        <button style={s.btnG} onClick={()=>setEditingProdId(null)}>Cancelar</button>
+                        <button style={s.btnG} onClick={()=>{setEditingProdId(null);setFotoFile(null);setFotoPreview(null);}}>Cancelar</button>
                       </div>
                     ):(
                     <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
