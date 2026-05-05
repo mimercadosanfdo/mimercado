@@ -1,5 +1,5 @@
-// BUILD:1777864656
-"use client"; // Lokl v1777864283
+// BUILD:1777996319
+"use client"; // Lokl v1777996319
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -3190,7 +3190,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 </div>
               </>);
             })()}
-            <div style={{...s.ib,background:"#f0fdf4",marginBottom:8}}><div style={{fontSize:12,color:"#15803d"}}>🎁 45 días gratis sin compromiso. Después $5/mes (restaurantes y negocios) o $3/mes (servicios).</div></div>
+            <div style={{...s.ib,background:"#f0fdf4",marginBottom:8}}><div style={{fontSize:12,color:"#15803d"}}>🎁 45 días gratis sin compromiso. Después $2.99/mes (restaurantes y negocios) o $1.99/mes (servicios).</div></div>
             <label style={s.lbl}>Logo del negocio</label>
             {logoPreview&&<img src={logoPreview} alt="" style={{width:60,height:60,borderRadius:"50%",objectFit:"cover",marginBottom:8}}/>}
             <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setLogoFile(f);setLogoPreview(URL.createObjectURL(f));}}}/>
@@ -4860,7 +4860,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                   <div style={s.statCard}><div style={{...s.statNum,fontSize:18,color:"#f59e0b"}}>{suscripciones.filter(s=>s.meses_gratis_restantes>0).length}</div><div style={s.statLbl}>En período gratis</div></div>
                   <div style={s.statCard}><div style={{...s.statNum,fontSize:18,color:"#ef4444"}}>{suscripciones.filter(s=>!s.suscripcion_pagada&&s.meses_gratis_restantes===0).length}</div><div style={s.statLbl}>Vencidas</div></div>
                 </div>
-                <div style={{fontSize:12,color:"#22c55e",fontWeight:600,marginBottom:8}}>💰 Ingreso mensual potencial: ${(suscripciones.filter(s=>s.suscripcion_activa&&s.meses_gratis_restantes===0).length*8).toFixed(0)}/mes</div>
+                <div style={{fontSize:12,color:"#22c55e",fontWeight:600,marginBottom:8}}>💰 Ingreso mensual potencial: ${(suscripciones.filter(s=>s.suscripcion_activa&&s.meses_gratis_restantes===0).reduce((acc,s)=>acc+(!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(s.tipo_negocio)?1.99:2.99),0)).toFixed(2)}/mes</div>
                 {suscripciones.map(s=>(
                   <div key={s.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
@@ -4868,6 +4868,9 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                       <div style={{flex:1}}>
                         <div style={{fontSize:13,fontWeight:700}}>{s.negocio}</div>
                         <div style={{fontSize:11,color:"#64748b"}}>@{s.usuario} · {s.tipo_negocio||"Restaurante"}</div>
+                        <div style={{fontSize:11,fontWeight:700,color:"#15803d",marginTop:2}}>
+                          {!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(s.tipo_negocio)?"$1.99/mes":"$2.99/mes"}
+                        </div>
                       </div>
                       <span style={{fontSize:11,fontWeight:700,padding:"3px 8px",borderRadius:8,
                         background:s.meses_gratis_restantes>0?"#fef9c3":s.suscripcion_pagada?"#dcfce7":"#fee2e2",
