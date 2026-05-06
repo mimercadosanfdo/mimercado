@@ -402,6 +402,7 @@ const VE_ESTADOS_MUNICIPIOS={
   const [spFoto,setSpFoto]=useState(null);
   const [spFotoPreview,setSpFotoPreview]=useState(null);
   const [newZona,setNewZona]=useState({municipio:"San Fernando",zona:"",tipo:"barrio",costo_delivery:1.50,delivery_gratis_super:18.00,delivery_gratis_comida:12.00});
+  const [superAbierto,setSuperAbierto]=useState(true);
   const [newCombo,setNewCombo]=useState({nombre:"",descripcion:"",precio:"",temporada:"",fecha_inicio:"",fecha_fin:""});
   const [notaSheet,setNotaSheet]=useState(null);
   const [notaTemp,setNotaTemp]=useState("");
@@ -501,6 +502,7 @@ const VE_ESTADOS_MUNICIPIOS={
   };
 
   const loadAll=async()=>{
+    supabase.from("configuracion").select("valor").eq("clave","super_abierto").single().then(({data})=>{if(data)setSuperAbierto(data.valor==="true");});
     const hoy=new Date().toISOString().split("T")[0];
     const ubi=JSON.parse(typeof window!=="undefined"&&localStorage.getItem("apure_ubicacion")||"null")||UBI_DEFAULT;
     const muni=ubi.municipio;
@@ -3233,10 +3235,10 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
               {(()=>{
                 const abAhora=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,provData.activo,provData.en_pausa);
                 return(
-                  <button onClick={(e)=>{e.stopPropagation();toggleMiEstado();}} style={{background:abAhora?"#16a34a":"#dc2626",border:"none",borderRadius:16,padding:"10px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,flexShrink:0,minWidth:110,justifyContent:"center",WebkitTapHighlightColor:"rgba(0,0,0,0)"}}>
-                    <span style={{width:8,height:8,borderRadius:"50%",background:"#fff",display:"inline-block"}}/>
-                    <span style={{fontSize:13,fontWeight:900,color:"#fff",letterSpacing:0.3}}>{abAhora?"ABIERTO":"CERRADO"}</span>
-                  </button>
+                  <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0,background:abAhora?"rgba(37,211,102,0.2)":"rgba(239,68,68,0.2)",border:`1.5px solid ${abAhora?"#25D366":"#ef4444"}`,borderRadius:20,padding:"7px 14px"}}>
+                    <span style={{width:7,height:7,borderRadius:"50%",background:abAhora?"#25D366":"#ef4444",display:"inline-block"}}/>
+                    <span style={{fontSize:11,fontWeight:800,color:abAhora?"#4ade80":"#f87171"}}>{abAhora?"ABIERTO":"CERRADO"}</span>
+                  </div>
                 );
               })()}
             </div>
@@ -3273,6 +3275,24 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
             {/* PANEL PRINCIPAL — solo visible en estado */}
             {provTab==="estado"&&(
               <div style={{padding:"14px 16px 12px"}}>
+                {/* BOTÓN ABIERTO / CERRADO */}
+                {(()=>{
+                  const ab=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,provData.activo,provData.en_pausa);
+                  return(
+                    <div style={{marginBottom:14}}>
+                      <button
+                        type="button"
+                        onClick={toggleMiEstado}
+                        style={{width:"100%",padding:"16px",borderRadius:16,border:"none",background:ab?"#16a34a":"#dc2626",color:"#fff",fontSize:16,fontWeight:900,cursor:"pointer",display:"block",letterSpacing:0.3}}
+                      >
+                        {ab?"🟢  ABIERTO — Recibiendo pedidos":"🔴  CERRADO — Toca para abrir"}
+                      </button>
+                      <div style={{textAlign:"center",fontSize:10,color:"#94a3b8",marginTop:4}}>
+                        {ab?"Toca para cerrar temporalmente":"Toca para abrir tu negocio"}
+                      </div>
+                    </div>
+                  );
+                })()}
                 {/* STATS — 4 métricas clave */}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
                   {[
@@ -4393,9 +4413,9 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
         {provMode==="admin"&&(<>
           <div style={{...s.pc,background:"#eff6ff",borderColor:"#bfdbfe"}}>
             <div style={{fontSize:14,fontWeight:700,color:"#1d4ed8",marginBottom:10}}>⚙️ Panel Admin — {APP_NAME}</div>
-            <button style={s.toggleBtn(superProds.length>0)} onClick={async()=>{await supabase.from("productos_supermercado").update({disponible:superProds.length===0}).neq("id","00000000-0000-0000-0000-000000000000");loadAll();}}>
-              <span style={{fontSize:20}}>{superProds.length>0?"🟢":"🔴"}</span>
-              <div><div style={{fontSize:13,fontWeight:700,color:superProds.length>0?"#15803d":"#92400e"}}>Supermercado: {superProds.length>0?"ABIERTO":"CERRADO"}</div><div style={{fontSize:11,color:"#64748b"}}>Toca para {superProds.length>0?"cerrar":"abrir"}</div></div>
+            <button type="button" style={s.toggleBtn(superAbierto)} onClick={async()=>{const nuevoEstado=!superAbierto;await supabase.from("configuracion").update({valor:String(nuevoEstado)}).eq("clave","super_abierto");setSuperAbierto(nuevoEstado);}}>
+              <span style={{fontSize:20}}>{superAbierto?"🟢":"🔴"}</span>
+              <div><div style={{fontSize:13,fontWeight:700,color:superAbierto?"#15803d":"#92400e"}}>Supermercado: {superAbierto?"ABIERTO":"CERRADO"}</div><div style={{fontSize:11,color:"#64748b"}}>Toca para {superAbierto?"cerrar":"abrir"}</div></div>
             </button>
           </div>
 
