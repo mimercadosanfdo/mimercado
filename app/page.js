@@ -1120,9 +1120,10 @@ const VE_ESTADOS_MUNICIPIOS={
 
   const togglePausa=async(id,enPausa)=>{await supabase.from("proveedores").update({en_pausa:!enPausa}).eq("id",id);loadAdmin();loadAll();};
   const deleteProveedor=(id)=>{setConfirmModal({msg:"¿Eliminar este proveedor? No se puede deshacer.",onOk:async()=>{await supabase.from("productos_proveedor").delete().eq("proveedor_id",id);await supabase.from("proveedores").delete().eq("id",id);loadAdmin();loadAll();}});};
-  const toggleMiEstado=async()=>{const n=!provData.activo;await supabase.from("proveedores").update({activo:n}).eq("id",provData.id);setProvData({...provData,activo:n});loadAll();};
-  const estaAbiertoAhora=(desde,hasta,activoManual)=>{
-    if(activoManual===false)return false; // forzado cerrado manualmente
+  const toggleMiEstado=async()=>{const n=!provData.en_pausa;await supabase.from("proveedores").update({en_pausa:n}).eq("id",provData.id);setProvData({...provData,en_pausa:n});loadAll();};
+  const estaAbiertoAhora=(desde,hasta,activoManual,enPausa)=>{
+    if(enPausa===true)return false; // forzado cerrado manualmente por el proveedor
+    if(activoManual===false)return false; // cuenta desactivada por admin
     if(!desde||!hasta)return activoManual!==false; // sin horario = depende solo del manual
     const ahora=new Date();
     const [dh,dm]=desde.split(":").map(Number);
@@ -2050,8 +2051,8 @@ const VE_ESTADOS_MUNICIPIOS={
                   <div style={{fontSize:13,fontWeight:700}}>{negocioCatFiltro||`"${search}"`}</div>
                   <button onClick={()=>{setNegocioCatFiltro(null);setSearch("");}} style={{fontSize:12,color:P,background:"none",border:"none",cursor:"pointer"}}>← Volver</button>
                 </div>
-                {[...allNegocios].sort((a,b)=>{const aAb=estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo);const bAb=estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo);return bAb-aAb;}).filter(n=>negocioCatFiltro?(n.categorias||[]).includes(negocioCatFiltro):n.negocio.toLowerCase().includes(search.toLowerCase())).map(n=>{
-  const abiertoN=estaAbiertoAhora(n.horario_desde,n.horario_hasta,n.activo);
+                {[...allNegocios].sort((a,b)=>{const aAb=estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo,a.en_pausa);const bAb=estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo,b.en_pausa);return bAb-aAb;}).filter(n=>negocioCatFiltro?(n.categorias||[]).includes(negocioCatFiltro):n.negocio.toLowerCase().includes(search.toLowerCase())).map(n=>{
+  const abiertoN=estaAbiertoAhora(n.horario_desde,n.horario_hasta,n.activo,n.en_pausa);
   return(
                   <div key={n.id} onClick={()=>{setNegocioActivo(n);setCartNegocioId(n.id);setCartNegocioNombre(n.negocio);setCartNegocioWa(n.whatsapp_negocio||n.telefono);setSearch("");}} style={{background:abiertoN?"#fff":"#f8fafc",borderRadius:14,padding:14,border:`1px solid ${abiertoN?"#f1f5f9":"#e2e8f0"}`,display:"flex",gap:12,alignItems:"center",marginBottom:10,cursor:"pointer",opacity:abiertoN?1:0.72,position:"relative"}}>
                     {!abiertoN&&<div style={{position:"absolute",top:8,right:8,background:"#dc2626",color:"#fff",fontSize:9,fontWeight:800,padding:"2px 7px",borderRadius:20,letterSpacing:0.5}}>CERRADO</div>}
@@ -2281,8 +2282,8 @@ const VE_ESTADOS_MUNICIPIOS={
                     </button>
                   </div>
                 )}
-                {[...allRestaurantes].sort((a,b)=>{const aAb=estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo);const bAb=estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo);return bAb-aAb;}).map(r=>{
-                  const abiertoR=estaAbiertoAhora(r.horario_desde,r.horario_hasta,r.activo);
+                {[...allRestaurantes].sort((a,b)=>{const aAb=estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo,a.en_pausa);const bAb=estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo,b.en_pausa);return bAb-aAb;}).map(r=>{
+                  const abiertoR=estaAbiertoAhora(r.horario_desde,r.horario_hasta,r.activo,r.en_pausa);
                   const opTexto=r.tipo_operacion_gastro==="cocina_oscura"?"🚚 Pedidos solo por delivery":
                     r.tipo_operacion_gastro==="restaurante"?`🍽️ Atención en local${r.delivery_propio?" · 🚚 Delivery disponible":""}`:
                     r.tipo_operacion_gastro==="comida_casera"?"🏠 Comida casera · Delivery":
@@ -2674,7 +2675,7 @@ const VE_ESTADOS_MUNICIPIOS={
                 <div style={{fontSize:36,filter:"drop-shadow(0 2px 6px rgba(0,0,0,0.3))"}}>{categoriaServicio.icon}</div>
                 <div>
                   <div style={{fontSize:20,fontWeight:900,letterSpacing:-0.5}}>{categoriaServicio.label}</div>
-                  <div style={{fontSize:11,color:"rgba(255,255,255,0.7)"}}>{ubiActiva.municipio} · {(()=>{const ab=proveedoresServicio.filter(p=>estaAbiertoAhora(p.horario_desde,p.horario_hasta,p.activo)).length;const tot=proveedoresServicio.length;return ab>0?`${ab} disponible${ab!==1?"s":""} ahora · ${tot} en total`:`${tot} proveedor${tot!==1?"es":""}`;})()}</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.7)"}}>{ubiActiva.municipio} · {(()=>{const ab=proveedoresServicio.filter(p=>estaAbiertoAhora(p.horario_desde,p.horario_hasta,p.activo,p.en_pausa)).length;const tot=proveedoresServicio.length;return ab>0?`${ab} disponible${ab!==1?"s":""} ahora · ${tot} en total`:`${tot} proveedor${tot!==1?"es":""}`;})()}</div>
                 </div>
               </div>
             </div>
@@ -2703,7 +2704,7 @@ const VE_ESTADOS_MUNICIPIOS={
                       {proveedorServicioActivo.instagram&&<a href={`https://instagram.com/${proveedorServicioActivo.instagram.replace("@","")}`} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} style={{background:"#fdf2f8",color:"#9d174d",fontSize:11,padding:"4px 10px",borderRadius:20,border:"1px solid #fbcfe8",textDecoration:"none",fontWeight:600}}>📸 {proveedorServicioActivo.instagram}</a>}
                     </div>
                     {(()=>{
-                      const ab=estaAbiertoAhora(proveedorServicioActivo.horario_desde,proveedorServicioActivo.horario_hasta,proveedorServicioActivo.activo);
+                      const ab=estaAbiertoAhora(proveedorServicioActivo.horario_desde,proveedorServicioActivo.horario_hasta,proveedorServicioActivo.activo,proveedorServicioActivo.en_pausa);
                       const horTxt=proveedorServicioActivo.horarios_atencion||(proveedorServicioActivo.horario_desde&&proveedorServicioActivo.horario_hasta?`${proveedorServicioActivo.horario_desde} – ${proveedorServicioActivo.horario_hasta}${proveedorServicioActivo.horario_desc?" ("+proveedorServicioActivo.horario_desc+")":""}`:null);
                       return(<>
                         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:horTxt?4:0}}>
@@ -2898,7 +2899,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                       </button>
                     </div>
                   ):(
-                    ([...proveedoresServicio].filter(p=>!searchServicios||(p.negocio+(p.especialidad||"")+(p.descripcion_negocio||"")).toLowerCase().includes(searchServicios.toLowerCase())).sort((a,b)=>estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo)-estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo))).map(prov=>(
+                    ([...proveedoresServicio].filter(p=>!searchServicios||(p.negocio+(p.especialidad||"")+(p.descripcion_negocio||"")).toLowerCase().includes(searchServicios.toLowerCase())).sort((a,b)=>estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo,b.en_pausa)-estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo,a.en_pausa))).map(prov=>(
                       /* TARJETA CLICKEABLE — abre detalle del proveedor */
                       <div key={prov.id} onClick={()=>setProveedorServicioActivo(prov)} style={{background:"#fff",borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.08)",border:"1px solid #f1f5f9",cursor:"pointer",transition:"box-shadow 0.15s"}}>
                         <div style={{display:"flex",gap:12,alignItems:"center"}}>
@@ -2915,7 +2916,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                             {prov.descripcion_negocio&&<div style={{fontSize:11,color:"#94a3b8",marginTop:2,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{prov.descripcion_negocio}</div>}
                           </div>
                           <div style={{flexShrink:0,textAlign:"center"}}>
-                            {(()=>{const ab=estaAbiertoAhora(prov.horario_desde,prov.horario_hasta,prov.activo);return(<>
+                            {(()=>{const ab=estaAbiertoAhora(prov.horario_desde,prov.horario_hasta,prov.activo,prov.en_pausa);return(<>
                             <span style={{background:ab?"#dcfce7":"#fee2e2",color:ab?"#15803d":"#dc2626",fontSize:9,fontWeight:700,padding:"3px 7px",borderRadius:10,display:"block",textAlign:"center",marginBottom:4}}>{ab?"● Abierto":"● Cerrado"}</span>
                             {!ab&&(prov.horario_desde)&&<div style={{fontSize:9,color:"#94a3b8",textAlign:"center",lineHeight:1.3}}>🕐 {prov.horario_desde}–{prov.horario_hasta}</div>}
                             <div style={{fontSize:10,color:"#94a3b8",marginTop:4,textAlign:"center"}}>Ver →</div>
@@ -3230,7 +3231,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 {provData.tipo_negocio&&<div style={{fontSize:10,color:"#93c5fd",fontWeight:600,marginTop:3,background:"rgba(147,197,253,0.15)",display:"inline-block",padding:"2px 8px",borderRadius:20}}>{provData.tipo_negocio}</div>}
               </div>
               {(()=>{
-                const abAhora=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,provData.activo);
+                const abAhora=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,provData.activo,provData.en_pausa);
                 return(
                   <button onClick={toggleMiEstado} style={{background:abAhora?"rgba(37,211,102,0.2)":"rgba(239,68,68,0.2)",border:`1.5px solid ${abAhora?"#25D366":"#ef4444"}`,borderRadius:20,padding:"7px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:6,flexShrink:0,backdropFilter:"blur(4px)"}}>
                     <span style={{width:7,height:7,borderRadius:"50%",background:abAhora?"#25D366":"#ef4444",display:"inline-block",boxShadow:abAhora?"0 0 6px #25D366":"0 0 6px #ef4444"}}/>
