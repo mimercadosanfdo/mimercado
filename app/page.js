@@ -1120,11 +1120,11 @@ const VE_ESTADOS_MUNICIPIOS={
 
   const togglePausa=async(id,enPausa)=>{await supabase.from("proveedores").update({en_pausa:!enPausa}).eq("id",id);loadAdmin();loadAll();};
   const deleteProveedor=(id)=>{setConfirmModal({msg:"¿Eliminar este proveedor? No se puede deshacer.",onOk:async()=>{await supabase.from("productos_proveedor").delete().eq("proveedor_id",id);await supabase.from("proveedores").delete().eq("id",id);loadAdmin();loadAll();}});};
-  const toggleMiEstado=async()=>{const n=!provData.activo;await supabase.from("proveedores").update({activo:n}).eq("id",provData.id);setProvData({...provData,activo:n});loadAll();};
+  const toggleMiEstado=async()=>{const n=!provData.en_pausa;await supabase.from("proveedores").update({en_pausa:n}).eq("id",provData.id);setProvData({...provData,en_pausa:n});loadAll();};
   const estaAbiertoAhora=(desde,hasta,activoManual,enPausa)=>{
-    if(enPausa===true)return false; // pausado por admin
-    if(activoManual===false)return false; // cerrado manualmente por el proveedor (siempre tiene prioridad)
-    if(!desde||!hasta)return true; // sin horario configurado y activo=true → abierto
+    if(enPausa===true)return false; // forzado cerrado manualmente por el proveedor
+    if(activoManual===false)return false; // cuenta desactivada por admin
+    if(!desde||!hasta)return activoManual!==false; // sin horario = depende solo del manual
     const ahora=new Date();
     const [dh,dm]=desde.split(":").map(Number);
     const [hh,hm]=hasta.split(":").map(Number);
@@ -3233,9 +3233,9 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
               {(()=>{
                 const abAhora=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,provData.activo,provData.en_pausa);
                 return(
-                  <button onClick={toggleMiEstado} style={{background:abAhora?"rgba(37,211,102,0.2)":"rgba(239,68,68,0.2)",border:`1.5px solid ${abAhora?"#25D366":"#ef4444"}`,borderRadius:20,padding:"7px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:6,flexShrink:0,backdropFilter:"blur(4px)"}}>
-                    <span style={{width:7,height:7,borderRadius:"50%",background:abAhora?"#25D366":"#ef4444",display:"inline-block",boxShadow:abAhora?"0 0 6px #25D366":"0 0 6px #ef4444"}}/>
-                    <span style={{fontSize:11,fontWeight:800,color:abAhora?"#4ade80":"#f87171"}}>{abAhora?"ABIERTO":"CERRADO"}</span>
+                  <button onClick={(e)=>{e.stopPropagation();toggleMiEstado();}} style={{background:abAhora?"#16a34a":"#dc2626",border:"none",borderRadius:16,padding:"10px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,flexShrink:0,minWidth:110,justifyContent:"center",WebkitTapHighlightColor:"rgba(0,0,0,0)"}}>
+                    <span style={{width:8,height:8,borderRadius:"50%",background:"#fff",display:"inline-block"}}/>
+                    <span style={{fontSize:13,fontWeight:900,color:"#fff",letterSpacing:0.3}}>{abAhora?"ABIERTO":"CERRADO"}</span>
                   </button>
                 );
               })()}
