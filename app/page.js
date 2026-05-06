@@ -1,5 +1,5 @@
-// BUILD:1778087147
-"use client"; // Lokl v1778087147
+// BUILD:1778087906
+"use client"; // Lokl v1778087906
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1122,7 +1122,7 @@ const VE_ESTADOS_MUNICIPIOS={
 
   const togglePausa=async(id,enPausa)=>{await supabase.from("proveedores").update({en_pausa:!enPausa}).eq("id",id);loadAdmin();loadAll();};
   const deleteProveedor=(id)=>{setConfirmModal({msg:"¿Eliminar este proveedor? No se puede deshacer.",onOk:async()=>{await supabase.from("productos_proveedor").delete().eq("proveedor_id",id);await supabase.from("proveedores").delete().eq("id",id);loadAdmin();loadAll();}});};
-  const toggleMiEstado=async()=>{const n=!provData.en_pausa;await supabase.from("proveedores").update({en_pausa:n}).eq("id",provData.id);setProvData({...provData,en_pausa:n});loadAll();};
+  const toggleMiEstado=async()=>{const n=!provData.activo;await supabase.from("proveedores").update({activo:n}).eq("id",provData.id);setProvData({...provData,activo:n});loadAll();};
   const estaAbiertoAhora=(desde,hasta,activoManual,enPausa)=>{
     if(enPausa===true)return false; // forzado cerrado manualmente por el proveedor
     if(activoManual===false)return false; // cuenta desactivada por admin
@@ -1676,11 +1676,17 @@ const VE_ESTADOS_MUNICIPIOS={
               <div style={{fontSize:11,color:"rgba(255,255,255,0.55)",marginTop:1}}>Productos frescos · Delivery a domicilio</div>
             </div>
           </div>
-          <div style={{background:"rgba(245,158,11,0.18)",borderRadius:12,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,border:"1px solid rgba(245,158,11,0.4)"}}>
-            <span style={{fontSize:20}}>🚚</span>
-            <div>
-              <div style={{fontSize:15,color:"#fbbf24",fontWeight:900,letterSpacing:-0.3}}>DELIVERY GRATIS</div>
-              <div style={{fontSize:11,color:"rgba(255,255,255,0.65)",marginTop:1}}>En pedidos mayores a $15</div>
+          <div style={{display:"flex",gap:8,alignItems:"stretch"}}>
+            <div style={{background:"rgba(245,158,11,0.18)",borderRadius:12,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,border:"1px solid rgba(245,158,11,0.4)",flex:1}}>
+              <span style={{fontSize:20}}>🚚</span>
+              <div>
+                <div style={{fontSize:15,color:"#fbbf24",fontWeight:900,letterSpacing:-0.3}}>DELIVERY GRATIS</div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,0.65)",marginTop:1}}>En pedidos mayores a $15</div>
+              </div>
+            </div>
+            <div style={{background:superAbierto?"rgba(22,163,74,0.2)":"rgba(220,38,38,0.2)",border:`1px solid ${superAbierto?"#16a34a":"#dc2626"}`,borderRadius:12,padding:"10px 12px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,flexShrink:0}}>
+              <span style={{width:10,height:10,borderRadius:"50%",background:superAbierto?"#4ade80":"#f87171",display:"inline-block"}}/>
+              <span style={{fontSize:10,fontWeight:900,color:superAbierto?"#4ade80":"#f87171",letterSpacing:0.3}}>{superAbierto?"ABIERTO":"CERRADO"}</span>
             </div>
           </div>
         </div>
