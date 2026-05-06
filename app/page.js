@@ -1120,11 +1120,11 @@ const VE_ESTADOS_MUNICIPIOS={
 
   const togglePausa=async(id,enPausa)=>{await supabase.from("proveedores").update({en_pausa:!enPausa}).eq("id",id);loadAdmin();loadAll();};
   const deleteProveedor=(id)=>{setConfirmModal({msg:"¿Eliminar este proveedor? No se puede deshacer.",onOk:async()=>{await supabase.from("productos_proveedor").delete().eq("proveedor_id",id);await supabase.from("proveedores").delete().eq("id",id);loadAdmin();loadAll();}});};
-  const toggleMiEstado=async()=>{const n=!provData.en_pausa;await supabase.from("proveedores").update({en_pausa:n}).eq("id",provData.id);setProvData({...provData,en_pausa:n});loadAll();};
+  const toggleMiEstado=async()=>{const n=!provData.activo;await supabase.from("proveedores").update({activo:n}).eq("id",provData.id);setProvData({...provData,activo:n});loadAll();};
   const estaAbiertoAhora=(desde,hasta,activoManual,enPausa)=>{
-    if(enPausa===true)return false; // forzado cerrado manualmente por el proveedor
-    if(activoManual===false)return false; // cuenta desactivada por admin
-    if(!desde||!hasta)return activoManual!==false; // sin horario = depende solo del manual
+    if(enPausa===true)return false; // pausado por admin
+    if(activoManual===false)return false; // cerrado manualmente por el proveedor (siempre tiene prioridad)
+    if(!desde||!hasta)return true; // sin horario configurado y activo=true → abierto
     const ahora=new Date();
     const [dh,dm]=desde.split(":").map(Number);
     const [hh,hm]=hasta.split(":").map(Number);
