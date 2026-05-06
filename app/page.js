@@ -2050,13 +2050,16 @@ const VE_ESTADOS_MUNICIPIOS={
                   <div style={{fontSize:13,fontWeight:700}}>{negocioCatFiltro||`"${search}"`}</div>
                   <button onClick={()=>{setNegocioCatFiltro(null);setSearch("");}} style={{fontSize:12,color:P,background:"none",border:"none",cursor:"pointer"}}>← Volver</button>
                 </div>
-                {allNegocios.filter(n=>negocioCatFiltro?(n.categorias||[]).includes(negocioCatFiltro):n.negocio.toLowerCase().includes(search.toLowerCase())).map(n=>(
-                  <div key={n.id} onClick={()=>{setNegocioActivo(n);setCartNegocioId(n.id);setCartNegocioNombre(n.negocio);setCartNegocioWa(n.whatsapp_negocio||n.telefono);setSearch("");}} style={{background:"#fff",borderRadius:14,padding:14,border:"1px solid #f1f5f9",display:"flex",gap:12,alignItems:"center",marginBottom:10,cursor:"pointer"}}>
+                {[...allNegocios].sort((a,b)=>{const aAb=estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo);const bAb=estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo);return bAb-aAb;}).filter(n=>negocioCatFiltro?(n.categorias||[]).includes(negocioCatFiltro):n.negocio.toLowerCase().includes(search.toLowerCase())).map(n=>{
+  const abiertoN=estaAbiertoAhora(n.horario_desde,n.horario_hasta,n.activo);
+  return(
+                  <div key={n.id} onClick={()=>{setNegocioActivo(n);setCartNegocioId(n.id);setCartNegocioNombre(n.negocio);setCartNegocioWa(n.whatsapp_negocio||n.telefono);setSearch("");}} style={{background:abiertoN?"#fff":"#f8fafc",borderRadius:14,padding:14,border:`1px solid ${abiertoN?"#f1f5f9":"#e2e8f0"}`,display:"flex",gap:12,alignItems:"center",marginBottom:10,cursor:"pointer",opacity:abiertoN?1:0.72,position:"relative"}}>
+                    {!abiertoN&&<div style={{position:"absolute",top:8,right:8,background:"#dc2626",color:"#fff",fontSize:9,fontWeight:800,padding:"2px 7px",borderRadius:20,letterSpacing:0.5}}>CERRADO</div>}
                     {n.logo_url?<img src={n.logo_url} alt="" style={{width:52,height:52,borderRadius:12,objectFit:"cover",flexShrink:0}}/>:<div style={{width:52,height:52,borderRadius:12,background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🏪</div>}
-                    <div style={{flex:1}}><div style={{fontSize:14,fontWeight:700,color:P}}>{n.negocio}</div><div style={{fontSize:11,color:"#64748b"}}>{(n.categorias||[]).join(" · ")}</div>{n.direccion_fisica&&<div style={{fontSize:10,color:"#94a3b8"}}>📍 {n.direccion_fisica}</div>}</div>
+                    <div style={{flex:1}}><div style={{display:"flex",alignItems:"center",gap:6,marginBottom:1}}><div style={{fontSize:14,fontWeight:700,color:P,flex:1}}>{n.negocio}</div>{abiertoN&&<span style={{fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:20,background:"#dcfce7",color:"#15803d",flexShrink:0}}>● Abierto</span>}</div><div style={{fontSize:11,color:"#64748b"}}>{(n.categorias||[]).join(" · ")}</div>{n.direccion_fisica&&<div style={{fontSize:10,color:"#94a3b8"}}>📍 {n.direccion_fisica}</div>}</div>
                     <div style={{color:"#94a3b8",fontSize:18}}>›</div>
                   </div>
-                ))}
+                );})}
                 {allNegocios.filter(n=>negocioCatFiltro?(n.categorias||[]).includes(negocioCatFiltro):n.negocio.toLowerCase().includes(search.toLowerCase())).length===0&&<div style={{textAlign:"center",padding:"30px 0",color:"#94a3b8"}}><div style={{fontSize:36,marginBottom:8}}>🔍</div><div style={{fontSize:13,fontWeight:600,color:"#64748b"}}>No encontramos tiendas en esta categoría</div><div style={{fontSize:11,marginTop:4}}>Los negocios locales estarán disponibles muy pronto</div></div>}
               </div>
             )}
@@ -2278,7 +2281,8 @@ const VE_ESTADOS_MUNICIPIOS={
                     </button>
                   </div>
                 )}
-                {allRestaurantes.map(r=>{
+                {[...allRestaurantes].sort((a,b)=>{const aAb=estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo);const bAb=estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo);return bAb-aAb;}).map(r=>{
+                  const abiertoR=estaAbiertoAhora(r.horario_desde,r.horario_hasta,r.activo);
                   const opTexto=r.tipo_operacion_gastro==="cocina_oscura"?"🚚 Pedidos solo por delivery":
                     r.tipo_operacion_gastro==="restaurante"?`🍽️ Atención en local${r.delivery_propio?" · 🚚 Delivery disponible":""}`:
                     r.tipo_operacion_gastro==="comida_casera"?"🏠 Comida casera · Delivery":
@@ -2288,7 +2292,8 @@ const VE_ESTADOS_MUNICIPIOS={
                   const etaRest=r.eta_texto||(r.eta_minutos_min&&r.eta_minutos_max?`${r.eta_minutos_min}–${r.eta_minutos_max} min`:null);
                   const catPrincipal=(r.categorias||[])[0]||"";
                   return(
-                  <div key={r.id} onClick={()=>{setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);setSearch("");}} style={{background:"#fff",borderRadius:16,border:"1px solid #f1f5f9",marginBottom:10,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.05)",padding:"12px 14px",display:"flex",gap:12,alignItems:"center"}}>
+                  <div key={r.id} onClick={()=>{setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);setSearch("");}} style={{background:abiertoR?"#fff":"#f8fafc",borderRadius:16,border:`1px solid ${abiertoR?"#f1f5f9":"#e2e8f0"}`,marginBottom:10,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.05)",padding:"12px 14px",display:"flex",gap:12,alignItems:"center",opacity:abiertoR?1:0.7,position:"relative"}}>
+                    {!abiertoR&&<div style={{position:"absolute",top:10,right:10,background:"#dc2626",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 8px",borderRadius:20,letterSpacing:0.5}}>CERRADO</div>}
                     <div style={{width:52,height:52,borderRadius:"50%",background:r.logo_url?"#f8fafc":getAvatarColor(r.negocio),flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",padding:r.logo_url?5:0}}>
                       {r.logo_url
                         ?<img src={r.logo_url} alt="" style={{width:"100%",height:"100%",objectFit:"contain"}} onError={e=>{e.target.style.display="none";e.target.parentNode.style.background=getAvatarColor(r.negocio);e.target.parentNode.innerHTML=`<span style="color:#fff;font-size:20px;font-weight:900">${(r.negocio||"?")[0].toUpperCase()}</span>`;}}/>
@@ -2300,7 +2305,7 @@ const VE_ESTADOS_MUNICIPIOS={
                       {/* FILA 1: nombre + estado */}
                       <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
                         <div style={{fontSize:15,fontWeight:800,color:"#0f172a",letterSpacing:-0.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{r.negocio}</div>
-                        <span style={{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:20,background:r.activo?"#dcfce7":"#fee2e2",color:r.activo?"#15803d":"#dc2626",flexShrink:0}}>{r.activo?"● Abierto":"● Cerrado"}</span>
+                        {abiertoR&&<span style={{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:20,background:"#dcfce7",color:"#15803d",flexShrink:0}}>● Abierto</span>}
                       </div>
                       {/* FILA 2: descripción (qué vende) */}
                       {r.descripcion_negocio&&<div style={{fontSize:11,color:"#64748b",marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.descripcion_negocio}</div>}
@@ -3267,6 +3272,76 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
             {/* PANEL PRINCIPAL — solo visible en estado */}
             {provTab==="estado"&&(
               <div style={{padding:"14px 16px 12px"}}>
+                {/* BOTÓN PRINCIPAL ABIERTO / CERRADO */}
+                {(()=>{
+                  const abAhora=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,provData.activo);
+                  const forzadoCerrado=!provData.activo&&(provData.horario_desde||!provData.horario_desde);
+                  return(
+                    <div style={{marginBottom:16}}>
+                      <button
+                        onClick={toggleMiEstado}
+                        style={{
+                          width:"100%",
+                          padding:"18px 20px",
+                          borderRadius:20,
+                          border:`2.5px solid ${abAhora?"#16a34a":"#dc2626"}`,
+                          background:abAhora?"linear-gradient(135deg,#dcfce7,#bbf7d0)":"linear-gradient(135deg,#fee2e2,#fecaca)",
+                          cursor:"pointer",
+                          display:"flex",
+                          alignItems:"center",
+                          justifyContent:"space-between",
+                          boxShadow:abAhora?"0 4px 20px rgba(22,163,74,0.25)":"0 4px 20px rgba(220,38,38,0.2)",
+                          transition:"all 0.2s"
+                        }}
+                      >
+                        <div style={{display:"flex",alignItems:"center",gap:14}}>
+                          <div style={{
+                            width:52,height:52,borderRadius:"50%",
+                            background:abAhora?"#16a34a":"#dc2626",
+                            display:"flex",alignItems:"center",justifyContent:"center",
+                            boxShadow:abAhora?"0 0 0 6px rgba(22,163,74,0.2)":"0 0 0 6px rgba(220,38,38,0.15)",
+                            fontSize:26,flexShrink:0
+                          }}>
+                            {abAhora?"🟢":"🔴"}
+                          </div>
+                          <div style={{textAlign:"left"}}>
+                            <div style={{fontSize:20,fontWeight:900,color:abAhora?"#14532d":"#991b1b",letterSpacing:-0.5,lineHeight:1}}>
+                              {abAhora?"ABIERTO":"CERRADO"}
+                            </div>
+                            <div style={{fontSize:11,color:abAhora?"#15803d":"#b91c1c",marginTop:3,fontWeight:500}}>
+                              {abAhora
+                                ?(provData.horario_desde&&provData.horario_hasta?`Horario: ${provData.horario_desde} – ${provData.horario_hasta}`:"Recibiendo pedidos ahora")
+                                :(forzadoCerrado&&provData.horario_desde?"Cerrado manualmente fuera de horario":"No disponible ahora")
+                              }
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{
+                          background:abAhora?"#16a34a":"#dc2626",
+                          color:"#fff",
+                          borderRadius:12,
+                          padding:"8px 14px",
+                          fontSize:12,
+                          fontWeight:700,
+                          flexShrink:0
+                        }}>
+                          {abAhora?"Forzar cierre →":"Abrir ahora →"}
+                        </div>
+                      </button>
+                      {abAhora&&provData.horario_hasta&&(()=>{
+                        const [hh,hm]=provData.horario_hasta.split(":").map(Number);
+                        const ahora=new Date();
+                        const minRest=(hh*60+hm)-(ahora.getHours()*60+ahora.getMinutes());
+                        if(minRest>0&&minRest<=120)return(
+                          <div style={{textAlign:"center",fontSize:11,color:"#92400e",marginTop:6,fontWeight:600}}>
+                            ⏱ Cierra automáticamente en {minRest>=60?`${Math.floor(minRest/60)}h ${minRest%60}min`:`${minRest} min`}
+                          </div>
+                        );
+                        return null;
+                      })()}
+                    </div>
+                  );
+                })()}
                 {/* STATS — 4 métricas clave */}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
                   {[
