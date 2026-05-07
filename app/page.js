@@ -1,5 +1,5 @@
-// BUILD:1778119300
-"use client"; // Lokl v1778119300
+// BUILD:1778119661
+"use client"; // Lokl v1778119661
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -3281,24 +3281,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
             {/* PANEL PRINCIPAL — solo visible en estado */}
             {provTab==="estado"&&(
               <div style={{padding:"14px 16px 12px"}}>
-                {/* BOTÓN ABIERTO / CERRADO */}
-                {(()=>{
-                  const ab=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,provData.activo,provData.en_pausa);
-                  return(
-                    <div style={{marginBottom:14}}>
-                      <button
-                        type="button"
-                        onClick={toggleMiEstado}
-                        style={{width:"100%",padding:"16px",borderRadius:16,border:"none",background:ab?"#16a34a":"#dc2626",color:"#fff",fontSize:16,fontWeight:900,cursor:"pointer",display:"block",letterSpacing:0.3}}
-                      >
-                        {ab?"🟢  ABIERTO — Recibiendo pedidos":"🔴  CERRADO — Toca para abrir"}
-                      </button>
-                      <div style={{textAlign:"center",fontSize:10,color:"#94a3b8",marginTop:4}}>
-                        {ab?"Toca para cerrar temporalmente":"Toca para abrir tu negocio"}
-                      </div>
-                    </div>
-                  );
-                })()}
+
                 {/* STATS — 4 métricas clave */}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
                   {[
@@ -5486,6 +5469,36 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
 
       {/* SHEET CHECKOUT */}
       {/* LIGHTBOX IMAGEN AMPLIADA */}
+      {provMode==="dash"&&provData&&(()=>{
+        const abFlot=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,provData.activo,provData.en_pausa);
+        return(
+          <div style={{position:"fixed",bottom:24,right:16,zIndex:9000}}>
+            <button
+              type="button"
+              onClick={()=>{const n=!provData.activo;supabase.from("proveedores").update({activo:n}).eq("id",provData.id).then(()=>{setProvData(p=>({...p,activo:n}));loadAll();});}}
+              style={{
+                background:abFlot?"#16a34a":"#dc2626",
+                color:"#fff",
+                border:"none",
+                borderRadius:50,
+                padding:"14px 20px",
+                fontSize:14,
+                fontWeight:900,
+                cursor:"pointer",
+                boxShadow:"0 4px 20px rgba(0,0,0,0.35)",
+                display:"flex",
+                alignItems:"center",
+                gap:8,
+                WebkitTapHighlightColor:"transparent",
+                touchAction:"manipulation"
+              }}
+            >
+              <span style={{width:10,height:10,borderRadius:"50%",background:"rgba(255,255,255,0.8)",display:"inline-block",flexShrink:0}}/>
+              {abFlot?"ABIERTO":"CERRADO"}
+            </button>
+          </div>
+        );
+      })()}
       {imgZoom&&(
         <div onClick={()=>setImgZoom(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
           <button onClick={()=>setImgZoom(null)} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:"50%",width:36,height:36,color:"#fff",fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
