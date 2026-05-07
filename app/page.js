@@ -1,5 +1,5 @@
-// BUILD:1778156934
-"use client"; // Lokl v1778156934
+// BUILD:1778158230
+"use client"; // Lokl v1778158230
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1144,7 +1144,7 @@ const VE_ESTADOS_MUNICIPIOS={
     if(fotoFile)foto_url=await upload(fotoFile,"productos",`${provData.id}_${Date.now()}`);
     const esServicio=!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio);
     const{data:existing}=await supabase.from("productos_proveedor").select("id").eq("proveedor_id",provData.id).eq("primera_aprobacion",true).limit(1);
-    const auto=esServicio?(existing&&existing.length>0):(existing&&existing.length>0);
+    const auto=false; // Todos los productos requieren aprobación del admin
     const{error}=await supabase.from("productos_proveedor").insert({
       proveedor_id:provData.id,
       nombre:newProd.nombre,
