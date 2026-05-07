@@ -1,5 +1,5 @@
-// BUILD:1778158230
-"use client"; // Lokl v1778158230
+// BUILD:1778159148
+"use client"; // Lokl v1778159148
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -354,9 +354,14 @@ const VE_ESTADOS_MUNICIPIOS={
   const [pedidoFiltro,setPedidoFiltro]=useState("todos");
   // ---------------------------------------------------------
 
-  const [provMode,setProvMode]=useState("login");
+  // provMode ya declarado arriba con localStorage
   const [provForm,setProvForm]=useState({email:"",nombre:"",negocio:"",whatsapp_negocio:"",telefono_principal:"",instagram:"",categorias:[],pass:"",tipo_negocio:"Restaurante / Cocina / Comida",tipo_operacion_gastro:"",descripcion_negocio:"",delivery_propio:false,permite_retiro:false,delivery_costo:0,delivery_gratis_desde:15,direccion_fisica:"",horario_desde:"08:00",horario_hasta:"18:00",horario_desc:"",subcategoria_servicio:"",especialidad:"",matricula_prof:"",precio_consulta:"",horarios_atencion:"",zona_cobertura:"",tarifa_referencial:"",examenes:"",estado_ubicacion:"",municipio:""});
-  const [provData,setProvData]=useState(null);
+  const [provData,setProvData]=useState(()=>{
+    try{const s=localStorage.getItem("lokl_prov");return s?JSON.parse(s):null;}catch{return null;}
+  });
+  const [provMode,setProvModeRaw]=useState(()=>{
+    try{const s=localStorage.getItem("lokl_prov");return s?"dash":"login";}catch{return "login";}
+  });
   const [myProds,setMyProds]=useState([]);
   const [myPromos,setMyPromos]=useState([]);
   const [myVentas,setMyVentas]=useState([]);
@@ -760,6 +765,7 @@ const VE_ESTADOS_MUNICIPIOS={
       .eq("aprobado",true)
       .eq("suscripcion_activa",true)
       .eq("en_pausa",false)
+      .eq("activo",true)
       .eq("subcategoria_servicio",subcategoria)
       .eq("municipio",municipio);
     // Buscar también por tipo_negocio para los existentes
@@ -771,6 +777,7 @@ const VE_ESTADOS_MUNICIPIOS={
         .eq("aprobado",true)
         .eq("suscripcion_activa",true)
         .eq("en_pausa",false)
+        .eq("activo",true)
         .eq("municipio",municipio)
         .in("tipo_negocio",tipos);
       byTipo=d||[];
@@ -1025,7 +1032,7 @@ const VE_ESTADOS_MUNICIPIOS={
     if(error||!data)return setPmsg("Usuario no encontrado");
     if(data.en_pausa)return setPmsg("Tu cuenta está pausada. Contacta al administrador.");
     if(data.password_plain&&data.password_plain!==provForm.pass)return setPmsg("Contraseña incorrecta");
-    setProvData(data);setProvMode("dash");setProvTab("estado");setPmsg("");
+    setProvDataPersist(data);setProvModePersist("dash");setProvTab("estado");setPmsg("");
     loadMyProds(data.id);loadMyPromos(data.id);loadMyVentas(data.id);loadMisRestPedidos(data.id,data.negocio);loadMisClientes(data.negocio);
   };
 
@@ -1072,7 +1079,7 @@ const VE_ESTADOS_MUNICIPIOS={
     setLoading(false);
     if(error)return setPmsg(error.message.includes("unique")?"Ese correo ya está registrado":"Error al registrarse: "+error.message);
     setPmsg("✅ Registro exitoso. Ya puedes iniciar sesión y abrir tu negocio.");
-    setProvMode("login");
+    setProvModePersist("login");
   };
 
   const loadMyProds=async(pid)=>{
@@ -1122,7 +1129,15 @@ const VE_ESTADOS_MUNICIPIOS={
 
   const togglePausa=async(id,enPausa)=>{await supabase.from("proveedores").update({en_pausa:!enPausa}).eq("id",id);loadAdmin();loadAll();};
   const deleteProveedor=(id)=>{setConfirmModal({msg:"¿Eliminar este proveedor? No se puede deshacer.",onOk:async()=>{await supabase.from("productos_proveedor").delete().eq("proveedor_id",id);await supabase.from("proveedores").delete().eq("id",id);loadAdmin();loadAll();}});};
-  const toggleMiEstado=async()=>{const n=!provData.activo;await supabase.from("proveedores").update({activo:n}).eq("id",provData.id);setProvData({...provData,activo:n});loadAll();};
+  const setProvDataPersist=(data)=>{
+    setProvData(data);
+    try{if(data)localStorage.setItem("lokl_prov",JSON.stringify(data));else localStorage.removeItem("lokl_prov");}catch{}
+  };
+  const setProvModePersist=(mode)=>{
+    setProvModeRaw(mode);
+    if(mode!=="dash")try{localStorage.removeItem("lokl_prov");}catch{}
+  };
+  const toggleMiEstado=async()=>{const n=!provData.activo;await supabase.from("proveedores").update({activo:n}).eq("id",provData.id);setProvDataPersist({...provData,activo:n});loadAll();};
   const estaAbiertoAhora=(desde,hasta,activoManual,enPausa)=>{
     if(enPausa===true)return false; // forzado cerrado manualmente por el proveedor
     if(activoManual===false)return false; // cuenta desactivada por admin
@@ -3327,7 +3342,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 </div>
                 {/* CERRAR SESIÓN en panel principal */}
                 <div style={{marginTop:8}}>
-                  <button onClick={()=>{setProvMode("login");setProvData(null);setMyProds([]);setMyPromos([]);setMyVentas([]);setPmsg("");setProvTab("estado");}} style={{width:"100%",background:"none",border:"1px solid #e2e8f0",borderRadius:12,padding:"11px",fontSize:13,fontWeight:600,color:"#94a3b8",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                  <button onClick={()=>{setProvModePersist("login");setProvData(null);setMyProds([]);setMyPromos([]);setMyVentas([]);setPmsg("");setProvTab("estado");}} style={{width:"100%",background:"none",border:"1px solid #e2e8f0",borderRadius:12,padding:"11px",fontSize:13,fontWeight:600,color:"#94a3b8",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
                     🚪 Cerrar sesión
                   </button>
                 </div>
@@ -4922,7 +4937,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
             </div>
           )}
 
-          <button style={{...s.btnG,margin:"8px 16px 16px"}} onClick={()=>{setProvMode("login");setPendProds([]);setPendResenas([]);setAllProveedores([]);setPedidos([]);}}>Cerrar sesión admin</button>
+          <button style={{...s.btnG,margin:"8px 16px 16px"}} onClick={()=>{setProvModePersist("login");setPendProds([]);setPendResenas([]);setAllProveedores([]);setPedidos([]);}}>Cerrar sesión admin</button>
         </>)}
       </div>)}
 
