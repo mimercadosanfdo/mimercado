@@ -1,5 +1,5 @@
-// BUILD:1778087906
-"use client"; // Lokl v1778087906
+// BUILD:1778119300
+"use client"; // Lokl v1778119300
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -5533,7 +5533,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
       {sheet==="checkout"&&null}
 
       {/* SHEET RESUMEN */}
-      {sheet==="resumen"&&(<div style={s.ov}><div style={s.sh}>
+      {sheet==="resumen"&&(<div style={s.ov} onClick={()=>setSheet(null)}><div style={s.sh} onClick={e=>e.stopPropagation()}>
         <div style={s.hnd}/>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
           <div style={s.shT}>✅ Resumen de tu pedido</div>
@@ -5554,7 +5554,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
       </div></div>)}
 
       {/* SHEET ÉXITO */}
-      {sheet==="success"&&(<div style={s.ov}><div style={s.sh}><div style={s.hnd}/><div style={{textAlign:"center",padding:"16px 0"}}><div style={{fontSize:52,marginBottom:10}}>🎉</div><div style={{fontSize:20,fontWeight:700,color:P,marginBottom:6}}>¡Pedido enviado!</div><div style={{fontSize:13,color:"#64748b",lineHeight:1.7,marginBottom:20}}>Tu pedido fue enviado por WhatsApp. Te confirmaremos a <strong>{form.telefono}</strong> para coordinar el pago.</div><button style={s.btnG} onClick={()=>{setCart({});setSheet(null);setForm({nombre:"",telefono:"",sexo:"",pago:"Pago Móvil",recibirPromos:false});setZonaSelId("");setZonaSel(null);setAddr({calle:"",referencia:""});setPedidoRef("");}}>Hacer otro pedido</button></div></div></div>)}
+      {sheet==="success"&&(<div style={s.ov} onClick={()=>setSheet(null)}><div style={s.sh} onClick={e=>e.stopPropagation()}><div style={s.hnd}/><div style={{textAlign:"center",padding:"16px 0"}}><div style={{fontSize:52,marginBottom:10}}>🎉</div><div style={{fontSize:20,fontWeight:700,color:P,marginBottom:6}}>¡Pedido enviado!</div><div style={{fontSize:13,color:"#64748b",lineHeight:1.7,marginBottom:20}}>Tu pedido fue enviado por WhatsApp. Te confirmaremos a <strong>{form.telefono}</strong> para coordinar el pago.</div><button style={s.btnG} onClick={()=>{setCart({});setSheet(null);setForm({nombre:"",telefono:"",sexo:"",pago:"Pago Móvil",recibirPromos:false});setZonaSelId("");setZonaSel(null);setAddr({calle:"",referencia:""});setPedidoRef("");}}>Hacer otro pedido</button></div></div></div>)}
 
       {/* SHEET SERVICIO */}
       {sheet==="service"&&selSvc&&(<div style={s.ov} onClick={()=>setSheet(null)}><div style={s.sh} onClick={e=>e.stopPropagation()}><div style={s.hnd}/><div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}><span style={{fontSize:28}}>{selSvc.emoji}</span><div style={s.shT}>{selSvc.name}</div></div><label style={s.lbl}>Tu nombre</label><input style={s.inp} placeholder="María González" value={svcForm.nombre} onChange={e=>setSvcForm({...svcForm,nombre:e.target.value})}/><label style={s.lbl}>WhatsApp</label><input style={s.inp} placeholder="+58 424-000-0000" value={svcForm.telefono} onChange={e=>setSvcForm({...svcForm,telefono:e.target.value})}/><label style={s.lbl}>Dirección</label><input style={s.inp} placeholder="¿Dónde necesitas el servicio?" value={svcForm.direccion} onChange={e=>setSvcForm({...svcForm,direccion:e.target.value})}/><label style={s.lbl}>Detalle</label><input style={s.inp} placeholder="Cuéntanos lo que necesitas" value={svcForm.detalle} onChange={e=>setSvcForm({...svcForm,detalle:e.target.value})}/><div style={s.ib}><div style={{fontSize:12,color:"#64748b"}}>Te contactamos por WhatsApp para confirmar.</div></div><button style={s.btnWa} onClick={sendSvcWa}>Enviar solicitud</button><button style={s.btnG} onClick={()=>setSheet(null)}>Cancelar</button></div></div>)}
