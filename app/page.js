@@ -1,5 +1,5 @@
-// BUILD:1778159148
-"use client"; // Lokl v1778159148
+// BUILD:1778167775
+"use client"; // Lokl v1778167775
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -314,6 +314,9 @@ const VE_ESTADOS_MUNICIPIOS={
   const [clasificadoSeleccionado,setClasificadoSeleccionado]=useState(null);
   const [showPublicarClasificado,setShowPublicarClasificado]=useState(false);
   const [pendClasificados,setPendClasificados]=useState([]);
+  const [allClasificadosAdmin,setAllClasificadosAdmin]=useState([]);
+  const [clasifAdminFiltro,setClasifAdminFiltro]=useState("pendientes");
+  const [editClasif,setEditClasif]=useState(null);
   const [clasificadoGeoFiltro,setClasificadoGeoFiltro]=useState("todo"); // "todo" | "miMunicipio"
   const [newClasificado,setNewClasificado]=useState({
     tipo:"Vehículos",titulo:"",descripcion:"",precio:"",negociable:false,categoria:"Vehículos",
@@ -694,7 +697,7 @@ const VE_ESTADOS_MUNICIPIOS={
   };
 
   const loadClasificados=async()=>{
-    const{data}=await supabase.from("clasificados").select("*").eq("aprobado",true).eq("vendido",false).order("created_at",{ascending:false});
+    const hoy=new Date().toISOString().split("T")[0];const{data}=await supabase.from("clasificados").select("*").eq("aprobado",true).eq("vendido",false).gte("fecha_caducidad",hoy).order("created_at",{ascending:false});
     if(data)setClasificados(data);
   };
 
@@ -722,6 +725,7 @@ const VE_ESTADOS_MUNICIPIOS={
       estado:c.estado||ubiActiva.estado||"Apure",
       municipio:c.municipio||ubiActiva.municipio||"San Fernando",
       aprobado:false,vendido:false,
+      fecha_caducidad:new Date(Date.now()+30*24*60*60*1000).toISOString().split("T")[0],
     });
     setLoading(false);
     if(error){setPmsg("Error: "+error.message);return;}
@@ -765,7 +769,6 @@ const VE_ESTADOS_MUNICIPIOS={
       .eq("aprobado",true)
       .eq("suscripcion_activa",true)
       .eq("en_pausa",false)
-      .eq("activo",true)
       .eq("subcategoria_servicio",subcategoria)
       .eq("municipio",municipio);
     // Buscar también por tipo_negocio para los existentes
@@ -777,7 +780,6 @@ const VE_ESTADOS_MUNICIPIOS={
         .eq("aprobado",true)
         .eq("suscripcion_activa",true)
         .eq("en_pausa",false)
-        .eq("activo",true)
         .eq("municipio",municipio)
         .in("tipo_negocio",tipos);
       byTipo=d||[];
@@ -1095,7 +1097,7 @@ const VE_ESTADOS_MUNICIPIOS={
   const loadMisClientes=async(provNombre)=>{const{data}=await supabase.from("pedidos").select("cliente_nombre,cliente_telefono,created_at,total,ref").eq("proveedor_nombre",provNombre).order("created_at",{ascending:false});if(data){const mapa={};data.forEach(p=>{const k=p.cliente_telefono;if(!mapa[k])mapa[k]={nombre:p.cliente_nombre,telefono:p.cliente_telefono,ultimoPedido:p.created_at,totalPedidos:0,totalGastado:0};mapa[k].totalPedidos++;mapa[k].totalGastado+=p.total||0;});setMisClientes(Object.values(mapa).sort((a,b)=>new Date(b.ultimoPedido)-new Date(a.ultimoPedido)));}};
 
   const loadAdmin=async()=>{
-    const[pr,re,zo,av,todos,cb,ped,promo,remPend,svcPend,clasifPend]=await Promise.all([
+    const[pr,re,zo,av,todos,cb,ped,promo,remPend,svcPend,clasifPend,allClasif]=await Promise.all([
       supabase.from("productos_proveedor").select("*,proveedores(negocio,id)").eq("aprobado",false).eq("rechazado",false),
       supabase.from("resenas").select("*").eq("aprobada",false),
       supabase.from("zonas_delivery").select("*").order("municipio"),
@@ -1107,6 +1109,7 @@ const VE_ESTADOS_MUNICIPIOS={
       supabase.from("remates").select("*").eq("aprobado",false).eq("vendido",false).order("created_at",{ascending:false}),
       supabase.from("servicios_comunidad").select("*").eq("aprobado",false).order("created_at",{ascending:false}),
       supabase.from("clasificados").select("*").eq("aprobado",false).eq("vendido",false).order("created_at",{ascending:false}),
+      supabase.from("clasificados").select("*").order("created_at",{ascending:false}),
     ]);
     if(pr.data)setPendProds(pr.data);
     if(re.data)setPendResenas(re.data);
@@ -1119,6 +1122,7 @@ const VE_ESTADOS_MUNICIPIOS={
     if(remPend.data)setPendRemates(remPend.data);
     if(svcPend.data)setPendServiciosCom(svcPend.data);
     if(clasifPend.data)setPendClasificados(clasifPend.data);
+    if(allClasif.data)setAllClasificadosAdmin(allClasif.data);
   };
 
   const loadResenas=async(prodId)=>{
@@ -2922,9 +2926,11 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                       </button>
                     </div>
                   ):(
-                    ([...proveedoresServicio].filter(p=>!searchServicios||(p.negocio+(p.especialidad||"")+(p.descripcion_negocio||"")).toLowerCase().includes(searchServicios.toLowerCase())).sort((a,b)=>estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo,b.en_pausa)-estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo,a.en_pausa))).map(prov=>(
+                    ([...proveedoresServicio].filter(p=>!searchServicios||(p.negocio+(p.especialidad||"")+(p.descripcion_negocio||"")).toLowerCase().includes(searchServicios.toLowerCase())).sort((a,b)=>estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo,b.en_pausa)-estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo,a.en_pausa))).map(prov=>{
+                      const abProv=estaAbiertoAhora(prov.horario_desde,prov.horario_hasta,prov.activo,prov.en_pausa);
+                      return(
                       /* TARJETA CLICKEABLE — abre detalle del proveedor */
-                      <div key={prov.id} onClick={()=>setProveedorServicioActivo(prov)} style={{background:"#fff",borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.08)",border:"1px solid #f1f5f9",cursor:"pointer",transition:"box-shadow 0.15s"}}>
+                      <div key={prov.id} onClick={()=>setProveedorServicioActivo(prov)} style={{background:abProv?"#fff":"#f8fafc",borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.08)",border:`1px solid ${abProv?"#f1f5f9":"#e2e8f0"}`,cursor:"pointer",transition:"box-shadow 0.15s",opacity:abProv?1:0.75,position:"relative"}}>
                         <div style={{display:"flex",gap:12,alignItems:"center"}}>
                           {prov.logo_url
                             ?<img src={prov.logo_url} style={{width:56,height:56,borderRadius:14,objectFit:"cover",border:"2px solid #f1f5f9",flexShrink:0}}/>
@@ -2953,7 +2959,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                           </div>
                         )}
                       </div>
-                    ))
+                    );})
                   )}
                 </>
               )}
@@ -4447,6 +4453,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 {key:"remates_pend",label:"🏷️ Remates pendientes",n:pendRemates.length},
                 {key:"servicios_pend",label:"🛠️ Servicios pendientes",n:pendServiciosCom.length},
                 {key:"clasificados_pend",label:"🚗 Clasificados pendientes",n:pendClasificados.length},
+                {key:"clasificados_all",label:"🚗 Todos los clasificados",n:allClasificadosAdmin.length},
                 {key:"suscripciones",label:"💳 Suscripciones",n:suscripciones.filter(s=>!s.suscripcion_pagada&&s.meses_gratis_restantes===0).length},
               ].map(x=>(
                 <button key={x.key} style={s.admRow(false)} onClick={()=>{setAdminSec(x.key);if(x.key==="pedidos")loadPedidos();if(x.key==="suscripciones")loadSuscripciones();}}>
@@ -4879,6 +4886,90 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {adminSec==="clasificados_all"&&(
+            <div style={{margin:"0 16px"}}>
+              <div style={s.pc}>
+                <div style={s.pT}>🚗 Todos los clasificados ({allClasificadosAdmin.length})</div>
+                {/* Filtros */}
+                <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
+                  {["pendientes","aprobados","caducados","vendidos","todos"].map(f=>{
+                    const hoy=new Date().toISOString().split("T")[0];
+                    const counts={
+                      pendientes:allClasificadosAdmin.filter(c=>!c.aprobado&&!c.vendido).length,
+                      aprobados:allClasificadosAdmin.filter(c=>c.aprobado&&!c.vendido&&c.fecha_caducidad>=hoy).length,
+                      caducados:allClasificadosAdmin.filter(c=>c.fecha_caducidad&&c.fecha_caducidad<hoy).length,
+                      vendidos:allClasificadosAdmin.filter(c=>c.vendido).length,
+                      todos:allClasificadosAdmin.length,
+                    };
+                    return(
+                      <button key={f} onClick={()=>setClasifAdminFiltro(f)} style={{padding:"5px 12px",borderRadius:20,border:"none",fontSize:11,fontWeight:700,cursor:"pointer",background:clasifAdminFiltro===f?"#0f172a":"#f1f5f9",color:clasifAdminFiltro===f?"#fff":"#64748b"}}>
+                        {f.charAt(0).toUpperCase()+f.slice(1)} ({counts[f]})
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* Lista */}
+                {(()=>{
+                  const hoy=new Date().toISOString().split("T")[0];
+                  const lista=allClasificadosAdmin.filter(c=>{
+                    if(clasifAdminFiltro==="pendientes")return !c.aprobado&&!c.vendido;
+                    if(clasifAdminFiltro==="aprobados")return c.aprobado&&!c.vendido&&(!c.fecha_caducidad||c.fecha_caducidad>=hoy);
+                    if(clasifAdminFiltro==="caducados")return c.fecha_caducidad&&c.fecha_caducidad<hoy;
+                    if(clasifAdminFiltro==="vendidos")return c.vendido;
+                    return true;
+                  });
+                  if(lista.length===0)return <div style={{fontSize:13,color:"#94a3b8",textAlign:"center",padding:"20px 0"}}>No hay clasificados en esta categoría</div>;
+                  return lista.map(c=>(
+                    <div key={c.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
+                      {editClasif===c.id?(
+                        <div style={{background:"#f8fafc",borderRadius:12,padding:12,marginBottom:8}}>
+                          <div style={{fontSize:12,fontWeight:700,marginBottom:8,color:"#1d4ed8"}}>✏️ Editando clasificado</div>
+                          <label style={s.lbl}>Título</label>
+                          <input style={s.inp} value={c.titulo} onChange={e=>{setAllClasificadosAdmin(prev=>prev.map(x=>x.id===c.id?{...x,titulo:e.target.value}:x));}}/>
+                          <label style={s.lbl}>Precio</label>
+                          <input style={s.inp} type="number" value={c.precio} onChange={e=>{setAllClasificadosAdmin(prev=>prev.map(x=>x.id===c.id?{...x,precio:e.target.value}:x));}}/>
+                          <label style={s.lbl}>Descripción</label>
+                          <input style={s.inp} value={c.descripcion||""} onChange={e=>{setAllClasificadosAdmin(prev=>prev.map(x=>x.id===c.id?{...x,descripcion:e.target.value}:x));}}/>
+                          <label style={s.lbl}>Vendedor</label>
+                          <input style={s.inp} value={c.vendedor_nombre||""} onChange={e=>{setAllClasificadosAdmin(prev=>prev.map(x=>x.id===c.id?{...x,vendedor_nombre:e.target.value}:x));}}/>
+                          <label style={s.lbl}>Teléfono</label>
+                          <input style={s.inp} value={c.vendedor_telefono||""} onChange={e=>{setAllClasificadosAdmin(prev=>prev.map(x=>x.id===c.id?{...x,vendedor_telefono:e.target.value}:x));}}/>
+                          <div style={{display:"flex",gap:8,marginTop:8}}>
+                            <button onClick={async()=>{
+                              await supabase.from("clasificados").update({titulo:c.titulo,precio:parseFloat(c.precio),descripcion:c.descripcion,vendedor_nombre:c.vendedor_nombre,vendedor_telefono:c.vendedor_telefono}).eq("id",c.id);
+                              setEditClasif(null);loadAdmin();
+                            }} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>💾 Guardar</button>
+                            <button onClick={()=>setEditClasif(null)} style={{...s.apvBtn,background:"#f1f5f9",color:"#64748b"}}>Cancelar</button>
+                          </div>
+                        </div>
+                      ):(
+                        <>
+                          {c.foto1_url&&<img src={c.foto1_url} alt="" style={{width:"100%",height:130,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
+                          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                            <span style={{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:20,background:c.vendido?"#f1f5f9":c.aprobado&&(!c.fecha_caducidad||c.fecha_caducidad>=new Date().toISOString().split("T")[0])?"#dcfce7":c.fecha_caducidad&&c.fecha_caducidad<new Date().toISOString().split("T")[0]?"#fef9c3":"#fef2f2",color:c.vendido?"#64748b":c.aprobado&&(!c.fecha_caducidad||c.fecha_caducidad>=new Date().toISOString().split("T")[0])?"#15803d":c.fecha_caducidad&&c.fecha_caducidad<new Date().toISOString().split("T")[0]?"#854d0e":"#dc2626"}}>{c.vendido?"Vendido":c.aprobado&&(!c.fecha_caducidad||c.fecha_caducidad>=new Date().toISOString().split("T")[0])?"✓ Aprobado":c.fecha_caducidad&&c.fecha_caducidad<new Date().toISOString().split("T")[0]?"⏰ Caducado":"⏳ Pendiente"}</span>
+                            <span style={{fontSize:10,color:"#94a3b8"}}>Caduca: {c.fecha_caducidad||"—"}</span>
+                          </div>
+                          <div style={{fontSize:11,color:"#7e22ce",fontWeight:700}}>{c.tipo}</div>
+                          <div style={{fontSize:13,fontWeight:700}}>{c.titulo}</div>
+                          <div style={{fontSize:12,color:"#22c55e",fontWeight:700}}>${parseFloat(c.precio||0).toLocaleString()}{c.negociable?" · Negociable":""}</div>
+                          <div style={{fontSize:11,color:"#64748b",margin:"4px 0"}}>👤 {c.vendedor_nombre} · 📱 {c.vendedor_telefono}</div>
+                          {c.descripcion&&<div style={{fontSize:11,color:"#94a3b8",marginBottom:6}}>{c.descripcion}</div>}
+                          <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
+                            {!c.aprobado&&!c.vendido&&<button onClick={async()=>{await supabase.from("clasificados").update({aprobado:true}).eq("id",c.id);loadAdmin();loadClasificados();}} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Aprobar</button>}
+                            {c.aprobado&&!c.vendido&&<button onClick={async()=>{await supabase.from("clasificados").update({aprobado:false}).eq("id",c.id);loadAdmin();loadClasificados();}} style={{...s.apvBtn,background:"#f59e0b",color:"#fff"}}>⏸ Suspender</button>}
+                            {c.fecha_caducidad&&c.fecha_caducidad<new Date().toISOString().split("T")[0]&&<button onClick={async()=>{const nueva=new Date();nueva.setDate(nueva.getDate()+30);await supabase.from("clasificados").update({fecha_caducidad:nueva.toISOString().split("T")[0],aprobado:true}).eq("id",c.id);loadAdmin();loadClasificados();}} style={{...s.apvBtn,background:"#3b82f6",color:"#fff"}}>🔄 Renovar 30d</button>}
+                            <button onClick={()=>setEditClasif(c.id)} style={{...s.apvBtn,background:"#6366f1",color:"#fff"}}>✏️ Editar</button>
+                            <button onClick={()=>setConfirmModal({msg:"¿Eliminar este clasificado?",onOk:async()=>{await supabase.from("clasificados").delete().eq("id",c.id);loadAdmin();loadClasificados();}})} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>🗑 Eliminar</button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ));
+                })()}
               </div>
             </div>
           )}
