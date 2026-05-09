@@ -138,6 +138,8 @@ const SERVICIO_CATEGORIAS = [
   {id:"hogar",        label:"Hogar",              icon:"🔧", color:"#374151", bg:"linear-gradient(135deg,#1f2937,#4b5563)", desc:"Plomería, electricidad...",   tipo:"hogar"},
   {id:"educacion",    label:"Educación",          icon:"📚", color:"#1e40af", bg:"linear-gradient(135deg,#1e3a8a,#4f46e5)", desc:"Clases y tutorías",           tipo:"hogar"},
   {id:"mecanica",     label:"Mecánica",           icon:"🔩", color:"#92400e", bg:"linear-gradient(135deg,#78350f,#b45309)", desc:"Autos y motos",              tipo:"hogar"},
+  {id:"hoteles",      label:"Hoteles",            icon:"🏨", color:"#0f766e", bg:"linear-gradient(135deg,#134e4a,#0d9488)", desc:"Hospedaje y alojamiento",    tipo:"turismo"},
+  {id:"turismo",      label:"Turismo / Fincas",   icon:"🌴", color:"#065f46", bg:"linear-gradient(135deg,#064e3b,#16a34a)", desc:"Fincas, tours y aventura",   tipo:"turismo"},
 ];
 
 const SVCS = [
@@ -331,7 +333,9 @@ const VE_ESTADOS_MUNICIPIOS={
   const [searchServicios,setSearchServicios]=useState("");
   const [proveedoresServicio,setProveedoresServicio]=useState([]); // proveedores filtrados por categoria
   const [provProductosServicio,setProvProductosServicio]=useState({}); // {provId:[productos]}
-  const [rutasTransporte,setRutasTransporte]=useState([]); // rutas interurbanas
+  const [rutasTransporte,setRutasTransporte]=useState([]);
+  const [contactModal,setContactModal]=useState(null); // {prov, servicio, catId, esRuta, ruta}
+  const [contactForm,setContactForm]=useState({nombre:"",telefono:"",fecha:"",personas:"1",puestos:"1",fechaSalida:""}); // rutas interurbanas
   const [proveedorServicioActivo,setProveedorServicioActivo]=useState(null); // proveedor seleccionado
   const [showSolicitudServicio,setShowSolicitudServicio]=useState(false);
   const [solicitudData,setSolicitudData]=useState({descripcion:"",fecha:"",hora:""});
@@ -761,6 +765,8 @@ const VE_ESTADOS_MUNICIPIOS={
       "hogar":["Plomería","Electricidad","Pintura y construcción","Limpieza del hogar","Carpintería / Herrería"],
       "educacion":["Clases y tutorías","Idiomas"],
       "mecanica":["Mecánica automotriz","Electricidad automotriz"],
+      "hoteles":["Hotel","Posada","Hospedaje"],
+      "turismo":["Finca turística","Tour operador","Campamento","Turismo y aventura"],
     };
     const municipio=ubiActiva.municipio||"San Fernando";
     // Buscar por subcategoria_servicio primero
@@ -2638,6 +2644,17 @@ const VE_ESTADOS_MUNICIPIOS={
 
             {/* SECCIÓN TRANSPORTE */}
             <div style={{padding:"16px 16px 0"}}>
+              <div style={{fontSize:10,fontWeight:800,color:"#94a3b8",letterSpacing:1.5,marginBottom:10,textTransform:"uppercase"}}>🌴 Turismo</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+                {SERVICIO_CATEGORIAS.filter(c=>c.tipo==="turismo").map(cat=>(
+                  <button key={cat.id} onClick={()=>{setCategoriaServicio(cat);setProveedoresServicio([]);setSearchServicios("");loadProveedoresServicio(cat.id);}}
+                    style={{background:cat.bg,border:"none",borderRadius:16,padding:"16px 12px",textAlign:"left",cursor:"pointer",boxShadow:"0 4px 12px rgba(0,0,0,0.15)",position:"relative",minHeight:90}}>
+                    <div style={{fontSize:28,marginBottom:8,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.2))"}}>{cat.icon}</div>
+                    <div style={{fontSize:13,fontWeight:800,color:"#fff",lineHeight:1.2}}>{cat.label}</div>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,0.75)",marginTop:3}}>{cat.desc}</div>
+                  </button>
+                ))}
+              </div>
               <div style={{fontSize:10,fontWeight:800,color:"#94a3b8",letterSpacing:1.5,marginBottom:10,textTransform:"uppercase"}}>🚗 Transporte</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
                 {SERVICIO_CATEGORIAS.filter(c=>c.tipo==="transporte").map(cat=>(
@@ -2743,14 +2760,7 @@ const VE_ESTADOS_MUNICIPIOS={
                     })()}
                   </div>
 
-                  {/* DATOS DEL CLIENTE */}
-                  {(!form.nombre||!form.telefono)&&(
-                    <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:12,padding:"12px 14px",marginBottom:12}}>
-                      <div style={{fontSize:12,fontWeight:600,color:"#374151",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>👤 <span>Tus datos para el mensaje</span></div>
-                      {!form.nombre&&<input style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"1px solid #e2e8f0",fontSize:13,marginBottom:8,boxSizing:"border-box",background:"#fff"}} placeholder="Tu nombre y apellido" onChange={e=>setForm(f=>({...f,nombre:e.target.value}))}/>}
-                      {!form.telefono&&<input style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"1px solid #e2e8f0",fontSize:13,boxSizing:"border-box",background:"#fff"}} placeholder="Tu WhatsApp (04XX-XXXXXXX)" onChange={e=>setForm(f=>({...f,telefono:e.target.value}))}/>}
-                    </div>
-                  )}
+
 
                   {/* LISTA DE SERVICIOS DEL PROVEEDOR */}
                   {provProductosServicio[proveedorServicioActivo.id]?.length>0?(
@@ -2786,18 +2796,18 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
 
 ¿Cuándo puedes atenderme?`;
                         return(
-                          <div key={sp.id} style={{background:"#fff",borderRadius:14,marginBottom:10,border:"1px solid #f1f5f9",boxShadow:"0 1px 4px rgba(0,0,0,0.05)",overflow:"hidden"}}>
-                            {sp.foto_url&&<img src={sp.foto_url} alt={sp.nombre} style={{width:"100%",height:160,objectFit:"cover",display:"block"}}/>}
-                            <div style={{padding:"12px 14px"}}>
-                              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
-                                <div style={{flex:1}}>
-                                  <div style={{fontSize:14,fontWeight:700,color:"#0f172a"}}>{sp.nombre}</div>
-                                  {sp.descripcion&&<div style={{fontSize:12,color:"#64748b",marginTop:3,lineHeight:1.4}}>{sp.descripcion}</div>}
+                          <div key={sp.id} style={{background:"#fff",borderRadius:14,marginBottom:10,border:"1px solid #f1f5f9",boxShadow:"0 1px 4px rgba(0,0,0,0.05)",overflow:"hidden",display:"flex",gap:0}}>
+                            {sp.foto_url&&<img src={sp.foto_url} alt={sp.nombre} style={{width:88,height:88,objectFit:"cover",display:"block",flexShrink:0,alignSelf:"stretch"}}/>}
+                            <div style={{padding:"10px 12px",flex:1,display:"flex",flexDirection:"column",justifyContent:"space-between",minWidth:0}}>
+                              <div style={{marginBottom:8}}>
+                                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:6}}>
+                                  <div style={{fontSize:13,fontWeight:700,color:"#0f172a",flex:1,lineHeight:1.2}}>{sp.nombre}</div>
+                                  <div style={{fontSize:15,fontWeight:800,color:"#0f9b6e",flexShrink:0}}>${sp.precio}</div>
                                 </div>
-                                <div style={{fontSize:16,fontWeight:800,color:"#0f9b6e",flexShrink:0,marginLeft:12}}>${sp.precio}</div>
+                                {sp.descripcion&&<div style={{fontSize:11,color:"#64748b",marginTop:3,lineHeight:1.3}}>{sp.descripcion}</div>}
                               </div>
-                              <button onClick={()=>window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank")} style={{width:"100%",background:"#0f9b6e",color:"#fff",border:"none",borderRadius:10,padding:"11px",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,letterSpacing:0.2}}>
-                                📲 {esMedico?"Solicitar cita":"Contactar por este servicio"}
+                              <button onClick={()=>setContactModal({prov:proveedorServicioActivo,servicio:sp,catId:categoriaServicio.id})} style={{width:"100%",background:"#0f9b6e",color:"#fff",border:"none",borderRadius:8,padding:"8px",fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                                📲 {esMedico?"Solicitar cita":"Contactar"}
                               </button>
                             </div>
                           </div>
@@ -2818,32 +2828,8 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                           💲 {proveedorServicioActivo.tarifa_referencial}
                         </div>
                       )}
-                      <button onClick={()=>{
-                        const wa=(proveedorServicioActivo.whatsapp_negocio||proveedorServicioActivo.telefono||"").replace(/\D/g,"");
-                        const num=wa.startsWith("0")?"58"+wa.slice(1):wa.startsWith("58")?wa:"58"+wa;
-                        const esMedico=["medicos","enfermeria","laboratorios","odontologia"].includes(categoriaServicio.id);
-                        const msg=esMedico
-                          ?`👨‍⚕️ *Solicitud de cita — Lokl*
-
-Hola ${proveedorServicioActivo.negocio}, vi su perfil en Lokl y me gustaría solicitar una cita.
-
-👤 *Paciente:* ${form.nombre||"(tu nombre)"}
-📱 *Teléfono:* ${form.telefono||"(tu teléfono)"}
-
-¿Cuál es la próxima disponibilidad?`
-                          :`🔧 *Solicitud de servicio — Lokl*
-
-Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
-
-*Servicio:* ${categoriaServicio.label}
-
-👤 *Nombre:* ${form.nombre||"(tu nombre)"}
-📱 *Teléfono:* ${form.telefono||"(tu teléfono)"}
-
-¿Cuándo puedes atenderme?`;
-                        window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank");
-                      }} style={{width:"100%",background:"#0f9b6e",color:"#fff",border:"none",borderRadius:10,padding:"12px",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,letterSpacing:0.2}}>
-                        📲 {["medicos","enfermeria","laboratorios","odontologia"].includes(categoriaServicio.id)?"Solicitar cita":"Contactar ahora"}
+                      <button onClick={()=>setContactModal({prov:proveedorServicioActivo,servicio:null,catId:categoriaServicio.id})} style={{width:"100%",background:"#0f9b6e",color:"#fff",border:"none",borderRadius:10,padding:"13px",fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                        📲 {["medicos","enfermeria","laboratorios","odontologia"].includes(categoriaServicio.id)?"Solicitar cita":"Contactar por WhatsApp"}
                       </button>
                     </div>
                   )}
@@ -2893,13 +2879,8 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                             </div>
                           )}
                         </div>
-                        <button onClick={()=>{
-                          const wa=(ruta.proveedores?.whatsapp_negocio||ruta.proveedores?.telefono||"").replace(/\D/g,"");
-                          const num=wa.startsWith("0")?"58"+wa.slice(1):wa.startsWith("58")?wa:"58"+wa;
-                          const msg=`🚌 *Reserva de puesto — Lokl*\n\nHola, quiero reservar un puesto para:\n\n📍 Ruta: *${ruta.origen} → ${ruta.destino}*\n🕐 Salida: *${ruta.hora_salida?.slice(0,5)}*\n💰 Precio: *$${ruta.precio}*\n\n👤 Mi nombre: ${form.nombre||"(escribe tu nombre)"}\n📱 Mi teléfono: ${form.telefono||"(escribe tu teléfono)"}\n\n¿Está disponible el puesto?`;
-                          window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank");
-                        }} style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                          📲 Reservar puesto por WhatsApp
+                        <button onClick={()=>setContactModal({esRuta:true,ruta:ruta,catId:"rutas"})} style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                          📲 Reservar puesto
                         </button>
                       </div>
                     ))
@@ -3225,7 +3206,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 </div>
               </>);
             })()}
-            <div style={{...s.ib,background:"#f0fdf4",marginBottom:8}}><div style={{fontSize:12,color:"#15803d"}}>🎁 45 días gratis sin compromiso. Después $2.99/mes (restaurantes y negocios) o $1.99/mes (servicios).</div></div>
+            <div style={{...s.ib,background:"#f0fdf4",marginBottom:8}}><div style={{fontSize:12,color:"#15803d"}}>🎁 45 días gratis sin compromiso. Después $2.99/mes (restaurantes y negocios) o $1.99/mes (servicios y transporte).</div></div>
             <label style={s.lbl}>Logo del negocio</label>
             {logoPreview&&<img src={logoPreview} alt="" style={{width:60,height:60,borderRadius:"50%",objectFit:"cover",marginBottom:8}}/>}
             <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setLogoFile(f);setLogoPreview(URL.createObjectURL(f));}}}/>
@@ -4983,7 +4964,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                   <div style={s.statCard}><div style={{...s.statNum,fontSize:18,color:"#f59e0b"}}>{suscripciones.filter(s=>s.meses_gratis_restantes>0).length}</div><div style={s.statLbl}>En período gratis</div></div>
                   <div style={s.statCard}><div style={{...s.statNum,fontSize:18,color:"#ef4444"}}>{suscripciones.filter(s=>!s.suscripcion_pagada&&s.meses_gratis_restantes===0).length}</div><div style={s.statLbl}>Vencidas</div></div>
                 </div>
-                <div style={{fontSize:12,color:"#22c55e",fontWeight:600,marginBottom:8}}>💰 Ingreso mensual potencial: ${(suscripciones.filter(s=>s.suscripcion_activa&&s.meses_gratis_restantes===0).reduce((acc,s)=>acc+(!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(s.tipo_negocio)?1.99:2.99),0)).toFixed(2)}/mes</div>
+                <div style={{fontSize:12,color:"#22c55e",fontWeight:600,marginBottom:8}}>💰 Ingreso mensual potencial: ${(suscripciones.filter(s=>s.suscripcion_activa&&s.meses_gratis_restantes===0).reduce((acc,s)=>acc+(["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(s.tipo_negocio)?2.99:1.99),0)).toFixed(2)}/mes</div>
                 {suscripciones.map(s=>(
                   <div key={s.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
@@ -4992,7 +4973,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                         <div style={{fontSize:13,fontWeight:700}}>{s.negocio}</div>
                         <div style={{fontSize:11,color:"#64748b"}}>@{s.usuario} · {s.tipo_negocio||"Restaurante"}</div>
                         <div style={{fontSize:11,fontWeight:700,color:"#15803d",marginTop:2}}>
-                          {!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(s.tipo_negocio)?"$1.99/mes":"$2.99/mes"}
+                          {["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(s.tipo_negocio)?"$2.99/mes":"$1.99/mes"}
                         </div>
                       </div>
                       <span style={{fontSize:11,fontWeight:700,padding:"3px 8px",borderRadius:8,
@@ -5578,6 +5559,114 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
       {/* SHEET CHECKOUT */}
       {/* LIGHTBOX IMAGEN AMPLIADA */}
 
+
+      {/* MODAL DE CONTACTO — datos del cliente DESPUÉS de tocar el botón */}
+      {contactModal&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:9500,display:"flex",alignItems:"flex-end"}} onClick={()=>setContactModal(null)}>
+          <div style={{background:"#fff",borderRadius:"20px 20px 0 0",padding:"20px 16px 32px",width:"100%",maxHeight:"85vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            {(()=>{
+              const {prov,servicio,catId,esRuta,ruta}=contactModal;
+              const wa=((esRuta?ruta.proveedores?.whatsapp_negocio:prov?.whatsapp_negocio)||
+                        (esRuta?ruta.proveedores?.telefono:prov?.telefono)||"").replace(/\D/g,"");
+              const num=wa.startsWith("0")?"58"+wa.slice(1):wa.startsWith("58")?wa:"58"+wa;
+
+              const esTransporte=["mototaxi","taxi","encomiendas"].includes(catId);
+              const esSalud=["medicos","enfermeria","laboratorios","odontologia"].includes(catId);
+              const esRutaFlag=catId==="rutas"||esRuta;
+              const esHotel=catId==="hoteles";
+              const esTurismo=catId==="turismo";
+
+              const buildMsg=()=>{
+                const n=contactForm.nombre||"(tu nombre)";
+                const t=contactForm.telefono||"(tu teléfono)";
+                if(esRutaFlag){
+                  return `🚌 *Reserva de puesto — Lokl*\n\nHola, quiero reservar un puesto para:\n\n📍 Ruta: *${ruta?.origen} → ${ruta?.destino}*\n🕐 Salida: *${ruta?.hora_salida?.slice(0,5)}*\n💰 Precio: *$${ruta?.precio}*\n📅 Fecha: *${contactForm.fecha||"(fecha)"}*\n👥 Puestos: *${contactForm.puestos}*\n\n👤 ${n}\n📱 ${t}\n\n¿Están disponibles los puestos?`;
+                }
+                if(esHotel){
+                  return `🏨 *Consulta de hospedaje — Lokl*\n\nHola ${prov?.negocio}, vi su perfil en Lokl.\n\n📅 Entrada: *${contactForm.fecha||"(fecha)"}*\n📅 Salida: *${contactForm.fechaSalida||"(fecha)"}*\n👥 Personas: *${contactForm.personas}*\n${servicio?`🛏️ Habitación: *${servicio.nombre}*\n💰 Precio: *$${servicio.precio}/noche*\n`:""}\n👤 ${n}\n📱 ${t}\n\n¿Tienen disponibilidad?`;
+                }
+                if(esTurismo){
+                  return `🌴 *Consulta turística — Lokl*\n\nHola ${prov?.negocio}, vi su perfil en Lokl.\n\n${servicio?`🎯 Servicio: *${servicio.nombre}*\n💰 Precio: *$${servicio.precio}*\n`:""}📅 Fecha: *${contactForm.fecha||"(fecha)"}*\n👥 Personas: *${contactForm.personas}*\n\n👤 ${n}\n📱 ${t}\n\n¿Tienen disponibilidad?`;
+                }
+                if(esSalud){
+                  return `👨‍⚕️ *Solicitud de cita — Lokl*\n\nHola ${prov?.negocio}, vi su perfil en Lokl.\n\n${servicio?`🩺 Servicio: *${servicio.nombre}*\n💰 Precio: *$${servicio.precio}*\n`:""}\n👤 Paciente: *${n}*\n📱 Teléfono: *${t}*\n\n¿Cuál es la próxima disponibilidad?`;
+                }
+                if(esTransporte){
+                  return `🛵 *Solicitud de servicio — Lokl*\n\nHola ${prov?.negocio}, vi tu perfil en Lokl.\n\n${servicio?`⚡ Servicio: *${servicio.nombre}*\n💰 Precio: *$${servicio.precio}*\n`:""}📍 Recogida: *${contactForm.fecha||"(dirección de recogida)"}*\n🏁 Destino: *${contactForm.fechaSalida||"(destino)"}*\n\n👤 ${n}\n📱 ${t}`;
+                }
+                return `🔧 *Solicitud de servicio — Lokl*\n\nHola ${prov?.negocio}, vi tu perfil en Lokl.\n\n${servicio?`⚡ Servicio: *${servicio.nombre}*\n💰 Precio: *$${servicio.precio}*\n`:""}\n👤 ${n}\n📱 ${t}\n\n¿Cuándo puedes atenderme?`;
+              };
+
+              return(
+                <>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                    <div>
+                      <div style={{fontSize:16,fontWeight:900,color:"#0f172a"}}>
+                        {esRutaFlag?"🚌 Reservar puesto":esHotel?"🏨 Consultar disponibilidad":esTurismo?"🌴 Consultar disponibilidad":esSalud?"👨‍⚕️ Solicitar cita":"📲 Contactar"}
+                      </div>
+                      <div style={{fontSize:12,color:"#64748b",marginTop:2}}>{esRutaFlag?`${ruta?.origen} → ${ruta?.destino}`:prov?.negocio}</div>
+                    </div>
+                    <button onClick={()=>setContactModal(null)} style={{background:"#f1f5f9",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",fontSize:16}}>✕</button>
+                  </div>
+
+                  {servicio&&<div style={{background:"#f8fafc",borderRadius:12,padding:"10px 12px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div style={{fontSize:13,fontWeight:700,color:"#0f172a"}}>{servicio.nombre}</div>
+                    <div style={{fontSize:14,fontWeight:800,color:"#0f9b6e"}}>${servicio.precio}</div>
+                  </div>}
+
+                  <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                    <input style={{padding:"12px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:14,width:"100%",boxSizing:"border-box"}} placeholder="Tu nombre completo" value={contactForm.nombre} onChange={e=>setContactForm(f=>({...f,nombre:e.target.value}))}/>
+                    <input style={{padding:"12px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:14,width:"100%",boxSizing:"border-box"}} placeholder="Tu WhatsApp (04XX-XXXXXXX)" value={contactForm.telefono} onChange={e=>setContactForm(f=>({...f,telefono:e.target.value}))}/>
+
+                    {esTransporte&&<>
+                      <input style={{padding:"12px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:14,width:"100%",boxSizing:"border-box"}} placeholder="📍 Dirección de recogida" value={contactForm.fecha} onChange={e=>setContactForm(f=>({...f,fecha:e.target.value}))}/>
+                      <input style={{padding:"12px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:14,width:"100%",boxSizing:"border-box"}} placeholder="🏁 Destino" value={contactForm.fechaSalida} onChange={e=>setContactForm(f=>({...f,fechaSalida:e.target.value}))}/>
+                    </>}
+
+                    {esRutaFlag&&<>
+                      <input type="date" style={{padding:"12px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:14,width:"100%",boxSizing:"border-box"}} value={contactForm.fecha} onChange={e=>setContactForm(f=>({...f,fecha:e.target.value}))}/>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <label style={{fontSize:13,color:"#64748b",flexShrink:0}}>Puestos:</label>
+                        <select style={{padding:"10px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:14,flex:1}} value={contactForm.puestos} onChange={e=>setContactForm(f=>({...f,puestos:e.target.value}))}>
+                          {[1,2,3,4,5,6].map(n=><option key={n} value={n}>{n} puesto{n>1?"s":""}</option>)}
+                        </select>
+                      </div>
+                    </>}
+
+                    {(esHotel||esTurismo)&&<>
+                      <div style={{fontSize:12,color:"#64748b",fontWeight:600}}>{esHotel?"📅 Fecha de entrada":"📅 Fecha de visita"}</div>
+                      <input type="date" style={{padding:"12px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:14,width:"100%",boxSizing:"border-box"}} value={contactForm.fecha} onChange={e=>setContactForm(f=>({...f,fecha:e.target.value}))}/>
+                      {esHotel&&<>
+                        <div style={{fontSize:12,color:"#64748b",fontWeight:600}}>📅 Fecha de salida</div>
+                        <input type="date" style={{padding:"12px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:14,width:"100%",boxSizing:"border-box"}} value={contactForm.fechaSalida} onChange={e=>setContactForm(f=>({...f,fechaSalida:e.target.value}))}/>
+                      </>}
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <label style={{fontSize:13,color:"#64748b",flexShrink:0}}>Personas:</label>
+                        <select style={{padding:"10px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:14,flex:1}} value={contactForm.personas} onChange={e=>setContactForm(f=>({...f,personas:e.target.value}))}>
+                          {[1,2,3,4,5,6,7,8,9,10].map(n=><option key={n} value={n}>{n} persona{n>1?"s":""}</option>)}
+                        </select>
+                      </div>
+                    </>}
+                  </div>
+
+                  <button
+                    onClick={()=>{
+                      if(!contactForm.nombre||!contactForm.telefono)return;
+                      window.open("https://wa.me/"+num+"?text="+encodeURIComponent(buildMsg()),"_blank");
+                      setContactModal(null);
+                      setContactForm({nombre:contactForm.nombre,telefono:contactForm.telefono,fecha:"",personas:"1",puestos:"1",fechaSalida:""});
+                    }}
+                    style={{width:"100%",background:!contactForm.nombre||!contactForm.telefono?"#94a3b8":"#25D366",color:"#fff",border:"none",borderRadius:14,padding:"16px",fontSize:15,fontWeight:900,cursor:!contactForm.nombre||!contactForm.telefono?"not-allowed":"pointer",marginTop:16,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}
+                  >
+                    📲 Enviar mensaje por WhatsApp
+                  </button>
+                  {(!contactForm.nombre||!contactForm.telefono)&&<div style={{textAlign:"center",fontSize:11,color:"#94a3b8",marginTop:6}}>Completa tu nombre y teléfono para continuar</div>}
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
       {imgZoom&&(
         <div onClick={()=>setImgZoom(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
           <button onClick={()=>setImgZoom(null)} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:"50%",width:36,height:36,color:"#fff",fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
