@@ -1,5 +1,5 @@
-// BUILD:1778167775
-"use client"; // Lokl v1778167775
+// BUILD:1778377784
+"use client"; // Lokl v1778377784
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -2897,6 +2897,10 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                     value={searchServicios||""}
                     onChange={e=>setSearchServicios(e.target.value)}
                   />
+                  {/* BOTÓN REGISTRO — siempre visible independiente del ternario */}
+                  <button onClick={()=>{setTab("Proveedores");setCategoriaServicio(null);}} style={{background:"linear-gradient(135deg,#15803d,#22c55e)",color:"#fff",border:"none",borderRadius:12,padding:"10px 16px",fontSize:12,fontWeight:700,cursor:"pointer",width:"100%",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                    🏅 ¿Ofreces este servicio? Regístrate gratis →
+                  </button>
                   {(proveedoresServicio.filter(p=>!searchServicios||(p.negocio+p.especialidad+p.descripcion_negocio).toLowerCase().includes(searchServicios.toLowerCase()))).length===0?(
                     <div style={{textAlign:"center",padding:"40px 20px",color:"#94a3b8"}}>
                       <div style={{fontSize:48,marginBottom:12}}>{categoriaServicio.icon}</div>
