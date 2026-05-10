@@ -1869,6 +1869,8 @@ const VE_ESTADOS_MUNICIPIOS={
             {superGroups.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🔍</div><p>No encontramos ese producto</p></div>}
           </div>
         )}
+        </> /* end tieneSuper true branch */
+        )} {/* end tieneSuper ternary */}
       </>)}
 
       {/* REMATES */}
@@ -2001,8 +2003,6 @@ const VE_ESTADOS_MUNICIPIOS={
             </div>
           </div>
         )}
-        </> /* end tieneSuper true branch */
-        )} {/* end tieneSuper ternary */}
       </>)}
 
       {/* NEGOCIOS LOCALES */}
