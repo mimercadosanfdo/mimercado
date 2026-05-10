@@ -2687,17 +2687,6 @@ const VE_ESTADOS_MUNICIPIOS={
 
             {/* SECCIÓN TRANSPORTE */}
             <div style={{padding:"16px 16px 0"}}>
-              <div style={{fontSize:10,fontWeight:800,color:"#94a3b8",letterSpacing:1.5,marginBottom:10,textTransform:"uppercase"}}>🌴 Turismo</div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-                {SERVICIO_CATEGORIAS.filter(c=>c.tipo==="turismo").map(cat=>(
-                  <button key={cat.id} onClick={()=>{setCategoriaServicio(cat);setProveedoresServicio([]);setSearchServicios("");loadProveedoresServicio(cat.id);}}
-                    style={{background:cat.bg,border:"none",borderRadius:16,padding:"16px 12px",textAlign:"left",cursor:"pointer",boxShadow:"0 4px 12px rgba(0,0,0,0.15)",position:"relative",minHeight:90}}>
-                    <div style={{fontSize:28,marginBottom:8,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.2))"}}>{cat.icon}</div>
-                    <div style={{fontSize:13,fontWeight:800,color:"#fff",lineHeight:1.2}}>{cat.label}</div>
-                    <div style={{fontSize:10,color:"rgba(255,255,255,0.75)",marginTop:3}}>{cat.desc}</div>
-                  </button>
-                ))}
-              </div>
               <div style={{fontSize:10,fontWeight:800,color:"#94a3b8",letterSpacing:1.5,marginBottom:10,textTransform:"uppercase"}}>🚗 Transporte</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
                 {SERVICIO_CATEGORIAS.filter(c=>c.tipo==="transporte").map(cat=>(
@@ -2735,6 +2724,19 @@ const VE_ESTADOS_MUNICIPIOS={
                     <div style={{fontSize:13,fontWeight:800,color:"#fff",letterSpacing:-0.2}}>{cat.label}</div>
                     <div style={{fontSize:10,color:"rgba(255,255,255,0.65)",marginTop:2}}>{cat.desc}</div>
                     <div style={{position:"absolute",top:10,right:10,background:"rgba(255,255,255,0.15)",borderRadius:20,padding:"2px 8px",fontSize:9,color:"rgba(255,255,255,0.8)",fontWeight:600}}>Ver →</div>
+                  </button>
+                ))}
+              </div>
+
+              {/* SECCIÓN TURISMO */}
+              <div style={{fontSize:10,fontWeight:800,color:"#94a3b8",letterSpacing:1.5,marginBottom:10,textTransform:"uppercase"}}>🌴 Turismo</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+                {SERVICIO_CATEGORIAS.filter(c=>c.tipo==="turismo").map(cat=>(
+                  <button key={cat.id} onClick={()=>{setCategoriaServicio(cat);setProveedoresServicio([]);setSearchServicios("");loadProveedoresServicio(cat.id);}}
+                    style={{background:cat.bg,border:"none",borderRadius:16,padding:"16px 12px",textAlign:"left",cursor:"pointer",boxShadow:"0 4px 12px rgba(0,0,0,0.15)",position:"relative",minHeight:90}}>
+                    <div style={{fontSize:28,marginBottom:8,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.2))"}}>{cat.icon}</div>
+                    <div style={{fontSize:13,fontWeight:800,color:"#fff",lineHeight:1.2}}>{cat.label}</div>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,0.75)",marginTop:3}}>{cat.desc}</div>
                   </button>
                 ))}
               </div>
