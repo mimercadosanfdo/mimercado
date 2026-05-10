@@ -1033,7 +1033,7 @@ const VE_ESTADOS_MUNICIPIOS={
 
   const handleLogin=async()=>{
     if(!provForm.email||!provForm.pass)return setPmsg("Completa correo y contraseña");
-    if(provForm.email===ADMIN_USER&&provForm.pass===ADMIN_PASS){setProvMode("admin");setTab("Proveedores");setAdminSec("dashboard");loadAdmin();loadPedidos();loadSuscripciones();return;}
+    if(provForm.email===ADMIN_USER&&provForm.pass===ADMIN_PASS){setProvModeRaw("admin");setTab("Proveedores");setAdminSec("dashboard");loadAdmin();loadPedidos();loadSuscripciones();return;}
     setLoading(true);
     const{data,error}=await supabase.from("proveedores").select("*").eq("email",provForm.email).single();
     setLoading(false);
@@ -3215,7 +3215,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
           <label style={s.lbl}>Contraseña *</label>
           <input style={s.inp} type="password" placeholder="••••••••" value={provForm.pass} onChange={e=>setProvForm({...provForm,pass:e.target.value})}/>
           <button style={s.btn} onClick={provMode==="login"?handleLogin:handleRegister} disabled={loading}>{loading?"Procesando...":(provMode==="login"?"Entrar":"Registrarme")}</button>
-          <button style={s.btnG} onClick={()=>{setProvMode(provMode==="login"?"register":"login");setPmsg("");}}>{provMode==="login"?"¿Nuevo? Regístrate aquí":"¿Ya tienes cuenta? Inicia sesión"}</button>
+          <button style={s.btnG} onClick={()=>{setProvModeRaw(provMode==="login"?"register":"login");setPmsg("");}}>{provMode==="login"?"¿Nuevo? Regístrate aquí":"¿Ya tienes cuenta? Inicia sesión"}</button>
           {provMode==="login"&&(
             <button style={{background:"none",border:"none",color:"#94a3b8",fontSize:12,cursor:"pointer",marginTop:4,textDecoration:"underline"}} onClick={()=>{
               const correo=provForm.email;
