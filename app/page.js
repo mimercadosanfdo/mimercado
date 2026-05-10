@@ -334,6 +334,15 @@ const VE_ESTADOS_MUNICIPIOS={
   const [proveedoresServicio,setProveedoresServicio]=useState([]); // proveedores filtrados por categoria
   const [provProductosServicio,setProvProductosServicio]=useState({}); // {provId:[productos]}
   const [rutasTransporte,setRutasTransporte]=useState([]);
+  const [misRutas,setMisRutas]=useState([]);
+  const [misHabitaciones,setMisHabitaciones]=useState([]);
+  const [misTurismo,setMisTurismo]=useState([]);
+  const [newRuta,setNewRuta]=useState({origen:"San Fernando",destino:"",hora_salida:"07:00",precio:"",puestos_disponibles:10,dias_operacion:"Lunes a Domingo",acepta_encomiendas:false});
+  const [newHabitacion,setNewHabitacion]=useState({nombre:"",descripcion:"",precio_noche:"",capacidad_personas:2,foto_url:""});
+  const [newTurismo,setNewTurismo]=useState({nombre:"",descripcion:"",precio:"",capacidad_personas:"",incluye:"",foto_url:""});
+  const [showNuevaRuta,setShowNuevaRuta]=useState(false);
+  const [showNuevaHab,setShowNuevaHab]=useState(false);
+  const [showNuevoTurismo,setShowNuevoTurismo]=useState(false);
   const [contactModal,setContactModal]=useState(null); // {prov, servicio, catId, esRuta, ruta}
   const [contactForm,setContactForm]=useState({nombre:"",telefono:"",fecha:"",personas:"1",puestos:"1",fechaSalida:""}); // rutas interurbanas
   const [proveedorServicioActivo,setProveedorServicioActivo]=useState(null); // proveedor seleccionado
@@ -805,6 +814,18 @@ const VE_ESTADOS_MUNICIPIOS={
     }
   };
 
+  const loadMisRutas=async(pid)=>{
+    const{data}=await supabase.from("rutas_transporte").select("*").eq("proveedor_id",pid).order("hora_salida");
+    if(data)setMisRutas(data);
+  };
+  const loadMisHabitaciones=async(pid)=>{
+    const{data}=await supabase.from("habitaciones_hotel").select("*").eq("proveedor_id",pid).order("created_at");
+    if(data)setMisHabitaciones(data);
+  };
+  const loadMisTurismo=async(pid)=>{
+    const{data}=await supabase.from("servicios_turismo").select("*").eq("proveedor_id",pid).order("created_at");
+    if(data)setMisTurismo(data);
+  };
   const loadRutasTransporte=async()=>{
     const{data}=await supabase.from("rutas_transporte").select("*,proveedores(negocio,logo_url,whatsapp_negocio,telefono,disponible_ahora)").eq("activa",true).order("hora_salida");
     if(data)setRutasTransporte(data);
@@ -3327,11 +3348,23 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                     {k:"clientes",     icon:"👥", label:"Clientes",    sub:"Tu base de clientes",   color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#0369a1,#0ea5e9)", n:0},
                     {k:"ventas",       icon:"📈", label:"Mis ventas",  sub:"Dashboard de ingresos", color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#b45309,#f59e0b)", n:0},
                     {k:"mi_negocio",   icon:"⚙️", label:"Mi negocio",  sub:"Perfil y configuración",color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#374151,#6b7280)", n:0},
+                    ...((["Transporte interurbano (rutas)","Transporte y encomiendas"].includes(provData.tipo_negocio))?[
+                      {k:"mis_rutas", icon:"🚌", label:"Mis rutas", sub:"Gestiona tus rutas", color:"#fff", textColor:"#0f172a", bg:"linear-gradient(135deg,#064e3b,#059669)", n:0},
+                    ]:[]),
+                    ...(["Hotel","Posada","Hospedaje"].includes(provData.tipo_negocio)?[
+                      {k:"mis_habitaciones", icon:"🛏️", label:"Habitaciones", sub:"Gestiona tu oferta", color:"#fff", textColor:"#0f172a", bg:"linear-gradient(135deg,#134e4a,#0d9488)", n:0},
+                    ]:[]),
+                    ...(["Finca turística","Tour operador","Campamento","Turismo y aventura"].includes(provData.tipo_negocio)?[
+                      {k:"mis_turismo", icon:"🌴", label:"Mis servicios", sub:"Lo que ofreces", color:"#fff", textColor:"#0f172a", bg:"linear-gradient(135deg,#064e3b,#16a34a)", n:0},
+                    ]:[]),
                   ].map(t=>(
                     <button key={t.k} onClick={()=>{
                       setProvTab(t.k);
                       if(t.k==="clientes")loadMisClientes(provData.negocio);
                       if(t.k==="pedidos_rest")loadMisRestPedidos(provData.id,provData.negocio);
+                      if(t.k==="mis_rutas")loadMisRutas(provData.id);
+                      if(t.k==="mis_habitaciones")loadMisHabitaciones(provData.id);
+                      if(t.k==="mis_turismo")loadMisTurismo(provData.id);
                     }} style={{background:t.bg,border:"none",borderRadius:16,padding:"16px 14px",textAlign:"left",cursor:"pointer",position:"relative",boxShadow:"0 4px 12px rgba(0,0,0,0.15)",transition:"transform 0.1s"}}>
                       <div style={{fontSize:26,marginBottom:8,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.2))"}}>{t.icon}</div>
                       <div style={{fontSize:13,fontWeight:800,color:"#fff",letterSpacing:-0.2}}>{t.label}</div>
@@ -4124,6 +4157,104 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
 
 
           {/* ═══ TAB MI NEGOCIO ═══ */}
+            {provTab==="mis_rutas"&&(
+              <div style={{padding:"0 16px 16px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                  <div style={{fontSize:15,fontWeight:800,color:"#0f172a"}}>🚌 Mis rutas ({misRutas.length})</div>
+                  <button onClick={()=>setShowNuevaRuta(!showNuevaRuta)} style={{background:showNuevaRuta?"#64748b":"#059669",color:"#fff",border:"none",borderRadius:10,padding:"8px 14px",fontSize:12,fontWeight:700,cursor:"pointer"}}>{showNuevaRuta?"✕ Cancelar":"+ Nueva ruta"}</button>
+                </div>
+                {showNuevaRuta&&(<div style={{background:"#f0fdf4",borderRadius:14,padding:14,marginBottom:14,border:"1px solid #bbf7d0"}}>
+                  <label style={s.lbl}>Origen *</label><input style={s.inp} value={newRuta.origen} onChange={e=>setNewRuta(r=>({...r,origen:e.target.value}))} placeholder="San Fernando"/>
+                  <label style={s.lbl}>Destino *</label><input style={s.inp} value={newRuta.destino} onChange={e=>setNewRuta(r=>({...r,destino:e.target.value}))} placeholder="Caracas"/>
+                  <label style={s.lbl}>Hora de salida *</label><input style={s.inp} type="time" value={newRuta.hora_salida} onChange={e=>setNewRuta(r=>({...r,hora_salida:e.target.value}))}/>
+                  <label style={s.lbl}>Precio por persona ($) *</label><input style={s.inp} type="number" value={newRuta.precio} onChange={e=>setNewRuta(r=>({...r,precio:e.target.value}))} placeholder="25"/>
+                  <label style={s.lbl}>Puestos disponibles</label><input style={s.inp} type="number" value={newRuta.puestos_disponibles} onChange={e=>setNewRuta(r=>({...r,puestos_disponibles:parseInt(e.target.value)||10}))}/>
+                  <label style={s.lbl}>Días de operación</label><input style={s.inp} value={newRuta.dias_operacion} onChange={e=>setNewRuta(r=>({...r,dias_operacion:e.target.value}))} placeholder="Lunes a Domingo"/>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}><input type="checkbox" checked={newRuta.acepta_encomiendas} onChange={e=>setNewRuta(r=>({...r,acepta_encomiendas:e.target.checked}))}/><label style={{fontSize:13}}>📦 Acepta encomiendas</label></div>
+                  <button onClick={async()=>{
+                    if(!newRuta.destino||!newRuta.precio)return setPmsg("Completa destino y precio");
+                    const{error}=await supabase.from("rutas_transporte").insert({proveedor_id:provData.id,origen:newRuta.origen,destino:newRuta.destino,hora_salida:newRuta.hora_salida,precio:parseFloat(newRuta.precio),puestos_disponibles:newRuta.puestos_disponibles,dias_operacion:newRuta.dias_operacion,acepta_encomiendas:newRuta.acepta_encomiendas,activo:true});
+                    if(error)return setPmsg("Error: "+error.message);
+                    setPmsg("✅ Ruta publicada");setShowNuevaRuta(false);setNewRuta({origen:"San Fernando",destino:"",hora_salida:"07:00",precio:"",puestos_disponibles:10,dias_operacion:"Lunes a Domingo",acepta_encomiendas:false});loadMisRutas(provData.id);
+                  }} style={{...s.btn,marginTop:0}}>✅ Publicar ruta</button>
+                </div>)}
+                {misRutas.length===0&&!showNuevaRuta&&<div style={{textAlign:"center",padding:"30px 0",color:"#94a3b8",fontSize:13}}>No tienes rutas publicadas aún</div>}
+                {misRutas.map(ruta=>(<div key={ruta.id} style={{background:"#fff",borderRadius:14,padding:14,marginBottom:10,border:"1px solid #f1f5f9"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                    <div><div style={{fontSize:14,fontWeight:800}}>{ruta.origen} → {ruta.destino}</div><div style={{fontSize:11,color:"#64748b"}}>🕐 {ruta.hora_salida?.slice(0,5)} · 💺 {ruta.puestos_disponibles} puestos · {ruta.dias_operacion}</div>{ruta.acepta_encomiendas&&<div style={{fontSize:11,color:"#c2410c"}}>📦 Acepta encomiendas</div>}</div>
+                    <div style={{fontSize:18,fontWeight:900,color:"#059669"}}>${ruta.precio}</div>
+                  </div>
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={async()=>{const p=parseInt(prompt("Puestos disponibles:",ruta.puestos_disponibles));if(isNaN(p))return;await supabase.from("rutas_transporte").update({puestos_disponibles:p}).eq("id",ruta.id);loadMisRutas(provData.id);}} style={{...s.apvBtn,background:"#eff6ff",color:"#1d4ed8",flex:1}}>✏️ Editar</button>
+                    <button onClick={async()=>{if(!window.confirm("¿Eliminar?"))return;await supabase.from("rutas_transporte").delete().eq("id",ruta.id);loadMisRutas(provData.id);}} style={{...s.apvBtn,background:"#fef2f2",color:"#dc2626"}}>🗑️</button>
+                  </div>
+                </div>))}
+              </div>
+            )}
+            {provTab==="mis_habitaciones"&&(
+              <div style={{padding:"0 16px 16px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                  <div style={{fontSize:15,fontWeight:800,color:"#0f172a"}}>🛏️ Habitaciones ({misHabitaciones.length})</div>
+                  <button onClick={()=>setShowNuevaHab(!showNuevaHab)} style={{background:showNuevaHab?"#64748b":"#0d9488",color:"#fff",border:"none",borderRadius:10,padding:"8px 14px",fontSize:12,fontWeight:700,cursor:"pointer"}}>{showNuevaHab?"✕ Cancelar":"+ Nueva hab."}</button>
+                </div>
+                {showNuevaHab&&(<div style={{background:"#f0fdfa",borderRadius:14,padding:14,marginBottom:14,border:"1px solid #99f6e4"}}>
+                  <label style={s.lbl}>Nombre *</label><input style={s.inp} value={newHabitacion.nombre} onChange={e=>setNewHabitacion(h=>({...h,nombre:e.target.value}))} placeholder="Habitación doble, Suite..."/>
+                  <label style={s.lbl}>Descripción</label><input style={s.inp} value={newHabitacion.descripcion} onChange={e=>setNewHabitacion(h=>({...h,descripcion:e.target.value}))} placeholder="AC, baño privado, TV..."/>
+                  <label style={s.lbl}>Precio por noche ($)</label><input style={s.inp} type="number" value={newHabitacion.precio_noche} onChange={e=>setNewHabitacion(h=>({...h,precio_noche:e.target.value}))} placeholder="50"/>
+                  <label style={s.lbl}>Capacidad (personas)</label><input style={s.inp} type="number" value={newHabitacion.capacidad_personas} onChange={e=>setNewHabitacion(h=>({...h,capacidad_personas:parseInt(e.target.value)||2}))}/>
+                  <label style={s.lbl}>URL foto (opcional)</label><input style={s.inp} value={newHabitacion.foto_url} onChange={e=>setNewHabitacion(h=>({...h,foto_url:e.target.value}))} placeholder="https://..."/>
+                  <button onClick={async()=>{
+                    if(!newHabitacion.nombre)return setPmsg("El nombre es obligatorio");
+                    const{error}=await supabase.from("habitaciones_hotel").insert({proveedor_id:provData.id,nombre:newHabitacion.nombre,descripcion:newHabitacion.descripcion||null,precio_noche:newHabitacion.precio_noche?parseFloat(newHabitacion.precio_noche):null,capacidad_personas:newHabitacion.capacidad_personas,foto_url:newHabitacion.foto_url||null,disponible:true,aprobado:false});
+                    if(error)return setPmsg("Error: "+error.message);
+                    setPmsg("✅ Enviado para aprobación");setShowNuevaHab(false);setNewHabitacion({nombre:"",descripcion:"",precio_noche:"",capacidad_personas:2,foto_url:""});loadMisHabitaciones(provData.id);
+                  }} style={{...s.btn,marginTop:0}}>✅ Enviar para aprobación</button>
+                </div>)}
+                {misHabitaciones.length===0&&!showNuevaHab&&<div style={{textAlign:"center",padding:"30px 0",color:"#94a3b8",fontSize:13}}>No tienes habitaciones publicadas aún</div>}
+                {misHabitaciones.map(hab=>(<div key={hab.id} style={{background:"#fff",borderRadius:14,padding:14,marginBottom:10,border:"1px solid #f1f5f9",display:"flex",gap:12}}>
+                  {hab.foto_url&&<img src={hab.foto_url} alt="" style={{width:68,height:68,borderRadius:10,objectFit:"cover",flexShrink:0}}/>}
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex",justifyContent:"space-between"}}><div style={{fontSize:13,fontWeight:700}}>{hab.nombre}</div><span style={{fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:20,background:hab.aprobado?"#dcfce7":"#fef9c3",color:hab.aprobado?"#15803d":"#854d0e"}}>{hab.aprobado?"✓":"⏳"}</span></div>
+                    {hab.descripcion&&<div style={{fontSize:11,color:"#64748b",marginTop:2}}>{hab.descripcion}</div>}
+                    <div style={{fontSize:12,color:"#0d9488",fontWeight:700,marginTop:3}}>{hab.precio_noche?`$${hab.precio_noche}/noche`:"Sin precio"} · 👥 {hab.capacidad_personas}p</div>
+                    <button onClick={async()=>{if(!window.confirm("¿Eliminar?"))return;await supabase.from("habitaciones_hotel").delete().eq("id",hab.id);loadMisHabitaciones(provData.id);}} style={{...s.apvBtn,background:"#fef2f2",color:"#dc2626",marginTop:6}}>🗑️ Eliminar</button>
+                  </div>
+                </div>))}
+              </div>
+            )}
+            {provTab==="mis_turismo"&&(
+              <div style={{padding:"0 16px 16px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                  <div style={{fontSize:15,fontWeight:800,color:"#0f172a"}}>🌴 Servicios turísticos ({misTurismo.length})</div>
+                  <button onClick={()=>setShowNuevoTurismo(!showNuevoTurismo)} style={{background:showNuevoTurismo?"#64748b":"#16a34a",color:"#fff",border:"none",borderRadius:10,padding:"8px 14px",fontSize:12,fontWeight:700,cursor:"pointer"}}>{showNuevoTurismo?"✕ Cancelar":"+ Nuevo"}</button>
+                </div>
+                {showNuevoTurismo&&(<div style={{background:"#f0fdf4",borderRadius:14,padding:14,marginBottom:14,border:"1px solid #bbf7d0"}}>
+                  <label style={s.lbl}>Nombre *</label><input style={s.inp} value={newTurismo.nombre} onChange={e=>setNewTurismo(t=>({...t,nombre:e.target.value}))} placeholder="Paseo en lancha, Noche en cabaña..."/>
+                  <label style={s.lbl}>Descripción</label><input style={s.inp} value={newTurismo.descripcion} onChange={e=>setNewTurismo(t=>({...t,descripcion:e.target.value}))} placeholder="Descripción..."/>
+                  <label style={s.lbl}>Precio por persona ($)</label><input style={s.inp} type="number" value={newTurismo.precio} onChange={e=>setNewTurismo(t=>({...t,precio:e.target.value}))} placeholder="30"/>
+                  <label style={s.lbl}>Capacidad máxima</label><input style={s.inp} type="number" value={newTurismo.capacidad_personas} onChange={e=>setNewTurismo(t=>({...t,capacidad_personas:e.target.value}))} placeholder="10"/>
+                  <label style={s.lbl}>¿Qué incluye?</label><input style={s.inp} value={newTurismo.incluye} onChange={e=>setNewTurismo(t=>({...t,incluye:e.target.value}))} placeholder="Comida, guía, transporte..."/>
+                  <label style={s.lbl}>URL foto (opcional)</label><input style={s.inp} value={newTurismo.foto_url} onChange={e=>setNewTurismo(t=>({...t,foto_url:e.target.value}))} placeholder="https://..."/>
+                  <button onClick={async()=>{
+                    if(!newTurismo.nombre)return setPmsg("El nombre es obligatorio");
+                    const{error}=await supabase.from("servicios_turismo").insert({proveedor_id:provData.id,nombre:newTurismo.nombre,descripcion:newTurismo.descripcion||null,precio:newTurismo.precio?parseFloat(newTurismo.precio):null,capacidad_personas:newTurismo.capacidad_personas?parseInt(newTurismo.capacidad_personas):null,incluye:newTurismo.incluye||null,foto_url:newTurismo.foto_url||null,disponible:true,aprobado:false});
+                    if(error)return setPmsg("Error: "+error.message);
+                    setPmsg("✅ Enviado para aprobación");setShowNuevoTurismo(false);setNewTurismo({nombre:"",descripcion:"",precio:"",capacidad_personas:"",incluye:"",foto_url:""});loadMisTurismo(provData.id);
+                  }} style={{...s.btn,marginTop:0}}>✅ Enviar para aprobación</button>
+                </div>)}
+                {misTurismo.length===0&&!showNuevoTurismo&&<div style={{textAlign:"center",padding:"30px 0",color:"#94a3b8",fontSize:13}}>No tienes servicios publicados aún</div>}
+                {misTurismo.map(srv=>(<div key={srv.id} style={{background:"#fff",borderRadius:14,padding:14,marginBottom:10,border:"1px solid #f1f5f9",display:"flex",gap:12}}>
+                  {srv.foto_url&&<img src={srv.foto_url} alt="" style={{width:68,height:68,borderRadius:10,objectFit:"cover",flexShrink:0}}/>}
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex",justifyContent:"space-between"}}><div style={{fontSize:13,fontWeight:700}}>{srv.nombre}</div><span style={{fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:20,background:srv.aprobado?"#dcfce7":"#fef9c3",color:srv.aprobado?"#15803d":"#854d0e"}}>{srv.aprobado?"✓":"⏳"}</span></div>
+                    {srv.descripcion&&<div style={{fontSize:11,color:"#64748b",marginTop:2}}>{srv.descripcion}</div>}
+                    {srv.precio&&<div style={{fontSize:12,color:"#16a34a",fontWeight:700,marginTop:3}}>${srv.precio}/persona{srv.capacidad_personas?` · 👥 máx ${srv.capacidad_personas}`:""}</div>}
+                    {srv.incluye&&<div style={{fontSize:11,color:"#1d4ed8",marginTop:2}}>✓ {srv.incluye}</div>}
+                    <button onClick={async()=>{if(!window.confirm("¿Eliminar?"))return;await supabase.from("servicios_turismo").delete().eq("id",srv.id);loadMisTurismo(provData.id);}} style={{...s.apvBtn,background:"#fef2f2",color:"#dc2626",marginTop:6}}>🗑️ Eliminar</button>
+                  </div>
+                </div>))}
+              </div>
+            )}
           {provTab==="mi_negocio"&&(()=>{
             // seccionNegocio está en el estado del componente
             const seccion=seccionNegocio;const setSeccion=setSeccionNegocio;
