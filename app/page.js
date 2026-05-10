@@ -1,5 +1,5 @@
-// BUILD:1778377784
-"use client"; // Lokl v1778377784
+// BUILD:1778378240
+"use client"; // Lokl v1778378240
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -19,7 +19,7 @@ const DARK = "#2E2E2E";
 const LIGHT = "#F6F6F6";
 const P2 = "#1aab52";
 
-const MAIN_TABS = ["Inicio","Supermercado","Negocios locales","Feria de comidas","Servicios"];
+const MAIN_TABS = ["Inicio","Supermercado","Negocios locales","Feria de comida","Servicios"];
 const SEC_TABS = ["Clasificados","Mercadito local"];
 const NEGOCIO_CATS = [
   {cat:"Ropa y calzado",emoji:"👗",color:"#fdf2f8",tc:"#9d174d"},
@@ -1488,12 +1488,12 @@ const VE_ESTADOS_MUNICIPIOS={
       </div>
       <div style={s.tabs}>
         {MAIN_TABS.map(t=>{
-          const icons={"Inicio":"🏠","Supermercado":"🛒","Negocios locales":"🏪","Feria de comidas":"🍽️","Servicios":"⚡"};
+          const icons={"Inicio":"🏠","Supermercado":"🛒","Negocios locales":"🏪","Feria de comida":"🍽️","Servicios":"⚡"};
           const activeColors={
             "Inicio":     {bg:"#f0fdf4",border:"#15803d",text:"#15803d"},
             "Supermercado":{bg:"#fef9c3",border:"#b45309",text:"#b45309"},
             "Negocios locales":{bg:"#eff6ff",border:"#1d4ed8",text:"#1d4ed8"},
-            "Feria de comidas":{bg:"#fff7ed",border:"#c2410c",text:"#c2410c"},
+            "Feria de comida":{bg:"#fff7ed",border:"#c2410c",text:"#c2410c"},
             "Servicios":  {bg:"#fdf4ff",border:"#7e22ce",text:"#7e22ce"},
           };
           const ac=activeColors[t];
@@ -1501,7 +1501,7 @@ const VE_ESTADOS_MUNICIPIOS={
           return(
             <button key={t} style={{flex:1,padding:"8px 2px 6px",border:"none",background:isActive?ac.bg:"transparent",borderBottom:isActive?`3px solid ${ac.border}`:"3px solid transparent",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,transition:"all 0.15s",minWidth:0}} onClick={()=>{setTab(t);if(t!=="Servicios")setCategoriaServicio(null);}}>
               <span style={{fontSize:isActive?24:18,transition:"all 0.2s",filter:isActive?"none":"grayscale(60%)",display:"block"}}>{icons[t]}</span>
-              <span style={{fontSize:8,lineHeight:1.2,textAlign:"center",fontWeight:isActive?700:400,color:isActive?ac.text:"#94a3b8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",width:"100%",paddingX:2}}>{t==="Negocios locales"?"Negocios":t==="Feria de comidas"?"Restaurantes":t}</span>
+              <span style={{fontSize:8,lineHeight:1.2,textAlign:"center",fontWeight:isActive?700:400,color:isActive?ac.text:"#94a3b8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",width:"100%",paddingX:2}}>{t==="Negocios locales"?"Negocios":t==="Feria de comida"?"Feria de comida":t}</span>
             </button>
           );
         })}
@@ -1536,7 +1536,7 @@ const VE_ESTADOS_MUNICIPIOS={
             {allProdsConMargen.filter(p=>p.name.toLowerCase().includes(search.toLowerCase())).length===0
               ?<div style={{textAlign:"center",padding:"20px 0",color:"#94a3b8",fontSize:13}}>Sin resultados para "{search}"</div>
               :allProdsConMargen.filter(p=>p.name.toLowerCase().includes(search.toLowerCase())).slice(0,6).map(p=>(
-                <div key={p.id} onClick={()=>{setCat(p.cat==="Supermercado"?"Supermercado":p.cat);setTab(p.cat==="Supermercado"?"Supermercado":"Feria de comidas");}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9",cursor:"pointer"}}>
+                <div key={p.id} onClick={()=>{setCat(p.cat==="Supermercado"?"Supermercado":p.cat);setTab(p.cat==="Supermercado"?"Supermercado":"Feria de comida");}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9",cursor:"pointer"}}>
                   {p.foto?<img src={p.foto} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}}/>:<div style={{width:40,height:40,borderRadius:8,background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{p.emoji||"🛒"}</div>}
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:13,fontWeight:600,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</div>
@@ -1559,7 +1559,7 @@ const VE_ESTADOS_MUNICIPIOS={
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
             {[
               {icon:"🛒", label:"Supermercado", tab:"Supermercado",     bg:"linear-gradient(135deg,#0f172a,#1e293b)",   tc:"#fbbf24"},
-              {icon:"🍽️", label:"Restaurantes", tab:"Feria de comidas", bg:"linear-gradient(135deg,#9a3412,#c2410c)",   tc:"#fff"},
+              {icon:"🍽️", label:"Feria de comida", tab:"Feria de comida", bg:"linear-gradient(135deg,#9a3412,#c2410c)",   tc:"#fff"},
               {icon:"🏪", label:"Negocios",     tab:"Negocios locales", bg:"linear-gradient(135deg,#1e40af,#2563eb)",   tc:"#fff"},
               {icon:"⚡", label:"Servicios",    tab:"Servicios",        bg:"linear-gradient(135deg,#581c87,#7e22ce)",   tc:"#fff"},
               {icon:"🚗", label:"Clasificados", tab:"Clasificados",     bg:"linear-gradient(135deg,#065f46,#059669)",   tc:"#fff"},
@@ -1591,12 +1591,12 @@ const VE_ESTADOS_MUNICIPIOS={
         {allRestaurantes.filter(r=>r.activo).length>0&&(
           <div style={{padding:"0 16px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 10px"}}>
-              <div style={{fontSize:17,fontWeight:900,color:"#0f172a",letterSpacing:-0.3}}>🍽️ Restaurantes abiertos</div>
-              <button onClick={()=>setTab("Feria de comidas")} style={{fontSize:11,color:"#94a3b8",background:"none",border:"none",cursor:"pointer",fontWeight:400}}>Ver todos →</button>
+              <div style={{fontSize:17,fontWeight:900,color:"#0f172a",letterSpacing:-0.3}}>🍽️ Feria de comida</div>
+              <button onClick={()=>setTab("Feria de comida")} style={{fontSize:11,color:"#94a3b8",background:"none",border:"none",cursor:"pointer",fontWeight:400}}>Ver todos →</button>
             </div>
             <div style={{display:"flex",gap:12,overflowX:"auto",paddingBottom:8}}>
               {allRestaurantes.filter(r=>r.activo).slice(0,6).map(r=>(
-                <div key={r.id} onClick={()=>{setTab("Feria de comidas");setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);}} style={{flexShrink:0,textAlign:"center",cursor:"pointer",width:72}}>
+                <div key={r.id} onClick={()=>{setTab("Feria de comida");setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);}} style={{flexShrink:0,textAlign:"center",cursor:"pointer",width:72}}>
                   <div style={{width:60,height:60,borderRadius:"50%",background:r.logo_url?"#f8fafc":getAvatarColor(r.negocio),display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",padding:r.logo_url?4:0,margin:"0 auto",border:"2px solid #dcfce7"}}>
                       {r.logo_url
                         ?<img src={r.logo_url} alt="" style={{width:"100%",height:"100%",objectFit:"contain"}} onError={e=>{e.target.style.display="none";e.target.parentNode.style.background=getAvatarColor(r.negocio);e.target.parentNode.innerHTML=`<span style="color:#fff;font-size:22px;font-weight:900">${(r.negocio||"?")[0].toUpperCase()}</span>`;}}/>
@@ -1616,11 +1616,11 @@ const VE_ESTADOS_MUNICIPIOS={
           <div style={{padding:"0 16px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 10px"}}>
               <div style={{fontSize:17,fontWeight:900,color:"#0f172a",letterSpacing:-0.3}}>🔥 Promociones activas</div>
-              <button onClick={()=>{setTab("Feria de comidas");}} style={{fontSize:11,color:"#94a3b8",background:"none",border:"none",cursor:"pointer",fontWeight:400}}>Ver todo →</button>
+              <button onClick={()=>{setTab("Feria de comida");}} style={{fontSize:11,color:"#94a3b8",background:"none",border:"none",cursor:"pointer",fontWeight:400}}>Ver todo →</button>
             </div>
             <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:8}}>
               {provPromos.slice(0,6).map(p=>(
-                <div key={p.id} onClick={()=>setTab("Feria de comidas")} style={{flexShrink:0,width:140,background:"#fff",borderRadius:12,border:"1px solid #fde68a",overflow:"hidden",cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
+                <div key={p.id} onClick={()=>setTab("Feria de comida")} style={{flexShrink:0,width:140,background:"#fff",borderRadius:12,border:"1px solid #fde68a",overflow:"hidden",cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
                   {p.foto_url?<img src={p.foto_url} alt={p.nombre} style={{width:"100%",height:75,objectFit:"cover"}}/>:<div style={{height:75,background:"#fef9c3",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>🎁</div>}
                   <div style={{padding:"6px 8px"}}>
                     <div style={{fontSize:11,color:"#fff",fontWeight:800,background:"#ea580c",padding:"2px 6px",borderRadius:6,display:"inline-block",letterSpacing:0.3}}>🏷️ PROMO</div>
@@ -2101,7 +2101,7 @@ const VE_ESTADOS_MUNICIPIOS={
         )}
       </>)}
 
-      {tab==="Feria de comidas"&&(<>
+      {tab==="Feria de comida"&&(<>
         {restauranteActivo?(
           /* -- MENÚ DEL RESTAURANTE -- */
           <div>
@@ -2236,8 +2236,8 @@ const VE_ESTADOS_MUNICIPIOS={
               <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
                 <div style={{width:48,height:48,background:"rgba(255,255,255,0.15)",borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>🍽️</div>
                 <div>
-                  <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:-0.5}}>Feria de comidas</div>
-                  <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",marginTop:1}}>Restaurantes y cocinas de {ubiActiva.municipio}</div>
+                  <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:-0.5}}>Feria de comida</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",marginTop:1}}>Restaurantes, cocinas y más de {ubiActiva.municipio}</div>
                 </div>
               </div>
               <input style={{width:"100%",padding:"11px 16px",borderRadius:12,border:"none",fontSize:13,background:"rgba(255,255,255,0.15)",color:"#fff",boxSizing:"border-box",outline:"none"}} placeholder="🔍  Buscar comida o restaurantes…" value={search} onChange={e=>setSearch(e.target.value)}/>
@@ -2302,6 +2302,15 @@ const VE_ESTADOS_MUNICIPIOS={
                 </div>
               )}
               <div style={{...s.sec,paddingTop:12}}>
+                {/* BOTÓN REGISTRO VENDEDORES DE COMIDA */}
+                <button onClick={()=>{setTab("Proveedores");}} style={{width:"100%",background:"linear-gradient(135deg,#9a3412,#ea580c,#f97316)",color:"#fff",border:"none",borderRadius:14,padding:"14px 16px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginBottom:14,boxShadow:"0 4px 16px rgba(234,88,12,0.35)"}}>
+                  <span style={{fontSize:22}}>🍽️</span>
+                  <div style={{textAlign:"left"}}>
+                    <div style={{fontSize:14,fontWeight:900,letterSpacing:-0.3}}>¿Vendes comida? ¡Abre tu vitrina gratis!</div>
+                    <div style={{fontSize:11,opacity:0.85,marginTop:1}}>Restaurantes · Cocinas · Postres · Comida casera</div>
+                  </div>
+                  <span style={{fontSize:18,marginLeft:"auto"}}>→</span>
+                </button>
                 {allRestaurantes.length===0&&(
                   <div style={{textAlign:"center",padding:"40px 16px",color:"#94a3b8"}}>
                     <div style={{fontSize:40,marginBottom:10}}>🍽️</div>
@@ -5046,7 +5055,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
         if(superItems.length>0){
           grupos["__super__"]={nombre:"Supermercado",tipo:"super",wa:null,items:superItems,delivery:true,costo:zonaSel?.costo_delivery||2,gratis:parseFloat(process?.env?.NEXT_PUBLIC_FREE_MIN||20),retiro:false};
         }
-        // — Feria de comidas (cartRest)
+        // — Feria de comida (cartRest)
         Object.values(cartRest).forEach(i=>{
           const k=i.kitchen||"Sin proveedor";
           if(!grupos[k])grupos[k]={nombre:k,tipo:"rest",wa:i.kitchenWa||"",items:[],delivery:i.kitchenDelivery,costo:i.kitchenDeliveryCosto||0,gratis:i.kitchenDeliveryGratis||15,retiro:i.kitchenRetiro};
