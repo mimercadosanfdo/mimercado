@@ -45,7 +45,7 @@ const MOTO_MARCAS = ["Honda","Yamaha","Suzuki","Kawasaki","TVS","AKT","Otro"];
 const TRANSMISION = ["Manual","Automático"];
 const COMBUSTIBLE = ["Gasolina","Diesel","Eléctrico","Híbrido"];
 const TIPO_OPERACION = ["Venta","Alquiler"];
-const REMATE_CATS = ["Electrodomésticos","Ropa y calzado","Muebles","Electrónica","Repuestos","Herramientas","Hogar","Juguetes","Otros"];
+const REMATE_CATS = ["Electrodomésticos","Electrónica","Ropa y calzado","Calzado","Muebles y hogar","Repuestos","Herramientas","Juguetes y niños","Empleo / Trabajo","Animales y mascotas","Otros"];
 const TIPO_NEGOCIO = [
   "Restaurante / Cocina / Comida",
   "Tienda / Negocio local",
@@ -325,6 +325,8 @@ const VE_ESTADOS_MUNICIPIOS={
   const [clasifAdminFiltro,setClasifAdminFiltro]=useState("pendientes");
   const [editClasif,setEditClasif]=useState(null);
   const [clasificadoGeoFiltro,setClasificadoGeoFiltro]=useState("todo"); // "todo" | "miMunicipio"
+  const [clasificadoSearch,setClasificadoSearch]=useState("");
+  const [clasificadoSort,setClasificadoSort]=useState("reciente"); // "reciente"|"menor"|"mayor"
   const [newClasificado,setNewClasificado]=useState({
     tipo:"Vehículos",titulo:"",descripcion:"",precio:"",negociable:false,categoria:"Vehículos",
     marca:"",modelo:"",anio:"",kilometraje:"",color:"",transmision:"Manual",combustible:"Gasolina",
@@ -1871,16 +1873,27 @@ const VE_ESTADOS_MUNICIPIOS={
 
       {/* REMATES */}
       {(tab==="Mercadito local"||tab==="Mercadito")&&(<>
-        <div style={s.banner}>
-          <p style={s.bT}>Mercadito San Fernando 🏷️</p>
-          <p style={s.bS}>Compra y vende en San Fernando · Contacto directo</p>
-          <span style={s.bdg("#22c55e","#fff")}>✓ Gratis publicar</span>
-          <span style={s.bdg(A,P)}>Contacto directo al vendedor</span>
+        {/* HERO BANNER */}
+        <div style={{background:"linear-gradient(135deg,#78350f 0%,#b45309 50%,#d97706 100%)",padding:"20px 16px 18px",color:"#fff",position:"relative",overflow:"hidden"}}>
+          <div style={{position:"absolute",top:-20,right:-20,width:120,height:120,borderRadius:"50%",background:"rgba(255,255,255,0.05)"}}/>
+          <div style={{position:"absolute",bottom:-30,left:-10,width:80,height:80,borderRadius:"50%",background:"rgba(255,255,255,0.04)"}}/>
+          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10,position:"relative"}}>
+            <div style={{width:44,height:44,borderRadius:14,background:"rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🏷️</div>
+            <div>
+              <div style={{fontSize:20,fontWeight:900,letterSpacing:-0.5,lineHeight:1}}>Mercadito Local</div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.65)",marginTop:2}}>Compra y vende en San Fernando</div>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap",position:"relative"}}>
+            <span style={{background:"rgba(34,197,94,0.25)",border:"1px solid rgba(34,197,94,0.4)",color:"#86efac",fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:20}}>✓ Gratis publicar</span>
+            <span style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.15)",color:"rgba(255,255,255,0.8)",fontSize:10,fontWeight:600,padding:"3px 10px",borderRadius:20}}>⚡ Contacto directo</span>
+            <span style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.15)",color:"rgba(255,255,255,0.8)",fontSize:10,fontWeight:600,padding:"3px 10px",borderRadius:20}}>📍 Solo San Fernando</span>
+          </div>
         </div>
 
         {/* BOTÓN PUBLICAR */}
         <div style={{padding:"12px 16px 0"}}>
-          <button onClick={()=>setShowPublicarRemate(!showPublicarRemate)} style={{...s.btn,marginTop:0,background:showPublicarRemate?"#64748b":"#f59e0b",color:"#fff",boxShadow:"0 2px 8px rgba(245,158,11,0.3)"}}>
+          <button onClick={()=>setShowPublicarRemate(!showPublicarRemate)} style={{width:"100%",padding:"14px",borderRadius:14,border:"none",background:showPublicarRemate?"#64748b":"linear-gradient(135deg,#b45309,#f59e0b)",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:showPublicarRemate?"none":"0 4px 16px rgba(245,158,11,0.4)",letterSpacing:-0.2}}>
             {showPublicarRemate?"✕ Cancelar":"➕ Publicar mi artículo gratis"}
           </button>
         </div>
@@ -1948,29 +1961,43 @@ const VE_ESTADOS_MUNICIPIOS={
 
         {/* LISTA DE REMATES */}
         {!showPublicarRemate&&(
-          <div style={{...s.sec,paddingTop:12}}>
+          <div style={{padding:"8px 16px 24px"}}>
             {remates.filter(r=>(remateCat==="Todos"||r.categoria===remateCat)&&(!remateSearch||r.titulo.toLowerCase().includes(remateSearch.toLowerCase())||r.descripcion?.toLowerCase().includes(remateSearch.toLowerCase()))).length===0&&(
-              <div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}>
-                <div style={{fontSize:40}}>🔍</div>
-                <p>No hay artículos en esta categoría</p>
-                <button onClick={()=>setShowPublicarRemate(true)} style={{...s.btn,maxWidth:260,margin:"12px auto 0"}}>Sé el primero en publicar</button>
+              <div style={{textAlign:"center",padding:"48px 16px",color:"#94a3b8"}}>
+                <div style={{fontSize:48,marginBottom:12}}>🏷️</div>
+                <div style={{fontSize:15,fontWeight:700,color:"#475569",marginBottom:4}}>{remateSearch?"Sin resultados para \""+remateSearch+"\"":"No hay artículos en esta categoría"}</div>
+                <div style={{fontSize:12,color:"#94a3b8",marginBottom:16}}>Sé el primero en publicar</div>
+                <button onClick={()=>setShowPublicarRemate(true)} style={{...s.btn,maxWidth:240,margin:"0 auto",background:"linear-gradient(135deg,#b45309,#f59e0b)"}}>➕ Publicar artículo</button>
               </div>
             )}
-            <div style={s.grid}>
-              {remates.filter(r=>(remateCat==="Todos"||r.categoria===remateCat)&&(!remateSearch||r.titulo.toLowerCase().includes(remateSearch.toLowerCase())||r.descripcion?.toLowerCase().includes(remateSearch.toLowerCase()))).map(r=>(
-                <div key={r.id} style={{...s.card,position:"relative"}}>
-                  {r.foto_url?<img src={r.foto_url} alt={r.titulo} style={s.cImg}/>:<div style={{...s.cEm,background:"#f1f5f9",borderRadius:8,padding:"16px 0"}}>🏷️</div>}
-                  <div style={{fontSize:10,fontWeight:600,background:"#fef3c7",color:"#92400e",padding:"2px 7px",borderRadius:8,alignSelf:"flex-start"}}>{r.categoria}</div>
-                  <div style={s.cNm}>{r.titulo}</div>
-                  {r.descripcion&&<div style={{fontSize:10,color:"#94a3b8",lineHeight:1.3}}>{r.descripcion}</div>}
-                  <div style={s.cBt}>
-                    <div><div style={s.cPr}>${parseFloat(r.precio).toFixed(2)}</div><div style={{fontSize:10,color:"#94a3b8"}}>{r.vendedor_nombre}</div></div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+              {remates.filter(r=>(remateCat==="Todos"||r.categoria===remateCat)&&(!remateSearch||r.titulo.toLowerCase().includes(remateSearch.toLowerCase())||r.descripcion?.toLowerCase().includes(remateSearch.toLowerCase()))).map(r=>{
+                const diasPublicado=Math.floor((new Date()-new Date(r.created_at))/(1000*60*60*24));
+                const esNuevo=diasPublicado<2;
+                return(
+                  <div key={r.id} style={{background:"#fff",borderRadius:16,overflow:"hidden",border:"1px solid #e8e8f0",boxShadow:"0 2px 10px rgba(0,0,0,0.06)",display:"flex",flexDirection:"column"}}>
+                    <div style={{position:"relative"}}>
+                      {r.foto_url
+                        ?<img src={r.foto_url} alt={r.titulo} style={{width:"100%",height:130,objectFit:"cover"}}/>
+                        :<div style={{height:100,background:"linear-gradient(135deg,#78350f,#d97706)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36}}>🏷️</div>
+                      }
+                      {esNuevo&&<span style={{position:"absolute",top:6,left:6,background:"#f59e0b",color:"#fff",fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:20,boxShadow:"0 2px 6px rgba(245,158,11,0.4)"}}>🔥 NUEVO</span>}
+                    </div>
+                    <div style={{padding:"8px 10px",flex:1,display:"flex",flexDirection:"column",gap:4}}>
+                      <span style={{fontSize:9,fontWeight:700,background:"#fef3c7",color:"#92400e",padding:"2px 7px",borderRadius:8,alignSelf:"flex-start"}}>{r.categoria}</span>
+                      <div style={{fontSize:12,fontWeight:800,color:"#1e293b",lineHeight:1.3}}>{r.titulo}</div>
+                      {r.descripcion&&<div style={{fontSize:10,color:"#94a3b8",lineHeight:1.3,flex:1}}>{r.descripcion.length>50?r.descripcion.slice(0,50)+"...":r.descripcion}</div>}
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:4}}>
+                        <div style={{fontSize:16,fontWeight:900,color:"#b45309"}}>${parseFloat(r.precio).toFixed(2)}</div>
+                        <div style={{fontSize:10,color:"#94a3b8"}}>{r.vendedor_nombre?.split(" ")[0]}</div>
+                      </div>
+                      <button onClick={e=>{e.stopPropagation();const _n=(r.vendedor_whatsapp||r.vendedor_telefono||"").replace(/\D/g,"");const num=_n.startsWith("0")?"58"+_n.slice(1):_n.startsWith("58")?_n:"58"+_n;window.open("https://wa.me/"+num+"?text="+encodeURIComponent("Hola "+r.vendedor_nombre+", vi tu artículo *"+r.titulo+"* en Lokl y me interesa. ¿Sigue disponible?"),"_blank");}} style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:10,padding:"8px",fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4,marginTop:4}}>
+                        📲 Contactar
+                      </button>
+                    </div>
                   </div>
-                  <button onClick={()=>{const _n=(r.vendedor_whatsapp||"").replace(/\D/g,"");window.location.href="https://wa.me/"+_n+"?text="+encodeURIComponent("Hola "+r.vendedor_nombre+", vi tu artículo *"+r.titulo+"* en MiMercado y me interesa. ¿Sigue disponible?");}} style={{...s.btnWa,marginTop:6,padding:"8px",fontSize:12}}>
-                    📲 Contactar vendedor
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -2406,46 +2433,47 @@ const VE_ESTADOS_MUNICIPIOS={
 
       {/* CLASIFICADOS */}
       {tab==="Clasificados"&&(<>
-        <div style={s.banner}>
-          <p style={s.bT}>Clasificados Venezuela 🚗🏠🏍️</p>
-          <p style={s.bS}>Vehículos · Motos · Inmuebles · Todo el país</p>
-          <span style={s.bdg("#22c55e","#fff")}>✓ Gratis publicar</span>
-          <span style={s.bdg(A,P)}>Hasta 4 fotos</span>
-        </div>
-        {/* FILTRO GEOGRÁFICO CLASIFICADOS */}
-        <div style={{padding:"10px 16px 0",display:"flex",alignItems:"center",gap:8}}>
-          <span style={{fontSize:11,color:"#64748b",flexShrink:0}}>📍 Mostrando:</span>
-          <div style={{display:"flex",gap:6,flex:1}}>
-            <button onClick={()=>setClasificadoGeoFiltro("todo")} style={{flex:1,padding:"6px 10px",borderRadius:20,border:"none",fontSize:11,fontWeight:700,cursor:"pointer",background:clasificadoGeoFiltro==="todo"?"#0f172a":"#f1f5f9",color:clasificadoGeoFiltro==="todo"?"#fff":"#64748b"}}>
-              🌎 Todo Venezuela
-            </button>
-            <button onClick={()=>setClasificadoGeoFiltro("miMunicipio")} style={{flex:1,padding:"6px 10px",borderRadius:20,border:"none",fontSize:11,fontWeight:700,cursor:"pointer",background:clasificadoGeoFiltro==="miMunicipio"?"#25D366":"#f1f5f9",color:clasificadoGeoFiltro==="miMunicipio"?"#fff":"#64748b"}}>
-              📍 {ubiActiva.municipio}
-            </button>
+        {/* HERO BANNER */}
+        <div style={{background:"linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#4338ca 100%)",padding:"20px 16px 18px",color:"#fff",position:"relative",overflow:"hidden"}}>
+          <div style={{position:"absolute",top:-20,right:-20,width:120,height:120,borderRadius:"50%",background:"rgba(255,255,255,0.05)"}}/>
+          <div style={{position:"absolute",bottom:-30,left:-10,width:80,height:80,borderRadius:"50%",background:"rgba(255,255,255,0.04)"}}/>
+          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10,position:"relative"}}>
+            <div style={{width:44,height:44,borderRadius:14,background:"rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🚗</div>
+            <div>
+              <div style={{fontSize:20,fontWeight:900,letterSpacing:-0.5,lineHeight:1}}>Clasificados</div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.65)",marginTop:2}}>Vehículos · Motos · Inmuebles · Venezuela</div>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap",position:"relative"}}>
+            <span style={{background:"rgba(34,197,94,0.25)",border:"1px solid rgba(34,197,94,0.4)",color:"#86efac",fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:20}}>✓ Gratis publicar</span>
+            <span style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.15)",color:"rgba(255,255,255,0.8)",fontSize:10,fontWeight:600,padding:"3px 10px",borderRadius:20}}>📷 Hasta 4 fotos</span>
+            <span style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.15)",color:"rgba(255,255,255,0.8)",fontSize:10,fontWeight:600,padding:"3px 10px",borderRadius:20}}>⚡ Contacto directo</span>
           </div>
         </div>
 
         {/* BOTÓN PUBLICAR */}
         <div style={{padding:"12px 16px 0"}}>
-          <button onClick={()=>{setShowPublicarClasificado(!showPublicarClasificado);setClasificadoSeleccionado(null);}} style={{...s.btn,marginTop:0,background:showPublicarClasificado?"#64748b":"#16a34a"}}>
+          <button onClick={()=>{setShowPublicarClasificado(!showPublicarClasificado);setClasificadoSeleccionado(null);}} style={{width:"100%",padding:"14px",borderRadius:14,border:"none",background:showPublicarClasificado?"#64748b":"linear-gradient(135deg,#4338ca,#6366f1)",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:showPublicarClasificado?"none":"0 4px 16px rgba(99,102,241,0.4)",letterSpacing:-0.2}}>
             {showPublicarClasificado?"✕ Cancelar publicación":"➕ Publicar mi anuncio gratis"}
           </button>
         </div>
 
         {/* FORMULARIO PUBLICAR */}
         {showPublicarClasificado&&(
-          <div style={{...s.sec,paddingTop:12}}>
+          <div style={{padding:"12px 16px 0"}}>
             {pmsg&&<div style={s.msg(pmsg.includes("✅"))}>{pmsg}</div>}
-            <div style={s.pc}>
-              <div style={s.pT}>📋 Nuevo anuncio</div>
-              <div style={{...s.ib,background:"#f0fdf4",marginBottom:12}}><div style={{fontSize:12,color:"#15803d"}}>✓ Gratis · Revisión del admin · Contacto directo por WhatsApp</div></div>
+            <div style={{background:"#fff",borderRadius:18,padding:16,border:"1px solid #e2e8f0",boxShadow:"0 2px 12px rgba(0,0,0,0.06)"}}>
+              <div style={{fontSize:15,fontWeight:800,color:"#1e1b4b",marginBottom:4}}>📋 Nuevo anuncio</div>
+              <div style={{background:"linear-gradient(135deg,#f0fdf4,#dcfce7)",border:"1px solid #86efac",borderRadius:10,padding:"8px 12px",marginBottom:14,fontSize:12,color:"#15803d",fontWeight:600}}>
+                ✓ Gratis · Revisión del admin · Contacto directo por WhatsApp
+              </div>
 
               {/* TIPO */}
               <label style={s.lbl}>Tipo de anuncio *</label>
-              <div style={{display:"flex",gap:8,marginBottom:10}}>
+              <div style={{display:"flex",gap:8,marginBottom:12}}>
                 {CLASIF_TIPOS.map(t=>(
-                  <button key={t} onClick={()=>setNewClasificado({...newClasificado,tipo:t,categoria:t})} style={{flex:1,padding:"10px 4px",borderRadius:10,border:newClasificado.tipo===t?`2px solid ${P}`:"1px solid #e2e8f0",background:newClasificado.tipo===t?"#0f172a":"#fff",color:newClasificado.tipo===t?"#fff":"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>
-                    {t==="Vehículos"?"🚗":t==="Motos"?"🏍️":"🏠"} {t}
+                  <button key={t} onClick={()=>setNewClasificado({...newClasificado,tipo:t,categoria:t})} style={{flex:1,padding:"12px 4px",borderRadius:12,border:"none",background:newClasificado.tipo===t?"linear-gradient(135deg,#4338ca,#6366f1)":"#f8fafc",color:newClasificado.tipo===t?"#fff":"#64748b",fontSize:12,fontWeight:700,cursor:"pointer",boxShadow:newClasificado.tipo===t?"0 2px 8px rgba(99,102,241,0.3)":"none",transition:"all 0.15s"}}>
+                    {t==="Vehículos"?"🚗":t==="Motos"?"🏍️":"🏠"}<br/><span style={{fontSize:10}}>{t}</span>
                   </button>
                 ))}
               </div>
@@ -2489,7 +2517,7 @@ const VE_ESTADOS_MUNICIPIOS={
               {/* CAMPOS INMUEBLES */}
               {newClasificado.tipo==="Inmuebles"&&(<>
                 <label style={s.lbl}>Tipo de operación *</label>
-                <div style={{display:"flex",gap:8,marginBottom:10}}>{TIPO_OPERACION.map(t=>(<button key={t} onClick={()=>setNewClasificado({...newClasificado,tipo_operacion:t})} style={{flex:1,padding:"9px",borderRadius:10,border:newClasificado.tipo_operacion===t?`2px solid ${P}`:"1px solid #e2e8f0",background:newClasificado.tipo_operacion===t?P:"#fff",color:newClasificado.tipo_operacion===t?"#fff":"#64748b",fontSize:13,fontWeight:600,cursor:"pointer"}}>{t==="Venta"?"🏷️ Venta":"🔑 Alquiler"}</button>))}</div>
+                <div style={{display:"flex",gap:8,marginBottom:10}}>{TIPO_OPERACION.map(t=>(<button key={t} onClick={()=>setNewClasificado({...newClasificado,tipo_operacion:t})} style={{flex:1,padding:"10px",borderRadius:10,border:"none",background:newClasificado.tipo_operacion===t?"linear-gradient(135deg,#4338ca,#6366f1)":"#f8fafc",color:newClasificado.tipo_operacion===t?"#fff":"#64748b",fontSize:13,fontWeight:700,cursor:"pointer"}}>{t==="Venta"?"🏷️ Venta":"🔑 Alquiler"}</button>))}</div>
                 <label style={s.lbl}>Sector / Urbanización</label>
                 <input style={s.inp} placeholder="Sector Norte, Barrio El Carmen..." value={newClasificado.sector} onChange={e=>setNewClasificado({...newClasificado,sector:e.target.value})}/>
                 <div style={{display:"flex",gap:8}}>
@@ -2500,31 +2528,30 @@ const VE_ESTADOS_MUNICIPIOS={
                 <input style={s.inp} placeholder="120 m²" value={newClasificado.metros2} onChange={e=>setNewClasificado({...newClasificado,metros2:e.target.value})}/>
               </>)}
 
-              {/* DESCRIPCIÓN */}
-              <label style={s.lbl}>Descripción (detalles adicionales)</label>
+              <label style={s.lbl}>Descripción</label>
               <input style={s.inp} placeholder="Estado, equipamiento, motivo de venta..." value={newClasificado.descripcion} onChange={e=>setNewClasificado({...newClasificado,descripcion:e.target.value})}/>
 
-              {/* PRECIO */}
               <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
                 <div style={{flex:1}}><label style={s.lbl}>Precio ($) *</label><input style={s.inp} type="number" placeholder="5000" value={newClasificado.precio} onChange={e=>setNewClasificado({...newClasificado,precio:e.target.value})}/></div>
-                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10,background:"#f1f5f9",padding:"11px 12px",borderRadius:10,flexShrink:0}}>
-                  <input type="checkbox" id="negoc" checked={newClasificado.negociable} onChange={e=>setNewClasificado({...newClasificado,negociable:e.target.checked})} style={{width:16,height:16}}/>
-                  <label htmlFor="negoc" style={{fontSize:12,cursor:"pointer",whiteSpace:"nowrap"}}>Negociable</label>
+                <div onClick={()=>setNewClasificado({...newClasificado,negociable:!newClasificado.negociable})} style={{display:"flex",alignItems:"center",gap:6,marginBottom:10,background:newClasificado.negociable?"#f0fdf4":"#f8fafc",border:`1px solid ${newClasificado.negociable?"#86efac":"#e2e8f0"}`,padding:"11px 12px",borderRadius:10,flexShrink:0,cursor:"pointer"}}>
+                  <div style={{width:16,height:16,borderRadius:4,border:`2px solid ${newClasificado.negociable?"#22c55e":"#cbd5e1"}`,background:newClasificado.negociable?"#22c55e":"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    {newClasificado.negociable&&<span style={{color:"#fff",fontSize:10,fontWeight:900}}>✓</span>}
+                  </div>
+                  <span style={{fontSize:11,fontWeight:600,color:newClasificado.negociable?"#15803d":"#94a3b8",whiteSpace:"nowrap"}}>Negociable</span>
                 </div>
               </div>
 
-              {/* FOTOS */}
-              <label style={s.lbl}>📸 Fotos (hasta 4 fotos)</label>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+              <label style={s.lbl}>📸 Fotos (hasta 4)</label>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
                 {[0,1,2,3].map(i=>(
                   <div key={i} style={{position:"relative"}}>
                     {clasifFotosPrev[i]?(
                       <div style={{position:"relative"}}>
-                        <img src={clasifFotosPrev[i]} alt="" style={{width:"100%",height:90,objectFit:"cover",borderRadius:8}}/>
+                        <img src={clasifFotosPrev[i]} alt="" style={{width:"100%",height:90,objectFit:"cover",borderRadius:10}}/>
                         <button onClick={()=>{const f=[...clasifFotos];const p=[...clasifFotosPrev];f[i]=null;p[i]=null;setClasifFotos(f);setClasifFotosPrev(p);}} style={{position:"absolute",top:4,right:4,background:"#ef4444",color:"#fff",border:"none",borderRadius:"50%",width:22,height:22,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
                       </div>
                     ):(
-                      <label style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:90,background:"#f8fafc",borderRadius:8,border:"2px dashed #e2e8f0",cursor:"pointer",gap:4}}>
+                      <label style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:90,background:"#f8fafc",borderRadius:10,border:"2px dashed #e2e8f0",cursor:"pointer",gap:4}}>
                         <span style={{fontSize:22}}>📷</span>
                         <span style={{fontSize:10,color:"#94a3b8"}}>Foto {i+1}</span>
                         <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){const arr=[...clasifFotos];const prev=[...clasifFotosPrev];arr[i]=f;prev[i]=URL.createObjectURL(f);setClasifFotos(arr);setClasifFotosPrev(prev);}}}/>
@@ -2534,14 +2561,12 @@ const VE_ESTADOS_MUNICIPIOS={
                 ))}
               </div>
 
-              {/* CONTACTO */}
               <label style={s.lbl}>Tu nombre *</label>
               <input style={s.inp} placeholder="Juan Pérez" value={newClasificado.vendedor_nombre} onChange={e=>setNewClasificado({...newClasificado,vendedor_nombre:e.target.value})}/>
-              <label style={s.lbl}>Tu WhatsApp * (compradores te contactarán aquí)</label>
+              <label style={s.lbl}>Tu WhatsApp *</label>
               <input style={s.inp} placeholder="+58 424-000-0000" value={newClasificado.vendedor_telefono} onChange={e=>setNewClasificado({...newClasificado,vendedor_telefono:e.target.value})}/>
 
-              {/* UBICACIÓN DEL ANUNCIO */}
-              <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"10px 12px",marginBottom:10}}>
+              <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:"10px 12px",marginBottom:12}}>
                 <div style={{fontSize:12,fontWeight:700,color:"#1d4ed8",marginBottom:8}}>📍 ¿Dónde está ubicado?</div>
                 <div style={{display:"flex",gap:8}}>
                   <div style={{flex:1}}>
@@ -2559,63 +2584,118 @@ const VE_ESTADOS_MUNICIPIOS={
                 </div>
               </div>
 
-              <button style={s.btn} onClick={publishClasificado} disabled={loading}>{loading?"Subiendo fotos...":"📤 Publicar anuncio"}</button>
+              <button style={{...s.btn,background:"linear-gradient(135deg,#4338ca,#6366f1)",boxShadow:"0 4px 16px rgba(99,102,241,0.35)"}} onClick={publishClasificado} disabled={loading}>{loading?"Subiendo fotos...":"📤 Publicar anuncio"}</button>
             </div>
           </div>
         )}
 
-        {/* FILTROS TIPO */}
+        {/* FILTROS + BÚSQUEDA + ORDEN */}
         {!showPublicarClasificado&&!clasificadoSeleccionado&&(
-          <div style={s.cs}>
-            {["Todos","Vehículos","Motos","Inmuebles"].map(t=>(
-              <button key={t} style={s.cb(clasificadoTipo===t)} onClick={()=>setClasificadoTipo(t)}>
-                {t==="Todos"?"🔍 Todos":t==="Vehículos"?"🚗 Vehículos":t==="Motos"?"🏍️ Motos":"🏠 Inmuebles"}
-              </button>
-            ))}
+          <div style={{padding:"12px 16px 0"}}>
+            {/* BUSCADOR */}
+            <div style={{position:"relative",marginBottom:10}}>
+              <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:15,pointerEvents:"none"}}>🔍</span>
+              <input style={{width:"100%",padding:"11px 12px 11px 36px",borderRadius:12,border:"2px solid #e2e8f0",fontSize:13,background:"#fff",boxSizing:"border-box",outline:"none"}} placeholder="Buscar en clasificados..." value={clasificadoSearch} onChange={e=>setClasificadoSearch(e.target.value)}/>
+              {clasificadoSearch&&<button onClick={()=>setClasificadoSearch("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"#e2e8f0",border:"none",borderRadius:"50%",width:20,height:20,fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>}
+            </div>
+            {/* FILTROS TIPO */}
+            <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4,marginBottom:8}}>
+              {["Todos","Vehículos","Motos","Inmuebles"].map(t=>(
+                <button key={t} onClick={()=>setClasificadoTipo(t)} style={{flexShrink:0,padding:"7px 14px",borderRadius:20,border:"none",fontSize:12,fontWeight:700,cursor:"pointer",background:clasificadoTipo===t?"#1e1b4b":"#f1f5f9",color:clasificadoTipo===t?"#fff":"#64748b",transition:"all 0.15s"}}>
+                  {t==="Todos"?"🔍 Todos":t==="Vehículos"?"🚗 Autos":t==="Motos"?"🏍️ Motos":"🏠 Inmuebles"}
+                </button>
+              ))}
+            </div>
+            {/* FILA GEO + ORDEN */}
+            <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:4}}>
+              <div style={{display:"flex",gap:4,flex:1}}>
+                <button onClick={()=>setClasificadoGeoFiltro("todo")} style={{flex:1,padding:"6px 8px",borderRadius:10,border:"none",fontSize:10,fontWeight:700,cursor:"pointer",background:clasificadoGeoFiltro==="todo"?"#1e1b4b":"#f1f5f9",color:clasificadoGeoFiltro==="todo"?"#fff":"#64748b"}}>🌎 Venezuela</button>
+                <button onClick={()=>setClasificadoGeoFiltro("miMunicipio")} style={{flex:1,padding:"6px 8px",borderRadius:10,border:"none",fontSize:10,fontWeight:700,cursor:"pointer",background:clasificadoGeoFiltro==="miMunicipio"?"#25D366":"#f1f5f9",color:clasificadoGeoFiltro==="miMunicipio"?"#fff":"#64748b"}}>📍 {ubiActiva.municipio}</button>
+              </div>
+              <select value={clasificadoSort} onChange={e=>setClasificadoSort(e.target.value)} style={{padding:"6px 8px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:11,fontWeight:600,color:"#475569",background:"#fff",cursor:"pointer"}}>
+                <option value="reciente">🕐 Recientes</option>
+                <option value="menor">💰 Menor precio</option>
+                <option value="mayor">💰 Mayor precio</option>
+              </select>
+            </div>
           </div>
         )}
 
         {/* DETALLE DE UN CLASIFICADO */}
         {clasificadoSeleccionado&&(
-          <div style={{...s.sec,paddingTop:12}}>
-            <button onClick={()=>setClasificadoSeleccionado(null)} style={{...s.btnG,marginTop:0,marginBottom:12}}>← Volver a la lista</button>
-            {/* GALERÍA DE FOTOS */}
+          <div style={{padding:"12px 16px 0"}}>
+            <button onClick={()=>setClasificadoSeleccionado(null)} style={{display:"flex",alignItems:"center",gap:6,background:"#f1f5f9",border:"none",borderRadius:10,padding:"8px 14px",fontSize:13,fontWeight:600,color:"#475569",cursor:"pointer",marginBottom:12}}>← Volver</button>
+            {/* GALERÍA */}
             {[clasificadoSeleccionado.foto1_url,clasificadoSeleccionado.foto2_url,clasificadoSeleccionado.foto3_url,clasificadoSeleccionado.foto4_url].filter(Boolean).length>0&&(
-              <div style={{display:"grid",gridTemplateColumns:[clasificadoSeleccionado.foto1_url,clasificadoSeleccionado.foto2_url,clasificadoSeleccionado.foto3_url,clasificadoSeleccionado.foto4_url].filter(Boolean).length===1?"1fr":"1fr 1fr",gap:6,marginBottom:12}}>
+              <div style={{display:"grid",gridTemplateColumns:[clasificadoSeleccionado.foto1_url,clasificadoSeleccionado.foto2_url,clasificadoSeleccionado.foto3_url,clasificadoSeleccionado.foto4_url].filter(Boolean).length===1?"1fr":"1fr 1fr",gap:6,marginBottom:12,borderRadius:16,overflow:"hidden"}}>
                 {[clasificadoSeleccionado.foto1_url,clasificadoSeleccionado.foto2_url,clasificadoSeleccionado.foto3_url,clasificadoSeleccionado.foto4_url].filter(Boolean).map((f,i)=>(
-                  <img key={i} src={f} alt="" style={{width:"100%",height:i===0&&[clasificadoSeleccionado.foto1_url,clasificadoSeleccionado.foto2_url,clasificadoSeleccionado.foto3_url,clasificadoSeleccionado.foto4_url].filter(Boolean).length===1?200:130,objectFit:"cover",borderRadius:10}}/>
+                  <img key={i} src={f} alt="" onClick={()=>setImgZoom(f)} style={{width:"100%",height:i===0&&[clasificadoSeleccionado.foto1_url,clasificadoSeleccionado.foto2_url,clasificadoSeleccionado.foto3_url,clasificadoSeleccionado.foto4_url].filter(Boolean).length===1?220:140,objectFit:"cover",cursor:"pointer"}}/>
                 ))}
               </div>
             )}
-            <div style={s.pc}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+            <div style={{background:"#fff",borderRadius:18,padding:16,border:"1px solid #e2e8f0",boxShadow:"0 2px 12px rgba(0,0,0,0.06)",marginBottom:12}}>
+              {/* BADGE TIPO + NUEVO */}
+              <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:8}}>
+                <span style={{background:"#ede9fe",color:"#6d28d9",fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:20}}>
+                  {clasificadoSeleccionado.tipo==="Vehículos"?"🚗":clasificadoSeleccionado.tipo==="Motos"?"🏍️":"🏠"} {clasificadoSeleccionado.tipo}
+                </span>
+                {clasificadoSeleccionado.tipo_operacion&&<span style={{background:"#f0fdf4",color:"#15803d",fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:20}}>{clasificadoSeleccionado.tipo_operacion}</span>}
+                {(()=>{const dias=Math.floor((new Date()-new Date(clasificadoSeleccionado.created_at))/(1000*60*60*24));return dias<2?<span style={{background:"#fef3c7",color:"#92400e",fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:20}}>🔥 NUEVO</span>:null;})()}
+              </div>
+              <div style={{fontSize:18,fontWeight:900,color:"#1e1b4b",marginBottom:4,letterSpacing:-0.3}}>{clasificadoSeleccionado.titulo}</div>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+                <div style={{fontSize:24,fontWeight:900,color:"#16a34a"}}>${parseFloat(clasificadoSeleccionado.precio).toLocaleString()}</div>
+                {clasificadoSeleccionado.negociable&&<span style={{background:"#fef9c3",color:"#854d0e",fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:20}}>💬 Negociable</span>}
+              </div>
+              {/* SPECS GRID */}
+              {[
+                clasificadoSeleccionado.marca&&{l:"Marca",v:clasificadoSeleccionado.marca},
+                clasificadoSeleccionado.modelo&&{l:"Modelo",v:clasificadoSeleccionado.modelo},
+                clasificadoSeleccionado.anio&&{l:"Año",v:clasificadoSeleccionado.anio},
+                clasificadoSeleccionado.kilometraje&&{l:"Kilometraje",v:clasificadoSeleccionado.kilometraje},
+                clasificadoSeleccionado.transmision&&{l:"Transmisión",v:clasificadoSeleccionado.transmision},
+                clasificadoSeleccionado.combustible&&{l:"Combustible",v:clasificadoSeleccionado.combustible},
+                clasificadoSeleccionado.color&&{l:"Color",v:clasificadoSeleccionado.color},
+                clasificadoSeleccionado.habitaciones&&{l:"Habitaciones",v:clasificadoSeleccionado.habitaciones},
+                clasificadoSeleccionado.banos&&{l:"Baños",v:clasificadoSeleccionado.banos},
+                clasificadoSeleccionado.metros2&&{l:"Metros²",v:clasificadoSeleccionado.metros2},
+                clasificadoSeleccionado.sector&&{l:"Sector",v:clasificadoSeleccionado.sector},
+              ].filter(Boolean).length>0&&(
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:12}}>
+                  {[
+                    clasificadoSeleccionado.marca&&{l:"Marca",v:clasificadoSeleccionado.marca},
+                    clasificadoSeleccionado.modelo&&{l:"Modelo",v:clasificadoSeleccionado.modelo},
+                    clasificadoSeleccionado.anio&&{l:"Año",v:clasificadoSeleccionado.anio},
+                    clasificadoSeleccionado.kilometraje&&{l:"Kilometraje",v:clasificadoSeleccionado.kilometraje},
+                    clasificadoSeleccionado.transmision&&{l:"Transmisión",v:clasificadoSeleccionado.transmision},
+                    clasificadoSeleccionado.combustible&&{l:"Combustible",v:clasificadoSeleccionado.combustible},
+                    clasificadoSeleccionado.color&&{l:"Color",v:clasificadoSeleccionado.color},
+                    clasificadoSeleccionado.habitaciones&&{l:"Habitaciones",v:clasificadoSeleccionado.habitaciones},
+                    clasificadoSeleccionado.banos&&{l:"Baños",v:clasificadoSeleccionado.banos},
+                    clasificadoSeleccionado.metros2&&{l:"Metros²",v:clasificadoSeleccionado.metros2},
+                    clasificadoSeleccionado.sector&&{l:"Sector",v:clasificadoSeleccionado.sector},
+                  ].filter(Boolean).map((spec,i)=>(
+                    <div key={i} style={{background:"#f8fafc",borderRadius:10,padding:"8px 10px",border:"1px solid #f1f5f9"}}>
+                      <div style={{fontSize:9,color:"#94a3b8",fontWeight:600,textTransform:"uppercase",letterSpacing:0.5}}>{spec.l}</div>
+                      <div style={{fontSize:13,fontWeight:700,color:"#1e293b",marginTop:2}}>{spec.v}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {clasificadoSeleccionado.descripcion&&<div style={{fontSize:13,color:"#475569",marginBottom:12,lineHeight:1.6,background:"#f8fafc",borderRadius:10,padding:"10px 12px"}}>{clasificadoSeleccionado.descripcion}</div>}
+              {/* UBICACIÓN + DÍAS */}
+              <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
+                {(clasificadoSeleccionado.municipio||clasificadoSeleccionado.estado)&&<span style={{fontSize:11,background:"#eff6ff",color:"#1d4ed8",padding:"4px 10px",borderRadius:20,fontWeight:600}}>📍 {clasificadoSeleccionado.municipio||clasificadoSeleccionado.estado}</span>}
+                {clasificadoSeleccionado.fecha_caducidad&&(()=>{const dias=Math.ceil((new Date(clasificadoSeleccionado.fecha_caducidad)-new Date())/(1000*60*60*24));return dias>0?<span style={{fontSize:11,background:"#f0fdf4",color:"#15803d",padding:"4px 10px",borderRadius:20,fontWeight:600}}>⏳ {dias} días restantes</span>:null;})()}
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",background:"#f8fafc",borderRadius:12,marginBottom:12}}>
+                <div style={{width:36,height:36,borderRadius:10,background:"linear-gradient(135deg,#4338ca,#6366f1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>👤</div>
                 <div>
-                  <div style={{fontSize:11,color:"#7e22ce",fontWeight:700,marginBottom:2}}>{clasificadoSeleccionado.tipo==="Vehículos"?"🚗":clasificadoSeleccionado.tipo==="Motos"?"🏍️":"🏠"} {clasificadoSeleccionado.tipo}</div>
-                  <div style={{fontSize:17,fontWeight:700,color:P}}>{clasificadoSeleccionado.titulo}</div>
-                </div>
-                <div style={{textAlign:"right"}}>
-                  <div style={{fontSize:20,fontWeight:700,color:"#22c55e"}}>${parseFloat(clasificadoSeleccionado.precio).toLocaleString()}</div>
-                  {clasificadoSeleccionado.negociable&&<div style={{fontSize:11,color:"#f59e0b",fontWeight:600}}>Negociable</div>}
+                  <div style={{fontSize:13,fontWeight:700,color:"#1e293b"}}>{clasificadoSeleccionado.vendedor_nombre}</div>
+                  <div style={{fontSize:11,color:"#94a3b8"}}>Vendedor particular</div>
                 </div>
               </div>
-              {/* SPECS */}
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:10}}>
-                {clasificadoSeleccionado.marca&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Marca</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.marca}</div></div>}
-                {clasificadoSeleccionado.modelo&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Modelo</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.modelo}</div></div>}
-                {clasificadoSeleccionado.anio&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Año</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.anio}</div></div>}
-                {clasificadoSeleccionado.kilometraje&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Kilometraje</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.kilometraje}</div></div>}
-                {clasificadoSeleccionado.transmision&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Transmisión</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.transmision}</div></div>}
-                {clasificadoSeleccionado.combustible&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Combustible</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.combustible}</div></div>}
-                {clasificadoSeleccionado.color&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Color</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.color}</div></div>}
-                {clasificadoSeleccionado.tipo_operacion&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Operación</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.tipo_operacion}</div></div>}
-                {clasificadoSeleccionado.habitaciones&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Habitaciones</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.habitaciones}</div></div>}
-                {clasificadoSeleccionado.banos&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Baños</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.banos}</div></div>}
-                {clasificadoSeleccionado.metros2&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Metros²</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.metros2}</div></div>}
-                {clasificadoSeleccionado.sector&&<div style={{background:"#f8fafc",borderRadius:8,padding:"6px 10px"}}><div style={{fontSize:10,color:"#94a3b8"}}>Sector</div><div style={{fontSize:13,fontWeight:600}}>{clasificadoSeleccionado.sector}</div></div>}
-              </div>
-              {clasificadoSeleccionado.descripcion&&<div style={{fontSize:13,color:"#64748b",marginBottom:12,lineHeight:1.6}}>{clasificadoSeleccionado.descripcion}</div>}
-              <div style={{fontSize:12,color:"#64748b",marginBottom:12}}>👤 {clasificadoSeleccionado.vendedor_nombre}</div>
-              <button onClick={()=>{const _n=(clasificadoSeleccionado.vendedor_telefono||"").replace(/\D/g,"");window.location.href="https://wa.me/"+_n+"?text="+encodeURIComponent("Hola "+clasificadoSeleccionado.vendedor_nombre+", vi tu anuncio *"+clasificadoSeleccionado.titulo+"* en MiMercado. ¿Sigue disponible?");}} style={s.btnWa}>
+              <button onClick={()=>{const _n=(clasificadoSeleccionado.vendedor_telefono||"").replace(/\D/g,"");const num=_n.startsWith("0")?"58"+_n.slice(1):_n.startsWith("58")?_n:"58"+_n;window.open("https://wa.me/"+num+"?text="+encodeURIComponent("Hola "+clasificadoSeleccionado.vendedor_nombre+", vi tu anuncio *"+clasificadoSeleccionado.titulo+"* en Lokl. ¿Sigue disponible?"),"_blank");}} style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:900,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 4px 16px rgba(37,211,102,0.35)"}}>
                 📲 Contactar por WhatsApp
               </button>
             </div>
@@ -2624,56 +2704,82 @@ const VE_ESTADOS_MUNICIPIOS={
 
         {/* LISTA DE CLASIFICADOS */}
         {!showPublicarClasificado&&!clasificadoSeleccionado&&(
-          <div style={{...s.sec,paddingTop:8}}>
+          <div style={{padding:"8px 16px 24px"}}>
             {(()=>{
-              const listFiltrada=clasificados.filter(c=>{
+              let lista=clasificados.filter(c=>{
                 const matchTipo=clasificadoTipo==="Todos"||c.tipo===clasificadoTipo;
                 const matchGeo=clasificadoGeoFiltro==="todo"||(c.municipio||"San Fernando")===ubiActiva.municipio;
-                return matchTipo&&matchGeo;
+                const matchSearch=!clasificadoSearch||c.titulo?.toLowerCase().includes(clasificadoSearch.toLowerCase())||c.descripcion?.toLowerCase().includes(clasificadoSearch.toLowerCase())||c.marca?.toLowerCase().includes(clasificadoSearch.toLowerCase())||c.modelo?.toLowerCase().includes(clasificadoSearch.toLowerCase());
+                return matchTipo&&matchGeo&&matchSearch;
               });
-              return(<>
-                {listFiltrada.length===0&&(
-                  <div style={{textAlign:"center",padding:"40px 16px",color:"#94a3b8"}}>
-                    <div style={{fontSize:40,marginBottom:8}}>{clasificadoTipo==="Motos"?"🏍️":clasificadoTipo==="Inmuebles"?"🏠":"🚗"}</div>
-                    <div style={{fontSize:14,fontWeight:600,color:"#475569",marginBottom:4}}>
-                      {clasificadoGeoFiltro==="miMunicipio"?`Sin anuncios en ${ubiActiva.municipio}`:"No hay anuncios en esta categoría"}
-                    </div>
-                    {clasificadoGeoFiltro==="miMunicipio"&&(
-                      <button onClick={()=>setClasificadoGeoFiltro("todo")} style={{fontSize:12,color:"#25D366",background:"none",border:"1px solid #86efac",borderRadius:10,padding:"7px 16px",cursor:"pointer",marginBottom:10}}>
-                        🌎 Ver todos en Venezuela
-                      </button>
-                    )}
-                    <button onClick={()=>setShowPublicarClasificado(true)} style={{...s.btn,maxWidth:260,margin:"8px auto 0"}}>Publicar el primero</button>
+              if(clasificadoSort==="menor")lista=[...lista].sort((a,b)=>parseFloat(a.precio)-parseFloat(b.precio));
+              else if(clasificadoSort==="mayor")lista=[...lista].sort((a,b)=>parseFloat(b.precio)-parseFloat(a.precio));
+              if(lista.length===0)return(
+                <div style={{textAlign:"center",padding:"48px 16px",color:"#94a3b8"}}>
+                  <div style={{fontSize:48,marginBottom:12}}>{clasificadoTipo==="Motos"?"🏍️":clasificadoTipo==="Inmuebles"?"🏠":"🚗"}</div>
+                  <div style={{fontSize:15,fontWeight:700,color:"#475569",marginBottom:4}}>
+                    {clasificadoSearch?"Sin resultados para \""+clasificadoSearch+"\"":clasificadoGeoFiltro==="miMunicipio"?"Sin anuncios en "+ubiActiva.municipio:"No hay anuncios en esta categoría"}
                   </div>
-                )}
-                {listFiltrada.map(c=>(
-                  <div key={c.id} onClick={()=>setClasificadoSeleccionado(c)} style={{background:"#fff",borderRadius:14,marginBottom:12,border:"1px solid #f1f5f9",overflow:"hidden",cursor:"pointer"}}>
-                    {c.foto1_url?<img src={c.foto1_url} alt={c.titulo} style={{width:"100%",height:160,objectFit:"cover"}}/>:<div style={{height:100,background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:40}}>{c.tipo==="Motos"?"🏍️":c.tipo==="Inmuebles"?"🏠":"🚗"}</div>}
-                    <div style={{padding:"10px 12px"}}>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
-                        <div style={{fontSize:11,color:"#7e22ce",fontWeight:700}}>{c.tipo==="Vehículos"?"🚗":c.tipo==="Motos"?"🏍️":"🏠"} {c.tipo}{c.tipo_operacion?` · ${c.tipo_operacion}`:""}</div>
-                        <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                          {(c.municipio||c.estado)&&<span style={{fontSize:10,color:"#94a3b8"}}>📍 {c.municipio||c.estado}</span>}
-                          {[c.foto1_url,c.foto2_url,c.foto3_url,c.foto4_url].filter(Boolean).length>1&&<div style={{fontSize:10,color:"#94a3b8"}}>📷 {[c.foto1_url,c.foto2_url,c.foto3_url,c.foto4_url].filter(Boolean).length}</div>}
+                  <div style={{fontSize:12,color:"#94a3b8",marginBottom:16}}>Sé el primero en publicar</div>
+                  {clasificadoGeoFiltro==="miMunicipio"&&<button onClick={()=>setClasificadoGeoFiltro("todo")} style={{fontSize:12,color:"#4338ca",background:"#ede9fe",border:"none",borderRadius:10,padding:"8px 16px",cursor:"pointer",marginBottom:10,fontWeight:700}}>🌎 Ver en toda Venezuela</button>}
+                  <button onClick={()=>setShowPublicarClasificado(true)} style={{...s.btn,maxWidth:240,margin:"0 auto",background:"linear-gradient(135deg,#4338ca,#6366f1)"}}>➕ Publicar anuncio</button>
+                </div>
+              );
+              return(
+                <>
+                  <div style={{fontSize:11,color:"#94a3b8",fontWeight:600,marginBottom:10}}>{lista.length} anuncio{lista.length!==1?"s":""} encontrado{lista.length!==1?"s":""}</div>
+                  {lista.map(c=>{
+                    const diasPublicado=Math.floor((new Date()-new Date(c.created_at))/(1000*60*60*24));
+                    const esNuevo=diasPublicado<2;
+                    const diasRestantes=c.fecha_caducidad?Math.ceil((new Date(c.fecha_caducidad)-new Date())/(1000*60*60*24)):null;
+                    const fotos=[c.foto1_url,c.foto2_url,c.foto3_url,c.foto4_url].filter(Boolean);
+                    return(
+                      <div key={c.id} onClick={()=>setClasificadoSeleccionado(c)} style={{background:"#fff",borderRadius:16,marginBottom:12,border:"1px solid #e8e8f0",overflow:"hidden",cursor:"pointer",boxShadow:"0 2px 10px rgba(0,0,0,0.06)",transition:"box-shadow 0.15s"}}>
+                        {/* IMAGEN */}
+                        <div style={{position:"relative"}}>
+                          {fotos.length>0
+                            ?<img src={fotos[0]} alt={c.titulo} style={{width:"100%",height:170,objectFit:"cover"}}/>
+                            :<div style={{height:110,background:`linear-gradient(135deg,${c.tipo==="Motos"?"#78350f,#d97706":c.tipo==="Inmuebles"?"#065f46,#059669":"#312e81,#4338ca"})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:48}}>
+                              {c.tipo==="Motos"?"🏍️":c.tipo==="Inmuebles"?"🏠":"🚗"}
+                            </div>
+                          }
+                          {/* BADGES SOBRE IMAGEN */}
+                          <div style={{position:"absolute",top:8,left:8,display:"flex",gap:4,flexWrap:"wrap"}}>
+                            {esNuevo&&<span style={{background:"#f59e0b",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 8px",borderRadius:20,boxShadow:"0 2px 6px rgba(245,158,11,0.4)"}}>🔥 NUEVO</span>}
+                            {c.tipo_operacion&&<span style={{background:"rgba(0,0,0,0.55)",color:"#fff",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:20,backdropFilter:"blur(4px)"}}>{c.tipo_operacion}</span>}
+                          </div>
+                          {fotos.length>1&&<div style={{position:"absolute",top:8,right:8,background:"rgba(0,0,0,0.55)",color:"#fff",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:20,backdropFilter:"blur(4px)"}}>📷 {fotos.length}</div>}
+                        </div>
+                        {/* CONTENIDO */}
+                        <div style={{padding:"10px 12px"}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:4}}>
+                            <div style={{fontSize:14,fontWeight:800,color:"#1e1b4b",lineHeight:1.2,flex:1}}>{c.titulo}</div>
+                            <div style={{textAlign:"right",flexShrink:0}}>
+                              <div style={{fontSize:18,fontWeight:900,color:"#16a34a",lineHeight:1}}>${parseFloat(c.precio).toLocaleString()}</div>
+                              {c.negociable&&<div style={{fontSize:9,color:"#854d0e",fontWeight:700}}>Negociable</div>}
+                            </div>
+                          </div>
+                          <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:6}}>
+                            <span style={{fontSize:10,background:"#ede9fe",color:"#6d28d9",padding:"3px 8px",borderRadius:20,fontWeight:600}}>{c.tipo==="Vehículos"?"🚗":c.tipo==="Motos"?"🏍️":"🏠"} {c.tipo}</span>
+                            {c.marca&&<span style={{fontSize:10,background:"#f1f5f9",color:"#475569",padding:"3px 8px",borderRadius:20,fontWeight:600}}>{c.marca}</span>}
+                            {c.anio&&<span style={{fontSize:10,background:"#f1f5f9",color:"#475569",padding:"3px 8px",borderRadius:20,fontWeight:600}}>{c.anio}</span>}
+                            {c.kilometraje&&<span style={{fontSize:10,background:"#f1f5f9",color:"#475569",padding:"3px 8px",borderRadius:20}}>{c.kilometraje}</span>}
+                            {c.habitaciones&&<span style={{fontSize:10,background:"#f1f5f9",color:"#475569",padding:"3px 8px",borderRadius:20}}>{c.habitaciones} hab.</span>}
+                            {c.sector&&<span style={{fontSize:10,background:"#eff6ff",color:"#1d4ed8",padding:"3px 8px",borderRadius:20,fontWeight:600}}>📍 {c.sector}</span>}
+                            {(c.municipio||c.estado)&&<span style={{fontSize:10,background:"#eff6ff",color:"#1d4ed8",padding:"3px 8px",borderRadius:20,fontWeight:600}}>📍 {c.municipio||c.estado}</span>}
+                            {diasRestantes!==null&&diasRestantes<=7&&<span style={{fontSize:10,background:"#fef2f2",color:"#dc2626",padding:"3px 8px",borderRadius:20,fontWeight:600}}>⏰ {diasRestantes}d</span>}
+                          </div>
                         </div>
                       </div>
-                    {c.kilometraje&&<span style={{fontSize:11,background:"#f1f5f9",color:"#64748b",padding:"2px 8px",borderRadius:20}}>{c.kilometraje}</span>}
-                    {c.habitaciones&&<span style={{fontSize:11,background:"#f1f5f9",color:"#64748b",padding:"2px 8px",borderRadius:20}}>{c.habitaciones} hab.</span>}
-                    {c.sector&&<span style={{fontSize:11,background:"#f1f5f9",color:"#64748b",padding:"2px 8px",borderRadius:20}}>📍 {c.sector}</span>}
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}}>
-                      <div><span style={{fontSize:18,fontWeight:700,color:"#22c55e"}}>${parseFloat(c.precio).toLocaleString()}</span>{c.negociable&&<span style={{fontSize:11,color:"#f59e0b",fontWeight:600,marginLeft:6}}>Negociable</span>}</div>
-                      <span style={{fontSize:12,color:P,fontWeight:600}}>Ver más →</span>
-                    </div>
-                  </div>
-                  </div>
-                ))}
-              </>);
+                    );
+                  })}
+                </>
+              );
             })()}
           </div>
         )}
       </>)}
-
-      {/* SERVICIOS — Directorio Local Digital */}
+          {/* SERVICIOS — Directorio Local Digital */}
       {tab==="Servicios"&&(<>
         {!categoriaServicio?(
           // ── PANTALLA PRINCIPAL: GRID DE CATEGORÍAS ──
