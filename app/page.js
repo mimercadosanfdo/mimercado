@@ -49,6 +49,11 @@ const REMATE_CATS = ["Electrodomésticos","Ropa y calzado","Muebles","Electróni
 const TIPO_NEGOCIO = [
   "Restaurante / Cocina / Comida",
   "Tienda / Negocio local",
+  // HOSPEDAJE Y TURISMO
+  "Hotel / Posada",
+  "Finca turística",
+  "Tour operador",
+  "Campamento / Aventura",
   // TRANSPORTE
   "Mototaxi",
   "Taxi",
@@ -346,6 +351,8 @@ const VE_ESTADOS_MUNICIPIOS={
   const [contactModal,setContactModal]=useState(null); // {prov, servicio, catId, esRuta, ruta}
   const [contactForm,setContactForm]=useState({nombre:"",telefono:"",fecha:"",personas:"1",puestos:"1",fechaSalida:""}); // rutas interurbanas
   const [proveedorServicioActivo,setProveedorServicioActivo]=useState(null); // proveedor seleccionado
+  const [habsProvActivo,setHabsProvActivo]=useState([]); // habitaciones del hotel activo
+  const [turismoProvActivo,setTurismoProvActivo]=useState([]); // servicios turismo del proveedor activo
   const [showSolicitudServicio,setShowSolicitudServicio]=useState(false);
   const [solicitudData,setSolicitudData]=useState({descripcion:"",fecha:"",hora:""});
   const [remateCat,setRemateCat]=useState("Todos");
@@ -360,6 +367,8 @@ const VE_ESTADOS_MUNICIPIOS={
   const [servComFotoPreview,setServComFotoPreview]=useState(null);
   const [pendRemates,setPendRemates]=useState([]);
   const [pendServiciosCom,setPendServiciosCom]=useState([]);
+  const [pendHabitaciones,setPendHabitaciones]=useState([]);
+  const [pendTurismo,setPendTurismo]=useState([]);
   const [resenaSheet,setResenaSheet]=useState(null);
   const [resena,setResena]=useState({estrellas:0,comentario:"",nombre:"",telefono:""});
   const [resenaMsj,setResenaMsj]=useState("");
@@ -774,8 +783,8 @@ const VE_ESTADOS_MUNICIPIOS={
       "hogar":["Plomería","Electricidad","Pintura y construcción","Limpieza del hogar","Carpintería / Herrería"],
       "educacion":["Clases y tutorías","Idiomas"],
       "mecanica":["Mecánica automotriz","Electricidad automotriz"],
-      "hoteles":["Hotel","Posada","Hospedaje"],
-      "turismo":["Finca turística","Tour operador","Campamento","Turismo y aventura"],
+      "hoteles":["Hotel","Posada","Hospedaje","Hotel / Posada"],
+      "turismo":["Finca turística","Tour operador","Campamento","Turismo y aventura","Campamento / Aventura"],
     };
     const municipio=ubiActiva.municipio||"San Fernando";
     // Buscar por subcategoria_servicio primero
@@ -1124,7 +1133,7 @@ const VE_ESTADOS_MUNICIPIOS={
   const loadMisClientes=async(provNombre)=>{const{data}=await supabase.from("pedidos").select("cliente_nombre,cliente_telefono,created_at,total,ref").eq("proveedor_nombre",provNombre).order("created_at",{ascending:false});if(data){const mapa={};data.forEach(p=>{const k=p.cliente_telefono;if(!mapa[k])mapa[k]={nombre:p.cliente_nombre,telefono:p.cliente_telefono,ultimoPedido:p.created_at,totalPedidos:0,totalGastado:0};mapa[k].totalPedidos++;mapa[k].totalGastado+=p.total||0;});setMisClientes(Object.values(mapa).sort((a,b)=>new Date(b.ultimoPedido)-new Date(a.ultimoPedido)));}};
 
   const loadAdmin=async()=>{
-    const[pr,re,zo,av,todos,cb,ped,promo,remPend,svcPend,clasifPend,allClasif]=await Promise.all([
+    const[pr,re,zo,av,todos,cb,ped,promo,remPend,svcPend,clasifPend,allClasif,habPend,turPend]=await Promise.all([
       supabase.from("productos_proveedor").select("*,proveedores(negocio,id)").eq("aprobado",false).eq("rechazado",false),
       supabase.from("resenas").select("*").eq("aprobada",false),
       supabase.from("zonas_delivery").select("*").order("municipio"),
@@ -1137,6 +1146,8 @@ const VE_ESTADOS_MUNICIPIOS={
       supabase.from("servicios_comunidad").select("*").eq("aprobado",false).order("created_at",{ascending:false}),
       supabase.from("clasificados").select("*").eq("aprobado",false).eq("vendido",false).order("created_at",{ascending:false}),
       supabase.from("clasificados").select("*").order("created_at",{ascending:false}),
+      supabase.from("habitaciones_hotel").select("*,proveedores(negocio,id)").eq("aprobado",false).order("created_at",{ascending:false}),
+      supabase.from("servicios_turismo").select("*,proveedores(negocio,id)").eq("aprobado",false).order("created_at",{ascending:false}),
     ]);
     if(pr.data)setPendProds(pr.data);
     if(re.data)setPendResenas(re.data);
@@ -1150,6 +1161,8 @@ const VE_ESTADOS_MUNICIPIOS={
     if(svcPend.data)setPendServiciosCom(svcPend.data);
     if(clasifPend.data)setPendClasificados(clasifPend.data);
     if(allClasif.data)setAllClasificadosAdmin(allClasif.data);
+    if(habPend.data)setPendHabitaciones(habPend.data);
+    if(turPend.data)setPendTurismo(turPend.data);
   };
 
   const loadResenas=async(prodId)=>{
@@ -2742,7 +2755,7 @@ const VE_ESTADOS_MUNICIPIOS={
           <>
             {/* HEADER CATEGORÍA */}
             <div style={{background:categoriaServicio.bg,padding:"16px",color:"#fff",position:"relative"}}>
-              <button onClick={()=>{if(proveedorServicioActivo){setProveedorServicioActivo(null);}else{setCategoriaServicio(null);setShowSolicitudServicio(false);}}} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,padding:"6px 12px",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
+              <button onClick={()=>{if(proveedorServicioActivo){setProveedorServicioActivo(null);setHabsProvActivo([]);setTurismoProvActivo([]);}else{setCategoriaServicio(null);setShowSolicitudServicio(false);}}} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,padding:"6px 12px",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
                 ← Volver
               </button>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -2791,6 +2804,59 @@ const VE_ESTADOS_MUNICIPIOS={
                   </div>
 
 
+
+                  {/* HABITACIONES DEL HOTEL */}
+                  {habsProvActivo.length>0&&(
+                    <div style={{marginBottom:12}}>
+                      <div style={{fontSize:13,fontWeight:700,color:"#0f766e",marginBottom:10,paddingBottom:8,borderBottom:"1px solid #f1f5f9"}}>🛏️ Habitaciones disponibles</div>
+                      {habsProvActivo.map(hab=>(
+                        <div key={hab.id} style={{background:"#fff",borderRadius:14,marginBottom:10,border:"1px solid #ccfbf1",overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
+                          {hab.foto_url&&<img src={hab.foto_url} alt={hab.nombre} style={{width:"100%",height:140,objectFit:"cover",display:"block"}}/>}
+                          <div style={{padding:"10px 12px"}}>
+                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:6,marginBottom:4}}>
+                              <div style={{fontSize:14,fontWeight:800,color:"#0f172a"}}>{hab.nombre}</div>
+                              <div style={{fontSize:15,fontWeight:800,color:"#0f766e",flexShrink:0}}>${hab.precio_noche}/noche</div>
+                            </div>
+                            {hab.descripcion&&<div style={{fontSize:12,color:"#64748b",marginBottom:6,lineHeight:1.4}}>{hab.descripcion}</div>}
+                            <div style={{fontSize:11,color:"#475569",marginBottom:8}}>👥 Capacidad: {hab.capacidad_personas} persona{hab.capacidad_personas>1?"s":""}</div>
+                            <button onClick={()=>setContactModal({prov:proveedorServicioActivo,servicio:{nombre:hab.nombre,precio:hab.precio_noche},catId:"hoteles"})} style={{width:"100%",background:"#0f766e",color:"#fff",border:"none",borderRadius:8,padding:"9px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                              🛏️ Consultar disponibilidad
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      <button onClick={()=>setContactModal({prov:proveedorServicioActivo,servicio:null,catId:"hoteles"})} style={{width:"100%",background:"#f0fdfa",color:"#0f766e",border:"1px solid #99f6e4",borderRadius:10,padding:"10px",fontSize:12,fontWeight:700,cursor:"pointer",marginTop:4}}>
+                        📲 Consulta general de disponibilidad
+                      </button>
+                    </div>
+                  )}
+
+                  {/* SERVICIOS TURÍSTICOS */}
+                  {turismoProvActivo.length>0&&(
+                    <div style={{marginBottom:12}}>
+                      <div style={{fontSize:13,fontWeight:700,color:"#065f46",marginBottom:10,paddingBottom:8,borderBottom:"1px solid #f1f5f9"}}>🌴 Experiencias disponibles</div>
+                      {turismoProvActivo.map(srv=>(
+                        <div key={srv.id} style={{background:"#fff",borderRadius:14,marginBottom:10,border:"1px solid #bbf7d0",overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
+                          {srv.foto_url&&<img src={srv.foto_url} alt={srv.nombre} style={{width:"100%",height:140,objectFit:"cover",display:"block"}}/>}
+                          <div style={{padding:"10px 12px"}}>
+                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:6,marginBottom:4}}>
+                              <div style={{fontSize:14,fontWeight:800,color:"#0f172a"}}>{srv.nombre}</div>
+                              {srv.precio&&<div style={{fontSize:15,fontWeight:800,color:"#065f46",flexShrink:0}}>${srv.precio}/persona</div>}
+                            </div>
+                            {srv.descripcion&&<div style={{fontSize:12,color:"#64748b",marginBottom:4,lineHeight:1.4}}>{srv.descripcion}</div>}
+                            {srv.incluye&&<div style={{fontSize:11,background:"#f0fdf4",color:"#15803d",padding:"4px 8px",borderRadius:6,marginBottom:6}}>✅ Incluye: {srv.incluye}</div>}
+                            {srv.capacidad_personas&&<div style={{fontSize:11,color:"#475569",marginBottom:8}}>👥 Máximo: {srv.capacidad_personas} personas</div>}
+                            <button onClick={()=>setContactModal({prov:proveedorServicioActivo,servicio:{nombre:srv.nombre,precio:srv.precio},catId:"turismo"})} style={{width:"100%",background:"#16a34a",color:"#fff",border:"none",borderRadius:8,padding:"9px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                              🌴 Consultar disponibilidad
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      <button onClick={()=>setContactModal({prov:proveedorServicioActivo,servicio:null,catId:"turismo"})} style={{width:"100%",background:"#f0fdf4",color:"#15803d",border:"1px solid #86efac",borderRadius:10,padding:"10px",fontSize:12,fontWeight:700,cursor:"pointer",marginTop:4}}>
+                        📲 Hacer consulta general
+                      </button>
+                    </div>
+                  )}
 
                   {/* LISTA DE SERVICIOS DEL PROVEEDOR */}
                   {provProductosServicio[proveedorServicioActivo.id]?.length>0?(
@@ -2945,7 +3011,19 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                       const abProv=estaAbiertoAhora(prov.horario_desde,prov.horario_hasta,prov.activo,prov.en_pausa);
                       return(
                       /* TARJETA CLICKEABLE — abre detalle del proveedor */
-                      <div key={prov.id} onClick={()=>setProveedorServicioActivo(prov)} style={{background:abProv?"#fff":"#f8fafc",borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.08)",border:`1px solid ${abProv?"#f1f5f9":"#e2e8f0"}`,cursor:"pointer",transition:"box-shadow 0.15s",opacity:abProv?1:0.75,position:"relative"}}>
+                      <div key={prov.id} onClick={async()=>{
+                        setProveedorServicioActivo(prov);
+                        setHabsProvActivo([]);setTurismoProvActivo([]);
+                        const tipoH=["Hotel / Posada","Hotel","Posada","Hospedaje"];
+                        const tipoT=["Finca turística","Tour operador","Campamento / Aventura","Campamento","Turismo y aventura"];
+                        if(tipoH.some(t=>prov.tipo_negocio?.includes(t))||categoriaServicio?.id==="hoteles"){
+                          const{data}=await supabase.from("habitaciones_hotel").select("*").eq("proveedor_id",prov.id).eq("aprobado",true).eq("disponible",true).order("created_at");
+                          if(data)setHabsProvActivo(data);
+                        } else if(tipoT.some(t=>prov.tipo_negocio?.includes(t))||categoriaServicio?.id==="turismo"){
+                          const{data}=await supabase.from("servicios_turismo").select("*").eq("proveedor_id",prov.id).eq("aprobado",true).eq("disponible",true).order("created_at");
+                          if(data)setTurismoProvActivo(data);
+                        }
+                      }} style={{background:abProv?"#fff":"#f8fafc",borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.08)",border:`1px solid ${abProv?"#f1f5f9":"#e2e8f0"}`,cursor:"pointer",transition:"box-shadow 0.15s",opacity:abProv?1:0.75,position:"relative"}}>
                         <div style={{display:"flex",gap:12,alignItems:"center"}}>
                           {prov.logo_url
                             ?<img src={prov.logo_url} style={{width:56,height:56,borderRadius:14,objectFit:"cover",border:"2px solid #f1f5f9",flexShrink:0}}/>
@@ -3009,6 +3087,12 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
             <label style={s.lbl}>Tipo de negocio o servicio *</label>
             <select style={{...s.inp,background:"#fff"}} value={provForm.tipo_negocio} onChange={e=>setProvForm({...provForm,tipo_negocio:e.target.value,categorias:[],tipo_operacion_gastro:"",subcategoria_servicio:""})}>
               <option value="">— Selecciona —</option>
+              <optgroup label="🏨 Hospedaje y turismo">
+                <option>Hotel / Posada</option>
+                <option>Finca turística</option>
+                <option>Tour operador</option>
+                <option>Campamento / Aventura</option>
+              </optgroup>
               <optgroup label="🍽️ Comida y comercio">
                 <option>Restaurante / Cocina / Comida</option>
                 <option>Tienda / Negocio local</option>
@@ -3351,10 +3435,10 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                     ...((["Transporte interurbano (rutas)","Transporte y encomiendas"].includes(provData.tipo_negocio))?[
                       {k:"mis_rutas", icon:"🚌", label:"Mis rutas", sub:"Gestiona tus rutas", color:"#fff", textColor:"#0f172a", bg:"linear-gradient(135deg,#064e3b,#059669)", n:0},
                     ]:[]),
-                    ...(["Hotel","Posada","Hospedaje"].includes(provData.tipo_negocio)?[
+                    ...(["Hotel","Posada","Hospedaje","Hotel / Posada"].includes(provData.tipo_negocio)?[
                       {k:"mis_habitaciones", icon:"🛏️", label:"Habitaciones", sub:"Gestiona tu oferta", color:"#fff", textColor:"#0f172a", bg:"linear-gradient(135deg,#134e4a,#0d9488)", n:0},
                     ]:[]),
-                    ...(["Finca turística","Tour operador","Campamento","Turismo y aventura"].includes(provData.tipo_negocio)?[
+                    ...(["Finca turística","Tour operador","Campamento","Turismo y aventura","Campamento / Aventura"].includes(provData.tipo_negocio)?[
                       {k:"mis_turismo", icon:"🌴", label:"Mis servicios", sub:"Lo que ofreces", color:"#fff", textColor:"#0f172a", bg:"linear-gradient(135deg,#064e3b,#16a34a)", n:0},
                     ]:[]),
                   ].map(t=>(
@@ -4577,6 +4661,8 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 {key:"super",label:"🛒 Supermercado",n:0},
                 {key:"remates_pend",label:"🏷️ Remates pendientes",n:pendRemates.length},
                 {key:"servicios_pend",label:"🛠️ Servicios pendientes",n:pendServiciosCom.length},
+                {key:"habitaciones_pend",label:"🛏️ Habitaciones pendientes",n:pendHabitaciones.length},
+                {key:"turismo_pend",label:"🌴 Turismo pendiente",n:pendTurismo.length},
                 {key:"clasificados_pend",label:"🚗 Clasificados pendientes",n:pendClasificados.length},
                 {key:"clasificados_all",label:"🚗 Todos los clasificados",n:allClasificadosAdmin.length},
                 {key:"suscripciones",label:"💳 Suscripciones",n:suscripciones.filter(s=>!s.suscripcion_pagada&&s.meses_gratis_restantes===0).length},
@@ -4985,6 +5071,57 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
     </div>
   </div>
 </div><button style={s.btn} onClick={addSuperProd} disabled={loading}>{loading?"Guardando...":"Agregar"}</button></div></div></div>)}
+
+          {adminSec==="habitaciones_pend"&&(
+            <div style={{margin:"0 16px"}}>
+              <div style={s.pc}>
+                <div style={s.pT}>🛏️ Habitaciones pendientes ({pendHabitaciones.length})</div>
+                {pendHabitaciones.length===0&&<div style={{fontSize:13,color:"#94a3b8",textAlign:"center",padding:"20px 0"}}>No hay habitaciones pendientes ✓</div>}
+                {pendHabitaciones.map(hab=>(
+                  <div key={hab.id} style={{borderBottom:"1px solid #f1f5f9",padding:"12px 0"}}>
+                    <div style={{fontSize:12,fontWeight:700,color:"#0f766e",marginBottom:4}}>🏨 {hab.proveedores?.negocio||"(hotel)"}</div>
+                    {hab.foto_url&&<img src={hab.foto_url} alt={hab.nombre} style={{width:"100%",maxHeight:140,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
+                    <div style={{fontSize:14,fontWeight:800,color:"#0f172a"}}>{hab.nombre}</div>
+                    {hab.descripcion&&<div style={{fontSize:12,color:"#64748b",marginTop:3}}>{hab.descripcion}</div>}
+                    <div style={{display:"flex",gap:10,marginTop:4,fontSize:12,color:"#475569"}}>
+                      {hab.precio_noche&&<span>💰 ${hab.precio_noche}/noche</span>}
+                      {hab.capacidad_personas&&<span>👥 {hab.capacidad_personas} personas</span>}
+                    </div>
+                    <div style={{display:"flex",gap:8,marginTop:10}}>
+                      <button onClick={async()=>{setPendHabitaciones(prev=>prev.filter(x=>x.id!==hab.id));await supabase.from("habitaciones_hotel").update({aprobado:true}).eq("id",hab.id);await loadAdmin();}} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Aprobar</button>
+                      <button onClick={()=>setConfirmModal({msg:"¿Rechazar y eliminar esta habitación?",onOk:async()=>{setPendHabitaciones(prev=>prev.filter(x=>x.id!==hab.id));await supabase.from("habitaciones_hotel").delete().eq("id",hab.id);await loadAdmin();}})} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Rechazar</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {adminSec==="turismo_pend"&&(
+            <div style={{margin:"0 16px"}}>
+              <div style={s.pc}>
+                <div style={s.pT}>🌴 Servicios turísticos pendientes ({pendTurismo.length})</div>
+                {pendTurismo.length===0&&<div style={{fontSize:13,color:"#94a3b8",textAlign:"center",padding:"20px 0"}}>No hay servicios turísticos pendientes ✓</div>}
+                {pendTurismo.map(srv=>(
+                  <div key={srv.id} style={{borderBottom:"1px solid #f1f5f9",padding:"12px 0"}}>
+                    <div style={{fontSize:12,fontWeight:700,color:"#065f46",marginBottom:4}}>🌴 {srv.proveedores?.negocio||"(proveedor)"}</div>
+                    {srv.foto_url&&<img src={srv.foto_url} alt={srv.nombre} style={{width:"100%",maxHeight:140,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
+                    <div style={{fontSize:14,fontWeight:800,color:"#0f172a"}}>{srv.nombre}</div>
+                    {srv.descripcion&&<div style={{fontSize:12,color:"#64748b",marginTop:3}}>{srv.descripcion}</div>}
+                    <div style={{display:"flex",gap:10,marginTop:4,fontSize:12,color:"#475569",flexWrap:"wrap"}}>
+                      {srv.precio&&<span>💰 ${srv.precio}/persona</span>}
+                      {srv.capacidad_personas&&<span>👥 máx {srv.capacidad_personas}p</span>}
+                      {srv.incluye&&<span>✅ {srv.incluye}</span>}
+                    </div>
+                    <div style={{display:"flex",gap:8,marginTop:10}}>
+                      <button onClick={async()=>{setPendTurismo(prev=>prev.filter(x=>x.id!==srv.id));await supabase.from("servicios_turismo").update({aprobado:true}).eq("id",srv.id);await loadAdmin();}} style={{...s.apvBtn,background:"#22c55e",color:"#fff"}}>✓ Aprobar</button>
+                      <button onClick={()=>setConfirmModal({msg:"¿Rechazar y eliminar este servicio turístico?",onOk:async()=>{setPendTurismo(prev=>prev.filter(x=>x.id!==srv.id));await supabase.from("servicios_turismo").delete().eq("id",srv.id);await loadAdmin();}})} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>✗ Rechazar</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {adminSec==="clasificados_pend"&&(
             <div style={{margin:"0 16px"}}>
