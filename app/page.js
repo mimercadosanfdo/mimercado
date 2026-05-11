@@ -10,6 +10,7 @@ const supabase = createClient(
 
 const CITY = "San Fernando";
 const APP_NAME = "Lokl";
+const APP_URL = "https://usalokl.com";
 const WA = "584243232671";
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "mimercado2024";
@@ -232,6 +233,22 @@ const s = {
 };
 
 const getHorario=()=>{const h=new Date().getHours();if(h>=6&&h<11)return{label:"🌅 Desayunos del día",sub:"Lo mejor para empezar tu mañana"};if(h>=11&&h<15)return{label:"☀️ Almuerzos del día",sub:"El menú perfecto para el mediodía"};if(h>=15&&h<18)return{label:"🍪 Meriendas",sub:"Algo rico para la tarde"};return{label:"🌙 Cenas",sub:"Termina el día con buen sabor"};};
+
+// ── FUNCIÓN COMPARTIR ─────────────────────────────────────────────────────────
+function compartirEnWA({titulo,precio,tab,id,emoji="📌"}){
+  const url=APP_URL+(tab?`?tab=${encodeURIComponent(tab)}`:""  )+(id?`&id=${id}`:"");
+  const precioTexto=precio?` — $${parseFloat(precio).toLocaleString()}`:"";
+  const msg=`${emoji} *${titulo}*${precioTexto}\n\n📲 Míralo en ${APP_NAME}:\n${url}\n\n_Publicado en ${APP_NAME} · San Fernando de Apure_`;
+  window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+}
+function BtnCompartir({titulo,precio,tab,id,emoji,small=false}){
+  return(
+    <button onClick={e=>{e.stopPropagation();compartirEnWA({titulo,precio,tab,id,emoji});}} title="Compartir en WhatsApp"
+      style={{background:small?"rgba(37,211,102,0.08)":"#f0fdf4",border:"1px solid #86efac",borderRadius:small?8:10,padding:small?"5px 8px":"7px 12px",fontSize:small?11:12,fontWeight:700,color:"#15803d",cursor:"pointer",display:"flex",alignItems:"center",gap:4,flexShrink:0,whiteSpace:"nowrap"}}>
+      🔗{small?"":" Compartir"}
+    </button>
+  );
+}
 
 export default function App() {
   const [tab,setTab]=useState("Inicio");
@@ -1260,7 +1277,7 @@ const VE_ESTADOS_MUNICIPIOS={
       .eq("proveedor_id",provData.id)
       .eq("acepta_promos",true);
     if(!subs||subs.length===0)return alert("Aún no tienes clientes suscritos a tus promos.\n\nCuando un cliente acepte recibir promociones al hacer un pedido, aparecerá aquí.");
-    const appUrl="https://mimercado-mu5k.vercel.app";
+    const appUrl=APP_URL;
     // Abrir WhatsApp con el primero — el proveedor envía manualmente uno a uno
     const primero=subs[0];
     const raw=(primero.cliente_telefono||"").replace(/\D/g,"");
@@ -1993,9 +2010,12 @@ const VE_ESTADOS_MUNICIPIOS={
                         <div style={{fontSize:16,fontWeight:900,color:"#b45309"}}>${parseFloat(r.precio).toFixed(2)}</div>
                         <div style={{fontSize:10,color:"#94a3b8"}}>{r.vendedor_nombre?.split(" ")[0]}</div>
                       </div>
-                      <button onClick={e=>{e.stopPropagation();const _n=(r.vendedor_whatsapp||r.vendedor_telefono||"").replace(/\D/g,"");const num=_n.startsWith("0")?"58"+_n.slice(1):_n.startsWith("58")?_n:"58"+_n;window.open("https://wa.me/"+num+"?text="+encodeURIComponent("Hola "+r.vendedor_nombre+", vi tu artículo *"+r.titulo+"* en Lokl y me interesa. ¿Sigue disponible?"),"_blank");}} style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:10,padding:"8px",fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4,marginTop:4}}>
-                        📲 Contactar
-                      </button>
+                      <div style={{display:"flex",gap:6,marginTop:4}}>
+                        <button onClick={e=>{e.stopPropagation();const _n=(r.vendedor_whatsapp||r.vendedor_telefono||"").replace(/\D/g,"");const num=_n.startsWith("0")?"58"+_n.slice(1):_n.startsWith("58")?_n:"58"+_n;window.open("https://wa.me/"+num+"?text="+encodeURIComponent("Hola "+r.vendedor_nombre+", vi tu artículo *"+r.titulo+"* en Lokl y me interesa. ¿Sigue disponible?"),"_blank");}} style={{flex:1,background:"#25D366",color:"#fff",border:"none",borderRadius:10,padding:"8px",fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+                          📲 Contactar
+                        </button>
+                        <BtnCompartir titulo={r.titulo} precio={r.precio} tab="Mercadito local" id={r.id} emoji="🏷️" small={true}/>
+                      </div>
                     </div>
                   </div>
                 );
@@ -2032,12 +2052,17 @@ const VE_ESTADOS_MUNICIPIOS={
                   :<span style={{fontSize:10,color:"rgba(255,255,255,0.6)",background:"rgba(255,255,255,0.08)",padding:"3px 8px",borderRadius:20}}>🏃 Solo retiro</span>
                 }
               </div>
-              {/* CTA WHATSAPP */}
-              {(negocioActivo.whatsapp_negocio||negocioActivo.telefono)&&(
-                <button onClick={()=>{const num=((negocioActivo.whatsapp_negocio||negocioActivo.telefono)||"").replace(/\D/g,"");const n=num.startsWith("0")?"58"+num.slice(1):num.startsWith("58")?num:"58"+num;window.location.href="https://wa.me/"+n+"?text="+encodeURIComponent("Hola, vi tu tienda "+negocioActivo.negocio+" en Lokl y quiero consultar algo");}} style={{width:"100%",background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:10,padding:"9px",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                  💬 Consultar por WhatsApp
+              {/* CTA WHATSAPP + COMPARTIR */}
+              <div style={{display:"flex",gap:8}}>
+                {(negocioActivo.whatsapp_negocio||negocioActivo.telefono)&&(
+                  <button onClick={()=>{const num=((negocioActivo.whatsapp_negocio||negocioActivo.telefono)||"").replace(/\D/g,"");const n=num.startsWith("0")?"58"+num.slice(1):num.startsWith("58")?num:"58"+num;window.location.href="https://wa.me/"+n+"?text="+encodeURIComponent("Hola, vi tu tienda "+negocioActivo.negocio+" en Lokl y quiero consultar algo");}} style={{flex:1,background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:10,padding:"9px",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                    💬 Consultar por WhatsApp
+                  </button>
+                )}
+                <button onClick={()=>compartirEnWA({titulo:negocioActivo.negocio,tab:"Negocios locales",id:negocioActivo.id,emoji:"🏪"})} style={{background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:10,padding:"9px 12px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5,flexShrink:0}}>
+                  🔗 Compartir
                 </button>
-              )}
+              </div>
             </div>
             {/* BANNER CERRADO */}
             {!negocioActivo.activo&&(
@@ -2125,11 +2150,13 @@ const VE_ESTADOS_MUNICIPIOS={
                           {n.permite_retiro&&<span style={{fontSize:10,background:"#eff6ff",color:"#3b82f6",padding:"2px 7px",borderRadius:8,fontWeight:600}}>🏪 Retiro</span>}
                         </div>
                       </div>
-                      <div style={{color:"#3b82f6",fontSize:20,fontWeight:300}}>›</div>
+                      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,flexShrink:0}}>
+                        <div style={{color:"#3b82f6",fontSize:20,fontWeight:300}}>›</div>
+                        <BtnCompartir titulo={n.negocio} tab="Negocios locales" id={n.id} emoji="🏪" small={true}/>
+                      </div>
                     </div>
                   ))}
                 </div>
-                {/* CTA PROVEEDOR */}
                 <div onClick={()=>setTab("Proveedores")} style={{background:"linear-gradient(135deg,#1e3a5f,#1d4ed8)",borderRadius:16,padding:"14px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:12,marginTop:4}}>
                   <span style={{fontSize:30}}>🏬</span>
                   <div style={{flex:1}}>
@@ -2209,9 +2236,12 @@ const VE_ESTADOS_MUNICIPIOS={
             )}
             {/* CTA PRINCIPAL */}
             {Object.values(cartRest).length===0&&(
-              <div style={{padding:"12px 16px 4px"}}>
-                <button onClick={()=>{const num=((restauranteActivo.whatsapp_negocio||restauranteActivo.telefono)||"").replace(/\D/g,"");const n=num.startsWith("0")?"58"+num.slice(1):num.startsWith("58")?num:"58"+num;window.location.href="https://wa.me/"+n+"?text="+encodeURIComponent("Hola "+restauranteActivo.negocio+", quiero hacer un pedido");}} style={{width:"100%",background:"linear-gradient(135deg,#ea580c,#c2410c)",color:"#fff",border:"none",borderRadius:14,padding:"13px",fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 4px 12px rgba(234,88,12,0.35)"}}>
+              <div style={{padding:"12px 16px 4px",display:"flex",gap:8}}>
+                <button onClick={()=>{const num=((restauranteActivo.whatsapp_negocio||restauranteActivo.telefono)||"").replace(/\D/g,"");const n=num.startsWith("0")?"58"+num.slice(1):num.startsWith("58")?num:"58"+num;window.location.href="https://wa.me/"+n+"?text="+encodeURIComponent("Hola "+restauranteActivo.negocio+", quiero hacer un pedido");}} style={{flex:1,background:"linear-gradient(135deg,#ea580c,#c2410c)",color:"#fff",border:"none",borderRadius:14,padding:"13px",fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 4px 12px rgba(234,88,12,0.35)"}}>
                   🍽️ Pedir por WhatsApp
+                </button>
+                <button onClick={()=>compartirEnWA({titulo:restauranteActivo.negocio,tab:"Feria de comida",id:restauranteActivo.id,emoji:"🍽️"})} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:14,padding:"13px 14px",color:"#15803d",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5,flexShrink:0}}>
+                  🔗 Compartir
                 </button>
               </div>
             )}
@@ -2420,7 +2450,10 @@ const VE_ESTADOS_MUNICIPIOS={
                         {r.horario_desde&&<span style={{fontSize:10,color:"#cbd5e1"}}>· 🕐 {r.horario_desde}–{r.horario_hasta}</span>}
                       </div>
                     </div>
-                    <div style={{color:"#e2e8f0",fontSize:18,flexShrink:0}}>›</div>
+                    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,flexShrink:0}}>
+                      <div style={{color:"#e2e8f0",fontSize:18}}>›</div>
+                      <BtnCompartir titulo={r.negocio} tab="Feria de comida" id={r.id} emoji="🍽️" small={true}/>
+                    </div>
                   </div>
                   );
                 })}
@@ -2698,6 +2731,7 @@ const VE_ESTADOS_MUNICIPIOS={
               <button onClick={()=>{const _n=(clasificadoSeleccionado.vendedor_telefono||"").replace(/\D/g,"");const num=_n.startsWith("0")?"58"+_n.slice(1):_n.startsWith("58")?_n:"58"+_n;window.open("https://wa.me/"+num+"?text="+encodeURIComponent("Hola "+clasificadoSeleccionado.vendedor_nombre+", vi tu anuncio *"+clasificadoSeleccionado.titulo+"* en Lokl. ¿Sigue disponible?"),"_blank");}} style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:900,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 4px 16px rgba(37,211,102,0.35)"}}>
                 📲 Contactar por WhatsApp
               </button>
+              <BtnCompartir titulo={clasificadoSeleccionado.titulo} precio={clasificadoSeleccionado.precio} tab="Clasificados" id={clasificadoSeleccionado.id} emoji={clasificadoSeleccionado.tipo==="Motos"?"🏍️":clasificadoSeleccionado.tipo==="Inmuebles"?"🏠":"🚗"}/>
             </div>
           </div>
         )}
@@ -2768,6 +2802,9 @@ const VE_ESTADOS_MUNICIPIOS={
                             {c.sector&&<span style={{fontSize:10,background:"#eff6ff",color:"#1d4ed8",padding:"3px 8px",borderRadius:20,fontWeight:600}}>📍 {c.sector}</span>}
                             {(c.municipio||c.estado)&&<span style={{fontSize:10,background:"#eff6ff",color:"#1d4ed8",padding:"3px 8px",borderRadius:20,fontWeight:600}}>📍 {c.municipio||c.estado}</span>}
                             {diasRestantes!==null&&diasRestantes<=7&&<span style={{fontSize:10,background:"#fef2f2",color:"#dc2626",padding:"3px 8px",borderRadius:20,fontWeight:600}}>⏰ {diasRestantes}d</span>}
+                          </div>
+                          <div style={{display:"flex",justifyContent:"flex-end",marginTop:6}}>
+                            <BtnCompartir titulo={c.titulo} precio={c.precio} tab="Clasificados" id={c.id} emoji={c.tipo==="Motos"?"🏍️":c.tipo==="Inmuebles"?"🏠":"🚗"} small={true}/>
                           </div>
                         </div>
                       </div>
@@ -2907,6 +2944,9 @@ const VE_ESTADOS_MUNICIPIOS={
                           {!ab&&horTxt&&<span style={{fontSize:11,color:"#64748b"}}>Atiende: {horTxt}</span>}
                         </div>
                         {ab&&horTxt&&<div style={{background:"#eff6ff",borderRadius:10,padding:"6px 12px",fontSize:11,color:"#1d4ed8",fontWeight:600,display:"flex",alignItems:"center",gap:6,marginTop:4}}>🕐 {horTxt}</div>}
+                        <div style={{marginTop:10}}>
+                          <BtnCompartir titulo={proveedorServicioActivo.negocio} tab="Servicios" id={proveedorServicioActivo.id} emoji={categoriaServicio?.icon||"⚡"}/>
+                        </div>
                       </>);
                     })()}
                   </div>
