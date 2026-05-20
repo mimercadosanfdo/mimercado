@@ -10,7 +10,7 @@ const supabase = createClient(
 
 const CITY = "San Fernando";
 const APP_NAME = "Lokl";
-const APP_URL = "https://mimercado-mu5k.vercel.app";
+const APP_URL = "https://www.usalokl.com";
 const WA = "584243232671";
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "mimercado2024";
