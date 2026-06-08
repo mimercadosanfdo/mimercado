@@ -1,5 +1,5 @@
-// BUILD:1778378240
-"use client"; // Lokl v1778378240
+// BUILD:1778379284
+"use client"; // Lokl v1778379284
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -412,6 +412,10 @@ const VE_ESTADOS_MUNICIPIOS={
   const [pendProds,setPendProds]=useState([]);
   const [pendPromos,setPendPromos]=useState([]);
   const [pendResenas,setPendResenas]=useState([]);
+  const [provResenas,setProvResenas]=useState({}); // {proveedor_id: [{...resena}]}
+  const [provResenasForm,setProvResenasForm]=useState({estrellas:0,comentario:"",nombre:""}); // form nueva reseña proveedor
+  const [provResenasMsj,setProvResenasMsj]=useState("");
+  const [showProvResenasId,setShowProvResenasId]=useState(null); // proveedor_id cuyas reseñas están abiertas
   const [allZonas,setAllZonas]=useState([]);
   const [allRestaurantes,setAllRestaurantes]=useState([]);
   const [allProveedores,setAllProveedores]=useState([]);
@@ -1054,6 +1058,43 @@ const VE_ESTADOS_MUNICIPIOS={
 
   const sendWa=()=>{window.location.href=`https://wa.me/${WA}?text=${encodeURIComponent(buildWaMsg())}`;};
   const sendSvcWa=()=>{const m=`*Solicitud: ${selSvc.name}* — ${APP_NAME}\n\nNombre: ${svcForm.nombre}\nTeléfono: ${svcForm.telefono}\nDirección: ${svcForm.direccion}\nDetalle: ${svcForm.detalle}`;window.location.href=`https://wa.me/${WA}?text=${encodeURIComponent(m)}`;setSheet(null);setSelSvc(null);};
+  // ── LISTA NEGRA — palabras que mandan la reseña a revisión del admin ──
+  const LISTA_NEGRA=["marico","marica","coño","verga","puta","mierda","pendejo","idiota","estupido","imbecil","cabron","hijueputa","gonorrea","malparido","mamaguevo","coñoemadre","maldito","maldita","maluco","maluca"];
+  const pasaFiltro=(texto)=>{
+    if(!texto)return true;
+    const t=texto.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+    return !LISTA_NEGRA.some(p=>t.includes(p.normalize("NFD").replace(/[̀-ͯ]/g,"")));
+  };
+
+  // Cargar reseñas aprobadas de un proveedor
+  const loadProvResenas=async(provId)=>{
+    if(provResenas[provId])return; // ya cargadas
+    const{data}=await supabase.from("resenas").select("*").eq("proveedor_id",provId).eq("aprobada",true).order("created_at",{ascending:false}).limit(10);
+    if(data)setProvResenas(prev=>({...prev,[provId]:data}));
+  };
+
+  // Enviar reseña de proveedor con filtro automático
+  const enviarResenaProveedor=async(provId,provNombre)=>{
+    if(!provResenasForm.estrellas||!provResenasForm.nombre.trim())return setProvResenasMsj("Pon tu nombre y calificación ⭐");
+    const autoAprobada=pasaFiltro(provResenasForm.comentario)&&pasaFiltro(provResenasForm.nombre);
+    const{error}=await supabase.from("resenas").insert({
+      proveedor_id:provId,
+      proveedor_nombre:provNombre||"",
+      cliente_nombre:provResenasForm.nombre.trim(),
+      estrellas:provResenasForm.estrellas,
+      comentario:provResenasForm.comentario.trim()||null,
+      aprobada:autoAprobada,
+    });
+    if(error){setProvResenasMsj("Error al enviar. Intenta de nuevo.");return;}
+    setProvResenasMsj(autoAprobada?"✅ ¡Gracias! Tu reseña ya está publicada.":"✅ Gracias. Tu reseña será revisada antes de publicarse.");
+    // Si fue aprobada automáticamente, actualizar lista local
+    if(autoAprobada){
+      const nueva={proveedor_id:provId,cliente_nombre:provResenasForm.nombre.trim(),estrellas:provResenasForm.estrellas,comentario:provResenasForm.comentario.trim()||null,aprobada:true,created_at:new Date().toISOString()};
+      setProvResenas(prev=>({...prev,[provId]:[nueva,...(prev[provId]||[])]}));
+    }
+    setTimeout(()=>{setProvResenasForm({estrellas:0,comentario:"",nombre:""});setProvResenasMsj("");setShowProvResenasId(null);},2500);
+  };
+
   const enviarResena=async()=>{if(!resena.estrellas||!resena.nombre)return setResenaMsj("Pon tu nombre y calificación");await supabase.from("resenas").insert({producto_id:resenaSheet,cliente_nombre:resena.nombre,cliente_telefono:resena.telefono,estrellas:resena.estrellas,comentario:resena.comentario,aprobada:false});setResenaMsj("✅ Gracias por tu reseña.");setTimeout(()=>{setSheet(null);setResenaSheet(null);setResena({estrellas:0,comentario:"",nombre:"",telefono:""});setResenaMsj("");},2000);};
 
   const comprimirImagen=async(file,maxW=1200,calidad=0.82)=>{
@@ -2087,6 +2128,63 @@ const VE_ESTADOS_MUNICIPIOS={
                 </div>
               )}
             </div>
+
+            {/* ── SECCIÓN RESEÑAS — negocio ── */}
+            {(()=>{
+              const rList=provResenas[negocioActivo.id]||[];
+              const avg=rList.length>0?(rList.reduce((a,r)=>a+r.estrellas,0)/rList.length).toFixed(1):null;
+              return(
+                <div style={{margin:"0 16px 16px",background:"#fff",borderRadius:16,padding:16,border:"1px solid #f1f5f9",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <span style={{fontSize:16,fontWeight:900,color:"#0f172a"}}>⭐ Reseñas</span>
+                      {avg&&<span style={{fontSize:15,fontWeight:900,color:"#f59e0b"}}>{avg}</span>}
+                      {rList.length>0&&<span style={{fontSize:11,color:"#94a3b8"}}>({rList.length} opinión{rList.length!==1?"es":""})</span>}
+                    </div>
+                    <button onClick={()=>setShowProvResenasId(showProvResenasId===negocioActivo.id?null:negocioActivo.id)}
+                      style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:20,padding:"6px 12px",fontSize:12,fontWeight:700,color:"#1d4ed8",cursor:"pointer"}}>
+                      {showProvResenasId===negocioActivo.id?"Cerrar":"✍️ Dejar reseña"}
+                    </button>
+                  </div>
+                  {showProvResenasId===negocioActivo.id&&(
+                    <div style={{background:"#f8fafc",borderRadius:12,padding:12,marginBottom:12,border:"1px solid #e2e8f0"}}>
+                      <div style={{fontSize:12,fontWeight:700,color:"#374151",marginBottom:8}}>Tu calificación</div>
+                      <div style={{display:"flex",gap:6,marginBottom:10}}>
+                        {[1,2,3,4,5].map(n=>(
+                          <span key={n} onClick={()=>setProvResenasForm(f=>({...f,estrellas:n}))}
+                            style={{fontSize:28,cursor:"pointer",color:provResenasForm.estrellas>=n?"#f59e0b":"#e2e8f0",transition:"color 0.1s"}}>★</span>
+                        ))}
+                      </div>
+                      <input style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:13,marginBottom:8,boxSizing:"border-box",outline:"none"}}
+                        placeholder="Tu nombre *" value={provResenasForm.nombre}
+                        onChange={e=>setProvResenasForm(f=>({...f,nombre:e.target.value}))}/>
+                      <textarea style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:13,marginBottom:8,boxSizing:"border-box",outline:"none",resize:"none",fontFamily:"inherit"}}
+                        rows={3} placeholder="¿Cómo fue tu experiencia? (opcional)"
+                        value={provResenasForm.comentario}
+                        onChange={e=>setProvResenasForm(f=>({...f,comentario:e.target.value}))}/>
+                      {provResenasMsj&&<div style={{fontSize:12,fontWeight:600,color:provResenasMsj.includes("✅")?"#15803d":"#dc2626",marginBottom:8}}>{provResenasMsj}</div>}
+                      <button onClick={()=>enviarResenaProveedor(negocioActivo.id,negocioActivo.negocio)}
+                        style={{width:"100%",background:"#1d4ed8",color:"#fff",border:"none",borderRadius:10,padding:"10px",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                        Enviar reseña
+                      </button>
+                    </div>
+                  )}
+                  {rList.length===0&&showProvResenasId!==negocioActivo.id&&(
+                    <div style={{textAlign:"center",padding:"10px 0",color:"#94a3b8",fontSize:12}}>Sé el primero en dejar una reseña</div>
+                  )}
+                  {rList.slice(0,5).map((r,i)=>(
+                    <div key={i} style={{paddingBottom:10,marginBottom:10,borderBottom:i<rList.slice(0,5).length-1?"1px solid #f1f5f9":"none"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:3}}>
+                        <div style={{fontSize:13,fontWeight:700,color:"#0f172a"}}>{r.cliente_nombre}</div>
+                        <div style={{fontSize:12,color:"#f59e0b",letterSpacing:1}}>{"★".repeat(r.estrellas)}{"☆".repeat(5-r.estrellas)}</div>
+                      </div>
+                      {r.comentario&&<div style={{fontSize:12,color:"#475569",lineHeight:1.4}}>{r.comentario}</div>}
+                      <div style={{fontSize:10,color:"#cbd5e1",marginTop:3}}>{(()=>{const d=new Date(r.created_at);const diff=Math.floor((Date.now()-d)/86400000);return diff===0?"Hoy":diff===1?"Ayer":diff<7?`Hace ${diff} días`:diff<30?`Hace ${Math.floor(diff/7)} semana(s)`:d.toLocaleDateString("es-VE",{month:"short",year:"numeric"});})()}</div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
             {Object.values(cartNegocio).length>0&&(
               <div style={{position:"fixed",bottom:80,left:"50%",transform:"translateX(-50%)",zIndex:150,width:"calc(100% - 32px)",maxWidth:398}}>
                 <button style={{...s.btn,margin:0,display:"flex",justifyContent:"space-between",alignItems:"center",background:"#22c55e"}} onClick={()=>setSheet("cartGlobal")}>
@@ -2135,7 +2233,7 @@ const VE_ESTADOS_MUNICIPIOS={
                     </div>
                   )}
                   {allNegocios.map(n=>(
-                    <div key={n.id} onClick={()=>{setNegocioActivo(n);setCartNegocioId(n.id);setCartNegocioNombre(n.negocio);setCartNegocioWa(n.whatsapp_negocio||n.telefono);setSearch("");}} style={{background:"#fff",borderRadius:16,padding:14,border:"1px solid #e2e8f0",display:"flex",gap:12,alignItems:"center",marginBottom:10,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+                    <div key={n.id} onClick={()=>{setNegocioActivo(n);setCartNegocioId(n.id);setCartNegocioNombre(n.negocio);setCartNegocioWa(n.whatsapp_negocio||n.telefono);setSearch("");loadProvResenas(n.id);}} style={{background:"#fff",borderRadius:16,padding:14,border:"1px solid #e2e8f0",display:"flex",gap:12,alignItems:"center",marginBottom:10,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
                       {n.logo_url
                         ?<img src={n.logo_url} alt="" style={{width:58,height:58,borderRadius:14,objectFit:"cover",flexShrink:0,border:"2px solid #f1f5f9"}}/>
                         :<div style={{width:58,height:58,borderRadius:14,background:"linear-gradient(135deg,#dbeafe,#bfdbfe)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>🏪</div>
@@ -2178,7 +2276,7 @@ const VE_ESTADOS_MUNICIPIOS={
                   <div key={n.id} onClick={()=>{setNegocioActivo(n);setCartNegocioId(n.id);setCartNegocioNombre(n.negocio);setCartNegocioWa(n.whatsapp_negocio||n.telefono);setSearch("");}} style={{background:abiertoN?"#fff":"#f8fafc",borderRadius:14,padding:14,border:`1px solid ${abiertoN?"#f1f5f9":"#e2e8f0"}`,display:"flex",gap:12,alignItems:"center",marginBottom:10,cursor:"pointer",opacity:abiertoN?1:0.72,position:"relative"}}>
                     {!abiertoN&&<div style={{position:"absolute",top:8,right:8,background:"#dc2626",color:"#fff",fontSize:9,fontWeight:800,padding:"2px 7px",borderRadius:20,letterSpacing:0.5}}>CERRADO</div>}
                     {n.logo_url?<img src={n.logo_url} alt="" style={{width:52,height:52,borderRadius:12,objectFit:"cover",flexShrink:0}}/>:<div style={{width:52,height:52,borderRadius:12,background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🏪</div>}
-                    <div style={{flex:1}}><div style={{display:"flex",alignItems:"center",gap:6,marginBottom:1}}><div style={{fontSize:14,fontWeight:700,color:P,flex:1}}>{n.negocio}</div>{abiertoN&&<span style={{fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:20,background:"#dcfce7",color:"#15803d",flexShrink:0}}>● Abierto</span>}</div><div style={{fontSize:11,color:"#64748b"}}>{(n.categorias||[]).join(" · ")}</div>{n.direccion_fisica&&<div style={{fontSize:10,color:"#94a3b8"}}>📍 {n.direccion_fisica}</div>}</div>
+                    <div style={{flex:1}}><div style={{display:"flex",alignItems:"center",gap:6,marginBottom:1}}><div style={{fontSize:14,fontWeight:700,color:P,flex:1}}>{n.negocio}</div>{abiertoN&&<span style={{fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:20,background:"#dcfce7",color:"#15803d",flexShrink:0}}>● Abierto</span>}</div><div style={{fontSize:11,color:"#64748b"}}>{(n.categorias||[]).join(" · ")}</div>{(()=>{const rr=provResenas[n.id]||[];if(rr.length===0)return null;const avg=(rr.reduce((a,x)=>a+x.estrellas,0)/rr.length).toFixed(1);return(<div style={{display:"flex",alignItems:"center",gap:4,marginTop:2}}><span style={{color:"#f59e0b",fontSize:11}}>★</span><span style={{fontSize:11,fontWeight:700,color:"#0f172a"}}>{avg}</span><span style={{fontSize:10,color:"#94a3b8"}}>({rr.length})</span></div>);})()}{n.direccion_fisica&&<div style={{fontSize:10,color:"#94a3b8"}}>📍 {n.direccion_fisica}</div>}</div>
                     <div style={{color:"#94a3b8",fontSize:18}}>›</div>
                   </div>
                 );})}
@@ -2310,6 +2408,66 @@ const VE_ESTADOS_MUNICIPIOS={
                 ));
               })()}
             </div>
+
+            {/* ── SECCIÓN RESEÑAS — restaurante ── */}
+            {(()=>{
+              const rList=provResenas[restauranteActivo.id]||[];
+              const avg=rList.length>0?(rList.reduce((a,r)=>a+r.estrellas,0)/rList.length).toFixed(1):null;
+              return(
+                <div style={{margin:"0 16px 16px",background:"#fff",borderRadius:16,padding:16,border:"1px solid #f1f5f9",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
+                  {/* CABECERA */}
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <span style={{fontSize:16,fontWeight:900,color:"#0f172a"}}>⭐ Reseñas</span>
+                      {avg&&<span style={{fontSize:15,fontWeight:900,color:"#f59e0b"}}>{avg}</span>}
+                      {rList.length>0&&<span style={{fontSize:11,color:"#94a3b8"}}>({rList.length} opinión{rList.length!==1?"es":""})</span>}
+                    </div>
+                    <button onClick={()=>setShowProvResenasId(showProvResenasId===restauranteActivo.id?null:restauranteActivo.id)}
+                      style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:20,padding:"6px 12px",fontSize:12,fontWeight:700,color:"#15803d",cursor:"pointer"}}>
+                      {showProvResenasId===restauranteActivo.id?"Cerrar":"✍️ Dejar reseña"}
+                    </button>
+                  </div>
+                  {/* FORMULARIO NUEVA RESEÑA */}
+                  {showProvResenasId===restauranteActivo.id&&(
+                    <div style={{background:"#f8fafc",borderRadius:12,padding:12,marginBottom:12,border:"1px solid #e2e8f0"}}>
+                      <div style={{fontSize:12,fontWeight:700,color:"#374151",marginBottom:8}}>Tu calificación</div>
+                      <div style={{display:"flex",gap:6,marginBottom:10}}>
+                        {[1,2,3,4,5].map(n=>(
+                          <span key={n} onClick={()=>setProvResenasForm(f=>({...f,estrellas:n}))}
+                            style={{fontSize:28,cursor:"pointer",color:provResenasForm.estrellas>=n?"#f59e0b":"#e2e8f0",transition:"color 0.1s"}}>★</span>
+                        ))}
+                      </div>
+                      <input style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:13,marginBottom:8,boxSizing:"border-box",outline:"none"}}
+                        placeholder="Tu nombre *" value={provResenasForm.nombre}
+                        onChange={e=>setProvResenasForm(f=>({...f,nombre:e.target.value}))}/>
+                      <textarea style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:13,marginBottom:8,boxSizing:"border-box",outline:"none",resize:"none",fontFamily:"inherit"}}
+                        rows={3} placeholder="¿Cómo estuvo la comida? (opcional)"
+                        value={provResenasForm.comentario}
+                        onChange={e=>setProvResenasForm(f=>({...f,comentario:e.target.value}))}/>
+                      {provResenasMsj&&<div style={{fontSize:12,fontWeight:600,color:provResenasMsj.includes("✅")?"#15803d":"#dc2626",marginBottom:8}}>{provResenasMsj}</div>}
+                      <button onClick={()=>enviarResenaProveedor(restauranteActivo.id,restauranteActivo.negocio)}
+                        style={{width:"100%",background:"#22c55e",color:"#fff",border:"none",borderRadius:10,padding:"10px",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                        Enviar reseña
+                      </button>
+                    </div>
+                  )}
+                  {/* LISTA DE RESEÑAS */}
+                  {rList.length===0&&showProvResenasId!==restauranteActivo.id&&(
+                    <div style={{textAlign:"center",padding:"10px 0",color:"#94a3b8",fontSize:12}}>Sé el primero en dejar una reseña</div>
+                  )}
+                  {rList.slice(0,5).map((r,i)=>(
+                    <div key={i} style={{paddingBottom:10,marginBottom:10,borderBottom:i<rList.slice(0,5).length-1?"1px solid #f1f5f9":"none"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:3}}>
+                        <div style={{fontSize:13,fontWeight:700,color:"#0f172a"}}>{r.cliente_nombre}</div>
+                        <div style={{fontSize:12,color:"#f59e0b",letterSpacing:1}}>{"★".repeat(r.estrellas)}{"☆".repeat(5-r.estrellas)}</div>
+                      </div>
+                      {r.comentario&&<div style={{fontSize:12,color:"#475569",lineHeight:1.4}}>{r.comentario}</div>}
+                      <div style={{fontSize:10,color:"#cbd5e1",marginTop:3}}>{(()=>{const d=new Date(r.created_at);const diff=Math.floor((Date.now()-d)/86400000);return diff===0?"Hoy":diff===1?"Ayer":diff<7?`Hace ${diff} días`:diff<30?`Hace ${Math.floor(diff/7)} semana(s)`:d.toLocaleDateString("es-VE",{month:"short",year:"numeric"});})()}</div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
             {/* CARRITO RESTAURANTE FLOTANTE */}
             {Object.values(cartRest).length>0&&(
               <div style={{position:"fixed",bottom:16,left:"50%",transform:"translateX(-50%)",zIndex:150,width:"calc(100% - 32px)",maxWidth:398}}>
@@ -2426,7 +2584,7 @@ const VE_ESTADOS_MUNICIPIOS={
                   const etaRest=r.eta_texto||(r.eta_minutos_min&&r.eta_minutos_max?`${r.eta_minutos_min}–${r.eta_minutos_max} min`:null);
                   const catPrincipal=(r.categorias||[])[0]||"";
                   return(
-                  <div key={r.id} onClick={()=>{setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);setSearch("");}} style={{background:abiertoR?"#fff":"#f8fafc",borderRadius:16,border:`1px solid ${abiertoR?"#f1f5f9":"#e2e8f0"}`,marginBottom:10,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.05)",padding:"12px 14px",display:"flex",gap:12,alignItems:"center",opacity:abiertoR?1:0.7,position:"relative"}}>
+                  <div key={r.id} onClick={()=>{setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);setSearch("");loadProvResenas(r.id);}} style={{background:abiertoR?"#fff":"#f8fafc",borderRadius:16,border:`1px solid ${abiertoR?"#f1f5f9":"#e2e8f0"}`,marginBottom:10,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.05)",padding:"12px 14px",display:"flex",gap:12,alignItems:"center",opacity:abiertoR?1:0.7,position:"relative"}}>
                     {!abiertoR&&<div style={{position:"absolute",top:10,right:10,background:"#dc2626",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 8px",borderRadius:20,letterSpacing:0.5}}>CERRADO</div>}
                     <div style={{width:52,height:52,borderRadius:"50%",background:r.logo_url?"#f8fafc":getAvatarColor(r.negocio),flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",padding:r.logo_url?5:0}}>
                       {r.logo_url
@@ -2443,6 +2601,8 @@ const VE_ESTADOS_MUNICIPIOS={
                       </div>
                       {/* FILA 2: descripción (qué vende) */}
                       {r.descripcion_negocio&&<div style={{fontSize:11,color:"#64748b",marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.descripcion_negocio}</div>}
+                      {/* FILA ESTRELLAS */}
+                      {(()=>{const rr=provResenas[r.id]||[];if(rr.length===0)return null;const avg=(rr.reduce((a,x)=>a+x.estrellas,0)/rr.length).toFixed(1);return(<div style={{display:"flex",alignItems:"center",gap:4,marginBottom:3}}><span style={{color:"#f59e0b",fontSize:12}}>★</span><span style={{fontSize:12,fontWeight:700,color:"#0f172a"}}>{avg}</span><span style={{fontSize:11,color:"#94a3b8"}}>({rr.length})</span></div>);})()}
                       {/* FILA 3: cómo pedir + 1 categoría */}
                       <div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap"}}>
                         {opTexto&&<span style={{fontSize:10,color:"#ea580c",fontWeight:600}}>{opTexto}</span>}
