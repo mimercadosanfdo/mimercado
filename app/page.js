@@ -1,5 +1,5 @@
-// BUILD:1778379284
-"use client"; // Lokl v1778379284
+// BUILD:1778379850
+"use client"; // Lokl v1778379850
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -339,6 +339,7 @@ const VE_ESTADOS_MUNICIPIOS={
   const [showPublicarClasificado,setShowPublicarClasificado]=useState(false);
   const [pendClasificados,setPendClasificados]=useState([]);
   const [allClasificadosAdmin,setAllClasificadosAdmin]=useState([]);
+  const [allResenasAdmin,setAllResenasAdmin]=useState([]);
   const [clasifAdminFiltro,setClasifAdminFiltro]=useState("pendientes");
   const [editClasif,setEditClasif]=useState(null);
   const [clasificadoGeoFiltro,setClasificadoGeoFiltro]=useState("todo"); // "todo" | "miMunicipio"
@@ -1193,7 +1194,7 @@ const VE_ESTADOS_MUNICIPIOS={
   const loadMisClientes=async(provNombre)=>{const{data}=await supabase.from("pedidos").select("cliente_nombre,cliente_telefono,created_at,total,ref").eq("proveedor_nombre",provNombre).order("created_at",{ascending:false});if(data){const mapa={};data.forEach(p=>{const k=p.cliente_telefono;if(!mapa[k])mapa[k]={nombre:p.cliente_nombre,telefono:p.cliente_telefono,ultimoPedido:p.created_at,totalPedidos:0,totalGastado:0};mapa[k].totalPedidos++;mapa[k].totalGastado+=p.total||0;});setMisClientes(Object.values(mapa).sort((a,b)=>new Date(b.ultimoPedido)-new Date(a.ultimoPedido)));}};
 
   const loadAdmin=async()=>{
-    const[pr,re,zo,av,todos,cb,ped,promo,remPend,svcPend,clasifPend,allClasif,habPend,turPend]=await Promise.all([
+    const[pr,re,zo,av,todos,cb,ped,promo,remPend,svcPend,clasifPend,allClasif,habPend,turPend,allRes]=await Promise.all([
       supabase.from("productos_proveedor").select("*,proveedores(negocio,id)").eq("aprobado",false).eq("rechazado",false),
       supabase.from("resenas").select("*").eq("aprobada",false),
       supabase.from("zonas_delivery").select("*").order("municipio"),
@@ -1208,6 +1209,7 @@ const VE_ESTADOS_MUNICIPIOS={
       supabase.from("clasificados").select("*").order("created_at",{ascending:false}),
       supabase.from("habitaciones_hotel").select("*,proveedores(negocio,id)").eq("aprobado",false).order("created_at",{ascending:false}),
       supabase.from("servicios_turismo").select("*,proveedores(negocio,id)").eq("aprobado",false).order("created_at",{ascending:false}),
+      supabase.from("resenas").select("*,proveedores(negocio)").eq("aprobada",true).order("created_at",{ascending:false}),
     ]);
     if(pr.data)setPendProds(pr.data);
     if(re.data)setPendResenas(re.data);
@@ -1223,6 +1225,7 @@ const VE_ESTADOS_MUNICIPIOS={
     if(allClasif.data)setAllClasificadosAdmin(allClasif.data);
     if(habPend.data)setPendHabitaciones(habPend.data);
     if(turPend.data)setPendTurismo(turPend.data);
+    if(allRes.data)setAllResenasAdmin(allRes.data);
   };
 
   const loadResenas=async(prodId)=>{
@@ -2179,7 +2182,7 @@ const VE_ESTADOS_MUNICIPIOS={
                         <div style={{fontSize:12,color:"#f59e0b",letterSpacing:1}}>{"★".repeat(r.estrellas)}{"☆".repeat(5-r.estrellas)}</div>
                       </div>
                       {r.comentario&&<div style={{fontSize:12,color:"#475569",lineHeight:1.4}}>{r.comentario}</div>}
-                      <div style={{fontSize:10,color:"#cbd5e1",marginTop:3}}>{(()=>{const d=new Date(r.created_at);const diff=Math.floor((Date.now()-d)/86400000);return diff===0?"Hoy":diff===1?"Ayer":diff<7?`Hace ${diff} días`:diff<30?`Hace ${Math.floor(diff/7)} semana(s)`:d.toLocaleDateString("es-VE",{month:"short",year:"numeric"});})()}</div>
+                      <div style={{fontSize:10,color:"#cbd5e1",marginTop:3}}>{(()=>{const d=new Date(r.created_at);const now=new Date();const diff=Math.floor((now.getTime()-d.getTime())/86400000);return diff<=0?"Hoy":diff===1?"Ayer":diff<7?`Hace ${diff} días`:diff<30?`Hace ${Math.floor(diff/7)} semana(s)`:d.toLocaleDateString("es-VE",{month:"short",year:"numeric"});})()}</div>
                     </div>
                   ))}
                 </div>
@@ -2462,7 +2465,7 @@ const VE_ESTADOS_MUNICIPIOS={
                         <div style={{fontSize:12,color:"#f59e0b",letterSpacing:1}}>{"★".repeat(r.estrellas)}{"☆".repeat(5-r.estrellas)}</div>
                       </div>
                       {r.comentario&&<div style={{fontSize:12,color:"#475569",lineHeight:1.4}}>{r.comentario}</div>}
-                      <div style={{fontSize:10,color:"#cbd5e1",marginTop:3}}>{(()=>{const d=new Date(r.created_at);const diff=Math.floor((Date.now()-d)/86400000);return diff===0?"Hoy":diff===1?"Ayer":diff<7?`Hace ${diff} días`:diff<30?`Hace ${Math.floor(diff/7)} semana(s)`:d.toLocaleDateString("es-VE",{month:"short",year:"numeric"});})()}</div>
+                      <div style={{fontSize:10,color:"#cbd5e1",marginTop:3}}>{(()=>{const d=new Date(r.created_at);const now=new Date();const diff=Math.floor((now.getTime()-d.getTime())/86400000);return diff<=0?"Hoy":diff===1?"Ayer":diff<7?`Hace ${diff} días`:diff<30?`Hace ${Math.floor(diff/7)} semana(s)`:d.toLocaleDateString("es-VE",{month:"short",year:"numeric"});})()}</div>
                     </div>
                   ))}
                 </div>
@@ -4969,6 +4972,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 {key:"super",label:"🛒 Supermercado",n:0},
                 {key:"remates_pend",label:"🏷️ Remates pendientes",n:pendRemates.length},
                 {key:"servicios_pend",label:"🛠️ Servicios pendientes",n:pendServiciosCom.length},
+                {key:"resenas_publicadas",label:"✅ Reseñas publicadas",n:allResenasAdmin.length},
                 {key:"habitaciones_pend",label:"🛏️ Habitaciones pendientes",n:pendHabitaciones.length},
                 {key:"turismo_pend",label:"🌴 Turismo pendiente",n:pendTurismo.length},
                 {key:"clasificados_pend",label:"🚗 Clasificados pendientes",n:pendClasificados.length},
@@ -5038,6 +5042,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                   {key:"suscripciones",icon:"💳",label:"Suscripciones",n:suscripciones.filter(s=>!s.suscripcion_pagada&&s.meses_gratis_restantes===0).length,color:"#be123c",bg:"#fff1f2"},
                   {key:"zonas",icon:"🗺️",label:"Zonas",n:0,color:"#475569",bg:"#f8fafc"},
                   {key:"resenas",icon:"⭐",label:"Reseñas",n:pendResenas.length,color:"#b45309",bg:"#fffbeb"},
+                  {key:"resenas_publicadas",icon:"✅",label:"Publicadas",n:allResenasAdmin.length,color:"#15803d",bg:"#f0fdf4"},
                 ].map(x=>(
                   <button key={x.key} onClick={()=>{setAdminSec(x.key);if(x.key==="pedidos")loadPedidos();if(x.key==="suscripciones")loadSuscripciones();}} style={{background:x.bg,border:`1px solid ${x.bg}`,borderRadius:12,padding:"12px",textAlign:"left",cursor:"pointer",position:"relative"}}>
                     <div style={{fontSize:22,marginBottom:4}}>{x.icon}</div>
@@ -5379,6 +5384,36 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
     </div>
   </div>
 </div><button style={s.btn} onClick={addSuperProd} disabled={loading}>{loading?"Guardando...":"Agregar"}</button></div></div></div>)}
+
+          {adminSec==="resenas_publicadas"&&(
+            <div style={{margin:"0 16px"}}>
+              <div style={s.pc}>
+                <div style={s.pT}>✅ Reseñas publicadas ({allResenasAdmin.length})</div>
+                {allResenasAdmin.length===0&&<div style={{fontSize:13,color:"#94a3b8",textAlign:"center",padding:"20px 0"}}>No hay reseñas publicadas aún</div>}
+                {allResenasAdmin.map(r=>{
+                  const now=new Date();const d=new Date(r.created_at);const diff=Math.floor((now.getTime()-d.getTime())/86400000);
+                  const fecha=diff<=0?"Hoy":diff===1?"Ayer":diff<7?`Hace ${diff} días`:diff<30?`Hace ${Math.floor(diff/7)} sem.`:d.toLocaleDateString("es-VE",{month:"short",year:"numeric"});
+                  return(
+                    <div key={r.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
+                        <div>
+                          <div style={{fontSize:13,fontWeight:700,color:"#0f172a"}}>{r.cliente_nombre}</div>
+                          <div style={{fontSize:11,color:"#94a3b8"}}>{r.proveedor_nombre||r.proveedores?.negocio||"—"} · {fecha}</div>
+                        </div>
+                        <div style={{color:"#f59e0b",fontSize:14,flexShrink:0}}>{"★".repeat(r.estrellas)}{"☆".repeat(5-r.estrellas)}</div>
+                      </div>
+                      {r.comentario&&<div style={{fontSize:12,color:"#475569",marginBottom:8,lineHeight:1.4}}>{r.comentario}</div>}
+                      <button onClick={()=>setConfirmModal({msg:"¿Eliminar esta reseña publicada?",onOk:async()=>{
+                        await supabase.from("resenas").delete().eq("id",r.id);
+                        setAllResenasAdmin(prev=>prev.filter(x=>x.id!==r.id));
+                        setProvResenas(prev=>{const copy={...prev};Object.keys(copy).forEach(k=>{copy[k]=(copy[k]||[]).filter(x=>x.id!==r.id);});return copy;});
+                      }})} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>🗑️ Eliminar</button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {adminSec==="habitaciones_pend"&&(
             <div style={{margin:"0 16px"}}>
