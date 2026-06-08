@@ -1,5 +1,5 @@
-// BUILD:1778379850
-"use client"; // Lokl v1778379850
+// BUILD:1778380100
+"use client"; // Lokl v1778380100
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -413,7 +413,8 @@ const VE_ESTADOS_MUNICIPIOS={
   const [pendProds,setPendProds]=useState([]);
   const [pendPromos,setPendPromos]=useState([]);
   const [pendResenas,setPendResenas]=useState([]);
-  const [provResenas,setProvResenas]=useState({}); // {proveedor_id: [{...resena}]}
+  const [provResenas,setProvResenas]=useState({});
+  const [promediosResenas,setPromediosResenas]=useState({}); // {proveedor_id: {avg, count}} // {proveedor_id: [{...resena}]}
   const [provResenasForm,setProvResenasForm]=useState({estrellas:0,comentario:"",nombre:""}); // form nueva reseña proveedor
   const [provResenasMsj,setProvResenasMsj]=useState("");
   const [showProvResenasId,setShowProvResenasId]=useState(null); // proveedor_id cuyas reseñas están abiertas
@@ -585,6 +586,20 @@ const VE_ESTADOS_MUNICIPIOS={
       const delMuni=restList.filter(r=>(r.municipio||"San Fernando")===muni);
       setAllRestaurantes(delMuni.filter(r=>r.tipo_negocio==="Restaurante / Cocina / Comida"||!r.tipo_negocio));
       setAllNegocios(delMuni.filter(r=>r.tipo_negocio==="Tienda / Negocio local"));
+    }
+    // Cargar promedios de reseñas para badges en tarjetas
+    const{data:resData}=await supabase.from("resenas").select("proveedor_id,estrellas").eq("aprobada",true).not("proveedor_id","is",null);
+    if(resData&&resData.length>0){
+      const mapa={};
+      resData.forEach(r=>{
+        if(!r.proveedor_id)return;
+        if(!mapa[r.proveedor_id])mapa[r.proveedor_id]={sum:0,count:0};
+        mapa[r.proveedor_id].sum+=r.estrellas;
+        mapa[r.proveedor_id].count+=1;
+      });
+      const promedios={};
+      Object.keys(mapa).forEach(k=>{promedios[k]={avg:(mapa[k].sum/mapa[k].count).toFixed(1),count:mapa[k].count};});
+      setPromediosResenas(promedios);
     }
   };
 
@@ -1092,6 +1107,8 @@ const VE_ESTADOS_MUNICIPIOS={
     if(autoAprobada){
       const nueva={proveedor_id:provId,cliente_nombre:provResenasForm.nombre.trim(),estrellas:provResenasForm.estrellas,comentario:provResenasForm.comentario.trim()||null,aprobada:true,created_at:new Date().toISOString()};
       setProvResenas(prev=>({...prev,[provId]:[nueva,...(prev[provId]||[])]}));
+      // Actualizar badge en tarjeta
+      setPromediosResenas(prev=>{const lista=[nueva,...(provResenas[provId]||[])];const avg=(lista.reduce((a,x)=>a+x.estrellas,0)/lista.length).toFixed(1);return{...prev,[provId]:{avg,count:lista.length}};});
     }
     setTimeout(()=>{setProvResenasForm({estrellas:0,comentario:"",nombre:""});setProvResenasMsj("");setShowProvResenasId(null);},2500);
   };
@@ -2279,7 +2296,7 @@ const VE_ESTADOS_MUNICIPIOS={
                   <div key={n.id} onClick={()=>{setNegocioActivo(n);setCartNegocioId(n.id);setCartNegocioNombre(n.negocio);setCartNegocioWa(n.whatsapp_negocio||n.telefono);setSearch("");}} style={{background:abiertoN?"#fff":"#f8fafc",borderRadius:14,padding:14,border:`1px solid ${abiertoN?"#f1f5f9":"#e2e8f0"}`,display:"flex",gap:12,alignItems:"center",marginBottom:10,cursor:"pointer",opacity:abiertoN?1:0.72,position:"relative"}}>
                     {!abiertoN&&<div style={{position:"absolute",top:8,right:8,background:"#dc2626",color:"#fff",fontSize:9,fontWeight:800,padding:"2px 7px",borderRadius:20,letterSpacing:0.5}}>CERRADO</div>}
                     {n.logo_url?<img src={n.logo_url} alt="" style={{width:52,height:52,borderRadius:12,objectFit:"cover",flexShrink:0}}/>:<div style={{width:52,height:52,borderRadius:12,background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🏪</div>}
-                    <div style={{flex:1}}><div style={{display:"flex",alignItems:"center",gap:6,marginBottom:1}}><div style={{fontSize:14,fontWeight:700,color:P,flex:1}}>{n.negocio}</div>{abiertoN&&<span style={{fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:20,background:"#dcfce7",color:"#15803d",flexShrink:0}}>● Abierto</span>}</div><div style={{fontSize:11,color:"#64748b"}}>{(n.categorias||[]).join(" · ")}</div>{(()=>{const rr=provResenas[n.id]||[];if(rr.length===0)return null;const avg=(rr.reduce((a,x)=>a+x.estrellas,0)/rr.length).toFixed(1);return(<div style={{display:"flex",alignItems:"center",gap:4,marginTop:2}}><span style={{color:"#f59e0b",fontSize:11}}>★</span><span style={{fontSize:11,fontWeight:700,color:"#0f172a"}}>{avg}</span><span style={{fontSize:10,color:"#94a3b8"}}>({rr.length})</span></div>);})()}{n.direccion_fisica&&<div style={{fontSize:10,color:"#94a3b8"}}>📍 {n.direccion_fisica}</div>}</div>
+                    <div style={{flex:1}}><div style={{display:"flex",alignItems:"center",gap:6,marginBottom:1}}><div style={{fontSize:14,fontWeight:700,color:P,flex:1}}>{n.negocio}</div>{abiertoN&&<span style={{fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:20,background:"#dcfce7",color:"#15803d",flexShrink:0}}>● Abierto</span>}</div><div style={{fontSize:11,color:"#64748b"}}>{(n.categorias||[]).join(" · ")}</div>{promediosResenas[n.id]&&(<div style={{display:"flex",alignItems:"center",gap:4,marginTop:2}}><span style={{color:"#f59e0b",fontSize:11}}>★</span><span style={{fontSize:11,fontWeight:700,color:"#0f172a"}}>{promediosResenas[n.id].avg}</span><span style={{fontSize:10,color:"#94a3b8"}}>({promediosResenas[n.id].count})</span></div>)}{n.direccion_fisica&&<div style={{fontSize:10,color:"#94a3b8"}}>📍 {n.direccion_fisica}</div>}</div>
                     <div style={{color:"#94a3b8",fontSize:18}}>›</div>
                   </div>
                 );})}
@@ -2605,7 +2622,7 @@ const VE_ESTADOS_MUNICIPIOS={
                       {/* FILA 2: descripción (qué vende) */}
                       {r.descripcion_negocio&&<div style={{fontSize:11,color:"#64748b",marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.descripcion_negocio}</div>}
                       {/* FILA ESTRELLAS */}
-                      {(()=>{const rr=provResenas[r.id]||[];if(rr.length===0)return null;const avg=(rr.reduce((a,x)=>a+x.estrellas,0)/rr.length).toFixed(1);return(<div style={{display:"flex",alignItems:"center",gap:4,marginBottom:3}}><span style={{color:"#f59e0b",fontSize:12}}>★</span><span style={{fontSize:12,fontWeight:700,color:"#0f172a"}}>{avg}</span><span style={{fontSize:11,color:"#94a3b8"}}>({rr.length})</span></div>);})()}
+                      {promediosResenas[r.id]&&(<div style={{display:"flex",alignItems:"center",gap:4,marginBottom:3}}><span style={{color:"#f59e0b",fontSize:12}}>★</span><span style={{fontSize:12,fontWeight:700,color:"#0f172a"}}>{promediosResenas[r.id].avg}</span><span style={{fontSize:11,color:"#94a3b8"}}>({promediosResenas[r.id].count})</span></div>)}
                       {/* FILA 3: cómo pedir + 1 categoría */}
                       <div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap"}}>
                         {opTexto&&<span style={{fontSize:10,color:"#ea580c",fontWeight:600}}>{opTexto}</span>}
@@ -5407,6 +5424,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                         await supabase.from("resenas").delete().eq("id",r.id);
                         setAllResenasAdmin(prev=>prev.filter(x=>x.id!==r.id));
                         setProvResenas(prev=>{const copy={...prev};Object.keys(copy).forEach(k=>{copy[k]=(copy[k]||[]).filter(x=>x.id!==r.id);});return copy;});
+        setPromediosResenas(prev=>{const copy={...prev};if(r.proveedor_id){const lista=(provResenas[r.proveedor_id]||[]).filter(x=>x.id!==r.id);if(lista.length===0){const c={...copy};delete c[r.proveedor_id];return c;}const avg=(lista.reduce((a,x)=>a+x.estrellas,0)/lista.length).toFixed(1);return{...copy,[r.proveedor_id]:{avg,count:lista.length}};}return copy;});
                       }})} style={{...s.apvBtn,background:"#ef4444",color:"#fff"}}>🗑️ Eliminar</button>
                     </div>
                   );
