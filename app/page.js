@@ -1,5 +1,5 @@
-// BUILD:1778381200
-"use client"; // Lokl v1778381200
+// BUILD:1778381300
+"use client"; // Lokl v1778381300
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1274,10 +1274,11 @@ const VE_ESTADOS_MUNICIPIOS={
     if(enPausa===true)return false; // forzado cerrado manualmente por el proveedor
     if(activoManual===false)return false; // cuenta desactivada por admin
     if(!desde||!hasta)return activoManual!==false; // sin horario = depende solo del manual
-    const ahora=new Date();
+    // Hora actual en Venezuela (UTC-4)
+    const ahoraVE=new Date(new Date().toLocaleString("en-US",{timeZone:"America/Caracas"}));
     const [dh,dm]=desde.split(":").map(Number);
     const [hh,hm]=hasta.split(":").map(Number);
-    const minAhora=ahora.getHours()*60+ahora.getMinutes();
+    const minAhora=ahoraVE.getHours()*60+ahoraVE.getMinutes();
     const minDesde=dh*60+dm;
     const minHasta=hh*60+hm;
     if(minHasta>minDesde)return minAhora>=minDesde&&minAhora<=minHasta;
