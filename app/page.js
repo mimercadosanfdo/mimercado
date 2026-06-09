@@ -1,5 +1,5 @@
-// BUILD:1778381100
-"use client"; // Lokl v1778381100
+// BUILD:1778381200
+"use client"; // Lokl v1778381200
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -306,6 +306,7 @@ const VE_ESTADOS_MUNICIPIOS={
   const [suscripciones,setSuscripciones]=useState([]);
   const [sheet,setSheet]=useState(null);
   const [platoDetalle,setPlatoDetalle]=useState(null);
+  const [productoDetalle,setProductoDetalle]=useState(null); // modal tarjeta completa negocios locales
   const [imgZoom,setImgZoom]=useState(null); // legacy - kept for backward compat
   const [lightbox,setLightbox]=useState(null); // {foto, nombre, descripcion, precio, unidad}
   const abrirLightbox=(foto,nombre="",descripcion="",precio=null,unidad="")=>setLightbox({foto,nombre,descripcion,precio,unidad});
@@ -1467,7 +1468,7 @@ const VE_ESTADOS_MUNICIPIOS={
   const CardNegocio=({p})=>{
     const qtyNeg=cartNegocio[p.id]?.qty||0;
     return(
-      <div style={{...s.card,padding:"0 0 10px",overflow:"hidden"}}>
+      <div style={{...s.card,padding:"0 0 10px",overflow:"hidden",cursor:"pointer"}} onClick={()=>setProductoDetalle(p)}>
         {/* IMAGEN */}
         <div style={{position:"relative",marginBottom:8}}>
           {p.foto
@@ -1492,11 +1493,11 @@ const VE_ESTADOS_MUNICIPIOS={
             <div style={{fontSize:17,fontWeight:900,color:"#15803d",letterSpacing:-0.3}}>${p.price.toFixed(2)}<span style={{fontSize:10,fontWeight:400,color:"#94a3b8",marginLeft:2}}>/{p.unit}</span></div>
             {qtyNeg>0?(
               <div style={s.qR}>
-                <button style={s.qB} onClick={()=>{const n={...cartNegocio};n[p.id].qty>1?n[p.id]={...n[p.id],qty:n[p.id].qty-1}:delete n[p.id];setCartNegocio(n);}}>-</button>
+                <button style={s.qB} onClick={e=>{e.stopPropagation();const n={...cartNegocio};n[p.id].qty>1?n[p.id]={...n[p.id],qty:n[p.id].qty-1}:delete n[p.id];setCartNegocio(n);}}>-</button>
                 <span style={s.qN}>{qtyNeg}</span>
-                <button style={s.qB} onClick={()=>setCartNegocio(c=>({...c,[p.id]:{...p,qty:qtyNeg+1}}))}>+</button>
+                <button style={s.qB} onClick={e=>{e.stopPropagation();setCartNegocio(c=>({...c,[p.id]:{...p,qty:qtyNeg+1}}));}}>+</button>
               </div>
-            ):<button style={{...s.aBtn,borderRadius:8,width:"auto",padding:"5px 10px",fontSize:11,fontWeight:700}} onClick={()=>setCartNegocio(c=>({...c,[p.id]:{...p,qty:1}}))}>+ Agregar</button>}
+            ):<button style={{...s.aBtn,borderRadius:8,width:"auto",padding:"5px 10px",fontSize:11,fontWeight:700}} onClick={e=>{e.stopPropagation();setCartNegocio(c=>({...c,[p.id]:{...p,qty:1}}));}}>+ Agregar</button>}
           </div>
         </div>
       </div>
@@ -6451,6 +6452,42 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
           </div>
         </div>
       )}
+      {/* MODAL PRODUCTO NEGOCIO LOCAL */}
+      {productoDetalle&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:400,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setProductoDetalle(null)}>
+          <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:480,maxHeight:"85vh",overflow:"auto",paddingBottom:24}} onClick={e=>e.stopPropagation()}>
+            <div style={{width:40,height:4,background:"#e2e8f0",borderRadius:4,margin:"10px auto 0"}}/>
+            {productoDetalle.foto
+              ?<img src={productoDetalle.foto} alt={productoDetalle.name} style={{width:"100%",height:220,objectFit:"cover",display:"block",marginTop:8}}/>
+              :<div style={{height:140,background:"linear-gradient(135deg,#dbeafe,#bfdbfe)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:56,marginTop:8}}>🛍️</div>
+            }
+            <div style={{padding:"16px 20px 8px"}}>
+              {productoDetalle.tag&&<span style={{fontSize:11,fontWeight:800,background:"#f59e0b",color:"#fff",padding:"3px 10px",borderRadius:8,marginBottom:10,display:"inline-block"}}>{productoDetalle.tag}</span>}
+              <div style={{fontSize:20,fontWeight:900,color:"#0f172a",marginBottom:6,letterSpacing:-0.3}}>{productoDetalle.name}</div>
+              {productoDetalle.marca&&<div style={{fontSize:13,fontWeight:600,color:"#475569",marginBottom:4}}>{productoDetalle.marca}</div>}
+              {productoDetalle.descripcion&&<div style={{fontSize:13,color:"#64748b",lineHeight:1.6,marginBottom:12}}>{productoDetalle.descripcion}</div>}
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:12}}>
+                <div style={{fontSize:26,fontWeight:900,color:"#15803d",letterSpacing:-0.5}}>${parseFloat(productoDetalle.price||0).toFixed(2)}<span style={{fontSize:13,fontWeight:400,color:"#94a3b8",marginLeft:4}}>/{productoDetalle.unit}</span></div>
+                {(()=>{
+                  const qty=cartNegocio[productoDetalle.id]?.qty||0;
+                  return qty>0?(
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <button style={{...s.qB,width:34,height:34,fontSize:18}} onClick={()=>{const n={...cartNegocio};n[productoDetalle.id].qty>1?n[productoDetalle.id]={...n[productoDetalle.id],qty:n[productoDetalle.id].qty-1}:delete n[productoDetalle.id];setCartNegocio(n);}}>−</button>
+                      <span style={{fontSize:16,fontWeight:800,minWidth:20,textAlign:"center"}}>{qty}</span>
+                      <button style={{...s.qB,width:34,height:34,fontSize:18}} onClick={()=>setCartNegocio(c=>({...c,[productoDetalle.id]:{...productoDetalle,qty:qty+1}}))}>+</button>
+                    </div>
+                  ):(
+                    <button style={{background:"#1d4ed8",color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:800,cursor:"pointer"}} onClick={()=>{setCartNegocio(c=>({...c,[productoDetalle.id]:{...productoDetalle,qty:1}}));setProductoDetalle(null);}}>
+                      + Agregar
+                    </button>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* SHEET CHECKOUT — redirige a cartGlobal */}
       {sheet==="checkout"&&null}
 
