@@ -1,5 +1,5 @@
-// BUILD:1778380200
-"use client"; // Lokl v1778380200
+// BUILD:1778380350
+"use client"; // Lokl v1778380350
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -3257,6 +3257,71 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                         📲 {["medicos","enfermeria","laboratorios","odontologia"].includes(categoriaServicio.id)?"Solicitar cita":"Contactar por WhatsApp"}
                       </button>
                     </div>
+
+                  {/* ── SECCIÓN RESEÑAS — servicio ── */}
+                  {(()=>{
+                    const rList=provResenas[proveedorServicioActivo.id]||[];
+                    const avg=rList.length>0?(rList.reduce((a,r)=>a+r.estrellas,0)/rList.length).toFixed(1):null;
+                    const placeholder=(()=>{
+                      const id=categoriaServicio?.id||"";
+                      if(["medicos","enfermeria","laboratorios","odontologia"].includes(id))return "¿Cómo fue la atención?";
+                      if(id==="transporte"||id==="rutas")return "¿Cumplió con el servicio?";
+                      if(id==="hoteles")return "¿Cómo fue tu estadía?";
+                      if(id==="turismo")return "¿Cómo fue la experiencia?";
+                      return "¿Cómo fue tu experiencia con este proveedor?";
+                    })();
+                    return(
+                      <div style={{margin:"12px 0",background:"#fff",borderRadius:16,padding:16,border:"1px solid #f1f5f9",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                          <div style={{display:"flex",alignItems:"center",gap:8}}>
+                            <span style={{fontSize:15,fontWeight:900,color:"#0f172a"}}>⭐ Reseñas</span>
+                            {avg&&<span style={{fontSize:14,fontWeight:900,color:"#f59e0b"}}>{avg}</span>}
+                            {rList.length>0&&<span style={{fontSize:11,color:"#94a3b8"}}>({rList.length} opinión{rList.length!==1?"es":""})</span>}
+                          </div>
+                          <button onClick={()=>setShowProvResenasId(showProvResenasId===proveedorServicioActivo.id?null:proveedorServicioActivo.id)}
+                            style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:20,padding:"6px 12px",fontSize:12,fontWeight:700,color:"#15803d",cursor:"pointer"}}>
+                            {showProvResenasId===proveedorServicioActivo.id?"Cerrar":"✍️ Dejar reseña"}
+                          </button>
+                        </div>
+                        {showProvResenasId===proveedorServicioActivo.id&&(
+                          <div style={{background:"#f8fafc",borderRadius:12,padding:12,marginBottom:12,border:"1px solid #e2e8f0"}}>
+                            <div style={{fontSize:12,fontWeight:700,color:"#374151",marginBottom:8}}>Tu calificación</div>
+                            <div style={{display:"flex",gap:6,marginBottom:10}}>
+                              {[1,2,3,4,5].map(n=>(
+                                <span key={n} onClick={()=>setProvResenasForm(f=>({...f,estrellas:n}))}
+                                  style={{fontSize:28,cursor:"pointer",color:provResenasForm.estrellas>=n?"#f59e0b":"#e2e8f0",transition:"color 0.1s"}}>★</span>
+                              ))}
+                            </div>
+                            <input style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:13,marginBottom:8,boxSizing:"border-box",outline:"none"}}
+                              placeholder="Tu nombre *" value={provResenasForm.nombre}
+                              onChange={e=>setProvResenasForm(f=>({...f,nombre:e.target.value}))}/>
+                            <textarea style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:13,marginBottom:8,boxSizing:"border-box",outline:"none",resize:"none",fontFamily:"inherit"}}
+                              rows={3} placeholder={placeholder}
+                              value={provResenasForm.comentario}
+                              onChange={e=>setProvResenasForm(f=>({...f,comentario:e.target.value}))}/>
+                            {provResenasMsj&&<div style={{fontSize:12,fontWeight:600,color:provResenasMsj.includes("✅")?"#15803d":"#dc2626",marginBottom:8}}>{provResenasMsj}</div>}
+                            <button onClick={()=>enviarResenaProveedor(proveedorServicioActivo.id,proveedorServicioActivo.negocio)}
+                              style={{width:"100%",background:"#0f9b6e",color:"#fff",border:"none",borderRadius:10,padding:"10px",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                              Enviar reseña
+                            </button>
+                          </div>
+                        )}
+                        {rList.length===0&&showProvResenasId!==proveedorServicioActivo.id&&(
+                          <div style={{textAlign:"center",padding:"10px 0",color:"#94a3b8",fontSize:12}}>Sé el primero en dejar una reseña</div>
+                        )}
+                        {rList.slice(0,5).map((r,i)=>(
+                          <div key={i} style={{paddingBottom:10,marginBottom:10,borderBottom:i<rList.slice(0,5).length-1?"1px solid #f1f5f9":"none"}}>
+                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:3}}>
+                              <div style={{fontSize:13,fontWeight:700,color:"#0f172a"}}>{r.cliente_nombre}</div>
+                              <div style={{fontSize:12,color:"#f59e0b",letterSpacing:1}}>{"★".repeat(r.estrellas)}{"☆".repeat(5-r.estrellas)}</div>
+                            </div>
+                            {r.comentario&&<div style={{fontSize:12,color:"#475569",lineHeight:1.4}}>{r.comentario}</div>}
+                            <div style={{fontSize:10,color:"#cbd5e1",marginTop:3}}>{(()=>{const d=new Date(r.created_at);const now=new Date();const diff=Math.floor((now.getTime()-d.getTime())/86400000);return diff<=0?"Hoy":diff===1?"Ayer":diff<7?`Hace ${diff} días`:diff<30?`Hace ${Math.floor(diff/7)} semana(s)`:d.toLocaleDateString("es-VE",{month:"short",year:"numeric"});})()}</div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                   )}
                 </div>
               ):(
@@ -3352,6 +3417,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                           const{data}=await supabase.from("servicios_turismo").select("*").eq("proveedor_id",prov.id).eq("aprobado",true).eq("disponible",true).order("created_at");
                           if(data)setTurismoProvActivo(data);
                         }
+                        loadProvResenas(prov.id);
                       }} style={{background:abProv?"#fff":"#f8fafc",borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.08)",border:`1px solid ${abProv?"#f1f5f9":"#e2e8f0"}`,cursor:"pointer",transition:"box-shadow 0.15s",opacity:abProv?1:0.75,position:"relative"}}>
                         <div style={{display:"flex",gap:12,alignItems:"center"}}>
                           {prov.logo_url
@@ -3364,6 +3430,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                               <span style={{background:"#dcfce7",color:"#15803d",fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20}}>✓ Verificado</span>
                             </div>
                             {prov.especialidad&&<div style={{fontSize:12,color:"#475569",fontWeight:600,marginTop:2}}>{prov.especialidad}</div>}
+                            {promediosResenas[prov.id]&&(<div style={{display:"flex",alignItems:"center",gap:3,marginTop:2}}><span style={{color:"#f59e0b",fontSize:11}}>★</span><span style={{fontSize:11,fontWeight:700,color:"#0f172a"}}>{promediosResenas[prov.id].avg}</span><span style={{fontSize:10,color:"#94a3b8"}}>({promediosResenas[prov.id].count})</span></div>)}
                             {prov.descripcion_negocio&&<div style={{fontSize:11,color:"#94a3b8",marginTop:2,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{prov.descripcion_negocio}</div>}
                           </div>
                           <div style={{flexShrink:0,textAlign:"center"}}>
