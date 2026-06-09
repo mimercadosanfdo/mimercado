@@ -1,5 +1,5 @@
-// BUILD:1778380900
-"use client"; // Lokl v1778380900
+// BUILD:1778381000
+"use client"; // Lokl v1778381000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1094,8 +1094,9 @@ const VE_ESTADOS_MUNICIPIOS={
   };
 
   // Enviar reseña de proveedor con filtro automático
-  const enviarResenaProveedor=async(provId,provNombre)=>{
-    if(!provResenasForm.estrellas||!provResenasForm.nombre.trim())return setProvResenasMsj("Pon tu nombre y calificación ⭐");
+  const enviarResenaProveedor=async(provId,provNombre,btn=null)=>{
+    if(btn){btn.disabled=true;btn.textContent="Enviando...";}
+    if(!provResenasForm.estrellas||!provResenasForm.nombre.trim()){setProvResenasMsj("Pon tu nombre y calificación ⭐");if(btn){btn.disabled=false;btn.textContent="Enviar reseña";}return;}
     const autoAprobada=pasaFiltro(provResenasForm.comentario)&&pasaFiltro(provResenasForm.nombre);
     const{error}=await supabase.from("resenas").insert({
       proveedor_id:provId,
@@ -1105,7 +1106,7 @@ const VE_ESTADOS_MUNICIPIOS={
       comentario:provResenasForm.comentario.trim()||null,
       aprobada:autoAprobada,
     });
-    if(error){setProvResenasMsj("Error al enviar. Intenta de nuevo.");return;}
+    if(error){setProvResenasMsj("Error al enviar. Intenta de nuevo.");if(btn){btn.disabled=false;btn.textContent="Enviar reseña";}return;}
     setProvResenasMsj(autoAprobada?"✅ ¡Gracias! Tu reseña ya está publicada.":"✅ Gracias. Tu reseña será revisada antes de publicarse.");
     // Si fue aprobada automáticamente, actualizar lista local
     if(autoAprobada){
@@ -1978,11 +1979,12 @@ const VE_ESTADOS_MUNICIPIOS={
                   <input style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:13,marginBottom:8,boxSizing:"border-box",outline:"none"}} placeholder="Tu nombre *" value={provResenasForm.nombre} onChange={e=>setProvResenasForm(f=>({...f,nombre:e.target.value}))}/>
                   <textarea style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:13,marginBottom:8,boxSizing:"border-box",outline:"none",resize:"none",fontFamily:"inherit"}} rows={3} placeholder="¿Cómo estuvo tu pedido?" value={provResenasForm.comentario} onChange={e=>setProvResenasForm(f=>({...f,comentario:e.target.value}))}/>
                   {provResenasMsj&&<div style={{fontSize:12,fontWeight:600,color:provResenasMsj.includes("✅")?"#15803d":"#dc2626",marginBottom:8}}>{provResenasMsj}</div>}
-                  <button onClick={async()=>{
-                    if(!provResenasForm.estrellas||!provResenasForm.nombre.trim())return setProvResenasMsj("Pon tu nombre y calificación ⭐");
+                  <button onClick={async(e)=>{
+                    const btn=e.currentTarget;btn.disabled=true;btn.textContent="Enviando...";
+                    if(!provResenasForm.estrellas||!provResenasForm.nombre.trim()){setProvResenasMsj("Pon tu nombre y calificación ⭐");btn.disabled=false;btn.textContent="Enviar opinión";return;}
                     const autoAprobada=pasaFiltro(provResenasForm.comentario)&&pasaFiltro(provResenasForm.nombre);
                     const{error}=await supabase.from("resenas").insert({proveedor_id:null,proveedor_nombre:"Supermercado Lokl",cliente_nombre:provResenasForm.nombre.trim(),estrellas:provResenasForm.estrellas,comentario:provResenasForm.comentario.trim()||null,aprobada:autoAprobada});
-                    if(error){setProvResenasMsj("Error al enviar. Intenta de nuevo.");return;}
+                    if(error){setProvResenasMsj("Error al enviar. Intenta de nuevo.");btn.disabled=false;btn.textContent="Enviar opinión";return;}
                     setProvResenasMsj(autoAprobada?"✅ ¡Gracias! Tu opinión ya está publicada.":"✅ Gracias. Tu opinión será revisada antes de publicarse.");
                     if(autoAprobada){
                       const nueva={proveedor_id:null,proveedor_nombre:"Supermercado Lokl",cliente_nombre:provResenasForm.nombre.trim(),estrellas:provResenasForm.estrellas,comentario:provResenasForm.comentario.trim()||null,aprobada:true,created_at:new Date().toISOString()};
