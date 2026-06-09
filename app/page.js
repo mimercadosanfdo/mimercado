@@ -1,5 +1,5 @@
-// BUILD:1778381000
-"use client"; // Lokl v1778381000
+// BUILD:1778381100
+"use client"; // Lokl v1778381100
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -306,7 +306,9 @@ const VE_ESTADOS_MUNICIPIOS={
   const [suscripciones,setSuscripciones]=useState([]);
   const [sheet,setSheet]=useState(null);
   const [platoDetalle,setPlatoDetalle]=useState(null);
-  const [imgZoom,setImgZoom]=useState(null);
+  const [imgZoom,setImgZoom]=useState(null); // legacy - kept for backward compat
+  const [lightbox,setLightbox]=useState(null); // {foto, nombre, descripcion, precio, unidad}
+  const abrirLightbox=(foto,nombre="",descripcion="",precio=null,unidad="")=>setLightbox({foto,nombre,descripcion,precio,unidad});
   const [zonas,setZonas]=useState([]);
   const [zonaSelId,setZonaSelId]=useState("");
   const [zonaSel,setZonaSel]=useState(null);
@@ -1469,7 +1471,7 @@ const VE_ESTADOS_MUNICIPIOS={
         {/* IMAGEN */}
         <div style={{position:"relative",marginBottom:8}}>
           {p.foto
-            ?<img src={p.foto} alt={p.name} style={{width:"100%",height:110,objectFit:"cover",display:"block",borderRadius:"12px 12px 0 0"}}/>
+            ?<img src={p.foto} alt={p.name} style={{width:"100%",height:110,objectFit:"cover",display:"block",borderRadius:"12px 12px 0 0",cursor:"zoom-in"}} onClick={e=>{e.stopPropagation();abrirLightbox(p.foto,p.name,p.description,p.price);}}/>
             :<div style={{height:100,background:"linear-gradient(135deg,#dbeafe,#bfdbfe)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,borderRadius:"12px 12px 0 0"}}>🛍️</div>
           }
           {p.tag&&<div style={{position:"absolute",top:6,left:6,fontSize:9,fontWeight:800,background:"#f59e0b",color:"#fff",padding:"2px 7px",borderRadius:8}}>{p.tag}</div>}
@@ -1899,7 +1901,7 @@ const VE_ESTADOS_MUNICIPIOS={
                     {/* IMAGEN */}
                     <div style={{position:"relative"}}>
                       {p.foto_url
-                        ?<img src={p.foto_url} alt={p.nombre} style={{width:"100%",height:125,objectFit:"cover",display:"block"}}/>
+                        ?<img src={p.foto_url} alt={p.nombre} style={{width:"100%",height:125,objectFit:"cover",display:"block",cursor:"zoom-in"}} onClick={e=>{e.stopPropagation();abrirLightbox(p.foto_url,p.nombre,p.descripcion,p.precio,p.unidad);}}/>
                         :<div style={{height:125,background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:44}}>{p.emoji||"🛒"}</div>
                       }
                       {/* BADGE OFERTA — fijo sobre imagen */}
@@ -2112,7 +2114,7 @@ const VE_ESTADOS_MUNICIPIOS={
                   <div key={r.id} style={{background:"#fff",borderRadius:16,overflow:"hidden",border:"1px solid #e8e8f0",boxShadow:"0 2px 10px rgba(0,0,0,0.06)",display:"flex",flexDirection:"column"}}>
                     <div style={{position:"relative"}}>
                       {r.foto_url
-                        ?<img src={r.foto_url} alt={r.titulo} style={{width:"100%",height:130,objectFit:"cover"}}/>
+                        ?<img src={r.foto_url} alt={r.titulo} style={{width:"100%",height:130,objectFit:"cover",cursor:"zoom-in"}} onClick={e=>{e.stopPropagation();abrirLightbox(r.foto_url,r.titulo,r.descripcion,r.precio);}}/>
                         :<div style={{height:100,background:"linear-gradient(135deg,#78350f,#d97706)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36}}>🏷️</div>
                       }
                       {esNuevo&&<span style={{position:"absolute",top:6,left:6,background:"#f59e0b",color:"#fff",fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:20,boxShadow:"0 2px 6px rgba(245,158,11,0.4)"}}>🔥 NUEVO</span>}
@@ -2896,7 +2898,7 @@ const VE_ESTADOS_MUNICIPIOS={
             {[clasificadoSeleccionado.foto1_url,clasificadoSeleccionado.foto2_url,clasificadoSeleccionado.foto3_url,clasificadoSeleccionado.foto4_url].filter(Boolean).length>0&&(
               <div style={{display:"grid",gridTemplateColumns:[clasificadoSeleccionado.foto1_url,clasificadoSeleccionado.foto2_url,clasificadoSeleccionado.foto3_url,clasificadoSeleccionado.foto4_url].filter(Boolean).length===1?"1fr":"1fr 1fr",gap:6,marginBottom:12,borderRadius:16,overflow:"hidden"}}>
                 {[clasificadoSeleccionado.foto1_url,clasificadoSeleccionado.foto2_url,clasificadoSeleccionado.foto3_url,clasificadoSeleccionado.foto4_url].filter(Boolean).map((f,i)=>(
-                  <img key={i} src={f} alt="" onClick={()=>setImgZoom(f)} style={{width:"100%",height:i===0&&[clasificadoSeleccionado.foto1_url,clasificadoSeleccionado.foto2_url,clasificadoSeleccionado.foto3_url,clasificadoSeleccionado.foto4_url].filter(Boolean).length===1?220:140,objectFit:"cover",cursor:"pointer"}}/>
+                  <img key={i} src={f} alt="" onClick={()=>abrirLightbox(f,clasificadoSeleccionado?.titulo,"",clasificadoSeleccionado?.precio)} style={{width:"100%",height:i===0&&[clasificadoSeleccionado.foto1_url,clasificadoSeleccionado.foto2_url,clasificadoSeleccionado.foto3_url,clasificadoSeleccionado.foto4_url].filter(Boolean).length===1?220:140,objectFit:"cover",cursor:"pointer"}}/>
                 ))}
               </div>
             )}
@@ -3193,7 +3195,7 @@ const VE_ESTADOS_MUNICIPIOS={
                       <div style={{fontSize:13,fontWeight:700,color:"#0f766e",marginBottom:10,paddingBottom:8,borderBottom:"1px solid #f1f5f9"}}>🛏️ Habitaciones disponibles</div>
                       {habsProvActivo.map(hab=>(
                         <div key={hab.id} style={{background:"#fff",borderRadius:14,marginBottom:10,border:"1px solid #ccfbf1",overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
-                          {hab.foto_url&&<img src={hab.foto_url} alt={hab.nombre} style={{width:"100%",height:140,objectFit:"cover",display:"block"}}/>}
+                          {hab.foto_url&&<img src={hab.foto_url} alt={hab.nombre} style={{width:"100%",height:140,objectFit:"cover",display:"block",cursor:"zoom-in"}} onClick={e=>{e.stopPropagation();abrirLightbox(hab.foto_url,hab.nombre,hab.descripcion,hab.precio_noche,"noche");}}/>}
                           <div style={{padding:"10px 12px"}}>
                             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:6,marginBottom:4}}>
                               <div style={{fontSize:14,fontWeight:800,color:"#0f172a"}}>{hab.nombre}</div>
@@ -3219,7 +3221,7 @@ const VE_ESTADOS_MUNICIPIOS={
                       <div style={{fontSize:13,fontWeight:700,color:"#065f46",marginBottom:10,paddingBottom:8,borderBottom:"1px solid #f1f5f9"}}>🌴 Experiencias disponibles</div>
                       {turismoProvActivo.map(srv=>(
                         <div key={srv.id} style={{background:"#fff",borderRadius:14,marginBottom:10,border:"1px solid #bbf7d0",overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
-                          {srv.foto_url&&<img src={srv.foto_url} alt={srv.nombre} style={{width:"100%",height:140,objectFit:"cover",display:"block"}}/>}
+                          {srv.foto_url&&<img src={srv.foto_url} alt={srv.nombre} style={{width:"100%",height:140,objectFit:"cover",display:"block",cursor:"zoom-in"}} onClick={e=>{e.stopPropagation();abrirLightbox(srv.foto_url,srv.nombre,srv.descripcion,srv.precio,"persona");}}/>}
                           <div style={{padding:"10px 12px"}}>
                             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:6,marginBottom:4}}>
                               <div style={{fontSize:14,fontWeight:800,color:"#0f172a"}}>{srv.nombre}</div>
@@ -3275,7 +3277,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
 ¿Cuándo puedes atenderme?`;
                         return(
                           <div key={sp.id} style={{background:"#fff",borderRadius:14,marginBottom:10,border:"1px solid #f1f5f9",boxShadow:"0 1px 4px rgba(0,0,0,0.05)",overflow:"hidden",display:"flex",gap:0}}>
-                            {sp.foto_url&&<img src={sp.foto_url} alt={sp.nombre} style={{width:88,height:88,objectFit:"cover",display:"block",flexShrink:0,alignSelf:"stretch"}}/>}
+                            {sp.foto_url&&<img src={sp.foto_url} alt={sp.nombre} style={{width:88,height:88,objectFit:"cover",display:"block",flexShrink:0,alignSelf:"stretch",cursor:"zoom-in"}} onClick={e=>{e.stopPropagation();abrirLightbox(sp.foto_url,sp.nombre,sp.descripcion,sp.precio);}}/>}
                             <div style={{padding:"10px 12px",flex:1,display:"flex",flexDirection:"column",justifyContent:"space-between",minWidth:0}}>
                               <div style={{marginBottom:8}}>
                                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:6}}>
@@ -3965,7 +3967,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 {myProds.filter(p=>p.aprobado&&!p.rechazado).map(p=>(
                   <div key={p.id} style={{padding:"12px 0",borderBottom:"1px solid #f1f5f9"}}>
                     <div style={{display:"flex",gap:8,marginBottom:8}}>
-                      {p.foto_url?<img src={p.foto_url} alt="" style={{width:50,height:50,borderRadius:8,objectFit:"cover"}}/>:<span style={{fontSize:28,width:50,textAlign:"center"}}>🍽️</span>}
+                      {p.foto_url?<img src={p.foto_url} alt="" style={{width:50,height:50,borderRadius:8,objectFit:"cover",cursor:"zoom-in"}} onClick={e=>{e.stopPropagation();abrirLightbox(p.foto_url,p.nombre,p.descripcion,p.precio);}}/>:<span style={{fontSize:28,width:50,textAlign:"center"}}>🍽️</span>}
                       <div style={{flex:1}}>
                         <div style={{fontSize:13,fontWeight:700}}>{p.nombre}</div>
                         {(p.marca||p.presentacion)&&<div style={{fontSize:11,color:"#94a3b8"}}>{[p.marca,p.presentacion].filter(Boolean).join(" · ")}</div>}
@@ -6399,10 +6401,17 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
           </div>
         </div>
       )}
-      {imgZoom&&(
-        <div onClick={()=>setImgZoom(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-          <button onClick={()=>setImgZoom(null)} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:"50%",width:36,height:36,color:"#fff",fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
-          <img src={imgZoom} alt="" style={{maxWidth:"100%",maxHeight:"85vh",objectFit:"contain",borderRadius:12,boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}}/>
+      {(imgZoom||lightbox)&&(
+        <div onClick={()=>{setImgZoom(null);setLightbox(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.93)",zIndex:500,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:16}}>
+          <button onClick={()=>{setImgZoom(null);setLightbox(null);}} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:"50%",width:36,height:36,color:"#fff",fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+          <img src={lightbox?.foto||imgZoom} alt="" style={{maxWidth:"100%",maxHeight:lightbox?.nombre?"65vh":"85vh",objectFit:"contain",borderRadius:12,boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}}/>
+          {lightbox?.nombre&&(
+            <div style={{marginTop:16,textAlign:"center",maxWidth:320,padding:"0 8px"}}>
+              <div style={{fontSize:17,fontWeight:800,color:"#fff",marginBottom:4}}>{lightbox.nombre}</div>
+              {lightbox.descripcion&&<div style={{fontSize:13,color:"rgba(255,255,255,0.75)",lineHeight:1.5,marginBottom:8}}>{lightbox.descripcion}</div>}
+              {lightbox.precio&&<div style={{fontSize:20,fontWeight:900,color:"#fbbf24"}}>${lightbox.precio}{lightbox.unidad?" / "+lightbox.unidad:""}</div>}
+            </div>
+          )}
         </div>
       )}
       {/* MODAL DETALLE PLATO */}
