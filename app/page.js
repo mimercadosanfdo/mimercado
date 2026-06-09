@@ -1,5 +1,5 @@
-// BUILD:1778380800
-"use client"; // Lokl v1778380800
+// BUILD:1778380900
+"use client"; // Lokl v1778380900
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1954,7 +1954,7 @@ const VE_ESTADOS_MUNICIPIOS={
 
         {/* RESEÑAS DEL SUPERMERCADO */}
         {(()=>{
-          const rList=provResenas[SUPER_ID_PLACEHOLDER]||[];
+          const rList=provResenas["super"]||[];
           const avg=rList.length>0?(rList.reduce((a,r)=>a+r.estrellas,0)/rList.length).toFixed(1):null;
           return(
             <div style={{margin:"16px 16px 8px",background:"#fff",borderRadius:16,padding:16,border:"1px solid #f1f5f9",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
