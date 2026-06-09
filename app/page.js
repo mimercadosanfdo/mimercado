@@ -1,5 +1,5 @@
-// BUILD:1778380700
-"use client"; // Lokl v1778380700
+// BUILD:1778380800
+"use client"; // Lokl v1778380800
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -478,7 +478,7 @@ const VE_ESTADOS_MUNICIPIOS={
   // ──────────────────────────────────────────────────────────
 
   useEffect(()=>{
-    loadAll();loadRemates();loadServiciosCom();loadClasificados();loadPromediosResenas();loadZonasOperacion();loadPromediosResenas();
+    loadAll();loadRemates();loadServiciosCom();loadClasificados();loadZonasOperacion();loadPromediosResenas();loadProvResenas("super");
     // Primera visita: mostrar selector de ciudad
     if(!ubicacionUsuario){
       setTimeout(()=>setShowCiudadModal(true),600);
@@ -1086,7 +1086,10 @@ const VE_ESTADOS_MUNICIPIOS={
   // Cargar reseñas aprobadas de un proveedor
   const loadProvResenas=async(provId)=>{
     if(provResenas[provId])return; // ya cargadas
-    const{data}=await supabase.from("resenas").select("*").eq("proveedor_id",provId).eq("aprobada",true).order("created_at",{ascending:false}).limit(10);
+    let query=supabase.from("resenas").select("*").eq("aprobada",true).order("created_at",{ascending:false}).limit(10);
+    if(provId==="super"){query=query.is("proveedor_id",null).eq("proveedor_nombre","Supermercado Lokl");}
+    else{query=query.eq("proveedor_id",provId);}
+    const{data}=await query;
     if(data)setProvResenas(prev=>({...prev,[provId]:data}));
   };
 
@@ -1948,6 +1951,54 @@ const VE_ESTADOS_MUNICIPIOS={
             {superGroups.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}><div style={{fontSize:40}}>🔍</div><p>No encontramos ese producto</p></div>}
           </div>
         )}
+
+        {/* RESEÑAS DEL SUPERMERCADO */}
+        {(()=>{
+          const rList=provResenas[SUPER_ID_PLACEHOLDER]||[];
+          const avg=rList.length>0?(rList.reduce((a,r)=>a+r.estrellas,0)/rList.length).toFixed(1):null;
+          return(
+            <div style={{margin:"16px 16px 8px",background:"#fff",borderRadius:16,padding:16,border:"1px solid #f1f5f9",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{fontSize:15,fontWeight:900,color:"#0f172a"}}>⭐ Opiniones del supermercado</span>
+                  {avg&&<span style={{fontSize:14,fontWeight:900,color:"#f59e0b"}}>{avg}</span>}
+                  {rList.length>0&&<span style={{fontSize:11,color:"#94a3b8"}}>({rList.length} opinión{rList.length!==1?"es":""})</span>}
+                </div>
+                <button onClick={()=>setShowProvResenasId(showProvResenasId==="super"?null:"super")}
+                  style={{background:"#fef9c3",border:"1px solid #fde68a",borderRadius:20,padding:"6px 12px",fontSize:12,fontWeight:700,color:"#92400e",cursor:"pointer"}}>
+                  {showProvResenasId==="super"?"Cerrar":"✍️ Opinar"}
+                </button>
+              </div>
+              {showProvResenasId==="super"&&(
+                <div style={{background:"#f8fafc",borderRadius:12,padding:12,marginBottom:12,border:"1px solid #e2e8f0"}}>
+                  <div style={{fontSize:12,fontWeight:700,color:"#374151",marginBottom:8}}>Tu calificación</div>
+                  <div style={{display:"flex",gap:6,marginBottom:10}}>
+                    {[1,2,3,4,5].map(n=>(<span key={n} onClick={()=>setProvResenasForm(f=>({...f,estrellas:n}))} style={{fontSize:28,cursor:"pointer",color:provResenasForm.estrellas>=n?"#f59e0b":"#e2e8f0",transition:"color 0.1s"}}>★</span>))}
+                  </div>
+                  <input style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:13,marginBottom:8,boxSizing:"border-box",outline:"none"}} placeholder="Tu nombre *" value={provResenasForm.nombre} onChange={e=>setProvResenasForm(f=>({...f,nombre:e.target.value}))}/>
+                  <textarea style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1px solid #e2e8f0",fontSize:13,marginBottom:8,boxSizing:"border-box",outline:"none",resize:"none",fontFamily:"inherit"}} rows={3} placeholder="¿Cómo estuvo tu pedido?" value={provResenasForm.comentario} onChange={e=>setProvResenasForm(f=>({...f,comentario:e.target.value}))}/>
+                  {provResenasMsj&&<div style={{fontSize:12,fontWeight:600,color:provResenasMsj.includes("✅")?"#15803d":"#dc2626",marginBottom:8}}>{provResenasMsj}</div>}
+                  <button onClick={async()=>{
+                    if(!provResenasForm.estrellas||!provResenasForm.nombre.trim())return setProvResenasMsj("Pon tu nombre y calificación ⭐");
+                    const autoAprobada=pasaFiltro(provResenasForm.comentario)&&pasaFiltro(provResenasForm.nombre);
+                    const{error}=await supabase.from("resenas").insert({proveedor_id:null,proveedor_nombre:"Supermercado Lokl",cliente_nombre:provResenasForm.nombre.trim(),estrellas:provResenasForm.estrellas,comentario:provResenasForm.comentario.trim()||null,aprobada:autoAprobada});
+                    if(error){setProvResenasMsj("Error al enviar. Intenta de nuevo.");return;}
+                    setProvResenasMsj(autoAprobada?"✅ ¡Gracias! Tu opinión ya está publicada.":"✅ Gracias. Tu opinión será revisada antes de publicarse.");
+                    if(autoAprobada){
+                      const nueva={proveedor_id:null,proveedor_nombre:"Supermercado Lokl",cliente_nombre:provResenasForm.nombre.trim(),estrellas:provResenasForm.estrellas,comentario:provResenasForm.comentario.trim()||null,aprobada:true,created_at:new Date().toISOString()};
+                      setProvResenas(prev=>({...prev,"super":[nueva,...(prev["super"]||[])]}));
+                    }
+                    setTimeout(()=>{setProvResenasForm({estrellas:0,comentario:"",nombre:""});setProvResenasMsj("");setShowProvResenasId(null);},2500);
+                  }} style={{width:"100%",background:"#f59e0b",color:"#fff",border:"none",borderRadius:10,padding:"10px",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                    Enviar opinión
+                  </button>
+                </div>
+              )}
+              {rList.length===0&&showProvResenasId!=="super"&&(<div style={{textAlign:"center",padding:"10px 0",color:"#94a3b8",fontSize:12}}>Sé el primero en opinar sobre el supermercado</div>)}
+              {rList.slice(0,5).map((r,i)=>(<div key={i} style={{paddingBottom:10,marginBottom:10,borderBottom:i<rList.slice(0,5).length-1?"1px solid #f1f5f9":"none"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:3}}><div style={{fontSize:13,fontWeight:700,color:"#0f172a"}}>{r.cliente_nombre}</div><div style={{fontSize:12,color:"#f59e0b",letterSpacing:1}}>{"★".repeat(r.estrellas)}{"☆".repeat(5-r.estrellas)}</div></div>{r.comentario&&<div style={{fontSize:12,color:"#475569",lineHeight:1.4}}>{r.comentario}</div>}<div style={{fontSize:10,color:"#cbd5e1",marginTop:3}}>{(()=>{const d=new Date(r.created_at);const now=new Date();const diff=Math.floor((now.getTime()-d.getTime())/86400000);return diff<=0?"Hoy":diff===1?"Ayer":diff<7?`Hace ${diff} días`:diff<30?`Hace ${Math.floor(diff/7)} semana(s)`:d.toLocaleDateString("es-VE",{month:"short",year:"numeric"});})()}</div></div>))}
+            </div>
+          );
+        })()}
         </> /* end tieneSuper true branch */
         )} {/* end tieneSuper ternary */}
       </>)}
