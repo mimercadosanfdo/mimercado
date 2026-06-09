@@ -1,5 +1,5 @@
-// BUILD:1778381400
-"use client"; // Lokl v1778381400
+// BUILD:1778381600
+"use client"; // Lokl v1778381600
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -583,7 +583,7 @@ const VE_ESTADOS_MUNICIPIOS={
     }));
     if(cb.data)setCombos(cb.data);
     // Cargar proveedores filtrados por municipio
-    const{data:restList}=await supabase.from("proveedores").select("id,negocio,logo_url,activo,en_pausa,horario_desde,horario_hasta,horario_desc,telefono,whatsapp_negocio,suscripcion_activa,tipo_negocio,descripcion_negocio,delivery_propio,delivery_costo,delivery_gratis_desde,categorias,direccion_fisica,tipo_presencia,estado_ubicacion,municipio,parroquia,latitud,longitud,eta_minutos_min,eta_minutos_max,eta_texto,permite_retiro").eq("aprobado",true).eq("suscripcion_activa",true).eq("en_pausa",false).order("negocio");
+    const{data:restList}=await supabase.from("proveedores").select("id,negocio,logo_url,activo,en_pausa,forzar_abierto,horario_desde,horario_hasta,horario_desc,telefono,whatsapp_negocio,suscripcion_activa,tipo_negocio,descripcion_negocio,delivery_propio,delivery_costo,delivery_gratis_desde,categorias,direccion_fisica,tipo_presencia,estado_ubicacion,municipio,parroquia,latitud,longitud,eta_minutos_min,eta_minutos_max,eta_texto,permite_retiro").eq("aprobado",true).eq("suscripcion_activa",true).order("negocio");
     if(restList){
       // Filtrar por municipio — si proveedor no tiene municipio asignado, se asume San Fernando
       const delMuni=restList.filter(r=>(r.municipio||"San Fernando")===muni);
@@ -835,7 +835,6 @@ const VE_ESTADOS_MUNICIPIOS={
       .select("*")
       .eq("aprobado",true)
       .eq("suscripcion_activa",true)
-      .eq("en_pausa",false)
       .eq("subcategoria_servicio",subcategoria)
       .eq("municipio",municipio);
     // Buscar también por tipo_negocio para los existentes
@@ -1270,12 +1269,12 @@ const VE_ESTADOS_MUNICIPIOS={
     if(mode!=="dash")try{localStorage.removeItem("lokl_prov");}catch{}
   };
   const toggleMiEstado=async()=>{const n=!provData.activo;await supabase.from("proveedores").update({activo:n}).eq("id",provData.id);setProvDataPersist({...provData,activo:n});loadAll();};
-  const estaAbiertoAhora=(desde,hasta,activoManual,enPausa)=>{
-    if(enPausa===true)return false; // forzado cerrado manualmente por el proveedor
+  const estaAbiertoAhora=(desde,hasta,activoManual,enPausa,forzarAbierto)=>{
     if(activoManual===false)return false; // cuenta desactivada por admin
-    if(!desde||!hasta)return activoManual!==false; // sin horario = depende solo del manual
+    if(forzarAbierto===true)return true; // dueño forzó apertura manual
     // Hora actual en Venezuela (UTC-4)
     const ahoraVE=new Date(new Date().toLocaleString("en-US",{timeZone:"America/Caracas"}));
+    if(!desde||!hasta)return true; // sin horario configurado = siempre abierto
     const [dh,dm]=desde.split(":").map(Number);
     const [hh,hm]=hasta.split(":").map(Number);
     const minAhora=ahoraVE.getHours()*60+ahoraVE.getMinutes();
@@ -2348,8 +2347,8 @@ const VE_ESTADOS_MUNICIPIOS={
                   <div style={{fontSize:13,fontWeight:700}}>{negocioCatFiltro||`"${search}"`}</div>
                   <button onClick={()=>{setNegocioCatFiltro(null);setSearch("");}} style={{fontSize:12,color:P,background:"none",border:"none",cursor:"pointer"}}>← Volver</button>
                 </div>
-                {[...allNegocios].sort((a,b)=>{const aAb=estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo,a.en_pausa);const bAb=estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo,b.en_pausa);return bAb-aAb;}).filter(n=>negocioCatFiltro?(n.categorias||[]).includes(negocioCatFiltro):n.negocio.toLowerCase().includes(search.toLowerCase())).map(n=>{
-  const abiertoN=estaAbiertoAhora(n.horario_desde,n.horario_hasta,n.activo,n.en_pausa);
+                {[...allNegocios].sort((a,b)=>{const aAb=estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo,a.en_pausa,a.forzar_abierto);const bAb=estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo,b.en_pausa,b.forzar_abierto);return bAb-aAb;}).filter(n=>negocioCatFiltro?(n.categorias||[]).includes(negocioCatFiltro):n.negocio.toLowerCase().includes(search.toLowerCase())).map(n=>{
+  const abiertoN=estaAbiertoAhora(n.horario_desde,n.horario_hasta,n.activo,n.en_pausa,n.forzar_abierto);
   return(
                   <div key={n.id} onClick={()=>{setNegocioActivo(n);setCartNegocioId(n.id);setCartNegocioNombre(n.negocio);setCartNegocioWa(n.whatsapp_negocio||n.telefono);setSearch("");}} style={{background:abiertoN?"#fff":"#f8fafc",borderRadius:14,padding:14,border:`1px solid ${abiertoN?"#f1f5f9":"#e2e8f0"}`,display:"flex",gap:12,alignItems:"center",marginBottom:10,cursor:"pointer",opacity:abiertoN?1:0.72,position:"relative"}}>
                     {!abiertoN&&<div style={{position:"absolute",top:8,right:8,background:"#dc2626",color:"#fff",fontSize:9,fontWeight:800,padding:"2px 7px",borderRadius:20,letterSpacing:0.5}}>CERRADO</div>}
@@ -2651,8 +2650,8 @@ const VE_ESTADOS_MUNICIPIOS={
                     </button>
                   </div>
                 )}
-                {[...allRestaurantes].sort((a,b)=>{const aAb=estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo,a.en_pausa);const bAb=estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo,b.en_pausa);return bAb-aAb;}).map(r=>{
-                  const abiertoR=estaAbiertoAhora(r.horario_desde,r.horario_hasta,r.activo,r.en_pausa);
+                {[...allRestaurantes].sort((a,b)=>{const aAb=estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo,a.en_pausa,a.forzar_abierto);const bAb=estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo,b.en_pausa,b.forzar_abierto);return bAb-aAb;}).map(r=>{
+                  const abiertoR=estaAbiertoAhora(r.horario_desde,r.horario_hasta,r.activo,r.en_pausa,r.forzar_abierto);
                   const opTexto=r.tipo_operacion_gastro==="cocina_oscura"?"🚚 Pedidos solo por delivery":
                     r.tipo_operacion_gastro==="restaurante"?`🍽️ Atención en local${r.delivery_propio?" · 🚚 Delivery disponible":""}`:
                     r.tipo_operacion_gastro==="comida_casera"?"🏠 Comida casera · Delivery":
@@ -3145,7 +3144,7 @@ const VE_ESTADOS_MUNICIPIOS={
                 <div style={{fontSize:36,filter:"drop-shadow(0 2px 6px rgba(0,0,0,0.3))"}}>{categoriaServicio.icon}</div>
                 <div>
                   <div style={{fontSize:20,fontWeight:900,letterSpacing:-0.5}}>{categoriaServicio.label}</div>
-                  <div style={{fontSize:11,color:"rgba(255,255,255,0.7)"}}>{ubiActiva.municipio} · {(()=>{const ab=proveedoresServicio.filter(p=>estaAbiertoAhora(p.horario_desde,p.horario_hasta,p.activo,p.en_pausa)).length;const tot=proveedoresServicio.length;return ab>0?`${ab} disponible${ab!==1?"s":""} ahora · ${tot} en total`:`${tot} proveedor${tot!==1?"es":""}`;})()}</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.7)"}}>{ubiActiva.municipio} · {(()=>{const ab=proveedoresServicio.filter(p=>estaAbiertoAhora(p.horario_desde,p.horario_hasta,p.activo,p.en_pausa,p.forzar_abierto)).length;const tot=proveedoresServicio.length;return ab>0?`${ab} disponible${ab!==1?"s":""} ahora · ${tot} en total`:`${tot} proveedor${tot!==1?"es":""}`;})()}</div>
                 </div>
               </div>
             </div>
@@ -3427,8 +3426,8 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                       </button>
                     </div>
                   ):(
-                    ([...proveedoresServicio].filter(p=>!searchServicios||(p.negocio+(p.especialidad||"")+(p.descripcion_negocio||"")).toLowerCase().includes(searchServicios.toLowerCase())).sort((a,b)=>estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo,b.en_pausa)-estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo,a.en_pausa))).map(prov=>{
-                      const abProv=estaAbiertoAhora(prov.horario_desde,prov.horario_hasta,prov.activo,prov.en_pausa);
+                    ([...proveedoresServicio].filter(p=>!searchServicios||(p.negocio+(p.especialidad||"")+(p.descripcion_negocio||"")).toLowerCase().includes(searchServicios.toLowerCase())).sort((a,b)=>estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo,b.en_pausa,b.forzar_abierto)-estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo,a.en_pausa,a.forzar_abierto))).map(prov=>{
+                      const abProv=estaAbiertoAhora(prov.horario_desde,prov.horario_hasta,prov.activo,prov.en_pausa,prov.forzar_abierto);
                       return(
                       /* TARJETA CLICKEABLE — abre detalle del proveedor */
                       <div key={prov.id} onClick={async()=>{
@@ -3460,7 +3459,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                             {prov.descripcion_negocio&&<div style={{fontSize:11,color:"#94a3b8",marginTop:2,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{prov.descripcion_negocio}</div>}
                           </div>
                           <div style={{flexShrink:0,textAlign:"center"}}>
-                            {(()=>{const ab=estaAbiertoAhora(prov.horario_desde,prov.horario_hasta,prov.activo,prov.en_pausa);return(<>
+                            {(()=>{const ab=estaAbiertoAhora(prov.horario_desde,prov.horario_hasta,prov.activo,prov.en_pausa,prov.forzar_abierto);return(<>
                             <span style={{background:ab?"#dcfce7":"#fee2e2",color:ab?"#15803d":"#dc2626",fontSize:9,fontWeight:700,padding:"3px 7px",borderRadius:10,display:"block",textAlign:"center",marginBottom:4}}>{ab?"● Abierto":"● Cerrado"}</span>
                             {!ab&&(prov.horario_desde)&&<div style={{fontSize:9,color:"#94a3b8",textAlign:"center",lineHeight:1.3}}>🕐 {prov.horario_desde}–{prov.horario_hasta}</div>}
                             <div style={{fontSize:10,color:"#94a3b8",marginTop:4,textAlign:"center"}}>Ver →</div>
@@ -3806,24 +3805,26 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
           {/* BOTÓN ABIERTO/CERRADO — estilo unificado */}
           <div style={{padding:"12px 16px 0"}}>
             {(()=>{
-              const enHorario=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,true,false);
-              const abierto=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,provData.activo,provData.en_pausa);
-              const fuerzaCierre=provData.en_pausa===true;
-              const subtext=fuerzaCierre?"Pausado manualmente — toca para reabrir":enHorario&&!abierto?"Cerrado manualmente — toca para reabrir":enHorario?"Toca para cerrar temporalmente":"Fuera de horario — toca para forzar apertura";
-              const titulo=abierto?"ABIERTO — Recibiendo pedidos":fuerzaCierre?"CERRADO — Pausado":"CERRADO — Fuera de horario";
+              const enHorario=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,true,false,false);
+              const abierto=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,provData.activo,provData.en_pausa,provData.forzar_abierto);
+              const forzado=provData.forzar_abierto===true;
+              const subtext=forzado?"Abierto manualmente — toca para volver al horario":enHorario?"Toca para forzar cierre fuera del horario":"Fuera de horario — toca para abrir manualmente";
+              const titulo=abierto?"ABIERTO — Recibiendo pedidos":"CERRADO";
+              const subtitulo=forzado?" (apertura manual)":enHorario?" (en horario)":" (fuera de horario)";
               return(
                 <button type="button" style={s.toggleBtn(abierto)} onClick={()=>{
-                  const nuevoEnPausa=!provData.en_pausa;
-                  supabase.from("proveedores").update({en_pausa:nuevoEnPausa}).eq("id",provData.id).then(({error})=>{if(!error){setProvData(p=>({...p,en_pausa:nuevoEnPausa}));loadAll();}});
+                  const nuevoForzar=!abierto;
+                  supabase.from("proveedores").update({forzar_abierto:nuevoForzar}).eq("id",provData.id).then(({error})=>{if(!error){setProvData(p=>({...p,forzar_abierto:nuevoForzar}));loadAll();}});
                 }}>
                   <span style={{fontSize:22}}>{abierto?"🟢":"🔴"}</span>
                   <div style={{textAlign:"left"}}>
-                    <div style={{fontSize:14,fontWeight:800,color:abierto?"#15803d":"#dc2626"}}>{titulo}</div>
+                    <div style={{fontSize:14,fontWeight:800,color:abierto?"#15803d":"#dc2626"}}>{titulo}<span style={{fontSize:11,fontWeight:400,color:"#94a3b8"}}>{subtitulo}</span></div>
                     <div style={{fontSize:11,color:"#64748b",marginTop:1}}>{subtext}</div>
                   </div>
                 </button>
               );
             })()}
+          </div>
           </div>
           <div>
             {/* Si hay sección activa distinta a estado, mostrar botón volver */}
