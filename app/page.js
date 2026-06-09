@@ -1,5 +1,5 @@
-// BUILD:1778380100
-"use client"; // Lokl v1778380100
+// BUILD:1778380200
+"use client"; // Lokl v1778380200
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -478,7 +478,7 @@ const VE_ESTADOS_MUNICIPIOS={
   // ──────────────────────────────────────────────────────────
 
   useEffect(()=>{
-    loadAll();loadRemates();loadServiciosCom();loadClasificados();loadZonasOperacion();
+    loadAll();loadRemates();loadServiciosCom();loadClasificados();loadPromediosResenas();loadZonasOperacion();loadPromediosResenas();
     // Primera visita: mostrar selector de ciudad
     if(!ubicacionUsuario){
       setTimeout(()=>setShowCiudadModal(true),600);
@@ -587,20 +587,21 @@ const VE_ESTADOS_MUNICIPIOS={
       setAllRestaurantes(delMuni.filter(r=>r.tipo_negocio==="Restaurante / Cocina / Comida"||!r.tipo_negocio));
       setAllNegocios(delMuni.filter(r=>r.tipo_negocio==="Tienda / Negocio local"));
     }
-    // Cargar promedios de reseñas para badges en tarjetas
-    const{data:resData}=await supabase.from("resenas").select("proveedor_id,estrellas").eq("aprobada",true).not("proveedor_id","is",null);
-    if(resData&&resData.length>0){
-      const mapa={};
-      resData.forEach(r=>{
-        if(!r.proveedor_id)return;
-        if(!mapa[r.proveedor_id])mapa[r.proveedor_id]={sum:0,count:0};
-        mapa[r.proveedor_id].sum+=r.estrellas;
-        mapa[r.proveedor_id].count+=1;
-      });
-      const promedios={};
-      Object.keys(mapa).forEach(k=>{promedios[k]={avg:(mapa[k].sum/mapa[k].count).toFixed(1),count:mapa[k].count};});
-      setPromediosResenas(promedios);
-    }
+  };
+
+  const loadPromediosResenas=async()=>{
+    const{data}=await supabase.from("resenas").select("proveedor_id,estrellas").eq("aprobada",true).not("proveedor_id","is",null);
+    if(!data||data.length===0)return;
+    const mapa={};
+    data.forEach(r=>{
+      if(!r.proveedor_id)return;
+      if(!mapa[r.proveedor_id])mapa[r.proveedor_id]={sum:0,count:0};
+      mapa[r.proveedor_id].sum+=r.estrellas;
+      mapa[r.proveedor_id].count+=1;
+    });
+    const promedios={};
+    Object.keys(mapa).forEach(k=>{promedios[k]={avg:(mapa[k].sum/mapa[k].count).toFixed(1),count:mapa[k].count};});
+    setPromediosResenas(promedios);
   };
 
   const loadMisNegPedidos=async(pid)=>{
@@ -1350,7 +1351,7 @@ const VE_ESTADOS_MUNICIPIOS={
 
   const approvePr=async(id)=>{await supabase.from("productos_proveedor").update({aprobado:true,primera_aprobacion:true,rechazado:false}).eq("id",id);loadAdmin();loadAll();};
   const rejectPr=async(id)=>{const motivo=rejectMotivo[id]||"No cumple los requisitos";await supabase.from("productos_proveedor").update({rechazado:true,aprobado:false,motivo_rechazo:motivo}).eq("id",id);loadAdmin();};
-  const approveRe=async(id)=>{await supabase.from("resenas").update({aprobada:true}).eq("id",id);loadAdmin();};
+  const approveRe=async(id)=>{await supabase.from("resenas").update({aprobada:true}).eq("id",id);loadAdmin();loadPromediosResenas();};
   const rejectRe=async(id)=>{await supabase.from("resenas").delete().eq("id",id);loadAdmin();};
   const addZona=async()=>{if(!newZona.zona)return;await supabase.from("zonas_delivery").insert(newZona);setNewZona({municipio:"San Fernando",zona:"",tipo:"barrio",costo_delivery:1.50,delivery_gratis_super:18.00,delivery_gratis_comida:12.00});loadAdmin();loadAll();};
   const addCombo=async()=>{if(!newCombo.nombre||!newCombo.precio)return;await supabase.from("combos").insert({...newCombo,precio:parseFloat(newCombo.precio),activa:true});setNewCombo({nombre:"",descripcion:"",precio:"",temporada:"",fecha_inicio:"",fecha_fin:""});loadAll();loadAdmin();};
