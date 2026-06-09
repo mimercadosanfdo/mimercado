@@ -1,5 +1,5 @@
-// BUILD:1778381600
-"use client"; // Lokl v1778381600
+// BUILD:1778381700
+"use client"; // Lokl v1778381700
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -3824,7 +3824,6 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 </button>
               );
             })()}
-          </div>
           </div>
           <div>
             {/* Si hay sección activa distinta a estado, mostrar botón volver */}
