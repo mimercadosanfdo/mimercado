@@ -1,5 +1,5 @@
-// BUILD:1778381300
-"use client"; // Lokl v1778381300
+// BUILD:1778381400
+"use client"; // Lokl v1778381400
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -3805,13 +3805,25 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
           {pmsg&&<div style={{...s.msg(pmsg.includes("✅")),margin:"8px 16px 0"}}>{pmsg}</div>}
           {/* BOTÓN ABIERTO/CERRADO — estilo unificado */}
           <div style={{padding:"12px 16px 0"}}>
-            <button type="button" style={s.toggleBtn(estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,provData.activo,provData.en_pausa))} onClick={()=>{const n=!provData.activo;supabase.from("proveedores").update({activo:n}).eq("id",provData.id).then(({error})=>{if(!error){setProvData(p=>({...p,activo:n}));loadAll();}});}} >
-              <span style={{fontSize:22}}>{estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,provData.activo,provData.en_pausa)?"🟢":"🔴"}</span>
-              <div style={{textAlign:"left"}}>
-                <div style={{fontSize:14,fontWeight:800,color:estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,provData.activo,provData.en_pausa)?"#15803d":"#dc2626"}}>{estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,provData.activo,provData.en_pausa)?"ABIERTO — Recibiendo pedidos":"CERRADO — Toca para abrir"}</div>
-                <div style={{fontSize:11,color:"#64748b",marginTop:1}}>Toca para {estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,provData.activo,provData.en_pausa)?"cerrar temporalmente":"abrir tu negocio"}</div>
-              </div>
-            </button>
+            {(()=>{
+              const enHorario=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,true,false);
+              const abierto=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,provData.activo,provData.en_pausa);
+              const fuerzaCierre=provData.en_pausa===true;
+              const subtext=fuerzaCierre?"Pausado manualmente — toca para reabrir":enHorario&&!abierto?"Cerrado manualmente — toca para reabrir":enHorario?"Toca para cerrar temporalmente":"Fuera de horario — toca para forzar apertura";
+              const titulo=abierto?"ABIERTO — Recibiendo pedidos":fuerzaCierre?"CERRADO — Pausado":"CERRADO — Fuera de horario";
+              return(
+                <button type="button" style={s.toggleBtn(abierto)} onClick={()=>{
+                  const nuevoEnPausa=!provData.en_pausa;
+                  supabase.from("proveedores").update({en_pausa:nuevoEnPausa}).eq("id",provData.id).then(({error})=>{if(!error){setProvData(p=>({...p,en_pausa:nuevoEnPausa}));loadAll();}});
+                }}>
+                  <span style={{fontSize:22}}>{abierto?"🟢":"🔴"}</span>
+                  <div style={{textAlign:"left"}}>
+                    <div style={{fontSize:14,fontWeight:800,color:abierto?"#15803d":"#dc2626"}}>{titulo}</div>
+                    <div style={{fontSize:11,color:"#64748b",marginTop:1}}>{subtext}</div>
+                  </div>
+                </button>
+              );
+            })()}
           </div>
           <div>
             {/* Si hay sección activa distinta a estado, mostrar botón volver */}
