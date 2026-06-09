@@ -1,5 +1,5 @@
-// BUILD:1778380350
-"use client"; // Lokl v1778380350
+// BUILD:1778380400
+"use client"; // Lokl v1778380400
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -3258,7 +3258,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                       </button>
                     </div>
 
-                  {/* ── SECCIÓN RESEÑAS — servicio ── */}
+                  {/* SECCION RESENAS - servicio */}
                   {(()=>{
                     const rList=provResenas[proveedorServicioActivo.id]||[];
                     const avg=rList.length>0?(rList.reduce((a,r)=>a+r.estrellas,0)/rList.length).toFixed(1):null;
