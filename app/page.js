@@ -1,5 +1,5 @@
-// BUILD:1778380400
-"use client"; // Lokl v1778380400
+// BUILD:1778380500
+"use client"; // Lokl v1778380500
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -3322,7 +3322,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                       </div>
                     );
                   })()}
-                  )}
+
                 </div>
               ):(
                 <>{/* ── LISTA DE PROVEEDORES ── */}
