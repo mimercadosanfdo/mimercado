@@ -1,5 +1,5 @@
-// BUILD:1783803500
-"use client"; // Lokl v1783803500
+// BUILD:1783804500
+"use client"; // Lokl v1783804500
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1269,14 +1269,14 @@ const VE_ESTADOS_MUNICIPIOS={
     if(mode!=="dash")try{localStorage.removeItem("lokl_prov");}catch{}
   };
   const toggleMiEstado=async()=>{
-    // El toggle manual usa forzar_abierto: null=seguir horario, true=forzado abierto, false=forzado cerrado
-    // activo queda reservado para desactivación por admin
-    const enHorario=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,true,false,null);
     let nuevoForzar;
-    if(provData.forzar_abierto===true){nuevoForzar=null;} // estaba forzado abierto → volver a horario
-    else if(provData.forzar_abierto===false){nuevoForzar=null;} // estaba forzado cerrado → volver a horario
-    else if(enHorario){nuevoForzar=false;} // en horario → forzar cierre
-    else{nuevoForzar=true;} // fuera de horario → forzar apertura
+    if(provData.forzar_abierto===true){nuevoForzar=null;} // forzado abierto → volver a horario
+    else if(provData.forzar_abierto===false){nuevoForzar=true;} // forzado cerrado → forzar apertura
+    else{
+      // null = siguiendo horario
+      const enHorario=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,true,false,null);
+      nuevoForzar=enHorario?false:true; // en horario→forzar cierre, fuera→forzar apertura
+    }
     await supabase.from("proveedores").update({forzar_abierto:nuevoForzar}).eq("id",provData.id);
     setProvDataPersist({...provData,forzar_abierto:nuevoForzar});
     loadAll();
@@ -3823,7 +3823,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
               const abierto=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,provData.activo,provData.en_pausa,provData.forzar_abierto);
               const forzadoAbierto=provData.forzar_abierto===true;
               const forzadoCerrado=provData.forzar_abierto===false;
-              const subtext=forzadoAbierto?"Abierto manualmente — toca para volver al horario":forzadoCerrado?"Cerrado manualmente — toca para volver al horario":enHorario?"En horario — toca para forzar cierre":"Fuera de horario — toca para abrir manualmente";
+              const subtext=forzadoAbierto?"Abierto manualmente — toca para volver al horario":forzadoCerrado?"Cerrado manualmente — toca para abrir":enHorario?"En horario — toca para forzar cierre":"Fuera de horario — toca para abrir ahora";
               const titulo=abierto?"ABIERTO — Recibiendo pedidos":"CERRADO";
               const subtitulo=forzadoAbierto?" (apertura manual)":forzadoCerrado?" (cierre manual)":enHorario?" (en horario)":" (fuera de horario)";
               return(
