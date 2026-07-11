@@ -1,5 +1,5 @@
-// BUILD:1778381700
-"use client"; // Lokl v1778381700
+// BUILD:1783800000
+"use client"; // Lokl v1783800000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1268,13 +1268,27 @@ const VE_ESTADOS_MUNICIPIOS={
     setProvModeRaw(mode);
     if(mode!=="dash")try{localStorage.removeItem("lokl_prov");}catch{}
   };
-  const toggleMiEstado=async()=>{const n=!provData.activo;await supabase.from("proveedores").update({activo:n}).eq("id",provData.id);setProvDataPersist({...provData,activo:n});loadAll();};
+  const toggleMiEstado=async()=>{
+    // El toggle manual usa forzar_abierto: null=seguir horario, true=forzado abierto, false=forzado cerrado
+    // activo queda reservado para desactivación por admin
+    const enHorario=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,true,false,null);
+    let nuevoForzar;
+    if(provData.forzar_abierto===true){nuevoForzar=null;} // estaba forzado abierto → volver a horario
+    else if(provData.forzar_abierto===false){nuevoForzar=null;} // estaba forzado cerrado → volver a horario
+    else if(enHorario){nuevoForzar=false;} // en horario → forzar cierre
+    else{nuevoForzar=true;} // fuera de horario → forzar apertura
+    await supabase.from("proveedores").update({forzar_abierto:nuevoForzar}).eq("id",provData.id);
+    setProvDataPersist({...provData,forzar_abierto:nuevoForzar});
+    loadAll();
+  };
   const estaAbiertoAhora=(desde,hasta,activoManual,enPausa,forzarAbierto)=>{
-    if(activoManual===false)return false; // cuenta desactivada por admin
-    if(forzarAbierto===true)return true; // dueño forzó apertura manual
-    // Hora actual en Venezuela (UTC-4)
+    if(activoManual===false&&forzarAbierto!==true)return false; // desactivado por admin (solo si no hay forzado)
+    if(enPausa&&forzarAbierto!==true)return false; // en pausa (solo si no hay forzado)
+    if(forzarAbierto===true)return true; // dueño forzó apertura manual — máxima prioridad
+    if(forzarAbierto===false)return false; // dueño forzó cierre manual — máxima prioridad
+    // Sin forzado: usar horario configurado
     const ahoraVE=new Date(new Date().toLocaleString("en-US",{timeZone:"America/Caracas"}));
-    if(!desde||!hasta)return true; // sin horario configurado = siempre abierto
+    if(!desde||!hasta)return true; // sin horario = siempre abierto
     const [dh,dm]=desde.split(":").map(Number);
     const [hh,hm]=hasta.split(":").map(Number);
     const minAhora=ahoraVE.getHours()*60+ahoraVE.getMinutes();
@@ -1710,14 +1724,14 @@ const VE_ESTADOS_MUNICIPIOS={
         </div>
 
         {/* RESTAURANTES ABIERTOS */}
-        {allRestaurantes.filter(r=>r.activo).length>0&&(
+        {allRestaurantes.length>0&&(
           <div style={{padding:"0 16px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"14px 0 10px"}}>
               <div style={{fontSize:17,fontWeight:900,color:"#0f172a",letterSpacing:-0.3}}>🍽️ Feria de comida</div>
               <button onClick={()=>setTab("Feria de comida")} style={{fontSize:11,color:"#94a3b8",background:"none",border:"none",cursor:"pointer",fontWeight:400}}>Ver todos →</button>
             </div>
             <div style={{display:"flex",gap:12,overflowX:"auto",paddingBottom:8}}>
-              {allRestaurantes.filter(r=>r.activo).slice(0,6).map(r=>(
+              {[...allRestaurantes].sort((a,b)=>{const aAb=estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo,a.en_pausa,a.forzar_abierto);const bAb=estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo,b.en_pausa,b.forzar_abierto);return bAb-aAb;}).slice(0,6).map(r=>(
                 <div key={r.id} onClick={()=>{setTab("Feria de comida");setRestauranteActivo(r);setCartRestId(r.id);setCartRestNombre(r.negocio);setCartRestWa(r.whatsapp_negocio||r.telefono);}} style={{flexShrink:0,textAlign:"center",cursor:"pointer",width:72}}>
                   <div style={{width:60,height:60,borderRadius:"50%",background:r.logo_url?"#f8fafc":getAvatarColor(r.negocio),display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",padding:r.logo_url?4:0,margin:"0 auto",border:"2px solid #dcfce7"}}>
                       {r.logo_url
@@ -2183,7 +2197,7 @@ const VE_ESTADOS_MUNICIPIOS={
               </div>
             </div>
             {/* BANNER CERRADO */}
-            {!negocioActivo.activo&&(
+            {!estaAbiertoAhora(negocioActivo.horario_desde,negocioActivo.horario_hasta,negocioActivo.activo,negocioActivo.en_pausa,negocioActivo.forzar_abierto)&&(
               <div style={{background:"#fff7ed",borderLeft:"4px solid #f97316",padding:"10px 16px",display:"flex",alignItems:"center",gap:8}}>
                 <span style={{fontSize:16}}>🔴</span>
                 <div>
@@ -3805,17 +3819,15 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
           {/* BOTÓN ABIERTO/CERRADO — estilo unificado */}
           <div style={{padding:"12px 16px 0"}}>
             {(()=>{
-              const enHorario=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,true,false,false);
+              const enHorario=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,true,false,null);
               const abierto=estaAbiertoAhora(provData.horario_desde,provData.horario_hasta,provData.activo,provData.en_pausa,provData.forzar_abierto);
-              const forzado=provData.forzar_abierto===true;
-              const subtext=forzado?"Abierto manualmente — toca para volver al horario":enHorario?"Toca para forzar cierre fuera del horario":"Fuera de horario — toca para abrir manualmente";
+              const forzadoAbierto=provData.forzar_abierto===true;
+              const forzadoCerrado=provData.forzar_abierto===false;
+              const subtext=forzadoAbierto?"Abierto manualmente — toca para volver al horario":forzadoCerrado?"Cerrado manualmente — toca para volver al horario":enHorario?"En horario — toca para forzar cierre":"Fuera de horario — toca para abrir manualmente";
               const titulo=abierto?"ABIERTO — Recibiendo pedidos":"CERRADO";
-              const subtitulo=forzado?" (apertura manual)":enHorario?" (en horario)":" (fuera de horario)";
+              const subtitulo=forzadoAbierto?" (apertura manual)":forzadoCerrado?" (cierre manual)":enHorario?" (en horario)":" (fuera de horario)";
               return(
-                <button type="button" style={s.toggleBtn(abierto)} onClick={()=>{
-                  const nuevoForzar=!abierto;
-                  supabase.from("proveedores").update({forzar_abierto:nuevoForzar}).eq("id",provData.id).then(({error})=>{if(!error){setProvData(p=>({...p,forzar_abierto:nuevoForzar}));loadAll();}});
-                }}>
+                <button type="button" style={s.toggleBtn(abierto)} onClick={toggleMiEstado}>
                   <span style={{fontSize:22}}>{abierto?"🟢":"🔴"}</span>
                   <div style={{textAlign:"left"}}>
                     <div style={{fontSize:14,fontWeight:800,color:abierto?"#15803d":"#dc2626"}}>{titulo}<span style={{fontSize:11,fontWeight:400,color:"#94a3b8"}}>{subtitulo}</span></div>
@@ -6099,7 +6111,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
             <input style={s.inp} placeholder="Juan Pérez" value={form.nombre} onChange={e=>setForm({...form,nombre:e.target.value})}/>
             <label style={s.lbl}>Tu WhatsApp *</label>
             <input style={s.inp} placeholder="+58 424-000-0000" value={form.telefono} onChange={e=>setForm({...form,telefono:e.target.value})}/>
-            {negocioActivo&&!negocioActivo.activo&&(
+            {negocioActivo&&!estaAbiertoAhora(negocioActivo.horario_desde,negocioActivo.horario_hasta,negocioActivo.activo,negocioActivo.en_pausa,negocioActivo.forzar_abierto)&&(
               <div style={{background:"#fff7ed",border:"1px solid #fed7aa",borderRadius:10,padding:"8px 12px",marginBottom:8}}>
                 <div style={{fontSize:12,fontWeight:700,color:"#c2410c"}}>🔴 Esta tienda está cerrada ahora</div>
                 <div style={{fontSize:11,color:"#92400e",marginTop:2}}>Tu pedido será enviado y atendido cuando abran. ¡Gracias por tu preferencia!</div>
