@@ -1,5 +1,5 @@
-// BUILD:1783800000
-"use client"; // Lokl v1783800000
+// BUILD:1783802500
+"use client"; // Lokl v1783802500
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -2173,7 +2173,7 @@ const VE_ESTADOS_MUNICIPIOS={
                   <div style={{color:"#fff",fontWeight:900,fontSize:17,letterSpacing:-0.3}}>{negocioActivo.negocio}</div>
                   <div style={{color:"rgba(255,255,255,0.6)",fontSize:11,marginTop:1}}>{negocioActivo.descripcion_negocio||(negocioActivo.categorias||[]).join(" · ")}</div>
                 </div>
-                <span style={{fontSize:11,fontWeight:700,padding:"4px 10px",borderRadius:20,background:negocioActivo.activo?"#dcfce7":"#fee2e2",color:negocioActivo.activo?"#15803d":"#dc2626",flexShrink:0,border:`1px solid ${negocioActivo.activo?"#86efac":"#fca5a5"}`}}>{negocioActivo.activo?"● Abierto":"● Cerrado"}</span>
+                <span style={{fontSize:11,fontWeight:700,padding:"4px 10px",borderRadius:20,background:estaAbiertoAhora(negocioActivo.horario_desde,negocioActivo.horario_hasta,negocioActivo.activo,negocioActivo.en_pausa,negocioActivo.forzar_abierto)?"#dcfce7":"#fee2e2",color:estaAbiertoAhora(negocioActivo.horario_desde,negocioActivo.horario_hasta,negocioActivo.activo,negocioActivo.en_pausa,negocioActivo.forzar_abierto)?"#15803d":"#dc2626",flexShrink:0,border:`1px solid ${estaAbiertoAhora(negocioActivo.horario_desde,negocioActivo.horario_hasta,negocioActivo.activo,negocioActivo.en_pausa,negocioActivo.forzar_abierto)?"#86efac":"#fca5a5"}`}}>{estaAbiertoAhora(negocioActivo.horario_desde,negocioActivo.horario_hasta,negocioActivo.activo,negocioActivo.en_pausa,negocioActivo.forzar_abierto)?"● Abierto":"● Cerrado"}</span>
               </div>
               {/* INFO CONFIANZA */}
               <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
@@ -2334,7 +2334,7 @@ const VE_ESTADOS_MUNICIPIOS={
                         <div style={{fontSize:11,color:"#64748b",marginTop:1}}>{(n.categorias||[]).join(" · ")} · {n.municipio||ubiActiva.municipio}</div>
                         {n.descripcion&&<div style={{fontSize:10,color:"#94a3b8",marginTop:2,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{n.descripcion}</div>}
                         <div style={{display:"flex",gap:6,marginTop:4,flexWrap:"wrap"}}>
-                          <span style={{fontSize:10,fontWeight:600,color:n.activo?"#15803d":"#94a3b8",background:n.activo?"#dcfce7":"#f1f5f9",padding:"2px 7px",borderRadius:8}}>{n.activo?"● Abierto":"● Cerrado"}</span>
+                          <span style={{fontSize:10,fontWeight:600,color:estaAbiertoAhora(n.horario_desde,n.horario_hasta,n.activo,n.en_pausa,n.forzar_abierto)?"#15803d":"#94a3b8",background:estaAbiertoAhora(n.horario_desde,n.horario_hasta,n.activo,n.en_pausa,n.forzar_abierto)?"#dcfce7":"#f1f5f9",padding:"2px 7px",borderRadius:8}}>{estaAbiertoAhora(n.horario_desde,n.horario_hasta,n.activo,n.en_pausa,n.forzar_abierto)?"● Abierto":"● Cerrado"}</span>
                           {n.delivery_propio&&<span style={{fontSize:10,background:"#dbeafe",color:"#1d4ed8",padding:"2px 7px",borderRadius:8,fontWeight:600}}>🛵 Delivery</span>}
                           {n.permite_retiro&&<span style={{fontSize:10,background:"#eff6ff",color:"#3b82f6",padding:"2px 7px",borderRadius:8,fontWeight:600}}>🏪 Retiro</span>}
                         </div>
@@ -2397,7 +2397,7 @@ const VE_ESTADOS_MUNICIPIOS={
                     <div style={{color:"#fff",fontWeight:900,fontSize:17,letterSpacing:-0.3}}>{restauranteActivo.negocio}</div>
                     <div style={{color:"rgba(255,255,255,0.7)",fontSize:11,marginTop:1}}>{restauranteActivo.tipo_operacion_gastro?TIPO_GASTRO_LABEL[restauranteActivo.tipo_operacion_gastro]:""}{restauranteActivo.descripcion_negocio?` · ${restauranteActivo.descripcion_negocio}`:""}</div>
                   </div>
-                  <span style={{fontSize:11,fontWeight:700,padding:"4px 10px",borderRadius:20,background:restauranteActivo.activo?"#dcfce7":"#fee2e2",color:restauranteActivo.activo?"#15803d":"#dc2626",flexShrink:0}}>{restauranteActivo.activo?"● Abierto":"● Cerrado"}</span>
+                  <span style={{fontSize:11,fontWeight:700,padding:"4px 10px",borderRadius:20,background:estaAbiertoAhora(restauranteActivo.horario_desde,restauranteActivo.horario_hasta,restauranteActivo.activo,restauranteActivo.en_pausa,restauranteActivo.forzar_abierto)?"#dcfce7":"#fee2e2",color:estaAbiertoAhora(restauranteActivo.horario_desde,restauranteActivo.horario_hasta,restauranteActivo.activo,restauranteActivo.en_pausa,restauranteActivo.forzar_abierto)?"#15803d":"#dc2626",flexShrink:0}}>{estaAbiertoAhora(restauranteActivo.horario_desde,restauranteActivo.horario_hasta,restauranteActivo.activo,restauranteActivo.en_pausa,restauranteActivo.forzar_abierto)?"● Abierto":"● Cerrado"}</span>
                 </div>
                 {/* INFO RÁPIDA */}
                 <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
