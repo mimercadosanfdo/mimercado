@@ -1,5 +1,5 @@
-// BUILD:1783813000
-"use client"; // Lokl v1783813000
+// BUILD:1783814000
+"use client"; // Lokl v1783814000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -23,7 +23,8 @@ const P2 = "#1aab52";
 const MAIN_TABS = ["Inicio","Supermercado","Negocios locales","Feria de comida","Servicios"];
 const SEC_TABS = ["Clasificados","Mercadito local"];
 const NEGOCIO_CATS = [
-  {cat:"Ropa y calzado",emoji:"👗",color:"#fdf2f8",tc:"#9d174d"},
+  {cat:"Ropa y moda",emoji:"👗",color:"#fdf2f8",tc:"#9d174d"},
+  {cat:"Calzado",emoji:"👟",color:"#fdf2f8",tc:"#9d174d"},
   {cat:"Accesorios y joyería",emoji:"💍",color:"#fefce8",tc:"#854d0e"},
   {cat:"Farmacia y salud",emoji:"💊",color:"#f0fdf4",tc:"#15803d"},
   {cat:"Ferretería",emoji:"🔧",color:"#fff7ed",tc:"#c2410c"},
@@ -35,6 +36,14 @@ const NEGOCIO_CATS = [
   {cat:"Mascotas",emoji:"🐾",color:"#fff7ed",tc:"#c2410c"},
   {cat:"Otros",emoji:"📦",color:"#f8fafc",tc:"#475569"},
 ];
+// Qué etiqueta de variante mostrar según categoría del producto
+const VARIANTES_CONFIG={
+  "Belleza":{label:"Tonos disponibles",placeholder:"Ej: 01 Marfil, 02 Beige, 03 Natural, 04 Café"},
+  "Ropa y moda":{label:"Tallas disponibles",placeholder:"Ej: XS, S, M, L, XL, XXL  ó  0, 2, 4, 6, 8"},
+  "Calzado":{label:"Tallas disponibles",placeholder:"Ej: 35, 36, 37, 38, 39, 40, 41"},
+  "Cuidado personal":{label:"Fragancias / Variantes",placeholder:"Ej: Lavanda, Vainilla, Sin fragancia, Rosa"},
+  "Accesorios y joyería":{label:"Colores / Variantes",placeholder:"Ej: Dorado, Plateado, Negro, Rosado"},
+};
 const SUPER_CATS = ["Snacks","Granos y cereales","Bebidas","Lácteos","Panadería","Aceites y condimentos","Enlatados","Limpieza del hogar","Aseo personal","Proteínas","Frutas y verduras"];
 const PROV_CATS = ["Comida preparada","Postres","Jugos y bebidas","Pan y repostería"];
 const ALL_CATS = ["Todo","Supermercado",...PROV_CATS];
@@ -88,7 +97,8 @@ const TIPO_NEGOCIO = [
   "Otro",
 ];
 const NEGOCIO_LOCAL_CATS = [
-  {cat:"Ropa y calzado",emoji:"👗",color:"#fce7f3",tc:"#be185d"},
+  {cat:"Ropa y moda",emoji:"👗",color:"#fce7f3",tc:"#be185d"},
+  {cat:"Calzado",emoji:"👟",color:"#fce7f3",tc:"#be185d"},
   {cat:"Accesorios y joyería",emoji:"💍",color:"#fef3c7",tc:"#92400e"},
   {cat:"Farmacia y salud",emoji:"💊",color:"#dbeafe",tc:"#1d4ed8"},
   {cat:"Ferretería",emoji:"🔧",color:"#f1f5f9",tc:"#475569"},
@@ -252,8 +262,11 @@ function BtnCompartir({titulo,precio,tab,id,emoji,small=false}){
 
 function ProductoDetalleModal({producto,cartNegocio,setCartNegocio,onClose,s}){
   const [sliderIdx,setSliderIdx]=useState(0);
+  const [varianteSel,setVarianteSel]=useState("");
   const fotos=[producto.foto,producto.foto2,producto.foto3,producto.foto4].filter(Boolean);
   const qty=cartNegocio[producto.id]?.qty||0;
+  const listaVariantes=producto.variantes?producto.variantes.split(",").map(v=>v.trim()).filter(Boolean):[];
+  const necesitaVariante=listaVariantes.length>0&&!varianteSel;
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:400,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
       <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:480,maxHeight:"85vh",overflow:"auto",paddingBottom:24}} onClick={e=>e.stopPropagation()}>
@@ -277,6 +290,22 @@ function ProductoDetalleModal({producto,cartNegocio,setCartNegocio,onClose,s}){
           <div style={{fontSize:20,fontWeight:900,color:"#0f172a",marginBottom:6,letterSpacing:-0.3}}>{producto.name}</div>
           {producto.marca&&<div style={{fontSize:13,fontWeight:600,color:"#475569",marginBottom:4}}>{producto.marca}</div>}
           {producto.descripcion&&<div style={{fontSize:13,color:"#64748b",lineHeight:1.6,marginBottom:12}}>{producto.descripcion}</div>}
+          {/* SELECTOR DE VARIANTES */}
+          {listaVariantes.length>0&&(
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:12,fontWeight:700,color:"#374151",marginBottom:8}}>
+                {VARIANTES_CONFIG[producto.cat]?.label||"Selecciona una opción"} *
+              </div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                {listaVariantes.map(v=>(
+                  <button key={v} onClick={()=>setVarianteSel(v)} style={{padding:"8px 14px",borderRadius:20,border:`2px solid ${varianteSel===v?"#1d4ed8":"#e2e8f0"}`,background:varianteSel===v?"#1d4ed8":"#fff",color:varianteSel===v?"#fff":"#374151",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+                    {v}
+                  </button>
+                ))}
+              </div>
+              {necesitaVariante&&<div style={{fontSize:11,color:"#dc2626",marginTop:6}}>⚠️ Selecciona una opción para continuar</div>}
+            </div>
+          )}
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:12}}>
             <div style={{fontSize:26,fontWeight:900,color:"#15803d",letterSpacing:-0.5}}>${parseFloat(producto.price||0).toFixed(2)}<span style={{fontSize:13,fontWeight:400,color:"#94a3b8",marginLeft:4}}>/{producto.unit}</span></div>
             {qty>0?(
@@ -286,8 +315,8 @@ function ProductoDetalleModal({producto,cartNegocio,setCartNegocio,onClose,s}){
                 <button style={{...s.qB,width:34,height:34,fontSize:18}} onClick={()=>setCartNegocio(c=>({...c,[producto.id]:{...producto,qty:qty+1}}))}>+</button>
               </div>
             ):(
-              <button style={{background:"#1d4ed8",color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:800,cursor:"pointer"}} onClick={()=>{setCartNegocio(c=>({...c,[producto.id]:{...producto,qty:1}}));onClose();}}>
-                + Agregar
+              <button style={{background:necesitaVariante?"#94a3b8":"#1d4ed8",color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:800,cursor:necesitaVariante?"not-allowed":"pointer"}} onClick={()=>{if(necesitaVariante)return;setCartNegocio(c=>({...c,[producto.id]:{...producto,variante:varianteSel||null,qty:1}}));onClose();}}>
+                + Agregar{varianteSel?` (${varianteSel})`:""}
               </button>
             )}
           </div>
@@ -481,7 +510,7 @@ const VE_ESTADOS_MUNICIPIOS={
   const [cambiandoClave,setCambiandoClave]=useState(false);
   const [claveForm,setClaveForm]=useState({actual:"",nueva:"",confirmar:""});
 
-  const [newProd,setNewProd]=useState({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"",stock:1,hi:"08:00",hf:"18:00",permanente:false,es_oferta:false});
+  const [newProd,setNewProd]=useState({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"",stock:1,hi:"08:00",hf:"18:00",permanente:false,es_oferta:false,variantes:""});
   const [editandoHorario,setEditandoHorario]=useState(false);
   const [editandoDelivery,setEditandoDelivery]=useState(false);
   const [deliveryConfig,setDeliveryConfig]=useState({delivery_propio:false,delivery_costo:0,delivery_gratis_desde:15});
@@ -909,7 +938,7 @@ const VE_ESTADOS_MUNICIPIOS={
     // Cargar productos/servicios de cada proveedor
     if(unique.length>0){
       const ids=unique.map(p=>p.id);
-      const{data:prods}=await supabase.from("productos_proveedor").select("id,proveedor_id,nombre,descripcion,precio,categoria,disponible,foto_url,foto_url_2,foto_url_3,foto_url_4").in("proveedor_id",ids).eq("aprobado",true).eq("disponible",true).eq("rechazado",false);
+      const{data:prods}=await supabase.from("productos_proveedor").select("id,proveedor_id,nombre,descripcion,precio,categoria,disponible,foto_url,foto_url_2,foto_url_3,foto_url_4,variantes").in("proveedor_id",ids).eq("aprobado",true).eq("disponible",true).eq("rechazado",false);
       if(prods){
         const mapa={};
         prods.forEach(p=>{if(!mapa[p.proveedor_id])mapa[p.proveedor_id]=[];mapa[p.proveedor_id].push(p);});
@@ -1050,7 +1079,7 @@ const VE_ESTADOS_MUNICIPIOS={
 
   const allProds=[
     ...superProds.map(p=>({id:`sp_${p.id}`,name:p.nombre,cat:"Supermercado",superCat:p.categoria,price:p.precio,unit:p.unidad,emoji:p.emoji||"🛒",margin:0.10,foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,abierto:true})),
-    ...provProds.map(p=>({id:`pv_${p.id}`,name:p.nombre,cat:p.categoria,price:p.precio,unit:p.unidad,emoji:"🍽️",margin:0,kitchen:p.proveedores?.negocio,kitchenWa:p.proveedores?.whatsapp_negocio||p.proveedores?.telefono,kitchenDelivery:p.proveedores?.delivery_propio,kitchenDeliveryCosto:p.proveedores?.delivery_costo||0,kitchenDeliveryGratis:p.proveedores?.delivery_gratis_desde||15,kitchenRetiro:p.proveedores?.permite_retiro,kitchenTipo:p.proveedores?.tipo_operacion_gastro,kitchenEta:p.proveedores?.eta_texto||(p.proveedores?.eta_minutos_min&&p.proveedores?.eta_minutos_max?`${p.proveedores.eta_minutos_min}–${p.proveedores.eta_minutos_max} min`:null),logo:p.proveedores?.logo_url,foto:p.foto_url,foto2:p.foto_url_2,foto3:p.foto_url_3,foto4:p.foto_url_4,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,stock:p.stock,horario:p.permanente?"Siempre disponible":`${p.horario_inicio}–${p.horario_fin}`,tag:p.stock<=3?`Solo ${p.stock} disp.`:null,dbId:p.id,abierto:p.proveedores?.activo!==false&&!p.proveedores?.en_pausa,horarioNeg:p.proveedores?.horario_desde&&p.proveedores?.horario_hasta?`${p.proveedores.horario_desde}–${p.proveedores.horario_hasta}${p.proveedores.horario_desc?" ("+p.proveedores.horario_desc+")":""}`:null})),
+    ...provProds.map(p=>({id:`pv_${p.id}`,name:p.nombre,cat:p.categoria,price:p.precio,unit:p.unidad,emoji:"🍽️",margin:0,kitchen:p.proveedores?.negocio,kitchenWa:p.proveedores?.whatsapp_negocio||p.proveedores?.telefono,kitchenDelivery:p.proveedores?.delivery_propio,kitchenDeliveryCosto:p.proveedores?.delivery_costo||0,kitchenDeliveryGratis:p.proveedores?.delivery_gratis_desde||15,kitchenRetiro:p.proveedores?.permite_retiro,kitchenTipo:p.proveedores?.tipo_operacion_gastro,kitchenEta:p.proveedores?.eta_texto||(p.proveedores?.eta_minutos_min&&p.proveedores?.eta_minutos_max?`${p.proveedores.eta_minutos_min}–${p.proveedores.eta_minutos_max} min`:null),logo:p.proveedores?.logo_url,foto:p.foto_url,foto2:p.foto_url_2,foto3:p.foto_url_3,foto4:p.foto_url_4,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,stock:p.stock,horario:p.permanente?"Siempre disponible":`${p.horario_inicio}–${p.horario_fin}`,tag:p.stock<=3?`Solo ${p.stock} disp.`:null,dbId:p.id,abierto:p.proveedores?.activo!==false&&!p.proveedores?.en_pausa,horarioNeg:p.proveedores?.horario_desde&&p.proveedores?.horario_hasta?`${p.proveedores.horario_desde}–${p.proveedores.horario_hasta}${p.proveedores.horario_desc?" ("+p.proveedores.horario_desc+")":""}`:null,variantes:p.variantes||null})),
     ...provPromos.map(pr=>({id:`promo_${pr.id}`,name:pr.nombre,cat:"Comida preparada",price:pr.precio,unit:"promo",emoji:"🎁",margin:0,kitchen:pr.proveedores?.negocio,kitchenWa:pr.proveedores?.whatsapp_negocio||pr.proveedores?.telefono,kitchenDelivery:pr.proveedores?.delivery_propio,kitchenDeliveryCosto:pr.proveedores?.delivery_costo||0,kitchenDeliveryGratis:pr.proveedores?.delivery_gratis_desde||15,kitchenRetiro:pr.proveedores?.permite_retiro,kitchenTipo:pr.proveedores?.tipo_operacion_gastro,logo:pr.proveedores?.logo_url,foto:pr.foto_url,descripcion:pr.descripcion,isPromo:true,tag:"🔥 PROMO",horario:`Hasta ${pr.fecha_fin}`,abierto:pr.proveedores?.activo!==false&&!pr.proveedores?.en_pausa,horarioNeg:pr.proveedores?.horario_desde&&pr.proveedores?.horario_hasta?`${pr.proveedores.horario_desde}–${pr.proveedores.horario_hasta}${pr.proveedores.horario_desc?" ("+pr.proveedores.horario_desc+")":""}`:null})),
   ];
 
@@ -1375,6 +1404,7 @@ const VE_ESTADOS_MUNICIPIOS={
       foto_url_2:foto_url_2||null,
       foto_url_3:foto_url_3||null,
       foto_url_4:foto_url_4||null,
+      variantes:newProd.variantes||null,
       stock:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?999:(parseInt(newProd.stock)||1),
       horario_inicio:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?null:newProd.hi,
       horario_fin:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?null:newProd.hf,
@@ -1389,7 +1419,7 @@ const VE_ESTADOS_MUNICIPIOS={
     setLoading(false);
     if(error){setPmsg("Error: "+error.message);return;}
     const esServ=!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio);setPmsg(auto?(esServ?"✅ Servicio publicado":"✅ Producto publicado"):(esServ?"✅ Servicio enviado al admin para aprobación":"✅ Enviado al admin para aprobación"));
-    setNewProd({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false,es_oferta:false});
+    setNewProd({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false,es_oferta:false,variantes:""});
     setFotoFile(null);setFotoPreview(null);
     setFotoFile2(null);setFotoPreview2(null);
     setFotoFile3(null);setFotoPreview3(null);
@@ -4068,8 +4098,16 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                     :SERV_CATS[provData.tipo_negocio]
                     ?(SERV_CATS[provData.tipo_negocio])
                     :(provData.categorias?.length>0?provData.categorias:PROV_CATS);
-                  return(<select style={{...s.inp,background:"#fff"}} value={newProd.categoria} onChange={e=>setNewProd({...newProd,categoria:e.target.value})}>{prodCats.map(c=><option key={c}>{c}</option>)}</select>);
+                  return(<select style={{...s.inp,background:"#fff"}} value={newProd.categoria} onChange={e=>setNewProd({...newProd,categoria:e.target.value,variantes:""})}>{prodCats.map(c=><option key={c}>{c}</option>)}</select>);
                 })()}
+                {/* CAMPO VARIANTES — solo para categorías específicas de Tienda */}
+                {provData.tipo_negocio==="Tienda / Negocio local"&&VARIANTES_CONFIG[newProd.categoria]&&(
+                  <div style={{background:"#eff6ff",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #bfdbfe"}}>
+                    <label style={{...s.lbl,color:"#1d4ed8",marginBottom:4}}>🎨 {VARIANTES_CONFIG[newProd.categoria].label}</label>
+                    <input style={s.inp} placeholder={VARIANTES_CONFIG[newProd.categoria].placeholder} value={newProd.variantes} onChange={e=>setNewProd({...newProd,variantes:e.target.value})}/>
+                    <div style={{fontSize:10,color:"#64748b",marginTop:-6}}>Separa cada opción con coma. El cliente podrá elegir antes de comprar.</div>
+                  </div>
+                )}
                 <label style={s.lbl}>Precio ($) *</label>
                 <input style={s.inp} type="number" placeholder="3.50" value={newProd.precio} onChange={e=>setNewProd({...newProd,precio:e.target.value})}/>
                 {!!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)&&<>
