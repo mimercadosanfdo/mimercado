@@ -1,5 +1,5 @@
-// BUILD:1783807000
-"use client"; // Lokl v1783807000
+// BUILD:1783810000
+"use client"; // Lokl v1783810000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -3989,13 +3989,13 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
               <div style={s.pc}>
                 <div style={s.pT}>{!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"➕ Agregar servicio":"➕ Publicar producto"}</div>
                 <label style={s.lbl}>Nombre del servicio *</label>
-                <input style={s.inp} placeholder={!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Ej: Consulta médica, Corte de cabello...":"Torta de zanahoria"} value={newProd.nombre} onChange={e=>setNewProd({...newProd,nombre:e.target.value})}/>
+                <input style={s.inp} placeholder={!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Ej: Consulta médica, Corte de cabello...":"Ej: Nombre del producto"} value={newProd.nombre} onChange={e=>setNewProd({...newProd,nombre:e.target.value})}/>
                 {!!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)&&<><label style={s.lbl}>Marca (opcional)</label>
-                <input style={s.inp} placeholder="Casero, artesanal..." value={newProd.marca} onChange={e=>setNewProd({...newProd,marca:e.target.value})}/>
+                <input style={s.inp} placeholder="Marca o elaboración (opcional)" value={newProd.marca} onChange={e=>setNewProd({...newProd,marca:e.target.value})}/>
                 <label style={s.lbl}>Presentación (opcional)</label>
-                <input style={s.inp} placeholder="500g, 1L..." value={newProd.presentacion} onChange={e=>setNewProd({...newProd,presentacion:e.target.value})}/></>}
+                <input style={s.inp} placeholder="Ej: 500g, 1 unidad, 1L" value={newProd.presentacion} onChange={e=>setNewProd({...newProd,presentacion:e.target.value})}/></>}
                 <label style={s.lbl}>Descripción {!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"(opcional — qué incluye este servicio)":"(opcional)"}</label>
-                <input style={s.inp} placeholder={!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Ej: Incluye examen físico y diagnóstico...":"Ingredientes, sabor..."} value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
+                <input style={s.inp} placeholder={!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Ej: Describe el servicio que ofreces":"Ingredientes, sabor..."} value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
                 <label style={s.lbl}>Categoría *</label>
                 {(()=>{
                   const SERV_CATS={"Médico / Consultorio":["Consulta médica","Procedimiento","Examen","Certificado médico","Otro"],"Laboratorio clínico":["Hematología","Bioquímica","Orina y heces","Hormonas","Microbiología","Perfil completo","Otros exámenes"],"Odontología":["Consulta","Limpieza dental","Extracción","Ortodoncia","Blanqueamiento","Radiografía","Otro"],"Enfermería a domicilio":["Cuidado diario","Inyección","Curación","Toma de presión","Otro"],"Farmacia":["Medicamentos","Suplementos","Insumos médicos","Otro"],"Peluquería / Barbería":["Corte caballero","Corte dama","Tinte","Tratamiento","Manicure","Pedicure","Otro"],"Manicure / Pedicure":["Manicure","Pedicure","Uñas acrílicas","Nail art","Otro"],"Maquillaje y estética":["Maquillaje","Depilación","Facial","Otro"],"Plomería":["Reparación","Instalación","Destape","Diagnóstico","Otro"],"Electricidad":["Reparación","Instalación","Diagnóstico","Mantenimiento","Otro"],"Pintura y construcción":["Pintura interior","Pintura exterior","Remodelación","Otro"],"Limpieza del hogar":["Limpieza básica","Limpieza profunda","Limpieza de oficina","Otro"],"Carpintería / Herrería":["Fabricación","Reparación","Instalación","Otro"],"Clases y tutorías":["Matemáticas","Física","Química","Inglés","Otra materia"],"Idiomas":["Inglés","Francés","Otro idioma"],"Mecánica automotriz":["Cambio de aceite","Frenos","Motor","Suspensión","Diagnóstico","Otro"],"Electricidad automotriz":["Diagnóstico","Reparación","Instalación de accesorios","Otro"],"Lavandería":["Lavado básico","Lavado y planchado","Ropa de cama","Otro"],"Fotografía / Video":["Sesión fotográfica","Video evento","Edición","Otro"],"Mototaxi":["Traslado de persona","Delivery","Encomienda","Otro"],"Taxi":["Traslado local","Traslado interurbano","Aeropuerto","Otro"],"Transporte interurbano (rutas)":["Pasaje","Encomienda","Ruta especial","Otro"],"Encomiendas y mudanzas":["Encomienda local","Encomienda foránea","Mudanza","Otro"],"Otro":["Servicio principal","Servicio adicional","Consulta","Otro"]};
@@ -4143,13 +4143,13 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                       <div style={{background:"#f8fafc",borderRadius:10,padding:12,border:"1px solid #e2e8f0"}}>
                         <div style={{fontSize:13,fontWeight:600,color:P,marginBottom:8}}>✏️ Corrige tu producto</div>
                         <label style={s.lbl}>Nombre *</label>
-                        <input style={s.inp} placeholder="Ej: Torta de zanahoria" value={newProd.nombre} onChange={e=>setNewProd({...newProd,nombre:e.target.value})}/>
+                        <input style={s.inp} placeholder="Ej: Nombre del producto o servicio" value={newProd.nombre} onChange={e=>setNewProd({...newProd,nombre:e.target.value})}/>
                         <label style={s.lbl}>Marca (opcional)</label>
-                        <input style={s.inp} placeholder="Casero, artesanal..." value={newProd.marca} onChange={e=>setNewProd({...newProd,marca:e.target.value})}/>
+                        <input style={s.inp} placeholder="Marca o elaboración (opcional)" value={newProd.marca} onChange={e=>setNewProd({...newProd,marca:e.target.value})}/>
                         <label style={s.lbl}>Presentación (opcional)</label>
-                        <input style={s.inp} placeholder="500g, 1 porción..." value={newProd.presentacion} onChange={e=>setNewProd({...newProd,presentacion:e.target.value})}/>
+                        <input style={s.inp} placeholder="Ej: 500g, 1 unidad, 1L" value={newProd.presentacion} onChange={e=>setNewProd({...newProd,presentacion:e.target.value})}/>
                         <label style={s.lbl}>Descripción (opcional)</label>
-                        <input style={s.inp} placeholder="Ingredientes, sabor..." value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
+                        <input style={s.inp} placeholder="Descripción del producto (opcional)" value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
                         <label style={s.lbl}>Categoría *</label>
                         {(()=>{
                           const editCats=provData.tipo_negocio==="Tienda / Negocio local"
