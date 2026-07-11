@@ -1,5 +1,5 @@
-// BUILD:1783806000
-"use client"; // Lokl v1783806000
+// BUILD:1783807000
+"use client"; // Lokl v1783807000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -3598,9 +3598,20 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
             {provForm._modulo==="tienda"&&(
               <>
                 <label style={s.lbl}>Categoría principal de tu tienda *</label>
-                <select style={{...s.inp,background:"#fff"}} value={provForm.tipo_negocio} onChange={e=>setProvForm({...provForm,tipo_negocio:e.target.value,categorias:[]})}>
-                  <option value="Tienda / Negocio local">— General / Varios —</option>
-                  <option value="Tienda / Negocio local">Tienda / Negocio local</option>
+                <select style={{...s.inp,background:"#fff"}} value={(provForm.categorias||[])[0]||""} onChange={e=>setProvForm({...provForm,categorias:e.target.value?[e.target.value]:[]})}>
+                  <option value="">— Selecciona una categoría —</option>
+                  <option>Ropa y moda</option>
+                  <option>Accesorios y joyería</option>
+                  <option>Farmacia y salud</option>
+                  <option>Ferretería</option>
+                  <option>Tecnología</option>
+                  <option>Hogar y muebles</option>
+                  <option>Regalos</option>
+                  <option>Belleza</option>
+                  <option>Cuidado personal</option>
+                  <option>Mascotas</option>
+                  <option>Alimentos y bebidas</option>
+                  <option>Otros</option>
                 </select>
               </>
             )}
