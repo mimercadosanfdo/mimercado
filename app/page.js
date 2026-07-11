@@ -1,5 +1,5 @@
-// BUILD:1783804500
-"use client"; // Lokl v1783804500
+// BUILD:1783805000
+"use client"; // Lokl v1783805000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -3187,7 +3187,7 @@ const VE_ESTADOS_MUNICIPIOS={
                       {proveedorServicioActivo.instagram&&<a href={`https://instagram.com/${proveedorServicioActivo.instagram.replace("@","")}`} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} style={{background:"#fdf2f8",color:"#9d174d",fontSize:11,padding:"4px 10px",borderRadius:20,border:"1px solid #fbcfe8",textDecoration:"none",fontWeight:600}}>📸 {proveedorServicioActivo.instagram}</a>}
                     </div>
                     {(()=>{
-                      const ab=estaAbiertoAhora(proveedorServicioActivo.horario_desde,proveedorServicioActivo.horario_hasta,proveedorServicioActivo.activo,proveedorServicioActivo.en_pausa);
+                      const ab=estaAbiertoAhora(proveedorServicioActivo.horario_desde,proveedorServicioActivo.horario_hasta,proveedorServicioActivo.activo,proveedorServicioActivo.en_pausa,proveedorServicioActivo.forzar_abierto);
                       const horTxt=proveedorServicioActivo.horarios_atencion||(proveedorServicioActivo.horario_desde&&proveedorServicioActivo.horario_hasta?`${proveedorServicioActivo.horario_desde} – ${proveedorServicioActivo.horario_hasta}${proveedorServicioActivo.horario_desc?" ("+proveedorServicioActivo.horario_desc+")":""}`:null);
                       return(<>
                         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:horTxt?4:0}}>
