@@ -1,5 +1,5 @@
-// BUILD:1783805000
-"use client"; // Lokl v1783805000
+// BUILD:1783806000
+"use client"; // Lokl v1783806000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -403,7 +403,7 @@ const VE_ESTADOS_MUNICIPIOS={
   // ---------------------------------------------------------
 
   // provMode ya declarado arriba con localStorage
-  const [provForm,setProvForm]=useState({email:"",nombre:"",negocio:"",whatsapp_negocio:"",telefono_principal:"",instagram:"",categorias:[],pass:"",tipo_negocio:"Restaurante / Cocina / Comida",tipo_operacion_gastro:"",descripcion_negocio:"",delivery_propio:false,permite_retiro:false,delivery_costo:0,delivery_gratis_desde:15,direccion_fisica:"",horario_desde:"08:00",horario_hasta:"18:00",horario_desc:"",subcategoria_servicio:"",especialidad:"",matricula_prof:"",precio_consulta:"",horarios_atencion:"",zona_cobertura:"",tarifa_referencial:"",examenes:"",estado_ubicacion:"",municipio:""});
+  const [provForm,setProvForm]=useState({email:"",nombre:"",negocio:"",whatsapp_negocio:"",telefono_principal:"",instagram:"",categorias:[],pass:"",tipo_negocio:"Restaurante / Cocina / Comida",tipo_operacion_gastro:"",descripcion_negocio:"",delivery_propio:false,permite_retiro:false,delivery_costo:0,delivery_gratis_desde:15,direccion_fisica:"",horario_desde:"08:00",horario_hasta:"18:00",horario_desc:"",subcategoria_servicio:"",especialidad:"",matricula_prof:"",precio_consulta:"",horarios_atencion:"",zona_cobertura:"",tarifa_referencial:"",examenes:"",estado_ubicacion:"",municipio:"",_modulo:""});
   const [provData,setProvData]=useState(()=>{
     try{const s=localStorage.getItem("lokl_prov");return s?JSON.parse(s):null;}catch{return null;}
   });
@@ -3519,58 +3519,91 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
             <input style={s.inp} placeholder="04143232671" value={provForm.telefono_principal} onChange={e=>setProvForm({...provForm,telefono_principal:e.target.value})}/>
             <label style={s.lbl}>Instagram (opcional)</label>
             <input style={s.inp} placeholder="@cosmeticosdorcas" value={provForm.instagram||""} onChange={e=>setProvForm({...provForm,instagram:e.target.value})}/>
-            <label style={s.lbl}>Tipo de negocio o servicio *</label>
-            <select style={{...s.inp,background:"#fff"}} value={provForm.tipo_negocio} onChange={e=>setProvForm({...provForm,tipo_negocio:e.target.value,categorias:[],tipo_operacion_gastro:"",subcategoria_servicio:""})}>
-              <option value="">— Selecciona —</option>
-              <optgroup label="🏨 Hospedaje y turismo">
-                <option>Hotel / Posada</option>
-                <option>Finca turística</option>
-                <option>Tour operador</option>
-                <option>Campamento / Aventura</option>
-              </optgroup>
-              <optgroup label="🍽️ Comida y comercio">
-                <option>Restaurante / Cocina / Comida</option>
-                <option>Tienda / Negocio local</option>
-              </optgroup>
-              <optgroup label="🚗 Transporte">
-                <option>Mototaxi</option>
-                <option>Taxi</option>
-                <option>Transporte interurbano (rutas)</option>
-                <option>Encomiendas y mudanzas</option>
-              </optgroup>
-              <optgroup label="🏥 Salud">
-                <option>Médico / Consultorio</option>
-                <option>Enfermería a domicilio</option>
-                <option>Laboratorio clínico</option>
-                <option>Odontología</option>
-                <option>Farmacia</option>
-              </optgroup>
-              <optgroup label="💇 Belleza">
-                <option>Peluquería / Barbería</option>
-                <option>Manicure / Pedicure</option>
-                <option>Maquillaje y estética</option>
-              </optgroup>
-              <optgroup label="🏠 Hogar y construcción">
-                <option>Plomería</option>
-                <option>Electricidad</option>
-                <option>Pintura y construcción</option>
-                <option>Limpieza del hogar</option>
-                <option>Carpintería / Herrería</option>
-              </optgroup>
-              <optgroup label="📚 Educación">
-                <option>Clases y tutorías</option>
-                <option>Idiomas</option>
-              </optgroup>
-              <optgroup label="🔩 Mecánica">
-                <option>Mecánica automotriz</option>
-                <option>Electricidad automotriz</option>
-              </optgroup>
-              <optgroup label="✦ Otros">
-                <option>Lavandería</option>
-                <option>Fotografía / Video</option>
-                <option>Otro</option>
-              </optgroup>
-            </select>
+
+            {/* SELECTOR DE MÓDULO */}
+            <label style={s.lbl}>¿Dónde quieres aparecer en Lokl? *</label>
+            <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:8}}>
+              {[
+                {id:"comida",emoji:"🍽️",titulo:"Feria de comida",desc:"Soy restaurante, cocina, panadería o negocio de comida preparada"},
+                {id:"tienda",emoji:"🛍️",titulo:"Negocios locales",desc:"Vendo productos físicos: ropa, cosméticos, ferretería, farmacia, etc."},
+                {id:"servicio",emoji:"🔧",titulo:"Directorio de servicios",desc:"Ofrezco servicios: belleza, salud, transporte, reparaciones, educación, etc."},
+              ].map(m=>{
+                const sel=provForm._modulo===m.id;
+                return(
+                  <div key={m.id} onClick={()=>setProvForm(f=>({...f,_modulo:m.id,tipo_negocio:m.id==="comida"?"Restaurante / Cocina / Comida":m.id==="tienda"?"Tienda / Negocio local":"",categorias:[],tipo_operacion_gastro:"",subcategoria_servicio:""}))} style={{display:"flex",alignItems:"flex-start",gap:10,background:sel?"#eff6ff":"#fff",border:`2px solid ${sel?"#3b82f6":"#e2e8f0"}`,borderRadius:12,padding:"12px",cursor:"pointer"}}>
+                    <div style={{width:22,height:22,borderRadius:"50%",background:sel?"#3b82f6":"#e2e8f0",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",marginTop:1}}>{sel&&<span style={{color:"#fff",fontSize:13,fontWeight:900}}>✓</span>}</div>
+                    <div>
+                      <div style={{fontSize:14,fontWeight:700,color:sel?"#1d4ed8":"#374151"}}>{m.emoji} {m.titulo}</div>
+                      <div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>{m.desc}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* TIPO ESPECÍFICO — solo si módulo es servicio o tienda */}
+            {provForm._modulo==="servicio"&&(
+              <>
+                <label style={s.lbl}>Tipo de servicio *</label>
+                <select style={{...s.inp,background:"#fff"}} value={provForm.tipo_negocio} onChange={e=>setProvForm({...provForm,tipo_negocio:e.target.value,categorias:[],subcategoria_servicio:""})}>
+                  <option value="">— Selecciona —</option>
+                  <optgroup label="🏨 Hospedaje y turismo">
+                    <option>Hotel / Posada</option>
+                    <option>Finca turística</option>
+                    <option>Tour operador</option>
+                    <option>Campamento / Aventura</option>
+                  </optgroup>
+                  <optgroup label="🚗 Transporte">
+                    <option>Mototaxi</option>
+                    <option>Taxi</option>
+                    <option>Transporte interurbano (rutas)</option>
+                    <option>Encomiendas y mudanzas</option>
+                  </optgroup>
+                  <optgroup label="🏥 Salud">
+                    <option>Médico / Consultorio</option>
+                    <option>Enfermería a domicilio</option>
+                    <option>Laboratorio clínico</option>
+                    <option>Odontología</option>
+                    <option>Farmacia</option>
+                  </optgroup>
+                  <optgroup label="💇 Belleza y estética">
+                    <option>Peluquería / Barbería</option>
+                    <option>Manicure / Pedicure</option>
+                    <option>Maquillaje y estética</option>
+                  </optgroup>
+                  <optgroup label="🏠 Hogar y construcción">
+                    <option>Plomería</option>
+                    <option>Electricidad</option>
+                    <option>Pintura y construcción</option>
+                    <option>Limpieza del hogar</option>
+                    <option>Carpintería / Herrería</option>
+                  </optgroup>
+                  <optgroup label="📚 Educación">
+                    <option>Clases y tutorías</option>
+                    <option>Idiomas</option>
+                  </optgroup>
+                  <optgroup label="🔩 Mecánica">
+                    <option>Mecánica automotriz</option>
+                    <option>Electricidad automotriz</option>
+                  </optgroup>
+                  <optgroup label="✦ Otros servicios">
+                    <option>Lavandería</option>
+                    <option>Fotografía / Video</option>
+                    <option>Otro</option>
+                  </optgroup>
+                </select>
+              </>
+            )}
+
+            {provForm._modulo==="tienda"&&(
+              <>
+                <label style={s.lbl}>Categoría principal de tu tienda *</label>
+                <select style={{...s.inp,background:"#fff"}} value={provForm.tipo_negocio} onChange={e=>setProvForm({...provForm,tipo_negocio:e.target.value,categorias:[]})}>
+                  <option value="Tienda / Negocio local">— General / Varios —</option>
+                  <option value="Tienda / Negocio local">Tienda / Negocio local</option>
+                </select>
+              </>
+            )}
 
             {/* CAMPOS ESPECÍFICOS SEGÚN TIPO */}
             {/* RESTAURANTE */}
