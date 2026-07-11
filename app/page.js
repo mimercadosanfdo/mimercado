@@ -1,5 +1,5 @@
-// BUILD:1783802500
-"use client"; // Lokl v1783802500
+// BUILD:1783803500
+"use client"; // Lokl v1783803500
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1174,7 +1174,7 @@ const VE_ESTADOS_MUNICIPIOS={
       telefono_principal:provForm.telefono_principal||null,
       instagram:provForm.instagram||null,
       categorias:provForm.categorias,
-      logo_url,aprobado:true,activo:false,en_pausa:false,password_plain:provForm.pass,
+      logo_url,aprobado:true,activo:true,en_pausa:false,password_plain:provForm.pass,
       tipo_negocio:provForm.tipo_negocio||"Restaurante / Cocina / Comida",
       descripcion_negocio:provForm.descripcion_negocio||null,
       tipo_operacion_gastro:provForm.tipo_operacion_gastro||null,
