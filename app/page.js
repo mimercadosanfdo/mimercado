@@ -1,5 +1,5 @@
-// BUILD:1783810000
-"use client"; // Lokl v1783810000
+// BUILD:1783812000
+"use client"; // Lokl v1783812000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -447,8 +447,14 @@ const VE_ESTADOS_MUNICIPIOS={
   const [editLogoFile,setEditLogoFile]=useState(null);
   const [editLogoPreview,setEditLogoPreview]=useState(null);
   const [fotoFile,setFotoFile]=useState(null);
+  const [fotoFile2,setFotoFile2]=useState(null);
+  const [fotoFile3,setFotoFile3]=useState(null);
+  const [fotoFile4,setFotoFile4]=useState(null);
   const [logoPreview,setLogoPreview]=useState(null);
   const [fotoPreview,setFotoPreview]=useState(null);
+  const [fotoPreview2,setFotoPreview2]=useState(null);
+  const [fotoPreview3,setFotoPreview3]=useState(null);
+  const [fotoPreview4,setFotoPreview4]=useState(null);
   const [loading,setLoading]=useState(false);
   const [pmsg,setPmsg]=useState("");
   const [provTab,setProvTab]=useState("estado");
@@ -856,7 +862,7 @@ const VE_ESTADOS_MUNICIPIOS={
     // Cargar productos/servicios de cada proveedor
     if(unique.length>0){
       const ids=unique.map(p=>p.id);
-      const{data:prods}=await supabase.from("productos_proveedor").select("id,proveedor_id,nombre,descripcion,precio,categoria,disponible,foto_url").in("proveedor_id",ids).eq("aprobado",true).eq("disponible",true).eq("rechazado",false);
+      const{data:prods}=await supabase.from("productos_proveedor").select("id,proveedor_id,nombre,descripcion,precio,categoria,disponible,foto_url,foto_url_2,foto_url_3,foto_url_4").in("proveedor_id",ids).eq("aprobado",true).eq("disponible",true).eq("rechazado",false);
       if(prods){
         const mapa={};
         prods.forEach(p=>{if(!mapa[p.proveedor_id])mapa[p.proveedor_id]=[];mapa[p.proveedor_id].push(p);});
@@ -997,7 +1003,7 @@ const VE_ESTADOS_MUNICIPIOS={
 
   const allProds=[
     ...superProds.map(p=>({id:`sp_${p.id}`,name:p.nombre,cat:"Supermercado",superCat:p.categoria,price:p.precio,unit:p.unidad,emoji:p.emoji||"🛒",margin:0.10,foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,abierto:true})),
-    ...provProds.map(p=>({id:`pv_${p.id}`,name:p.nombre,cat:p.categoria,price:p.precio,unit:p.unidad,emoji:"🍽️",margin:0,kitchen:p.proveedores?.negocio,kitchenWa:p.proveedores?.whatsapp_negocio||p.proveedores?.telefono,kitchenDelivery:p.proveedores?.delivery_propio,kitchenDeliveryCosto:p.proveedores?.delivery_costo||0,kitchenDeliveryGratis:p.proveedores?.delivery_gratis_desde||15,kitchenRetiro:p.proveedores?.permite_retiro,kitchenTipo:p.proveedores?.tipo_operacion_gastro,kitchenEta:p.proveedores?.eta_texto||(p.proveedores?.eta_minutos_min&&p.proveedores?.eta_minutos_max?`${p.proveedores.eta_minutos_min}–${p.proveedores.eta_minutos_max} min`:null),logo:p.proveedores?.logo_url,foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,stock:p.stock,horario:p.permanente?"Siempre disponible":`${p.horario_inicio}–${p.horario_fin}`,tag:p.stock<=3?`Solo ${p.stock} disp.`:null,dbId:p.id,abierto:p.proveedores?.activo!==false&&!p.proveedores?.en_pausa,horarioNeg:p.proveedores?.horario_desde&&p.proveedores?.horario_hasta?`${p.proveedores.horario_desde}–${p.proveedores.horario_hasta}${p.proveedores.horario_desc?" ("+p.proveedores.horario_desc+")":""}`:null})),
+    ...provProds.map(p=>({id:`pv_${p.id}`,name:p.nombre,cat:p.categoria,price:p.precio,unit:p.unidad,emoji:"🍽️",margin:0,kitchen:p.proveedores?.negocio,kitchenWa:p.proveedores?.whatsapp_negocio||p.proveedores?.telefono,kitchenDelivery:p.proveedores?.delivery_propio,kitchenDeliveryCosto:p.proveedores?.delivery_costo||0,kitchenDeliveryGratis:p.proveedores?.delivery_gratis_desde||15,kitchenRetiro:p.proveedores?.permite_retiro,kitchenTipo:p.proveedores?.tipo_operacion_gastro,kitchenEta:p.proveedores?.eta_texto||(p.proveedores?.eta_minutos_min&&p.proveedores?.eta_minutos_max?`${p.proveedores.eta_minutos_min}–${p.proveedores.eta_minutos_max} min`:null),logo:p.proveedores?.logo_url,foto:p.foto_url,foto2:p.foto_url_2,foto3:p.foto_url_3,foto4:p.foto_url_4,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,stock:p.stock,horario:p.permanente?"Siempre disponible":`${p.horario_inicio}–${p.horario_fin}`,tag:p.stock<=3?`Solo ${p.stock} disp.`:null,dbId:p.id,abierto:p.proveedores?.activo!==false&&!p.proveedores?.en_pausa,horarioNeg:p.proveedores?.horario_desde&&p.proveedores?.horario_hasta?`${p.proveedores.horario_desde}–${p.proveedores.horario_hasta}${p.proveedores.horario_desc?" ("+p.proveedores.horario_desc+")":""}`:null})),
     ...provPromos.map(pr=>({id:`promo_${pr.id}`,name:pr.nombre,cat:"Comida preparada",price:pr.precio,unit:"promo",emoji:"🎁",margin:0,kitchen:pr.proveedores?.negocio,kitchenWa:pr.proveedores?.whatsapp_negocio||pr.proveedores?.telefono,kitchenDelivery:pr.proveedores?.delivery_propio,kitchenDeliveryCosto:pr.proveedores?.delivery_costo||0,kitchenDeliveryGratis:pr.proveedores?.delivery_gratis_desde||15,kitchenRetiro:pr.proveedores?.permite_retiro,kitchenTipo:pr.proveedores?.tipo_operacion_gastro,logo:pr.proveedores?.logo_url,foto:pr.foto_url,descripcion:pr.descripcion,isPromo:true,tag:"🔥 PROMO",horario:`Hasta ${pr.fecha_fin}`,abierto:pr.proveedores?.activo!==false&&!pr.proveedores?.en_pausa,horarioNeg:pr.proveedores?.horario_desde&&pr.proveedores?.horario_hasta?`${pr.proveedores.horario_desde}–${pr.proveedores.horario_hasta}${pr.proveedores.horario_desc?" ("+pr.proveedores.horario_desc+")":""}`:null})),
   ];
 
@@ -1301,11 +1307,14 @@ const VE_ESTADOS_MUNICIPIOS={
   const publishProd=async()=>{
     if(!newProd.nombre||!newProd.precio)return setPmsg("Completa nombre y precio");
     setLoading(true);setPmsg("");
-    let foto_url=null;
+    let foto_url=null,foto_url_2=null,foto_url_3=null,foto_url_4=null;
     if(fotoFile)foto_url=await upload(fotoFile,"productos",`${provData.id}_${Date.now()}`);
+    if(fotoFile2)foto_url_2=await upload(fotoFile2,"productos",`${provData.id}_2_${Date.now()}`);
+    if(fotoFile3)foto_url_3=await upload(fotoFile3,"productos",`${provData.id}_3_${Date.now()}`);
+    if(fotoFile4)foto_url_4=await upload(fotoFile4,"productos",`${provData.id}_4_${Date.now()}`);
     const esServicio=!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio);
     const{data:existing}=await supabase.from("productos_proveedor").select("id").eq("proveedor_id",provData.id).eq("primera_aprobacion",true).limit(1);
-    const auto=false; // Todos los productos requieren aprobación del admin
+    const auto=false;
     const{error}=await supabase.from("productos_proveedor").insert({
       proveedor_id:provData.id,
       nombre:newProd.nombre,
@@ -1316,6 +1325,9 @@ const VE_ESTADOS_MUNICIPIOS={
       unidad:newProd.unidad,
       categoria:newProd.categoria,
       foto_url:foto_url||null,
+      foto_url_2:foto_url_2||null,
+      foto_url_3:foto_url_3||null,
+      foto_url_4:foto_url_4||null,
       stock:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?999:(parseInt(newProd.stock)||1),
       horario_inicio:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?null:newProd.hi,
       horario_fin:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?null:newProd.hf,
@@ -1332,6 +1344,9 @@ const VE_ESTADOS_MUNICIPIOS={
     const esServ=!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio);setPmsg(auto?(esServ?"✅ Servicio publicado":"✅ Producto publicado"):(esServ?"✅ Servicio enviado al admin para aprobación":"✅ Enviado al admin para aprobación"));
     setNewProd({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false,es_oferta:false});
     setFotoFile(null);setFotoPreview(null);
+    setFotoFile2(null);setFotoPreview2(null);
+    setFotoFile3(null);setFotoPreview3(null);
+    setFotoFile4(null);setFotoPreview4(null);
     loadMyProds(provData.id);loadAll();
   };
 
@@ -4022,9 +4037,25 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 {!newProd.permanente&&(<div style={{display:"flex",gap:10}}><div style={{flex:1}}><label style={s.lbl}>Desde</label><input style={s.inp} type="time" value={newProd.hi} onChange={e=>setNewProd({...newProd,hi:e.target.value})}/></div><div style={{flex:1}}><label style={s.lbl}>Hasta</label><input style={s.inp} type="time" value={newProd.hf} onChange={e=>setNewProd({...newProd,hf:e.target.value})}/></div></div>)}
                 <div onClick={()=>setNewProd({...newProd,es_oferta:!newProd.es_oferta})} style={{display:"flex",alignItems:"center",gap:10,background:newProd.es_oferta?"#fff7ed":"#f8fafc",border:`1px solid ${newProd.es_oferta?"#fed7aa":"#e2e8f0"}`,borderRadius:12,padding:"10px 14px",marginBottom:10,cursor:"pointer"}}><span style={{fontSize:20}}>{newProd.es_oferta?"🏷️":"⬜"}</span><div><div style={{fontSize:13,fontWeight:700,color:newProd.es_oferta?"#c2410c":"#64748b"}}>Destacar como oferta en Inicio</div><div style={{fontSize:11,color:"#94a3b8",marginTop:1}}>Aparecerá en Promociones activas de la home</div></div></div>
                 </>}
-                <label style={s.lbl}>Foto {!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"del profesional (opcional)":"del producto"}</label>
-                {fotoPreview&&<img src={fotoPreview} alt="" style={{width:"100%",height:110,objectFit:"cover",borderRadius:10,marginBottom:8}}/>}
-                <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setFotoFile(f);setFotoPreview(URL.createObjectURL(f));}}}/>
+                <label style={s.lbl}>Fotos {!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"del profesional":"del producto"} (hasta 4)</label>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+                  {[
+                    {preview:fotoPreview,setFile:setFotoFile,setPreview:setFotoPreview,label:"Foto 1 *"},
+                    {preview:fotoPreview2,setFile:setFotoFile2,setPreview:setFotoPreview2,label:"Foto 2"},
+                    {preview:fotoPreview3,setFile:setFotoFile3,setPreview:setFotoPreview3,label:"Foto 3"},
+                    {preview:fotoPreview4,setFile:setFotoFile4,setPreview:setFotoPreview4,label:"Foto 4"},
+                  ].map((slot,i)=>(
+                    <label key={i} style={{cursor:"pointer",display:"block"}}>
+                      <div style={{width:"100%",aspectRatio:"1",borderRadius:10,border:"2px dashed #cbd5e1",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",background:slot.preview?"#000":"#f8fafc",position:"relative"}}>
+                        {slot.preview
+                          ?<img src={slot.preview} alt="" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
+                          :<div style={{textAlign:"center",color:"#94a3b8"}}><div style={{fontSize:24}}>📷</div><div style={{fontSize:10,marginTop:4}}>{slot.label}</div></div>
+                        }
+                      </div>
+                      <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){slot.setFile(f);slot.setPreview(URL.createObjectURL(f));}}}/>
+                    </label>
+                  ))}
+                </div>
                 <div style={{...s.ib,background:"#fef9c3"}}><div style={{fontSize:12,color:"#854d0e"}}>ℹ️ Primera publicación requiere aprobación del admin.</div></div>
                 <button style={s.btn} onClick={publishProd} disabled={loading}>{loading?"Subiendo...":!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Agregar servicio":"Publicar producto"}</button>
               </div>
@@ -6522,14 +6553,27 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
         </div>
       )}
       {/* MODAL PRODUCTO NEGOCIO LOCAL */}
-      {productoDetalle&&(
+      {productoDetalle&&(()=>{
+        const fotos=[productoDetalle.foto,productoDetalle.foto2,productoDetalle.foto3,productoDetalle.foto4].filter(Boolean);
+        const [sliderIdx,setSliderIdx]=useState(0);
+        return(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:400,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setProductoDetalle(null)}>
           <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:480,maxHeight:"85vh",overflow:"auto",paddingBottom:24}} onClick={e=>e.stopPropagation()}>
             <div style={{width:40,height:4,background:"#e2e8f0",borderRadius:4,margin:"10px auto 0"}}/>
-            {productoDetalle.foto
-              ?<img src={productoDetalle.foto} alt={productoDetalle.name} style={{width:"100%",height:220,objectFit:"cover",display:"block",marginTop:8}}/>
-              :<div style={{height:140,background:"linear-gradient(135deg,#dbeafe,#bfdbfe)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:56,marginTop:8}}>🛍️</div>
-            }
+            {fotos.length>0?(
+              <div style={{position:"relative",marginTop:8}}>
+                <img src={fotos[sliderIdx]} alt={productoDetalle.name} style={{width:"100%",height:240,objectFit:"contain",display:"block",background:"#f8fafc"}}/>
+                {fotos.length>1&&(
+                  <>
+                    <button onClick={e=>{e.stopPropagation();setSliderIdx(i=>(i-1+fotos.length)%fotos.length);}} style={{position:"absolute",left:8,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.4)",color:"#fff",border:"none",borderRadius:"50%",width:32,height:32,fontSize:16,cursor:"pointer"}}>‹</button>
+                    <button onClick={e=>{e.stopPropagation();setSliderIdx(i=>(i+1)%fotos.length);}} style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.4)",color:"#fff",border:"none",borderRadius:"50%",width:32,height:32,fontSize:16,cursor:"pointer"}}>›</button>
+                    <div style={{position:"absolute",bottom:8,left:0,right:0,display:"flex",justifyContent:"center",gap:6}}>
+                      {fotos.map((_,i)=><div key={i} onClick={e=>{e.stopPropagation();setSliderIdx(i);}} style={{width:8,height:8,borderRadius:"50%",background:i===sliderIdx?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer"}}/>)}
+                    </div>
+                  </>
+                )}
+              </div>
+            ):<div style={{height:140,background:"linear-gradient(135deg,#dbeafe,#bfdbfe)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:56,marginTop:8}}>🛍️</div>}
             <div style={{padding:"16px 20px 8px"}}>
               {productoDetalle.tag&&<span style={{fontSize:11,fontWeight:800,background:"#f59e0b",color:"#fff",padding:"3px 10px",borderRadius:8,marginBottom:10,display:"inline-block"}}>{productoDetalle.tag}</span>}
               <div style={{fontSize:20,fontWeight:900,color:"#0f172a",marginBottom:6,letterSpacing:-0.3}}>{productoDetalle.name}</div>
@@ -6555,7 +6599,8 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* SHEET CHECKOUT — redirige a cartGlobal */}
       {sheet==="checkout"&&null}
