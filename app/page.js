@@ -1,5 +1,5 @@
-// BUILD:1783818000
-"use client"; // Lokl v1783818000
+// BUILD:1783819000
+"use client"; // Lokl v1783819000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -4201,27 +4201,48 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                         <input style={s.inp} type="number" value={newProd.precio} onChange={e=>setNewProd({...newProd,precio:e.target.value})}/>
                         {!!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)&&<><label style={s.lbl}>Unidad</label>
                         <input style={s.inp} value={newProd.unidad} onChange={e=>setNewProd({...newProd,unidad:e.target.value})}/></>}
-                        <label style={s.lbl}>Foto {!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"del servicio (opcional)":"del producto (opcional)"}</label>
-                        {(fotoPreview||p.foto_url)&&<img src={fotoPreview||p.foto_url} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:8,marginBottom:6}}/>}
-                        <input type="file" accept="image/*" style={{marginBottom:10,fontSize:13}} onChange={e=>{const f=e.target.files[0];if(f){setFotoFile(f);setFotoPreview(URL.createObjectURL(f));}}}/>
-                        <div style={{...s.ib,background:"#fef9c3"}}><div style={{fontSize:12,color:"#854d0e"}}>ℹ️ Al guardar va a revisión del admin antes de publicarse.</div></div>
-                        <button style={s.btn} disabled={loading} onClick={async()=>{
+                        <label style={s.lbl}>Fotos del producto (hasta 4)</label>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+                          {[
+                            {preview:fotoPreview,setFile:setFotoFile,setPreview:setFotoPreview,current:p.foto_url,label:"Foto 1"},
+                            {preview:fotoPreview2,setFile:setFotoFile2,setPreview:setFotoPreview2,current:p.foto_url_2,label:"Foto 2"},
+                            {preview:fotoPreview3,setFile:setFotoFile3,setPreview:setFotoPreview3,current:p.foto_url_3,label:"Foto 3"},
+                            {preview:fotoPreview4,setFile:setFotoFile4,setPreview:setFotoPreview4,current:p.foto_url_4,label:"Foto 4"},
+                          ].map((slot,i)=>(
+                            <label key={i} style={{cursor:"pointer",display:"block"}}>
+                              <div style={{width:"100%",aspectRatio:"1",borderRadius:10,border:`2px dashed ${(slot.preview||slot.current)?"#3b82f6":"#cbd5e1"}`,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",background:(slot.preview||slot.current)?"#000":"#f8fafc"}}>
+                                {(slot.preview||slot.current)
+                                  ?<img src={slot.preview||slot.current} alt="" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
+                                  :<div style={{textAlign:"center",color:"#94a3b8"}}><div style={{fontSize:22}}>📷</div><div style={{fontSize:9,marginTop:2}}>{slot.label}</div></div>
+                                }
+                              </div>
+                              <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){slot.setFile(f);slot.setPreview(URL.createObjectURL(f));}}}/>
+                            </label>
+                          ))}
+                        </div>
+                        <button style={{...s.btn,background:"linear-gradient(135deg,#15803d,#22c55e)"}} disabled={loading} onClick={async()=>{
                           if(!newProd.nombre||!newProd.precio)return setPmsg("Completa nombre y precio");
                           setLoading(true);
-                          let nueva_foto=p.foto_url||null;
+                          let nueva_foto=p.foto_url||null,nueva_foto2=p.foto_url_2||null,nueva_foto3=p.foto_url_3||null,nueva_foto4=p.foto_url_4||null;
                           if(fotoFile)nueva_foto=await upload(fotoFile,"productos",`${provData.id}_${Date.now()}`);
+                          if(fotoFile2)nueva_foto2=await upload(fotoFile2,"productos",`${provData.id}_2_${Date.now()}`);
+                          if(fotoFile3)nueva_foto3=await upload(fotoFile3,"productos",`${provData.id}_3_${Date.now()}`);
+                          if(fotoFile4)nueva_foto4=await upload(fotoFile4,"productos",`${provData.id}_4_${Date.now()}`);
                           await supabase.from("productos_proveedor").update({
                             nombre:newProd.nombre,marca:newProd.marca||null,
                             presentacion:newProd.presentacion||null,descripcion:newProd.descripcion||null,
                             precio:parseFloat(newProd.precio),unidad:newProd.unidad,
-                            foto_url:nueva_foto,
-                            aprobado:false,rechazado:false,motivo_rechazo:null,
+                            codigo_ref:newProd.codigo_ref||null,variantes:newProd.variantes||null,
+                            foto_url:nueva_foto,foto_url_2:nueva_foto2,foto_url_3:nueva_foto3,foto_url_4:nueva_foto4,
+                            aprobado:true,rechazado:false,motivo_rechazo:null,
                           }).eq("id",p.id);
-                          setLoading(false);setEditingProdId(null);setFotoFile(null);setFotoPreview(null);
-                          setPmsg("✅ Enviado a revisión del admin");
+                          setLoading(false);setEditingProdId(null);
+                          setFotoFile(null);setFotoPreview(null);setFotoFile2(null);setFotoPreview2(null);
+                          setFotoFile3(null);setFotoPreview3(null);setFotoFile4(null);setFotoPreview4(null);
+                          setPmsg("✅ Producto actualizado");
                           loadMyProds(provData.id);loadAll();
-                        }}>{loading?"Guardando...":"📤 Guardar y enviar a revisión"}</button>
-                        <button style={s.btnG} onClick={()=>{setEditingProdId(null);setFotoFile(null);setFotoPreview(null);}}>Cancelar</button>
+                        }}>{loading?"Guardando...":"✅ Guardar cambios"}</button>
+                        <button style={s.btnG} onClick={()=>{setEditingProdId(null);setFotoFile(null);setFotoPreview(null);setFotoFile2(null);setFotoPreview2(null);setFotoFile3(null);setFotoPreview3(null);setFotoFile4(null);setFotoPreview4(null);}}>Cancelar</button>
                       </div>
                     ):(
                     <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
