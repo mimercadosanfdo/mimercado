@@ -1,5 +1,5 @@
-// BUILD:1783815000
-"use client"; // Lokl v1783815000
+// BUILD:1783816000
+"use client"; // Lokl v1783816000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -782,7 +782,7 @@ const VE_ESTADOS_MUNICIPIOS={
     const subReal=items.reduce((a,i)=>a+i.price*i.qty,0);
     const totalReal=subReal+del;
     const lineasPromo=promos.map(i=>`🔥 Promo: ${i.name} x${i.qty||1}\n   • Cantidad: ${i.qty||1}\n   • Precio unitario: $${i.price.toFixed(2)}\n   • Subtotal: $${(i.price*(i.qty||1)).toFixed(2)}`).join("\n\n");
-    const lineasPlato=platos.map(i=>`🍽️ ${i.name}\n   • Cantidad: ${i.qty}\n   • Precio unitario: $${i.price.toFixed(2)}\n   • Subtotal: $${(i.price*i.qty).toFixed(2)}${i.nota?"\n   • Nota: "+i.nota:""}`).join("\n\n");
+    const lineasPlato=platos.map(i=>`🍽️ ${i.name}\n   • Cantidad: ${i.qty}\n   • Precio unitario: $${i.price.toFixed(2)}\n   • Subtotal: $${(i.price*i.qty).toFixed(2)}${i.variante?"\n   • Variante: "+i.variante:""}${i.nota?"\n   • Nota: "+i.nota:""}`).join("\n\n");
     const lineas=[lineasPromo,lineasPlato].filter(Boolean).join("\n\n");
     const delLinea=del===0?"🚚 Delivery: Gratis 🎉":`🚚 Delivery: $${del.toFixed(2)}`;
     return `🧾 *Pedido N° ${String(numPedido).padStart(3,"0")}*\n\n👋 Hola, quiero realizar un pedido:\n\n🏪 *${provNombre}*\n\n👤 *Datos del cliente:*\nNombre: ${clienteNombre||"No indicado"}\nTeléfono: ${clienteTel||"No indicado"}${clienteDir?"\nDirección: "+clienteDir:""}\n\n🛒 *Mi pedido:*\n\n${lineas}\n\n${delLinea}\n\n💵 *Total estimado: $${totalReal.toFixed(2)}*\n\n📞 Quedo atento(a) para confirmar disponibilidad, tiempo de entrega y método de pago.\nGracias.`;
@@ -1394,7 +1394,7 @@ const VE_ESTADOS_MUNICIPIOS={
     if(fotoFile4)foto_url_4=await upload(fotoFile4,"productos",`${provData.id}_4_${Date.now()}`);
     const esServicio=!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio);
     const{data:existing}=await supabase.from("productos_proveedor").select("id").eq("proveedor_id",provData.id).eq("primera_aprobacion",true).limit(1);
-    const auto=false;
+    const auto=true; // Productos se publican directo
     const{error}=await supabase.from("productos_proveedor").insert({
       proveedor_id:provData.id,
       nombre:newProd.nombre,
@@ -4128,6 +4128,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 <div onClick={()=>setNewProd({...newProd,es_oferta:!newProd.es_oferta})} style={{display:"flex",alignItems:"center",gap:10,background:newProd.es_oferta?"#fff7ed":"#f8fafc",border:`1px solid ${newProd.es_oferta?"#fed7aa":"#e2e8f0"}`,borderRadius:12,padding:"10px 14px",marginBottom:10,cursor:"pointer"}}><span style={{fontSize:20}}>{newProd.es_oferta?"🏷️":"⬜"}</span><div><div style={{fontSize:13,fontWeight:700,color:newProd.es_oferta?"#c2410c":"#64748b"}}>Destacar como oferta en Inicio</div><div style={{fontSize:11,color:"#94a3b8",marginTop:1}}>Aparecerá en Promociones activas de la home</div></div></div>
                 </>}
                 <label style={s.lbl}>Fotos {!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"del profesional":"del producto"} (hasta 4)</label>
+                <div style={{fontSize:11,color:"#dc2626",marginBottom:8,background:"#fff7ed",padding:"6px 10px",borderRadius:8,border:"1px solid #fed7aa"}}>⚠️ Al publicar confirmas que las fotos son apropiadas. Contenido inapropiado resulta en eliminación inmediata de la cuenta.</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
                   {[
                     {preview:fotoPreview,setFile:setFotoFile,setPreview:setFotoPreview,label:"Foto 1 *"},
