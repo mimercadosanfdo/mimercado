@@ -1,5 +1,5 @@
-// BUILD:1783819000
-"use client"; // Lokl v1783819000
+// BUILD:1783820000
+"use client"; // Lokl v1783820000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -248,12 +248,26 @@ const s = {
 
 const getHorario=()=>{const h=new Date().getHours();if(h>=6&&h<11)return{label:"🌅 Desayunos del día",sub:"Lo mejor para empezar tu mañana"};if(h>=11&&h<15)return{label:"☀️ Almuerzos del día",sub:"El menú perfecto para el mediodía"};if(h>=15&&h<18)return{label:"🍪 Meriendas",sub:"Algo rico para la tarde"};return{label:"🌙 Cenas",sub:"Termina el día con buen sabor"};};
 
+// ── HELPER WHATSAPP (a prueba de Safari iOS) ─────────────────────────────────
+// Usa window.location.href en vez de window.open porque Safari iOS bloquea
+// window.open cuando no viene directo de un click. Un solo punto para todo.
+function normalizarNumeroWA(tel){
+  const n=(tel||"").replace(/\D/g,"");
+  if(!n)return "";
+  return n.startsWith("0")?"58"+n.slice(1):n.startsWith("58")?n:"58"+n;
+}
+function abrirWhatsApp(numero,mensaje){
+  const num=normalizarNumeroWA(numero);
+  const base=num?"https://wa.me/"+num:"https://wa.me/";
+  window.location.href=base+"?text="+encodeURIComponent(mensaje||"");
+}
+
 // ── FUNCIÓN COMPARTIR ─────────────────────────────────────────────────────────
 function compartirEnWA({titulo,precio,tab,id,emoji="📌"}){
   const url=APP_URL+(tab?`?tab=${encodeURIComponent(tab)}`:""  )+(id?`&id=${id}`:"");
   const precioTexto=precio?` — $${parseFloat(precio).toLocaleString()}`:"";
   const msg=`${emoji} *${titulo}*${precioTexto}\n\n📲 Míralo en ${APP_NAME}:\n${url}\n\n_Publicado en ${APP_NAME} · San Fernando de Apure_`;
-  window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+  abrirWhatsApp(null,msg);
 }
 function BtnCompartir({titulo,precio,tab,id,emoji,small=false}){
   return(
@@ -755,18 +769,18 @@ const VE_ESTADOS_MUNICIPIOS={
 
   const buildNegocioWaMsg=(negNombre,negItems,negSub,negDel,negTotal,negRef)=>{
     const lineas=negItems.map(i=>`  - ${i.name} x${i.qty} - $${(i.price*i.qty).toFixed(2)}`).join("\n");
-    return `🛍️ *Nuevo pedido - ${APP_NAME}*\n📋 Ref: ${negRef}\n----------------------------\n${lineas}\n----------------------------\nSubtotal: $${negSub.toFixed(2)}\nDelivery: ${negDel===0?"GRATIS":"$"+negDel.toFixed(2)}\n*TOTAL: $${negTotal.toFixed(2)}*\n----------------------------\n👤 ${form.nombre}\n📱 ${form.telefono}\n📍 ${zonaSel?.zona||""}, ${addr.calle}\n`;
+    return `\u{1F6CD}\u{FE0F} *Nuevo pedido - ${APP_NAME}*\n\u{1F4CB} Ref: ${negRef}\n----------------------------\n${lineas}\n----------------------------\nSubtotal: $${negSub.toFixed(2)}\nDelivery: ${negDel===0?"GRATIS":"$"+negDel.toFixed(2)}\n*TOTAL: $${negTotal.toFixed(2)}*\n----------------------------\n\u{1F464} ${form.nombre}\n\u{1F4F1} ${form.telefono}\n\u{1F4CD} ${zonaSel?.zona||""}, ${addr.calle}\n`;
   };
 
   const buildRestWaMsg=(restNombre,restItems,restTotal,del,clienteNombre,clienteTel,clienteDir)=>{
     const promos=restItems.filter(i=>i.isPromo);
     const platos=restItems.filter(i=>!i.isPromo);
-    const lineasPromo=promos.map(i=>`🔥 Promo: ${i.name} x${i.qty||1}\n• Cantidad: ${i.qty||1}\n• Precio unitario: $${i.price.toFixed(2)}\n• Subtotal: $${(i.price*(i.qty||1)).toFixed(2)}`).join("\n\n");
-    const lineasPlato=platos.map(i=>`🍔 ${i.name}\n• Cantidad: ${i.qty}\n• Precio: $${i.price.toFixed(2)}${i.nota?"\n• Nota: "+i.nota:""}`).join("\n\n");
+    const lineasPromo=promos.map(i=>`\u{1F525} Promo: ${i.name} x${i.qty||1}\n• Cantidad: ${i.qty||1}\n• Precio unitario: $${i.price.toFixed(2)}\n• Subtotal: $${(i.price*(i.qty||1)).toFixed(2)}`).join("\n\n");
+    const lineasPlato=platos.map(i=>`\u{1F354} ${i.name}\n• Cantidad: ${i.qty}\n• Precio: $${i.price.toFixed(2)}${i.nota?"\n• Nota: "+i.nota:""}`).join("\n\n");
     const lineas=[lineasPromo,lineasPlato].filter(Boolean).join("\n\n");
-    const delLinea=del===0?"🚚 Delivery: Gratis 🎉":`🚚 Delivery: $${del.toFixed(2)}`;
-    const clienteBloque=`👤 *Datos del cliente:*\nNombre: ${clienteNombre||"No indicado"}\nTeléfono: ${clienteTel||"No indicado"}${clienteDir?`\nDirección: ${clienteDir}`:""}`;
-    return `👋 Hola, quiero realizar un pedido:\n\n🏪 *${restNombre}*\n\n${clienteBloque}\n\n🍽️ *Mi pedido:*\n\n${lineas}\n\n${delLinea}\n\n💵 *Total estimado:* $${restTotal.toFixed(2)}\n\n📞 Quedo atento(a) para confirmar disponibilidad, tiempo de entrega y método de pago.\nGracias.`;
+    const delLinea=del===0?"\u{1F69A} Delivery: Gratis \u{1F389}":`\u{1F69A} Delivery: $${del.toFixed(2)}`;
+    const clienteBloque=`\u{1F464} *Datos del cliente:*\nNombre: ${clienteNombre||"No indicado"}\nTeléfono: ${clienteTel||"No indicado"}${clienteDir?`\nDirección: ${clienteDir}`:""}`;
+    return `\u{1F44B} Hola, quiero realizar un pedido:\n\n\u{1F3EA} *${restNombre}*\n\n${clienteBloque}\n\n\u{1F37D}\u{FE0F} *Mi pedido:*\n\n${lineas}\n\n${delLinea}\n\n\u{1F4B5} *Total estimado:* $${restTotal.toFixed(2)}\n\n\u{1F4DE} Quedo atento(a) para confirmar disponibilidad, tiempo de entrega y método de pago.\nGracias.`;
   };
   const getModalidad=(prov)=>{
     if(prov?.delivery_propio&&prov?.permite_retiro)return"Delivery disponible";
@@ -781,11 +795,11 @@ const VE_ESTADOS_MUNICIPIOS={
     // Recalcular subtotal internamente para garantizar exactitud
     const subReal=items.reduce((a,i)=>a+i.price*i.qty,0);
     const totalReal=subReal+del;
-    const lineasPromo=promos.map(i=>`🔥 Promo: ${i.name} x${i.qty||1}\n   • Cantidad: ${i.qty||1}\n   • Precio unitario: $${i.price.toFixed(2)}\n   • Subtotal: $${(i.price*(i.qty||1)).toFixed(2)}`).join("\n\n");
-    const lineasPlato=platos.map(i=>`🍽️ ${i.name}\n   • Cantidad: ${i.qty}\n   • Precio unitario: $${i.price.toFixed(2)}\n   • Subtotal: $${(i.price*i.qty).toFixed(2)}${i.variante?"\n   • Variante: "+i.variante:""}${i.nota?"\n   • Nota: "+i.nota:""}`).join("\n\n");
+    const lineasPromo=promos.map(i=>`\u{1F525} Promo: ${i.name} x${i.qty||1}\n   • Cantidad: ${i.qty||1}\n   • Precio unitario: $${i.price.toFixed(2)}\n   • Subtotal: $${(i.price*(i.qty||1)).toFixed(2)}`).join("\n\n");
+    const lineasPlato=platos.map(i=>`\u{1F37D}\u{FE0F} ${i.name}\n   • Cantidad: ${i.qty}\n   • Precio unitario: $${i.price.toFixed(2)}\n   • Subtotal: $${(i.price*i.qty).toFixed(2)}${i.variante?"\n   • Variante: "+i.variante:""}${i.nota?"\n   • Nota: "+i.nota:""}`).join("\n\n");
     const lineas=[lineasPromo,lineasPlato].filter(Boolean).join("\n\n");
-    const delLinea=del===0?"🚚 Delivery: Gratis 🎉":`🚚 Delivery: $${del.toFixed(2)}`;
-    return `🧾 *Pedido N° ${String(numPedido).padStart(3,"0")}*\n\n👋 Hola, quiero realizar un pedido:\n\n🏪 *${provNombre}*\n\n👤 *Datos del cliente:*\nNombre: ${clienteNombre||"No indicado"}\nTeléfono: ${clienteTel||"No indicado"}${clienteDir?"\nDirección: "+clienteDir:""}\n\n🛒 *Mi pedido:*\n\n${lineas}\n\n${delLinea}\n\n💵 *Total estimado: $${totalReal.toFixed(2)}*\n\n📞 Quedo atento(a) para confirmar disponibilidad, tiempo de entrega y método de pago.\nGracias.`;
+    const delLinea=del===0?"\u{1F69A} Delivery: Gratis \u{1F389}":`\u{1F69A} Delivery: $${del.toFixed(2)}`;
+    return `\u{1F9FE} *Pedido N° ${String(numPedido).padStart(3,"0")}*\n\n\u{1F44B} Hola, quiero realizar un pedido:\n\n\u{1F3EA} *${provNombre}*\n\n\u{1F464} *Datos del cliente:*\nNombre: ${clienteNombre||"No indicado"}\nTeléfono: ${clienteTel||"No indicado"}${clienteDir?"\nDirección: "+clienteDir:""}\n\n\u{1F6D2} *Mi pedido:*\n\n${lineas}\n\n${delLinea}\n\n\u{1F4B5} *Total estimado: $${totalReal.toFixed(2)}*\n\n\u{1F4DE} Quedo atento(a) para confirmar disponibilidad, tiempo de entrega y método de pago.\nGracias.`;
   };
 
   const parseCsvRow=(row)=>{
@@ -1157,8 +1171,8 @@ const VE_ESTADOS_MUNICIPIOS={
     const lineas=items.map(i=>`  • ${i.name} x${i.qty} - ${(i.price*i.qty).toFixed(2)}`).join("\n");
     const dir=`${zonaSel?.zona||""}, ${addr.calle}${addr.referencia?`, ${addr.referencia}`:""}`;
     const hora=new Date().toLocaleTimeString("es-VE",{hour:"2-digit",minute:"2-digit"});
-    const delDetalle=del===0?"GRATIS 🎉":`${del.toFixed(2)}${delSuper>0&&delFood>0?` (super ${delSuper.toFixed(2)} + comida ${delFood.toFixed(2)})`:""}`;
-    return `🛒 *Nuevo pedido ${APP_NAME} ${CITY}*\n📋 Ref: ${pedidoRef}\n----------------------------\n${lineas}\n----------------------------\nSubtotal: ${sub.toFixed(2)}\nDelivery: ${delDetalle}\n*TOTAL: ${total.toFixed(2)}*\n----------------------------\n👤 ${form.nombre}\n📱 ${form.telefono}\n📍 ${zonaSel?.zona||""}\n🏠 ${dir}\n💳 ${form.pago}\n⏰ ${hora}`;
+    const delDetalle=del===0?"GRATIS \u{1F389}":`${del.toFixed(2)}${delSuper>0&&delFood>0?` (super ${delSuper.toFixed(2)} + comida ${delFood.toFixed(2)})`:""}`;
+    return `\u{1F6D2} *Nuevo pedido ${APP_NAME} ${CITY}*\n\u{1F4CB} Ref: ${pedidoRef}\n----------------------------\n${lineas}\n----------------------------\nSubtotal: ${sub.toFixed(2)}\nDelivery: ${delDetalle}\n*TOTAL: ${total.toFixed(2)}*\n----------------------------\n\u{1F464} ${form.nombre}\n\u{1F4F1} ${form.telefono}\n\u{1F4CD} ${zonaSel?.zona||""}\n\u{1F3E0} ${dir}\n\u{1F4B3} ${form.pago}\n\u{23F0} ${hora}`;
   };
 
   const sendWa=()=>{window.location.href=`https://wa.me/${WA}?text=${encodeURIComponent(buildWaMsg())}`;};
@@ -1462,9 +1476,9 @@ const VE_ESTADOS_MUNICIPIOS={
     const primero=subs[0];
     const raw=(primero.cliente_telefono||"").replace(/\D/g,"");
     const num=raw.startsWith("0")?"58"+raw.slice(1):raw.startsWith("58")?raw:"58"+raw;
-    const msg=`👋 Hola ${primero.cliente_nombre||""}\n\n*${provData.negocio}* tiene una nueva promo para ti 🍔\n\n🔥 *${promo.nombre}*\n${promo.descripcion||""}\n\n💵 Precio: $${promo.precio}\n\n👉 Pide aquí:\n${appUrl}\n\nSi no deseas recibir más promociones, responde *BAJA*.`;
+    const msg=`\u{1F44B} Hola ${primero.cliente_nombre||""}\n\n*${provData.negocio}* tiene una nueva promo para ti \u{1F354}\n\n\u{1F525} *${promo.nombre}*\n${promo.descripcion||""}\n\n\u{1F4B5} Precio: $${promo.precio}\n\n\u{1F449} Pide aquí:\n${appUrl}\n\nSi no deseas recibir más promociones, responde *BAJA*.`;
     alert(`Vas a enviar esta promo a ${subs.length} cliente${subs.length>1?"s":""} suscrito${subs.length>1?"s":""}.\n\nSe abrirá WhatsApp con el primer mensaje. Recuerda enviar uno a uno.`);
-    window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank");
+    abrirWhatsApp(num,msg);
   };
 
   const approvePr=async(id)=>{await supabase.from("productos_proveedor").update({aprobado:true,primera_aprobacion:true,rechazado:false}).eq("id",id);loadAdmin();loadAll();};
@@ -1916,7 +1930,7 @@ const VE_ESTADOS_MUNICIPIOS={
             <div style={{background:"#f0fdf4",border:"2px solid #86efac",borderRadius:16,padding:"18px 20px",marginBottom:20}}>
               <div style={{fontSize:13,fontWeight:700,color:"#15803d",marginBottom:8}}>📲 ¿Quieres que lleguemos antes?</div>
               <div style={{fontSize:12,color:"#64748b",marginBottom:12}}>Escríbenos y te avisamos cuando estemos en {ubiActiva.municipio}.</div>
-              <button onClick={()=>window.open("https://wa.me/"+WA+"?text="+encodeURIComponent("Hola Lokl! Soy de "+ubiActiva.municipio+", "+ubiActiva.estado+". Quisiera que el supermercado llegue pronto a mi municipio 🛒"),"_blank")} style={{background:"#25D366",color:"#fff",border:"none",borderRadius:12,padding:"12px 20px",fontSize:13,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",gap:8,margin:"0 auto"}}>
+              <button onClick={()=>abrirWhatsApp(WA,"Hola Lokl! Soy de "+ubiActiva.municipio+", "+ubiActiva.estado+". Quisiera que el supermercado llegue pronto a mi municipio \u{1F6D2}")} style={{background:"#25D366",color:"#fff",border:"none",borderRadius:12,padding:"12px 20px",fontSize:13,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",gap:8,margin:"0 auto"}}>
                 📲 Notificarme cuando lleguen
               </button>
             </div>
@@ -2240,7 +2254,7 @@ const VE_ESTADOS_MUNICIPIOS={
                         <div style={{fontSize:10,color:"#94a3b8"}}>{r.vendedor_nombre?.split(" ")[0]}</div>
                       </div>
                       <div style={{display:"flex",gap:6,marginTop:4}}>
-                        <button onClick={e=>{e.stopPropagation();const _n=(r.vendedor_whatsapp||r.vendedor_telefono||"").replace(/\D/g,"");const num=_n.startsWith("0")?"58"+_n.slice(1):_n.startsWith("58")?_n:"58"+_n;window.open("https://wa.me/"+num+"?text="+encodeURIComponent("Hola "+r.vendedor_nombre+", vi tu artículo *"+r.titulo+"* en Lokl y me interesa. ¿Sigue disponible?"),"_blank");}} style={{flex:1,background:"#25D366",color:"#fff",border:"none",borderRadius:10,padding:"8px",fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+                        <button onClick={e=>{e.stopPropagation();abrirWhatsApp(r.vendedor_whatsapp||r.vendedor_telefono,"Hola "+r.vendedor_nombre+", vi tu artículo *"+r.titulo+"* en Lokl y me interesa. ¿Sigue disponible?");}} style={{flex:1,background:"#25D366",color:"#fff",border:"none",borderRadius:10,padding:"8px",fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
                           📲 Contactar
                         </button>
                         <BtnCompartir titulo={r.titulo} precio={r.precio} tab="Mercadito local" id={r.id} emoji="🏷️" small={true}/>
@@ -3076,7 +3090,7 @@ const VE_ESTADOS_MUNICIPIOS={
                   <div style={{fontSize:11,color:"#94a3b8"}}>Vendedor particular</div>
                 </div>
               </div>
-              <button onClick={()=>{const _n=(clasificadoSeleccionado.vendedor_telefono||"").replace(/\D/g,"");const num=_n.startsWith("0")?"58"+_n.slice(1):_n.startsWith("58")?_n:"58"+_n;window.open("https://wa.me/"+num+"?text="+encodeURIComponent("Hola "+clasificadoSeleccionado.vendedor_nombre+", vi tu anuncio *"+clasificadoSeleccionado.titulo+"* en Lokl. ¿Sigue disponible?"),"_blank");}} style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:900,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 4px 16px rgba(37,211,102,0.35)"}}>
+              <button onClick={()=>{abrirWhatsApp(clasificadoSeleccionado.vendedor_telefono,"Hola "+clasificadoSeleccionado.vendedor_nombre+", vi tu anuncio *"+clasificadoSeleccionado.titulo+"* en Lokl. ¿Sigue disponible?");}} style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:900,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 4px 16px rgba(37,211,102,0.35)"}}>
                 📲 Contactar por WhatsApp
               </button>
               <BtnCompartir titulo={clasificadoSeleccionado.titulo} precio={clasificadoSeleccionado.precio} tab="Clasificados" id={clasificadoSeleccionado.id} emoji={clasificadoSeleccionado.tipo==="Motos"?"🏍️":clasificadoSeleccionado.tipo==="Inmuebles"?"🏠":"🚗"}/>
@@ -4596,18 +4610,18 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
               // RECIBIDO: resumen completo + datos de pago + solicitud de comprobante
               "recibido": (ped)=>{
                 const items=(ped.items||[]).map(i=>`  • ${i.nombre} x${i.qty||1} — $${((i.precio||0)*(i.qty||1)).toFixed(2)}`).join("\n");
-                return `Hola ${ped.cliente_nombre} 👋\n\n✅ *Recibimos tu pedido ${ped.ref}*\n\n🛒 *Resumen:*\n${items}\n🚚 Delivery: $${(ped.delivery||0).toFixed(2)}\n💵 *Total: $${(ped.total||0).toFixed(2)}*\n\n${bloqPago}\n\n📸 Por favor realiza el pago y envíanos el comprobante para procesar tu pedido.\n\n¡Gracias por tu preferencia! 🙏`;
+                return `Hola ${ped.cliente_nombre} \u{1F44B}\n\n\u{2705} *Recibimos tu pedido ${ped.ref}*\n\n\u{1F6D2} *Resumen:*\n${items}\n\u{1F69A} Delivery: $${(ped.delivery||0).toFixed(2)}\n\u{1F4B5} *Total: $${(ped.total||0).toFixed(2)}*\n\n${bloqPago}\n\n\u{1F4F8} Por favor realiza el pago y envíanos el comprobante para procesar tu pedido.\n\n¡Gracias por tu preferencia! \u{1F64F}`;
               },
               // ESPERANDO PAGO: recordatorio simple, sin repetir datos
-              "esperando_pago": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n⏳ Aún estamos esperando tu comprobante de pago del pedido *${ped.ref}*.\n\n💵 *Total pendiente: $${(ped.total||0).toFixed(2)}*\n\nCuando realices el pago, envíanos la captura y comenzamos a preparar tu pedido enseguida. ¡Gracias! 🙏`,
+              "esperando_pago": (ped)=>`Hola ${ped.cliente_nombre} \u{1F44B}\n\n\u{23F3} Aún estamos esperando tu comprobante de pago del pedido *${ped.ref}*.\n\n\u{1F4B5} *Total pendiente: $${(ped.total||0).toFixed(2)}*\n\nCuando realices el pago, envíanos la captura y comenzamos a preparar tu pedido enseguida. ¡Gracias! \u{1F64F}`,
               // PREPARANDO: confirma pago recibido
-              "preparando": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n✅ *¡Pago confirmado!*\n\nTu pedido *${ped.ref}* está siendo preparado con cariño. 👨‍🍳\n\nTe avisaremos cuando esté listo para enviarse. ¡Ya casi llega! 😊`,
+              "preparando": (ped)=>`Hola ${ped.cliente_nombre} \u{1F44B}\n\n\u{2705} *¡Pago confirmado!*\n\nTu pedido *${ped.ref}* está siendo preparado con cariño. \u{1F468}\u{200D}\u{1F373}\n\nTe avisaremos cuando esté listo para enviarse. ¡Ya casi llega! \u{1F60A}`,
               // ENVIADO: en camino con dirección
-              "enviado": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n🚀 *Tu pedido ${ped.ref} ya va en camino.*\n\n📍 Dirección: ${ped.cliente_direccion||"(dirección registrada)"}\n\nMantente atento(a), ¡pronto llega! 🛵`,
+              "enviado": (ped)=>`Hola ${ped.cliente_nombre} \u{1F44B}\n\n\u{1F680} *Tu pedido ${ped.ref} ya va en camino.*\n\n\u{1F4CD} Dirección: ${ped.cliente_direccion||"(dirección registrada)"}\n\nMantente atento(a), ¡pronto llega! \u{1F6F5}`,
               // ENTREGADO: cierre amigable
-              "entregado": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n🎉 *Tu pedido ${ped.ref} fue entregado.*\n\n¡Gracias por elegirnos! Si tienes algún comentario o inconveniente, no dudes en escribirnos. Esperamos verte pronto. 😊`,
+              "entregado": (ped)=>`Hola ${ped.cliente_nombre} \u{1F44B}\n\n\u{1F389} *Tu pedido ${ped.ref} fue entregado.*\n\n¡Gracias por elegirnos! Si tienes algún comentario o inconveniente, no dudes en escribirnos. Esperamos verte pronto. \u{1F60A}`,
               // CANCELADO
-              "cancelado": (ped)=>`Hola ${ped.cliente_nombre} 👋\n\n😔 Lamentamos informarte que tu pedido *${ped.ref}* fue cancelado.\n\nPor favor contáctanos si tienes alguna pregunta. Disculpa los inconvenientes.`,
+              "cancelado": (ped)=>`Hola ${ped.cliente_nombre} \u{1F44B}\n\n\u{1F614} Lamentamos informarte que tu pedido *${ped.ref}* fue cancelado.\n\nPor favor contáctanos si tienes alguna pregunta. Disculpa los inconvenientes.`,
             };
             const actualizarEstado=async(pedId,nuevoEstado,ped)=>{
               const{error}=await supabase.from("pedidos").update({
@@ -4623,10 +4637,8 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
               // Abrir WhatsApp automáticamente con mensaje del estado
               const msgFn=MSGS_ESTADO[nuevoEstado];
               if(msgFn&&ped?.cliente_telefono){
-                const _t=ped.cliente_telefono.replace(/\D/g,"");
-                const num=_t.startsWith("0")?"58"+_t.slice(1):_t.startsWith("58")?_t:"58"+_t;
                 const msg=msgFn(ped);
-                setTimeout(()=>window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank"),300);
+                abrirWhatsApp(ped.cliente_telefono,msg);
               }
             };
             // Filtros
@@ -4743,15 +4755,13 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                       )}
                       {/* Botón WhatsApp cliente */}
                       <button onClick={()=>{
-                        const _t=(ped.cliente_telefono||"").replace(/\D/g,"");
-                        const num=_t.startsWith("0")?"58"+_t.slice(1):_t.startsWith("58")?_t:"58"+_t;
                         const estadoMsg={
                           "recibido":"✅ Recibimos tu pedido *"+ped.ref+"* y lo estamos preparando.",
                           "en_camino":"🚀 Tu pedido *"+ped.ref+"* ya va en camino. ¡Pronto llega!",
-                          "entregado":"🎉 Tu pedido *"+ped.ref+"* fue entregado. ¡Gracias por preferirnos!",
-                          "cancelado":"😔 Lamentamos informarte que tu pedido *"+ped.ref+"* fue cancelado. Contáctanos para más info.",
-                        }[ped.estado]||"Hola "+ped.cliente_nombre+" 👋, te escribimos sobre tu pedido *"+ped.ref+"*.";
-                        window.open("https://wa.me/"+num+"?text="+encodeURIComponent("Hola "+ped.cliente_nombre+" 👋\n\n"+estadoMsg),"_blank");
+                          "entregado":"\u{1F389} Tu pedido *"+ped.ref+"* fue entregado. ¡Gracias por preferirnos!",
+                          "cancelado":"\u{1F614} Lamentamos informarte que tu pedido *"+ped.ref+"* fue cancelado. Contáctanos para más info.",
+                        }[ped.estado]||"Hola "+ped.cliente_nombre+" \u{1F44B}, te escribimos sobre tu pedido *"+ped.ref+"*.";
+                        abrirWhatsApp(ped.cliente_telefono,"Hola "+ped.cliente_nombre+" \u{1F44B}\n\n"+estadoMsg);
                       }} style={{width:"100%",background:"#25D366",color:"#fff",border:"none",borderRadius:10,padding:"9px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
                         📲 Notificar al cliente por WhatsApp
                       </button>
@@ -4983,11 +4993,10 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
             // seccionNegocio está en el estado del componente
             const seccion=seccionNegocio;const setSeccion=setSeccionNegocio;
             const notifPagoWa=(cambio)=>{
-              const raw=(provData.whatsapp_negocio||provData.telefono||"").replace(/\D/g,"");
-              const num=raw.startsWith("0")?"58"+raw.slice(1):raw.startsWith("58")?raw:"58"+raw;
+              const num=normalizarNumeroWA(provData.whatsapp_negocio||provData.telefono);
               if(!num)return;
               const msg=`⚙️ *Lokl — Cambio en tu cuenta*\n\nHola ${provData.negocio} 👋\n\n${cambio}\n\nSi no realizaste este cambio, contáctanos de inmediato.`;
-              window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank");
+              abrirWhatsApp(num,msg);
             };
             return(
               <div style={{background:"#fff",borderRadius:0,padding:"0 0 16px"}}>
@@ -6026,9 +6035,9 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
             // Guardar en DB con función dedicada que recibe parámetros correctos
             await guardarPedidoSuperDB(prov.items,sub,del,totalS,ref);
             const lineas=prov.items.map(i=>`• ${i.name} x${i.qty} — $${(i.price*i.qty).toFixed(2)}`).join("\n");
-            const msg=`🛒 *Pedido Supermercado — ${APP_NAME}*\n📋 Ref: ${ref}\n\n${lineas}\n\nSubtotal: $${sub.toFixed(2)}\nDelivery: ${del===0?"GRATIS 🎉":"$"+del.toFixed(2)}\n*TOTAL: $${totalS.toFixed(2)}*\n\n👤 ${form.nombre}\n📱 ${form.telefono}\n📍 ${zonaSel?.zona||""}, ${addr.calle||""}\n🗺️ ${addr.referencia||""}`;
+            const msg=`\u{1F6D2} *Pedido Supermercado — ${APP_NAME}*\n\u{1F4CB} Ref: ${ref}\n\n${lineas}\n\nSubtotal: $${sub.toFixed(2)}\nDelivery: ${del===0?"GRATIS \u{1F389}":"$"+del.toFixed(2)}\n*TOTAL: $${totalS.toFixed(2)}*\n\n\u{1F464} ${form.nombre}\n\u{1F4F1} ${form.telefono}\n\u{1F4CD} ${zonaSel?.zona||""}, ${addr.calle||""}\n\u{1F5FA}\u{FE0F} ${addr.referencia||""}`;
             const num=WA;
-            window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank");
+            abrirWhatsApp(num,msg);
             setCart({});
             setPedidoEnviadoA("Supermercado");
             return;
@@ -6039,8 +6048,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
           const total=sub+del;
           const aceptaPromo=!!consentPromo[prov.nombre];
           const msg=buildGlobalWaMsg(prov.nombre,prov.items,total,del,numPed,form.nombre,form.telefono,dirCliente);
-          const raw=prov.wa.replace(/\D/g,"");
-          const num=raw.startsWith("0")?"58"+raw.slice(1):raw.startsWith("58")?raw:"58"+raw;
+          const num=normalizarNumeroWA(prov.wa);
           const ref=`PED-${Date.now().toString().slice(-6)}`;
           // Guardar en DB
           if(prov.tipo==="rest"){
@@ -6052,7 +6060,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
             setCartNegocio({});
           }
           setPedidoEnviadoA(prov.nombre);
-          window.open("https://wa.me/"+num+"?text="+encodeURIComponent(msg),"_blank");
+          abrirWhatsApp(num,msg);
         };
         // Numeración secuencial por sesión
         return(
@@ -6351,8 +6359,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
           const aceptaPromo=!!consentPromo[prov.nombre];
           const numPedido=Date.now()%900+100;
           const msg=buildGlobalWaMsg(prov.nombre,prov.items,total,del,numPedido,form.nombre,form.telefono,dirCliente);
-          const raw=prov.wa.replace(/\D/g,"");
-          const num=raw.startsWith("0")?"58"+raw.slice(1):raw.startsWith("58")?raw:"58"+raw;
+          const num=normalizarNumeroWA(prov.wa);
           const ref=`PED-${String(numPedido).padStart(3,"0")}`;
           // Buscar id del proveedor desde allRestaurantes
           const restObj=allRestaurantes?.find(r=>r.negocio===prov.nombre);
@@ -6360,8 +6367,8 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
           const nuevoCart={...cartRest};
           prov.items.forEach(i=>delete nuevoCart[i.id]);
           setCartRest(nuevoCart);
-          window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`,"_blank");
           if(Object.keys(nuevoCart).length===0)setSheet(null);
+          abrirWhatsApp(num,msg);
         };
         return(
           <div style={s.ov} onClick={()=>setSheet(null)}>
@@ -6534,21 +6541,21 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 const n=contactForm.nombre||"(tu nombre)";
                 const t=contactForm.telefono||"(tu teléfono)";
                 if(esRutaFlag){
-                  return `🚌 *Reserva de puesto — Lokl*\n\nHola, quiero reservar un puesto para:\n\n📍 Ruta: *${ruta?.origen} → ${ruta?.destino}*\n🕐 Salida: *${ruta?.hora_salida?.slice(0,5)}*\n💰 Precio: *$${ruta?.precio}*\n📅 Fecha: *${contactForm.fecha||"(fecha)"}*\n👥 Puestos: *${contactForm.puestos}*\n\n👤 ${n}\n📱 ${t}\n\n¿Están disponibles los puestos?`;
+                  return `\u{1F68C} *Reserva de puesto — Lokl*\n\nHola, quiero reservar un puesto para:\n\n\u{1F4CD} Ruta: *${ruta?.origen} → ${ruta?.destino}*\n\u{1F550} Salida: *${ruta?.hora_salida?.slice(0,5)}*\n\u{1F4B0} Precio: *$${ruta?.precio}*\n\u{1F4C5} Fecha: *${contactForm.fecha||"(fecha)"}*\n\u{1F465} Puestos: *${contactForm.puestos}*\n\n\u{1F464} ${n}\n\u{1F4F1} ${t}\n\n¿Están disponibles los puestos?`;
                 }
                 if(esHotel){
-                  return `🏨 *Consulta de hospedaje — Lokl*\n\nHola ${prov?.negocio}, vi su perfil en Lokl.\n\n📅 Entrada: *${contactForm.fecha||"(fecha)"}*\n📅 Salida: *${contactForm.fechaSalida||"(fecha)"}*\n👥 Personas: *${contactForm.personas}*\n${servicio?`🛏️ Habitación: *${servicio.nombre}*\n💰 Precio: *$${servicio.precio}/noche*\n`:""}\n👤 ${n}\n📱 ${t}\n\n¿Tienen disponibilidad?`;
+                  return `\u{1F3E8} *Consulta de hospedaje — Lokl*\n\nHola ${prov?.negocio}, vi su perfil en Lokl.\n\n\u{1F4C5} Entrada: *${contactForm.fecha||"(fecha)"}*\n\u{1F4C5} Salida: *${contactForm.fechaSalida||"(fecha)"}*\n\u{1F465} Personas: *${contactForm.personas}*\n${servicio?`\u{1F6CF}\u{FE0F} Habitación: *${servicio.nombre}*\n\u{1F4B0} Precio: *$${servicio.precio}/noche*\n`:""}\n\u{1F464} ${n}\n\u{1F4F1} ${t}\n\n¿Tienen disponibilidad?`;
                 }
                 if(esTurismo){
-                  return `🌴 *Consulta turística — Lokl*\n\nHola ${prov?.negocio}, vi su perfil en Lokl.\n\n${servicio?`🎯 Servicio: *${servicio.nombre}*\n💰 Precio: *$${servicio.precio}*\n`:""}📅 Fecha: *${contactForm.fecha||"(fecha)"}*\n👥 Personas: *${contactForm.personas}*\n\n👤 ${n}\n📱 ${t}\n\n¿Tienen disponibilidad?`;
+                  return `\u{1F334} *Consulta turística — Lokl*\n\nHola ${prov?.negocio}, vi su perfil en Lokl.\n\n${servicio?`\u{1F3AF} Servicio: *${servicio.nombre}*\n\u{1F4B0} Precio: *$${servicio.precio}*\n`:""}\u{1F4C5} Fecha: *${contactForm.fecha||"(fecha)"}*\n\u{1F465} Personas: *${contactForm.personas}*\n\n\u{1F464} ${n}\n\u{1F4F1} ${t}\n\n¿Tienen disponibilidad?`;
                 }
                 if(esSalud){
-                  return `👨‍⚕️ *Solicitud de cita — Lokl*\n\nHola ${prov?.negocio}, vi su perfil en Lokl.\n\n${servicio?`🩺 Servicio: *${servicio.nombre}*\n💰 Precio: *$${servicio.precio}*\n`:""}\n👤 Paciente: *${n}*\n📱 Teléfono: *${t}*\n\n¿Cuál es la próxima disponibilidad?`;
+                  return `\u{1F468}\u{200D}\u{2695}\u{FE0F} *Solicitud de cita — Lokl*\n\nHola ${prov?.negocio}, vi su perfil en Lokl.\n\n${servicio?`\u{1FA7A} Servicio: *${servicio.nombre}*\n\u{1F4B0} Precio: *$${servicio.precio}*\n`:""}\n\u{1F464} Paciente: *${n}*\n\u{1F4F1} Teléfono: *${t}*\n\n¿Cuál es la próxima disponibilidad?`;
                 }
                 if(esTransporte){
-                  return `🛵 *Solicitud de servicio — Lokl*\n\nHola ${prov?.negocio}, vi tu perfil en Lokl.\n\n${servicio?`⚡ Servicio: *${servicio.nombre}*\n💰 Precio: *$${servicio.precio}*\n`:""}📍 Recogida: *${contactForm.fecha||"(dirección de recogida)"}*\n🏁 Destino: *${contactForm.fechaSalida||"(destino)"}*\n\n👤 ${n}\n📱 ${t}`;
+                  return `\u{1F6F5} *Solicitud de servicio — Lokl*\n\nHola ${prov?.negocio}, vi tu perfil en Lokl.\n\n${servicio?`\u{26A1} Servicio: *${servicio.nombre}*\n\u{1F4B0} Precio: *$${servicio.precio}*\n`:""}\u{1F4CD} Recogida: *${contactForm.fecha||"(dirección de recogida)"}*\n\u{1F3C1} Destino: *${contactForm.fechaSalida||"(destino)"}*\n\n\u{1F464} ${n}\n\u{1F4F1} ${t}`;
                 }
-                return `🔧 *Solicitud de servicio — Lokl*\n\nHola ${prov?.negocio}, vi tu perfil en Lokl.\n\n${servicio?`⚡ Servicio: *${servicio.nombre}*\n💰 Precio: *$${servicio.precio}*\n`:""}\n👤 ${n}\n📱 ${t}\n\n¿Cuándo puedes atenderme?`;
+                return `\u{1F527} *Solicitud de servicio — Lokl*\n\nHola ${prov?.negocio}, vi tu perfil en Lokl.\n\n${servicio?`\u{26A1} Servicio: *${servicio.nombre}*\n\u{1F4B0} Precio: *$${servicio.precio}*\n`:""}\n\u{1F464} ${n}\n\u{1F4F1} ${t}\n\n¿Cuándo puedes atenderme?`;
               };
 
               return(
@@ -6606,9 +6613,10 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                   <button
                     onClick={()=>{
                       if(!contactForm.nombre||!contactForm.telefono)return;
-                      window.open("https://wa.me/"+num+"?text="+encodeURIComponent(buildMsg()),"_blank");
+                      const _msg=buildMsg();
                       setContactModal(null);
                       setContactForm({nombre:contactForm.nombre,telefono:contactForm.telefono,fecha:"",personas:"1",puestos:"1",fechaSalida:""});
+                      abrirWhatsApp(num,_msg);
                     }}
                     style={{width:"100%",background:!contactForm.nombre||!contactForm.telefono?"#94a3b8":"#25D366",color:"#fff",border:"none",borderRadius:14,padding:"16px",fontSize:15,fontWeight:900,cursor:!contactForm.nombre||!contactForm.telefono?"not-allowed":"pointer",marginTop:16,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}
                   >
