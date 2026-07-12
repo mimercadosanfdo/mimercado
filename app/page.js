@@ -1,5 +1,5 @@
-// BUILD:1783816000
-"use client"; // Lokl v1783816000
+// BUILD:1783817000
+"use client"; // Lokl v1783817000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -4147,7 +4147,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                     </label>
                   ))}
                 </div>
-                <div style={{...s.ib,background:"#fef9c3"}}><div style={{fontSize:12,color:"#854d0e"}}>ℹ️ Primera publicación requiere aprobación del admin.</div></div>
+
                 <button style={s.btn} onClick={publishProd} disabled={loading}>{loading?"Subiendo...":!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Agregar servicio":"Publicar producto"}</button>
               </div>
             )}
