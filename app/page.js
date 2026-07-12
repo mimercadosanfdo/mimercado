@@ -1,5 +1,5 @@
-// BUILD:1783825000
-"use client"; // Lokl v1783825000
+// BUILD:1783826000
+"use client"; // Lokl v1783826000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -780,7 +780,7 @@ const VE_ESTADOS_MUNICIPIOS={
     const lineas=[lineasPromo,lineasPlato].filter(Boolean).join("\n\n");
     const delLinea=del===0?"\u{1F69A} Delivery: Gratis \u{1F389}":`\u{1F69A} Delivery: $${del.toFixed(2)}`;
     const clienteBloque=`\u{1F464} *Datos del cliente:*\nNombre: ${clienteNombre||"No indicado"}\nTeléfono: ${clienteTel||"No indicado"}${clienteDir?`\nDirección: ${clienteDir}`:""}`;
-    return `\u{1F44B} Hola, quiero realizar un pedido:\n\n\u{1F3EA} *${restNombre}*\n\n${clienteBloque}\n\n\u{1F37D}\u{FE0F} *Mi pedido:*\n\n${lineas}\n\n${delLinea}\n\n\u{1F4B5} *Total estimado:* $${restTotal.toFixed(2)}\n\n\u{1F4DE} Quedo atento(a) para confirmar disponibilidad, tiempo de entrega y método de pago.\nGracias.`;
+    return `\u{1F44B} Hola, quiero realizar un pedido:\n\n\u{1F3EA} *${restNombre}*\n\n${clienteBloque}\n\n\u{1F6CD}\u{FE0F} *Mi pedido:*\n\n${lineas}\n\n${delLinea}\n\n\u{1F4B5} *Total estimado:* $${restTotal.toFixed(2)}\n\n\u{1F4DE} Quedo atento(a) para confirmar disponibilidad, tiempo de entrega y método de pago.\nGracias.`;
   };
   const getModalidad=(prov)=>{
     if(prov?.delivery_propio&&prov?.permite_retiro)return"Delivery disponible";
@@ -795,11 +795,15 @@ const VE_ESTADOS_MUNICIPIOS={
     // Recalcular subtotal internamente para garantizar exactitud
     const subReal=items.reduce((a,i)=>a+i.price*i.qty,0);
     const totalReal=subReal+del;
+    // del === -1 significa "a consultar con el proveedor"
+    const aConsultar=del===-1;
+    const totalRealFinal=aConsultar?subReal:totalReal;
     const lineasPromo=promos.map(i=>`\u{1F525} Promo: ${i.name} x${i.qty||1}\n   • Cantidad: ${i.qty||1}\n   • Precio unitario: $${i.price.toFixed(2)}\n   • Subtotal: $${(i.price*(i.qty||1)).toFixed(2)}`).join("\n\n");
-    const lineasPlato=platos.map(i=>`\u{1F37D}\u{FE0F} ${i.name}\n   • Cantidad: ${i.qty}\n   • Precio unitario: $${i.price.toFixed(2)}\n   • Subtotal: $${(i.price*i.qty).toFixed(2)}${i.variante?"\n   • Variante: "+i.variante:""}${i.nota?"\n   • Nota: "+i.nota:""}`).join("\n\n");
+    const lineasPlato=platos.map(i=>`\u{1F6CD}\u{FE0F} ${i.name}\n   • Cantidad: ${i.qty}\n   • Precio unitario: $${i.price.toFixed(2)}\n   • Subtotal: $${(i.price*i.qty).toFixed(2)}${i.variante?"\n   • Variante: "+i.variante:""}${i.nota?"\n   • Nota: "+i.nota:""}`).join("\n\n");
     const lineas=[lineasPromo,lineasPlato].filter(Boolean).join("\n\n");
-    const delLinea=del===0?"\u{1F69A} Delivery: Gratis \u{1F389}":`\u{1F69A} Delivery: $${del.toFixed(2)}`;
-    return `\u{1F9FE} *Pedido N° ${String(numPedido).padStart(3,"0")}*\n\n\u{1F44B} Hola, quiero realizar un pedido:\n\n\u{1F3EA} *${provNombre}*\n\n\u{1F464} *Datos del cliente:*\nNombre: ${clienteNombre||"No indicado"}\nTeléfono: ${clienteTel||"No indicado"}${clienteDir?"\nDirección: "+clienteDir:""}\n\n\u{1F6D2} *Mi pedido:*\n\n${lineas}\n\n${delLinea}\n\n\u{1F4B5} *Total estimado: $${totalReal.toFixed(2)}*\n\n\u{1F4DE} Quedo atento(a) para confirmar disponibilidad, tiempo de entrega y método de pago.\nGracias.`;
+    const delLinea=aConsultar?"\u{1F69A} Delivery: a consultar seg\u00fan su zona":(del===0?"\u{1F69A} Delivery: Gratis \u{1F389}":`\u{1F69A} Delivery: $${del.toFixed(2)}`);
+    const totalLinea=aConsultar?`\u{1F4B5} *Subtotal: $${totalRealFinal.toFixed(2)}* _(+ delivery a consultar)_`:`\u{1F4B5} *Total estimado: $${totalRealFinal.toFixed(2)}*`;
+    return `\u{1F9FE} *Pedido N° ${String(numPedido).padStart(3,"0")}*\n\n\u{1F44B} Hola, quiero realizar un pedido:\n\n\u{1F3EA} *${provNombre}*\n\n\u{1F464} *Datos del cliente:*\nNombre: ${clienteNombre||"No indicado"}\nTeléfono: ${clienteTel||"No indicado"}${clienteDir?"\nDirección: "+clienteDir:""}\n\n\u{1F6D2} *Mi pedido:*\n\n${lineas}\n\n${delLinea}\n\n${totalLinea}\n\n\u{1F4DE} Quedo atento(a) para confirmar disponibilidad, tiempo de entrega y método de pago.\nGracias.`;
   };
 
   const parseCsvRow=(row)=>{
@@ -6029,13 +6033,16 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
             const sub=prov.items.reduce((a,i)=>a+i.price*i.qty,0);
             const delCosto=zonaSel?.costo_delivery||2;
             const freeMin=zonaSel?.delivery_gratis_super||18;
-            const del=sub>=freeMin?0:delCosto;
+            const consultarDel=delCosto===-1;
+            const del=consultarDel?0:(sub>=freeMin?0:delCosto);
             const totalS=sub+del;
             const ref=`PED-${Date.now().toString().slice(-6)}`;
             // Guardar en DB con función dedicada que recibe parámetros correctos
             await guardarPedidoSuperDB(prov.items,sub,del,totalS,ref);
             const lineas=prov.items.map(i=>`• ${i.name} x${i.qty} — $${(i.price*i.qty).toFixed(2)}`).join("\n");
-            const msg=`\u{1F6D2} *Pedido Supermercado — ${APP_NAME}*\n\u{1F4CB} Ref: ${ref}\n\n${lineas}\n\nSubtotal: $${sub.toFixed(2)}\nDelivery: ${del===0?"GRATIS \u{1F389}":"$"+del.toFixed(2)}\n*TOTAL: $${totalS.toFixed(2)}*\n\n\u{1F464} ${form.nombre}\n\u{1F4F1} ${form.telefono}\n\u{1F4CD} ${zonaSel?.zona||""}, ${addr.calle||""}\n\u{1F5FA}\u{FE0F} ${addr.referencia||""}`;
+            const delTexto=consultarDel?"a consultar seg\u00fan su zona":(del===0?"GRATIS \u{1F389}":"$"+del.toFixed(2));
+            const totalTexto=consultarDel?`Subtotal: $${sub.toFixed(2)} (+ delivery a consultar)`:`*TOTAL: $${totalS.toFixed(2)}*`;
+            const msg=`\u{1F6D2} *Pedido Supermercado — ${APP_NAME}*\n\u{1F4CB} Ref: ${ref}\n\n${lineas}\n\nSubtotal: $${sub.toFixed(2)}\nDelivery: ${delTexto}\n${totalTexto}\n\n\u{1F464} ${form.nombre}\n\u{1F4F1} ${form.telefono}\n\u{1F4CD} ${zonaSel?.zona||""}, ${addr.calle||""}\n\u{1F5FA}\u{FE0F} ${addr.referencia||""}`;
             const num=WA;
             abrirWhatsApp(num,msg);
             setCart({});
@@ -6110,9 +6117,11 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 // Para supermercado usar datos de zona seleccionada
                 const delCostoReal=prov.tipo==="super"?(zonaSel?.costo_delivery||2):prov.costo;
                 const freeMinReal=prov.tipo==="super"?(zonaSel?.delivery_gratis_super||18):prov.gratis;
-                const del=prov.delivery?(sub>=freeMinReal?0:delCostoReal):0;
-                const total=sub+del;
-                const falta=prov.delivery&&del>0?parseFloat((freeMinReal-sub).toFixed(2)):0;
+                // costo_delivery === -1 significa "a consultar según zona"
+                const consultarDel=delCostoReal===-1;
+                const del=consultarDel?-1:(prov.delivery?(sub>=freeMinReal?0:delCostoReal):0);
+                const total=consultarDel?sub:(sub+del);
+                const falta=(!consultarDel&&prov.delivery&&del>0)?parseFloat((freeMinReal-sub).toFixed(2)):0;
                 const numPed=idx+1;
                 const yaEnviado=pedidoEnviadoA===prov.nombre;
                 return(
@@ -6171,8 +6180,8 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                     )}
                     {/* Total fila */}
                     <div style={{display:"flex",justifyContent:"space-between",marginTop:8,paddingTop:8,borderTop:"1px solid #f1f5f9",fontSize:12}}>
-                      <span style={{color:"#64748b"}}>{del===0?(prov.delivery?"Delivery incluido":"Sin delivery"):`Delivery: $${del.toFixed(2)}`}</span>
-                      <span style={{fontWeight:800,color:"#0f172a",fontSize:14}}>Total: <span style={{color:"#ef4444"}}>${total.toFixed(2)}</span></span>
+                      <span style={{color:"#64748b"}}>{consultarDel?"Delivery: a consultar":(del===0?(prov.delivery?"Delivery incluido":"Sin delivery"):`Delivery: $${del.toFixed(2)}`)}</span>
+                      <span style={{fontWeight:800,color:"#0f172a",fontSize:14}}>{consultarDel?"Subtotal: ":"Total: "}<span style={{color:"#ef4444"}}>${total.toFixed(2)}</span></span>
                     </div>
                     {/* Consentimiento promos — solo para comida y negocios */}
                     {prov.tipo!=="super"&&(
