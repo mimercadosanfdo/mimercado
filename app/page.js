@@ -1,5 +1,5 @@
-// BUILD:1783817000
-"use client"; // Lokl v1783817000
+// BUILD:1783818000
+"use client"; // Lokl v1783818000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -514,7 +514,7 @@ const VE_ESTADOS_MUNICIPIOS={
   const [cambiandoClave,setCambiandoClave]=useState(false);
   const [claveForm,setClaveForm]=useState({actual:"",nueva:"",confirmar:""});
 
-  const [newProd,setNewProd]=useState({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"",stock:1,hi:"08:00",hf:"18:00",permanente:false,es_oferta:false,variantes:""});
+  const [newProd,setNewProd]=useState({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"unidad",categoria:"",stock:1,hi:"08:00",hf:"18:00",permanente:false,es_oferta:false,variantes:"",codigo_ref:""});
   const [editandoHorario,setEditandoHorario]=useState(false);
   const [editandoDelivery,setEditandoDelivery]=useState(false);
   const [deliveryConfig,setDeliveryConfig]=useState({delivery_propio:false,delivery_costo:0,delivery_gratis_desde:15});
@@ -1409,6 +1409,7 @@ const VE_ESTADOS_MUNICIPIOS={
       foto_url_3:foto_url_3||null,
       foto_url_4:foto_url_4||null,
       variantes:newProd.variantes||null,
+      codigo_ref:newProd.codigo_ref||null,
       stock:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?999:(parseInt(newProd.stock)||1),
       horario_inicio:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?null:newProd.hi,
       horario_fin:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?null:newProd.hf,
@@ -1423,7 +1424,7 @@ const VE_ESTADOS_MUNICIPIOS={
     setLoading(false);
     if(error){setPmsg("Error: "+error.message);return;}
     const esServ=!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio);setPmsg(auto?(esServ?"✅ Servicio publicado":"✅ Producto publicado"):(esServ?"✅ Servicio enviado al admin para aprobación":"✅ Enviado al admin para aprobación"));
-    setNewProd({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"porción",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false,es_oferta:false,variantes:""});
+    setNewProd({nombre:"",descripcion:"",marca:"",presentacion:"",precio:"",unidad:"unidad",categoria:"Comida preparada",stock:1,hi:"08:00",hf:"18:00",permanente:false,es_oferta:false,variantes:"",codigo_ref:""});
     setFotoFile(null);setFotoPreview(null);
     setFotoFile2(null);setFotoPreview2(null);
     setFotoFile3(null);setFotoPreview3(null);
@@ -4059,7 +4060,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 {["productos","prod_nuevo","prod_aprobados","prod_pendientes","prod_rechazados"].includes(provTab)&&(
                   <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
                     <button onClick={()=>setProvTab("estado")} style={{flexShrink:0,padding:"6px 10px",borderRadius:10,border:"none",background:"#f1f5f9",color:"#64748b",fontSize:11,fontWeight:600,cursor:"pointer"}}>← Volver</button>
-                    {[{k:"prod_nuevo",l:"➕ Nuevo"},{k:"prod_aprobados",l:"✅ En tienda"},{k:"prod_pendientes",l:"⏳ Pendientes"},{k:"prod_rechazados",l:"✗ Rechazados"}].map(t=>(
+                    {[{k:"prod_nuevo",l:"➕ Nuevo"},{k:"prod_aprobados",l:"✅ En tienda"}].map(t=>(
                       <button key={t.k} onClick={()=>setProvTab(t.k)} style={{flexShrink:0,padding:"7px 11px",borderRadius:10,border:"none",background:provTab===t.k?P:"#f1f5f9",color:provTab===t.k?"#fff":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer"}}>{t.l}</button>
                     ))}
                   </div>
@@ -4084,7 +4085,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
 
             {provTab==="prod_nuevo"&&(
               <div style={s.pc}>
-                <div style={s.pT}>{!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"➕ Agregar servicio":"➕ Publicar producto"}</div>
+                <div style={{background:"linear-gradient(135deg,#1d4ed8,#3b82f6)",borderRadius:12,padding:"14px 16px",marginBottom:14,color:"#fff"}}><div style={{fontSize:15,fontWeight:800}}>{"➕ "+(!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Nuevo servicio":"Nuevo producto")}</div><div style={{fontSize:11,color:"rgba(255,255,255,0.8)",marginTop:2}}>Se publicará de inmediato en tu tienda</div></div>
                 <label style={s.lbl}>Nombre del servicio *</label>
                 <input style={s.inp} placeholder={!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Ej: Consulta médica, Corte de cabello...":"Ej: Nombre del producto"} value={newProd.nombre} onChange={e=>setNewProd({...newProd,nombre:e.target.value})}/>
                 {!!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)&&<><label style={s.lbl}>Marca (opcional)</label>
@@ -4093,6 +4094,8 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 <input style={s.inp} placeholder="Ej: 500g, 1 unidad, 1L" value={newProd.presentacion} onChange={e=>setNewProd({...newProd,presentacion:e.target.value})}/></>}
                 <label style={s.lbl}>Descripción {!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"(opcional — qué incluye este servicio)":"(opcional)"}</label>
                 <input style={s.inp} placeholder={!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Ej: Describe el servicio que ofreces":"Ingredientes, sabor..."} value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
+                <label style={s.lbl}>Código de referencia (opcional)</label>
+                <input style={s.inp} placeholder="Ej: REF-001, SKU-2024, VG5851-M" value={newProd.codigo_ref||""} onChange={e=>setNewProd({...newProd,codigo_ref:e.target.value})}/>
                 <label style={s.lbl}>Categoría *</label>
                 {(()=>{
                   const SERV_CATS={"Médico / Consultorio":["Consulta médica","Procedimiento","Examen","Certificado médico","Otro"],"Laboratorio clínico":["Hematología","Bioquímica","Orina y heces","Hormonas","Microbiología","Perfil completo","Otros exámenes"],"Odontología":["Consulta","Limpieza dental","Extracción","Ortodoncia","Blanqueamiento","Radiografía","Otro"],"Enfermería a domicilio":["Cuidado diario","Inyección","Curación","Toma de presión","Otro"],"Farmacia":["Medicamentos","Suplementos","Insumos médicos","Otro"],"Peluquería / Barbería":["Corte caballero","Corte dama","Tinte","Tratamiento","Manicure","Pedicure","Otro"],"Manicure / Pedicure":["Manicure","Pedicure","Uñas acrílicas","Nail art","Otro"],"Maquillaje y estética":["Maquillaje","Depilación","Facial","Otro"],"Plomería":["Reparación","Instalación","Destape","Diagnóstico","Otro"],"Electricidad":["Reparación","Instalación","Diagnóstico","Mantenimiento","Otro"],"Pintura y construcción":["Pintura interior","Pintura exterior","Remodelación","Otro"],"Limpieza del hogar":["Limpieza básica","Limpieza profunda","Limpieza de oficina","Otro"],"Carpintería / Herrería":["Fabricación","Reparación","Instalación","Otro"],"Clases y tutorías":["Matemáticas","Física","Química","Inglés","Otra materia"],"Idiomas":["Inglés","Francés","Otro idioma"],"Mecánica automotriz":["Cambio de aceite","Frenos","Motor","Suspensión","Diagnóstico","Otro"],"Electricidad automotriz":["Diagnóstico","Reparación","Instalación de accesorios","Otro"],"Lavandería":["Lavado básico","Lavado y planchado","Ropa de cama","Otro"],"Fotografía / Video":["Sesión fotográfica","Video evento","Edición","Otro"],"Mototaxi":["Traslado de persona","Delivery","Encomienda","Otro"],"Taxi":["Traslado local","Traslado interurbano","Aeropuerto","Otro"],"Transporte interurbano (rutas)":["Pasaje","Encomienda","Ruta especial","Otro"],"Encomiendas y mudanzas":["Encomienda local","Encomienda foránea","Mudanza","Otro"],"Otro":["Servicio principal","Servicio adicional","Consulta","Otro"]};
@@ -4117,7 +4120,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 <input style={s.inp} type="number" placeholder="3.50" value={newProd.precio} onChange={e=>setNewProd({...newProd,precio:e.target.value})}/>
                 {!!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)&&<>
                 <label style={s.lbl}>Unidad *</label>
-                <input style={s.inp} placeholder="porción, kg..." value={newProd.unidad} onChange={e=>setNewProd({...newProd,unidad:e.target.value})}/>
+                <input style={s.inp} placeholder="Ej: unidad, par, docena, 3 unidades, kg, litro" value={newProd.unidad} onChange={e=>setNewProd({...newProd,unidad:e.target.value})}/>
                 <label style={s.lbl}>Cantidad disponible *</label>
                 <input style={s.inp} type="number" value={newProd.stock} onChange={e=>setNewProd({...newProd,stock:e.target.value})}/>
                 <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,background:"#f1f5f9",padding:"10px 14px",borderRadius:10}}>
@@ -4148,7 +4151,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                   ))}
                 </div>
 
-                <button style={s.btn} onClick={publishProd} disabled={loading}>{loading?"Subiendo...":!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Agregar servicio":"Publicar producto"}</button>
+                <button style={{...s.btn,background:"linear-gradient(135deg,#1d4ed8,#3b82f6)",fontSize:15,padding:"14px",borderRadius:12}} onClick={publishProd} disabled={loading}>{loading?"Subiendo...":!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Agregar servicio":"Publicar producto"}</button>
               </div>
             )}
 
@@ -4192,6 +4195,8 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                         <input style={s.inp} value={newProd.presentacion} onChange={e=>setNewProd({...newProd,presentacion:e.target.value})}/></>}
                         <label style={s.lbl}>Descripción {!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"(qué incluye este servicio)":""}</label>
                         <input style={s.inp} value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
+                <label style={s.lbl}>Código de referencia (opcional)</label>
+                <input style={s.inp} placeholder="Ej: REF-001, SKU-2024, VG5851-M" value={newProd.codigo_ref||""} onChange={e=>setNewProd({...newProd,codigo_ref:e.target.value})}/>
                         <label style={s.lbl}>Precio ($) *</label>
                         <input style={s.inp} type="number" value={newProd.precio} onChange={e=>setNewProd({...newProd,precio:e.target.value})}/>
                         {!!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)&&<><label style={s.lbl}>Unidad</label>
@@ -4272,6 +4277,8 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                         <input style={s.inp} placeholder="Ej: 500g, 1 unidad, 1L" value={newProd.presentacion} onChange={e=>setNewProd({...newProd,presentacion:e.target.value})}/>
                         <label style={s.lbl}>Descripción (opcional)</label>
                         <input style={s.inp} placeholder="Descripción del producto (opcional)" value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
+                <label style={s.lbl}>Código de referencia (opcional)</label>
+                <input style={s.inp} placeholder="Ej: REF-001, SKU-2024, VG5851-M" value={newProd.codigo_ref||""} onChange={e=>setNewProd({...newProd,codigo_ref:e.target.value})}/>
                         <label style={s.lbl}>Categoría *</label>
                         {(()=>{
                           const editCats=provData.tipo_negocio==="Tienda / Negocio local"
