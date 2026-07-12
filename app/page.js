@@ -1,5 +1,5 @@
-// BUILD:1783814000
-"use client"; // Lokl v1783814000
+// BUILD:1783815000
+"use client"; // Lokl v1783815000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -23,27 +23,30 @@ const P2 = "#1aab52";
 const MAIN_TABS = ["Inicio","Supermercado","Negocios locales","Feria de comida","Servicios"];
 const SEC_TABS = ["Clasificados","Mercadito local"];
 const NEGOCIO_CATS = [
-  {cat:"Ropa y moda",emoji:"👗",color:"#fdf2f8",tc:"#9d174d"},
+  {cat:"Ropa",emoji:"👗",color:"#fdf2f8",tc:"#9d174d"},
   {cat:"Calzado",emoji:"👟",color:"#fdf2f8",tc:"#9d174d"},
-  {cat:"Accesorios y joyería",emoji:"💍",color:"#fefce8",tc:"#854d0e"},
-  {cat:"Farmacia y salud",emoji:"💊",color:"#f0fdf4",tc:"#15803d"},
+  {cat:"Maquillaje",emoji:"💄",color:"#fdf2f8",tc:"#9d174d"},
+  {cat:"Accesorios",emoji:"💍",color:"#fefce8",tc:"#854d0e"},
+  {cat:"Farmacia",emoji:"💊",color:"#f0fdf4",tc:"#15803d"},
   {cat:"Ferretería",emoji:"🔧",color:"#fff7ed",tc:"#c2410c"},
   {cat:"Tecnología",emoji:"📱",color:"#eff6ff",tc:"#1d4ed8"},
-  {cat:"Hogar y muebles",emoji:"🏠",color:"#f0fdf4",tc:"#15803d"},
+  {cat:"Hogar",emoji:"🏠",color:"#f0fdf4",tc:"#15803d"},
   {cat:"Regalos",emoji:"🎁",color:"#fdf4ff",tc:"#7c3aed"},
-  {cat:"Belleza",emoji:"✂️",color:"#fdf2f8",tc:"#9d174d"},
   {cat:"Cuidado personal",emoji:"🧴",color:"#ecfdf5",tc:"#065f46"},
   {cat:"Mascotas",emoji:"🐾",color:"#fff7ed",tc:"#c2410c"},
+  {cat:"Alimentos",emoji:"🛒",color:"#f0fdf4",tc:"#15803d"},
   {cat:"Otros",emoji:"📦",color:"#f8fafc",tc:"#475569"},
 ];
 // Qué etiqueta de variante mostrar según categoría del producto
 const VARIANTES_CONFIG={
-  "Belleza":{label:"Tonos disponibles",placeholder:"Ej: 01 Marfil, 02 Beige, 03 Natural, 04 Café"},
-  "Ropa y moda":{label:"Tallas disponibles",placeholder:"Ej: XS, S, M, L, XL, XXL  ó  0, 2, 4, 6, 8"},
+  "Ropa":{label:"Tallas disponibles",placeholder:"Ej: XS, S, M, L, XL  ó  0, 2, 4, 6, 8"},
   "Calzado":{label:"Tallas disponibles",placeholder:"Ej: 35, 36, 37, 38, 39, 40, 41"},
+  "Maquillaje":{label:"Tonos disponibles",placeholder:"Ej: 01 Marfil, 02 Beige, 03 Natural, 04 Café"},
   "Cuidado personal":{label:"Fragancias / Variantes",placeholder:"Ej: Lavanda, Vainilla, Sin fragancia, Rosa"},
-  "Accesorios y joyería":{label:"Colores / Variantes",placeholder:"Ej: Dorado, Plateado, Negro, Rosado"},
+  "Accesorios":{label:"Colores / Variantes",placeholder:"Ej: Dorado, Plateado, Negro, Rosado"},
 };
+// Categorías de producto para Tienda / Negocio local
+const PROD_CATS_TIENDA=["Ropa","Calzado","Maquillaje","Cuidado personal","Accesorios","Tecnología","Hogar","Mascotas","Farmacia","Ferretería","Regalos","Alimentos","Otros"];
 const SUPER_CATS = ["Snacks","Granos y cereales","Bebidas","Lácteos","Panadería","Aceites y condimentos","Enlatados","Limpieza del hogar","Aseo personal","Proteínas","Frutas y verduras"];
 const PROV_CATS = ["Comida preparada","Postres","Jugos y bebidas","Pan y repostería"];
 const ALL_CATS = ["Todo","Supermercado",...PROV_CATS];
@@ -97,17 +100,18 @@ const TIPO_NEGOCIO = [
   "Otro",
 ];
 const NEGOCIO_LOCAL_CATS = [
-  {cat:"Ropa y moda",emoji:"👗",color:"#fce7f3",tc:"#be185d"},
+  {cat:"Ropa",emoji:"👗",color:"#fce7f3",tc:"#be185d"},
   {cat:"Calzado",emoji:"👟",color:"#fce7f3",tc:"#be185d"},
-  {cat:"Accesorios y joyería",emoji:"💍",color:"#fef3c7",tc:"#92400e"},
-  {cat:"Farmacia y salud",emoji:"💊",color:"#dbeafe",tc:"#1d4ed8"},
+  {cat:"Maquillaje",emoji:"💄",color:"#fce7f3",tc:"#be185d"},
+  {cat:"Accesorios",emoji:"💍",color:"#fef3c7",tc:"#92400e"},
+  {cat:"Farmacia",emoji:"💊",color:"#dbeafe",tc:"#1d4ed8"},
   {cat:"Ferretería",emoji:"🔧",color:"#f1f5f9",tc:"#475569"},
   {cat:"Tecnología",emoji:"📱",color:"#ede9fe",tc:"#7c3aed"},
-  {cat:"Hogar y muebles",emoji:"🏠",color:"#dcfce7",tc:"#15803d"},
+  {cat:"Hogar",emoji:"🏠",color:"#dcfce7",tc:"#15803d"},
   {cat:"Regalos",emoji:"🎁",color:"#fff7ed",tc:"#c2410c"},
-  {cat:"Belleza",emoji:"✂️",color:"#fdf4ff",tc:"#a21caf"},
   {cat:"Cuidado personal",emoji:"🧴",color:"#f0fdf4",tc:"#15803d"},
   {cat:"Mascotas",emoji:"🐾",color:"#fef9c3",tc:"#854d0e"},
+  {cat:"Alimentos",emoji:"🛒",color:"#f0fdf4",tc:"#15803d"},
   {cat:"Otros",emoji:"📦",color:"#f8fafc",tc:"#64748b"},
 ];
 const NEGOCIO_CATS_RESTAURANTE = ["Comida criolla","Comida rápida","Pizzería","Mariscos","Panadería/Pastelería","Jugos y bebidas","Postres","Otro"];
@@ -3692,17 +3696,18 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 <label style={s.lbl}>Categoría principal de tu tienda *</label>
                 <select style={{...s.inp,background:"#fff"}} value={(provForm.categorias||[])[0]||""} onChange={e=>setProvForm({...provForm,categorias:e.target.value?[e.target.value]:[]})}>
                   <option value="">— Selecciona una categoría —</option>
-                  <option>Ropa y moda</option>
-                  <option>Accesorios y joyería</option>
-                  <option>Farmacia y salud</option>
-                  <option>Ferretería</option>
-                  <option>Tecnología</option>
-                  <option>Hogar y muebles</option>
-                  <option>Regalos</option>
-                  <option>Belleza</option>
+                  <option>Ropa</option>
+                  <option>Calzado</option>
+                  <option>Maquillaje</option>
                   <option>Cuidado personal</option>
+                  <option>Accesorios</option>
+                  <option>Tecnología</option>
+                  <option>Hogar</option>
                   <option>Mascotas</option>
-                  <option>Alimentos y bebidas</option>
+                  <option>Farmacia</option>
+                  <option>Ferretería</option>
+                  <option>Regalos</option>
+                  <option>Alimentos</option>
                   <option>Otros</option>
                 </select>
               </>
@@ -4092,7 +4097,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 {(()=>{
                   const SERV_CATS={"Médico / Consultorio":["Consulta médica","Procedimiento","Examen","Certificado médico","Otro"],"Laboratorio clínico":["Hematología","Bioquímica","Orina y heces","Hormonas","Microbiología","Perfil completo","Otros exámenes"],"Odontología":["Consulta","Limpieza dental","Extracción","Ortodoncia","Blanqueamiento","Radiografía","Otro"],"Enfermería a domicilio":["Cuidado diario","Inyección","Curación","Toma de presión","Otro"],"Farmacia":["Medicamentos","Suplementos","Insumos médicos","Otro"],"Peluquería / Barbería":["Corte caballero","Corte dama","Tinte","Tratamiento","Manicure","Pedicure","Otro"],"Manicure / Pedicure":["Manicure","Pedicure","Uñas acrílicas","Nail art","Otro"],"Maquillaje y estética":["Maquillaje","Depilación","Facial","Otro"],"Plomería":["Reparación","Instalación","Destape","Diagnóstico","Otro"],"Electricidad":["Reparación","Instalación","Diagnóstico","Mantenimiento","Otro"],"Pintura y construcción":["Pintura interior","Pintura exterior","Remodelación","Otro"],"Limpieza del hogar":["Limpieza básica","Limpieza profunda","Limpieza de oficina","Otro"],"Carpintería / Herrería":["Fabricación","Reparación","Instalación","Otro"],"Clases y tutorías":["Matemáticas","Física","Química","Inglés","Otra materia"],"Idiomas":["Inglés","Francés","Otro idioma"],"Mecánica automotriz":["Cambio de aceite","Frenos","Motor","Suspensión","Diagnóstico","Otro"],"Electricidad automotriz":["Diagnóstico","Reparación","Instalación de accesorios","Otro"],"Lavandería":["Lavado básico","Lavado y planchado","Ropa de cama","Otro"],"Fotografía / Video":["Sesión fotográfica","Video evento","Edición","Otro"],"Mototaxi":["Traslado de persona","Delivery","Encomienda","Otro"],"Taxi":["Traslado local","Traslado interurbano","Aeropuerto","Otro"],"Transporte interurbano (rutas)":["Pasaje","Encomienda","Ruta especial","Otro"],"Encomiendas y mudanzas":["Encomienda local","Encomienda foránea","Mudanza","Otro"],"Otro":["Servicio principal","Servicio adicional","Consulta","Otro"]};
                   const prodCats=provData.tipo_negocio==="Tienda / Negocio local"
-                    ?(provData.categorias?.length>0?provData.categorias:NEGOCIO_CATS.map(c=>c.cat))
+                    ?PROD_CATS_TIENDA
                     :provData.tipo_negocio==="Restaurante / Cocina / Comida"
                     ?(provData.categorias?.length>0?provData.categorias:NEGOCIO_CATS_RESTAURANTE)
                     :SERV_CATS[provData.tipo_negocio]
@@ -4269,7 +4274,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                         <label style={s.lbl}>Categoría *</label>
                         {(()=>{
                           const editCats=provData.tipo_negocio==="Tienda / Negocio local"
-                            ?(provData.categorias?.length>0?provData.categorias:NEGOCIO_CATS.map(c=>c.cat))
+                            ?PROD_CATS_TIENDA
                             :provData.tipo_negocio==="Restaurante / Cocina / Comida"
                             ?(provData.categorias?.length>0?provData.categorias:NEGOCIO_CATS_RESTAURANTE)
                             :(provData.categorias?.length>0?provData.categorias:PROV_CATS);
