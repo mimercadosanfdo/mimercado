@@ -1,5 +1,5 @@
-// BUILD:1783820000
-"use client"; // Lokl v1783820000
+// BUILD:1783825000
+"use client"; // Lokl v1783825000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -209,8 +209,8 @@ const s = {
   qN:{fontSize:14,fontWeight:700,minWidth:16,textAlign:"center"},
   stars:{display:"flex",gap:4,margin:"4px 0"},
   star:(f)=>({fontSize:18,cursor:"pointer",color:f?"#f59e0b":"#e2e8f0"}),
-  ov:{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"},
-  sh:{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:430,maxHeight:"92vh",overflowY:"auto",padding:20},
+  ov:{position:"fixed",top:0,left:0,right:0,bottom:0,width:"100vw",height:"100vh",background:"rgba(0,0,0,0.5)",zIndex:9999,display:"flex",alignItems:"flex-end",justifyContent:"center"},
+  sh:{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:430,maxHeight:"92vh",overflowY:"auto",padding:20,WebkitOverflowScrolling:"touch"},
   hnd:{width:40,height:4,background:"#e2e8f0",borderRadius:2,margin:"0 auto 16px"},
   shT:{fontSize:18,fontWeight:700,color:P,marginBottom:14},
   ci:{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9"},
