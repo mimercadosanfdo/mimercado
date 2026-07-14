@@ -1,5 +1,5 @@
-// BUILD:1783828000
-"use client"; // Lokl v1783828000
+// BUILD:1783829000
+"use client"; // Lokl v1783829000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -4002,7 +4002,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
             {/* Si hay sección activa distinta a estado, mostrar botón volver */}
             {provTab!=="estado"&&!["prod_nuevo","prod_aprobados","prod_pendientes","prod_rechazados","promo_nueva","promo_activas","promo_pausadas","promo_pendientes","promo_rechazadas"].includes(provTab)&&(
               <div style={{padding:"12px 16px 4px"}}>
-                <button onClick={()=>setProvTab("estado")} style={{display:"flex",alignItems:"center",gap:6,background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:10,padding:"8px 14px",fontSize:13,fontWeight:600,color:"#475569",cursor:"pointer"}}>
+                <button onClick={()=>{setProvTab("estado");if(provData?.id)loadMisRestPedidos(provData.id,provData.negocio);}} style={{display:"flex",alignItems:"center",gap:6,background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:10,padding:"8px 14px",fontSize:13,fontWeight:600,color:"#475569",cursor:"pointer"}}>
                   ← Panel principal
                 </button>
               </div>
@@ -4651,20 +4651,17 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                     .select("stock").eq("id",it.dbId).single();
                   if(prodActual&&typeof prodActual.stock==="number"){
                     const nuevoStock=Math.max(0,prodActual.stock-qty);
+                    const cambios={stock:nuevoStock};
+                    // Si el stock llega a 0, pausar el producto (no borrarlo)
+                    if(nuevoStock===0)cambios.disponible=false;
                     await supabase.from("productos_proveedor")
-                      .update({stock:nuevoStock}).eq("id",it.dbId);
+                      .update(cambios).eq("id",it.dbId);
                   }
                 }
                 // Marcar el pedido para no volver a descontar
                 await supabase.from("pedidos").update({stock_descontado:true}).eq("id",pedId);
               }
               await loadMisRestPedidos(provData.id,provData.negocio);
-              // Abrir WhatsApp automáticamente con mensaje del estado
-              const msgFn=MSGS_ESTADO[nuevoEstado];
-              if(msgFn&&ped?.cliente_telefono){
-                const msg=msgFn(ped);
-                abrirWhatsApp(ped.cliente_telefono,msg);
-              }
             };
             // Filtros
             // Usar fecha local Venezuela (UTC-4) para evitar desfase
@@ -4690,7 +4687,15 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
               <div style={s.pc}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
                   <div style={s.pT}>📋 Mis pedidos</div>
-                  <button onClick={()=>loadMisRestPedidos(provData.id,provData.negocio)} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:10,padding:"6px 12px",fontSize:12,fontWeight:700,color:"#15803d",cursor:"pointer"}}>
+                  <button onClick={async(ev)=>{
+                    const b=ev.currentTarget;
+                    const txt=b.innerText;
+                    b.innerText="⏳ Actualizando...";
+                    b.disabled=true;
+                    await loadMisRestPedidos(provData.id,provData.negocio);
+                    b.innerText="✅ Actualizado";
+                    setTimeout(()=>{if(b){b.innerText=txt;b.disabled=false;}},1200);
+                  }} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:10,padding:"6px 12px",fontSize:12,fontWeight:700,color:"#15803d",cursor:"pointer"}}>
                     🔄 Actualizar
                   </button>
                 </div>
