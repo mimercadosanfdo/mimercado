@@ -1,5 +1,5 @@
-// BUILD:1783826000
-"use client"; // Lokl v1783826000
+// BUILD:1783827000
+"use client"; // Lokl v1783827000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -732,13 +732,14 @@ const VE_ESTADOS_MUNICIPIOS={
   const guardarPedidoRestaurante=async(restId,restItems,restSub,restDel,restTotal,restRef,aceptaPromo,provNombre)=>{
     const{error:errPed}=await supabase.from("pedidos").insert({
       ref:restRef,
+      proveedor_id:restId||null,
       proveedor_nombre:provNombre||"",
       cliente_nombre:form.nombre,
       cliente_telefono:form.telefono,
       cliente_direccion:[zonaSel?.zona,addr.calle,addr.referencia].filter(Boolean).join(", "),
       zona:zonaSel?.zona||"",
       metodo_pago:"WhatsApp",
-      items:restItems.map(i=>({nombre:i.name,precio:i.price,qty:i.qty,nota:i.nota||null,isPromo:i.isPromo||false})),
+      items:restItems.map(i=>({nombre:i.name,precio:i.price,qty:i.qty,nota:i.nota||null,isPromo:i.isPromo||false,dbId:i.dbId||null})),
       subtotal:parseFloat(restSub.toFixed(2)),
       delivery:parseFloat(restDel.toFixed(2)),
       total:parseFloat(restTotal.toFixed(2)),
@@ -4637,6 +4638,26 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 alert("Error al actualizar: "+error.message);
                 return;
               }
+              // Descontar inventario SOLO al marcar entregado, y solo una vez
+              // (evita doble descuento si el pedido ya estaba entregado)
+              if(nuevoEstado==="entregado" && ped?.estado!=="entregado" && !ped?.stock_descontado){
+                const items=Array.isArray(ped?.items)?ped.items:[];
+                for(const it of items){
+                  if(!it.dbId||it.isPromo)continue; // sin id o promo → no descontar
+                  const qty=parseInt(it.qty)||0;
+                  if(qty<=0)continue;
+                  // Leer stock actual y restar sin bajar de 0
+                  const{data:prodActual}=await supabase.from("productos_proveedor")
+                    .select("stock").eq("id",it.dbId).single();
+                  if(prodActual&&typeof prodActual.stock==="number"){
+                    const nuevoStock=Math.max(0,prodActual.stock-qty);
+                    await supabase.from("productos_proveedor")
+                      .update({stock:nuevoStock}).eq("id",it.dbId);
+                  }
+                }
+                // Marcar el pedido para no volver a descontar
+                await supabase.from("pedidos").update({stock_descontado:true}).eq("id",pedId);
+              }
               await loadMisRestPedidos(provData.id,provData.negocio);
               // Abrir WhatsApp automáticamente con mensaje del estado
               const msgFn=MSGS_ESTADO[nuevoEstado];
@@ -6063,7 +6084,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
             await guardarPedidoRestaurante(restObj?.id||null,prov.items,sub,del,total,ref,aceptaPromo,prov.nombre);
             const nuevoCart={...cartRest};prov.items.forEach(i=>delete nuevoCart[i.id]);setCartRest(nuevoCart);
           } else if(prov.tipo==="negocio"){
-            await guardarPedidoRestaurante(cartNegocioId,prov.items,sub,del,total,ref);
+            await guardarPedidoRestaurante(cartNegocioId,prov.items,sub,del,total,ref,false,prov.nombre);
             setCartNegocio({});
           }
           setPedidoEnviadoA(prov.nombre);
