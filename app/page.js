@@ -1,5 +1,5 @@
-// BUILD:1783827000
-"use client"; // Lokl v1783827000
+// BUILD:1783828000
+"use client"; // Lokl v1783828000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -4033,7 +4033,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",marginBottom:10,letterSpacing:1,textTransform:"uppercase"}}>{!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Tu directorio de servicios":"Tu tienda virtual"}</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                   {[
-                    {k:"pedidos_rest", icon:"📋", label:"Pedidos",     sub:"Gestiona tus pedidos", color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#1d4ed8,#3b82f6)", n:misRestPedidos.filter(p=>!["entregado","cancelado","enviado"].includes(p.estado||"nuevo")).length},
+                    {k:"pedidos_rest", icon:"📋", label:"Pedidos",     sub:"Gestiona tus pedidos", color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#1d4ed8,#3b82f6)", n:misRestPedidos.filter(p=>!["entregado","cancelado"].includes(p.estado||"nuevo")).length},
                     {k:"prod_aprobados",icon:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"🩺":"📦",label:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Mis servicios":"Productos",sub:!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)?"Servicios que ofrezco":"Tu catálogo en línea",color:"#fff",textColor:"#0f172a",bg:"linear-gradient(135deg,#15803d,#22c55e)",n:0},
                     {k:"promo_nueva",  icon:"🎉", label:"Promociones", sub:"Ofertas especiales",    color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#7e22ce,#a855f7)", n:myPromos.filter(pr=>pr.motivo_rechazo).length},
                     {k:"clientes",     icon:"👥", label:"Clientes",    sub:"Tu base de clientes",   color:"#fff",  textColor:"#0f172a", bg:"linear-gradient(135deg,#0369a1,#0ea5e9)", n:0},
@@ -4685,7 +4685,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
             const fechaLocal2=(d)=>new Date(new Date(d).getTime()-new Date(d).getTimezoneOffset()*60000).toISOString().slice(0,10);
             const totalHoy=misRestPedidos.filter(p=>fechaLocal2(p.created_at)===hoy);
             const ingreso=misRestPedidos.filter(p=>p.estado==="entregado").reduce((a,p)=>a+(p.total||0),0);
-            const pendientes=misRestPedidos.filter(p=>!["entregado","cancelado","enviado"].includes(p.estado||"nuevo"));
+            const pendientes=misRestPedidos.filter(p=>!["entregado","cancelado"].includes(p.estado||"nuevo"));
             return(
               <div style={s.pc}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
@@ -4710,7 +4710,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 </div>
                 {/* FILTRO ESTADO */}
                 <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
-                  {[["todos","Todos"],["nuevo","Nuevos"],["recibido","Recibidos"],["esperando_pago","Esp. pago"],["preparando","Preparando"],["enviado","Enviados"],["entregado","Entregados"],["cancelado","Cancelados"]].map(([v,l])=>(
+                  {[["todos","Todos"],["nuevo","Nuevos"],["entregado","Entregados"],["cancelado","Cancelados"]].map(([v,l])=>(
                     <button key={v} onClick={()=>setFiltroEstado(v)} style={{flexShrink:0,padding:"4px 10px",borderRadius:20,border:"none",fontSize:10,fontWeight:700,cursor:"pointer",background:filtroEstado===v?"#0f172a":"#f1f5f9",color:filtroEstado===v?"#fff":"#64748b"}}>
                       {l} {v!=="todos"&&misRestPedidos.filter(p=>p.estado===v).length>0?`(${misRestPedidos.filter(p=>p.estado===v).length})`:""}
                     </button>
@@ -4725,11 +4725,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 {pedFiltrados.map(ped=>{
                   const est=ESTADOS[ped.estado]||ESTADOS["nuevo"];
                   const siguientes={
-                    "nuevo":          ["recibido","cancelado"],
-                    "recibido":       ["esperando_pago","cancelado"],
-                    "esperando_pago": ["preparando","cancelado"],
-                    "preparando":     ["enviado","cancelado"],
-                    "enviado":        ["entregado","cancelado"],
+                    "nuevo":          ["entregado","cancelado"],
                     "entregado":      [],
                     "cancelado":      [],
                   }[ped.estado||"nuevo"]||[];
