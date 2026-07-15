@@ -1,5 +1,5 @@
-// BUILD:1783836000
-"use client"; // Lokl v1783836000
+// BUILD:1783837000
+"use client"; // Lokl v1783837000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1783,27 +1783,48 @@ const VE_ESTADOS_MUNICIPIOS={
         {/* RESULTADOS DE BÚSQUEDA GLOBAL */}
         {search.trim()&&(
           <div style={{padding:"8px 16px 0"}}>
-            <div style={{fontSize:12,color:"#64748b",marginBottom:8,fontWeight:600}}>
-              {(()=>{const r=allProdsConMargen.filter(p=>p.name.toLowerCase().includes(search.toLowerCase()));return r.length+" resultado"+(r.length!==1?"s":"")+" para \""+search+"\"";})()}
-            </div>
-            {allProdsConMargen.filter(p=>p.name.toLowerCase().includes(search.toLowerCase())).length===0
-              ?<div style={{textAlign:"center",padding:"20px 0",color:"#94a3b8",fontSize:13}}>Sin resultados para "{search}"</div>
-              :allProdsConMargen.filter(p=>p.name.toLowerCase().includes(search.toLowerCase())).slice(0,6).map(p=>(
-                <div key={p.id} onClick={()=>{setCat(p.cat==="Supermercado"?"Supermercado":p.cat);setTab(p.cat==="Supermercado"?"Supermercado":"Feria de comida");}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9",cursor:"pointer"}}>
-                  {p.foto?<img src={p.foto} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}}/>:<div style={{width:40,height:40,borderRadius:8,background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{p.emoji||"🛒"}</div>}
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:13,fontWeight:600,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</div>
-                    <div style={{fontSize:11,color:"#94a3b8"}}>{p.kitchen||p.cat}</div>
-                  </div>
-                  <div style={{fontSize:13,fontWeight:700,color:"#0f9b6e",flexShrink:0}}>${p.price.toFixed(2)}</div>
+            {(()=>{
+              const q=search.toLowerCase();
+              const prodMatch=allProdsConMargen.filter(p=>p.name.toLowerCase().includes(q));
+              // Tiendas y restaurantes cuyo NOMBRE coincide con la búsqueda
+              const negMatch=[...allNegocios,...allRestaurantes].filter(n=>n.negocio.toLowerCase().includes(q));
+              const totalR=prodMatch.length+negMatch.length;
+              return(<>
+                <div style={{fontSize:12,color:"#64748b",marginBottom:8,fontWeight:600}}>
+                  {totalR+" resultado"+(totalR!==1?"s":"")+" para \""+search+"\""}
                 </div>
-              ))
-            }
-            {allProdsConMargen.filter(p=>p.name.toLowerCase().includes(search.toLowerCase())).length>6&&(
-              <button onClick={()=>setTab("Supermercado")} style={{width:"100%",padding:"10px",background:"#f0fdf4",border:"1px solid #86efac",borderRadius:10,fontSize:12,fontWeight:600,color:"#15803d",cursor:"pointer",marginTop:6}}>
-                Ver todos los resultados →
-              </button>
-            )}
+                {totalR===0&&<div style={{textAlign:"center",padding:"20px 0",color:"#94a3b8",fontSize:13}}>Sin resultados para "{search}"</div>}
+                {/* TIENDAS que coinciden por nombre */}
+                {negMatch.slice(0,4).map(n=>{
+                  const esNeg=n.tipo_negocio==="Tienda / Negocio local";
+                  return(
+                    <div key={"neg_"+n.id} onClick={()=>{
+                      if(esNeg){setTab("Negocios locales");setNegocioActivo(n);setCartNegocioId(n.id);setCartNegocioNombre(n.negocio);setCartNegocioWa(n.whatsapp_negocio||n.telefono);loadProvResenas(n.id);}
+                      else{setTab("Feria de comida");setRestauranteActivo(n);}
+                      setSearch("");
+                    }} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9",cursor:"pointer"}}>
+                      {n.logo_url?<img src={n.logo_url} alt="" style={{width:40,height:40,borderRadius:10,objectFit:"cover",flexShrink:0}}/>:<div style={{width:40,height:40,borderRadius:10,background:"#eff6ff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{esNeg?"🏪":"🍽️"}</div>}
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:13,fontWeight:700,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{n.negocio}</div>
+                        <div style={{fontSize:11,color:"#3b82f6",fontWeight:600}}>{esNeg?"Tienda":"Restaurante"} · Ver catálogo</div>
+                      </div>
+                      <div style={{fontSize:18,color:"#94a3b8",flexShrink:0}}>›</div>
+                    </div>
+                  );
+                })}
+                {/* PRODUCTOS que coinciden */}
+                {prodMatch.slice(0,6).map(p=>(
+                  <div key={p.id} onClick={()=>{setCat(p.cat==="Supermercado"?"Supermercado":p.cat);setTab(p.cat==="Supermercado"?"Supermercado":"Feria de comida");}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9",cursor:"pointer"}}>
+                    {p.foto?<img src={p.foto} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}}/>:<div style={{width:40,height:40,borderRadius:8,background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{p.emoji||"🛒"}</div>}
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:13,fontWeight:600,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</div>
+                      <div style={{fontSize:11,color:"#94a3b8"}}>{p.kitchen||p.cat}</div>
+                    </div>
+                    <div style={{fontSize:13,fontWeight:700,color:"#0f9b6e",flexShrink:0}}>${p.price.toFixed(2)}</div>
+                  </div>
+                ))}
+              </>);
+            })()}
           </div>
         )}
 
