@@ -1,5 +1,5 @@
-// BUILD:1783839000
-"use client"; // Lokl v1783839000
+// BUILD:1783840000
+"use client"; // Lokl v1783840000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -4258,6 +4258,23 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                         <input style={s.inp} value={newProd.descripcion} onChange={e=>setNewProd({...newProd,descripcion:e.target.value})}/>
                 <label style={s.lbl}>Código de referencia (opcional)</label>
                 <input style={s.inp} placeholder="Ej: REF-001, SKU-2024, VG5851-M" value={newProd.codigo_ref||""} onChange={e=>setNewProd({...newProd,codigo_ref:e.target.value})}/>
+                        <label style={s.lbl}>Categoría *</label>
+                        {(()=>{
+                          const editCats2=provData.tipo_negocio==="Tienda / Negocio local"
+                            ?PROD_CATS_TIENDA
+                            :provData.tipo_negocio==="Restaurante / Cocina / Comida"
+                            ?(provData.categorias?.length>0?provData.categorias:NEGOCIO_CATS_RESTAURANTE)
+                            :SERV_CATS[provData.tipo_negocio]
+                            ?(SERV_CATS[provData.tipo_negocio])
+                            :(provData.categorias?.length>0?provData.categorias:PROV_CATS);
+                          return(<select style={{...s.inp,background:"#fff"}} value={newProd.categoria} onChange={e=>setNewProd({...newProd,categoria:e.target.value})}><option value="">Selecciona una categoría...</option>{editCats2.map(c=><option key={c}>{c}</option>)}</select>);
+                        })()}
+                        {provData.tipo_negocio==="Tienda / Negocio local"&&VARIANTES_CONFIG[newProd.categoria]&&(
+                          <div style={{background:"#eff6ff",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #bfdbfe"}}>
+                            <label style={{...s.lbl,color:"#1d4ed8",marginBottom:4}}>🎨 {VARIANTES_CONFIG[newProd.categoria].label}</label>
+                            <input style={s.inp} placeholder={VARIANTES_CONFIG[newProd.categoria].placeholder} value={newProd.variantes||""} onChange={e=>setNewProd({...newProd,variantes:e.target.value})}/>
+                          </div>
+                        )}
                         <label style={s.lbl}>Precio ($) *</label>
                         <input style={s.inp} type="number" value={newProd.precio} onChange={e=>setNewProd({...newProd,precio:e.target.value})}/>
                         {!!["Restaurante / Cocina / Comida","Tienda / Negocio local"].includes(provData.tipo_negocio)&&<><label style={s.lbl}>Unidad</label>
@@ -4294,6 +4311,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                             nombre:newProd.nombre,marca:newProd.marca||null,
                             presentacion:newProd.presentacion||null,descripcion:newProd.descripcion||null,
                             precio:parseFloat(newProd.precio),unidad:newProd.unidad,
+                            categoria:newProd.categoria||null,
                             codigo_ref:newProd.codigo_ref||null,variantes:newProd.variantes||null,
                             foto_url:nueva_foto,foto_url_2:nueva_foto2,foto_url_3:nueva_foto3,foto_url_4:nueva_foto4,
                             aprobado:true,rechazado:false,motivo_rechazo:null,
