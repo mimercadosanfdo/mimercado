@@ -1,5 +1,5 @@
-// BUILD:1783834000
-"use client"; // Lokl v1783834000
+// BUILD:1783835000
+"use client"; // Lokl v1783835000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -4057,10 +4057,10 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                       if(t.k==="mis_rutas")loadMisRutas(provData.id);
                       if(t.k==="mis_habitaciones")loadMisHabitaciones(provData.id);
                       if(t.k==="mis_turismo")loadMisTurismo(provData.id);
-                    }} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"16px 14px",textAlign:"left",cursor:"pointer",position:"relative",transition:"transform 0.1s"}}>
-                      <div style={{fontSize:26,marginBottom:8,color:"#16a34a"}}>{t.icon}</div>
-                      <div style={{fontSize:13,fontWeight:800,color:"#0f172a",letterSpacing:-0.2}}>{t.label}</div>
-                      <div style={{fontSize:10,color:"#94a3b8",marginTop:2,fontWeight:400}}>{t.sub}</div>
+                    }} style={{background:t.k==="ventas"?"#16a34a":"#fff",border:t.k==="ventas"?"none":"1px solid #e2e8f0",borderRadius:14,padding:"16px 14px",textAlign:"left",cursor:"pointer",position:"relative",transition:"transform 0.1s"}}>
+                      <div style={{fontSize:26,marginBottom:8,color:t.k==="ventas"?"#fff":"#16a34a"}}>{t.icon}</div>
+                      <div style={{fontSize:13,fontWeight:800,color:t.k==="ventas"?"#fff":"#0f172a",letterSpacing:-0.2}}>{t.label}</div>
+                      <div style={{fontSize:10,color:t.k==="ventas"?"rgba(255,255,255,0.8)":"#94a3b8",marginTop:2,fontWeight:400}}>{t.sub}</div>
                       {t.n>0&&<span style={{position:"absolute",top:10,right:10,background:"#f59e0b",color:"#fff",borderRadius:"50%",width:22,height:22,fontSize:11,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center"}}>{t.n}</span>}
                     </button>
                   ))}
@@ -4901,8 +4901,9 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
             // Rango del período ANTERIOR (para comparar)
             const semAnt=fechaVE_V(new Date(Date.now()-14*86400000));
             const mesAnt=fechaVE_V(new Date(Date.now()-60*86400000));
+            const anio=fechaVE_V(new Date(Date.now()-365*86400000));
             const filtroV=filtroVentas;const setFiltroV=setFiltroVentas;
-            const enRango=(f,tipo)=>tipo==="hoy"?f===hoyV:tipo==="semana"?f>=sem:tipo==="mes"?f>=mes:true;
+            const enRango=(f,tipo)=>tipo==="hoy"?f===hoyV:tipo==="semana"?f>=sem:tipo==="mes"?f>=mes:tipo==="anio"?f>=anio:true;
             const pedFiltV=pedidosEntregados.filter(p=>enRango(fechaVE_V(p.created_at),filtroV));
             const totalVendido=pedFiltV.reduce((a,p)=>a+(p.total||0),0);
             const ticketProm=pedFiltV.length>0?totalVendido/pedFiltV.length:0;
@@ -4911,6 +4912,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
               const f=fechaVE_V(p.created_at);
               if(filtroV==="semana")return f>=semAnt&&f<sem;
               if(filtroV==="mes")return f>=mesAnt&&f<mes;
+              if(filtroV==="anio"){const anioAnt=fechaVE_V(new Date(Date.now()-730*86400000));return f>=anioAnt&&f<anio;}
               if(filtroV==="hoy"){const ay=fechaVE_V(new Date(Date.now()-86400000));return f===ay;}
               return false;
             });
@@ -4953,9 +4955,9 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
               <div style={s.pc}>
                 <div style={s.pT}>📊 Dashboard de ventas</div>
                 {/* FILTROS */}
-                <div style={{display:"flex",gap:6,marginBottom:14}}>
-                  {[["todo","Todo"],["mes","Mes"],["semana","Semana"],["hoy","Hoy"]].map(([v,l])=>(
-                    <button key={v} onClick={()=>setFiltroV(v)} style={{flex:1,padding:"7px 4px",borderRadius:8,border:"none",fontSize:12,fontWeight:filtroV===v?700:600,cursor:"pointer",background:filtroV===v?"#0f172a":"#f1f5f9",color:filtroV===v?"#fff":"#64748b"}}>{l}</button>
+                <div style={{display:"flex",gap:5,marginBottom:14}}>
+                  {[["todo","Todos"],["hoy","Hoy"],["semana","Semana"],["mes","Mes"],["anio","Año"]].map(([v,l])=>(
+                    <button key={v} onClick={()=>setFiltroV(v)} style={{flex:1,padding:"7px 2px",borderRadius:8,border:"none",fontSize:11,fontWeight:filtroV===v?700:600,cursor:"pointer",background:filtroV===v?"#0f172a":"#f1f5f9",color:filtroV===v?"#fff":"#64748b"}}>{l}</button>
                   ))}
                 </div>
                 {/* TOTAL + COMPARACIÓN */}
