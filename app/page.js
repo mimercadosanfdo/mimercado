@@ -1,5 +1,5 @@
-// BUILD:1783835000
-"use client"; // Lokl v1783835000
+// BUILD:1783836000
+"use client"; // Lokl v1783836000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -2478,7 +2478,15 @@ const VE_ESTADOS_MUNICIPIOS={
                   <div style={{fontSize:13,fontWeight:700}}>{negocioCatFiltro||`"${search}"`}</div>
                   <button onClick={()=>{setNegocioCatFiltro(null);setSearch("");}} style={{fontSize:12,color:P,background:"none",border:"none",cursor:"pointer"}}>← Volver</button>
                 </div>
-                {[...allNegocios].sort((a,b)=>{const aAb=estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo,a.en_pausa,a.forzar_abierto);const bAb=estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo,b.en_pausa,b.forzar_abierto);return bAb-aAb;}).filter(n=>negocioCatFiltro?(n.categorias||[]).includes(negocioCatFiltro):n.negocio.toLowerCase().includes(search.toLowerCase())).map(n=>{
+                {[...allNegocios].sort((a,b)=>{const aAb=estaAbiertoAhora(a.horario_desde,a.horario_hasta,a.activo,a.en_pausa,a.forzar_abierto);const bAb=estaAbiertoAhora(b.horario_desde,b.horario_hasta,b.activo,b.en_pausa,b.forzar_abierto);return bAb-aAb;}).filter(n=>{
+                  if(negocioCatFiltro){
+                    // La tienda entra si su categoría la incluye O si tiene productos de esa categoría
+                    const catEnTienda=(n.categorias||[]).includes(negocioCatFiltro);
+                    const catEnProductos=provProds.some(p=>p.proveedor_id===n.id&&p.categoria===negocioCatFiltro);
+                    return catEnTienda||catEnProductos;
+                  }
+                  return n.negocio.toLowerCase().includes(search.toLowerCase());
+                }).map(n=>{
   const abiertoN=estaAbiertoAhora(n.horario_desde,n.horario_hasta,n.activo,n.en_pausa,n.forzar_abierto);
   return(
                   <div key={n.id} onClick={()=>{setNegocioActivo(n);setCartNegocioId(n.id);setCartNegocioNombre(n.negocio);setCartNegocioWa(n.whatsapp_negocio||n.telefono);setSearch("");}} style={{background:abiertoN?"#fff":"#f8fafc",borderRadius:14,padding:14,border:`1px solid ${abiertoN?"#f1f5f9":"#e2e8f0"}`,display:"flex",gap:12,alignItems:"center",marginBottom:10,cursor:"pointer",opacity:abiertoN?1:0.72,position:"relative"}}>
@@ -2488,7 +2496,14 @@ const VE_ESTADOS_MUNICIPIOS={
                     <div style={{color:"#94a3b8",fontSize:18}}>›</div>
                   </div>
                 );})}
-                {allNegocios.filter(n=>negocioCatFiltro?(n.categorias||[]).includes(negocioCatFiltro):n.negocio.toLowerCase().includes(search.toLowerCase())).length===0&&<div style={{textAlign:"center",padding:"30px 0",color:"#94a3b8"}}><div style={{fontSize:36,marginBottom:8}}>🔍</div><div style={{fontSize:13,fontWeight:600,color:"#64748b"}}>No encontramos tiendas en esta categoría</div><div style={{fontSize:11,marginTop:4}}>Los negocios locales estarán disponibles muy pronto</div></div>}
+                {allNegocios.filter(n=>{
+                  if(negocioCatFiltro){
+                    const catEnTienda=(n.categorias||[]).includes(negocioCatFiltro);
+                    const catEnProductos=provProds.some(p=>p.proveedor_id===n.id&&p.categoria===negocioCatFiltro);
+                    return catEnTienda||catEnProductos;
+                  }
+                  return n.negocio.toLowerCase().includes(search.toLowerCase());
+                }).length===0&&<div style={{textAlign:"center",padding:"30px 0",color:"#94a3b8"}}><div style={{fontSize:36,marginBottom:8}}>🔍</div><div style={{fontSize:13,fontWeight:600,color:"#64748b"}}>No encontramos tiendas en esta categoría</div><div style={{fontSize:11,marginTop:4}}>Los negocios locales estarán disponibles muy pronto</div></div>}
               </div>
             )}
           </>
