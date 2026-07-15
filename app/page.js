@@ -1,5 +1,5 @@
-// BUILD:1783832000
-"use client"; // Lokl v1783832000
+// BUILD:1783833000
+"use client"; // Lokl v1783833000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -4893,52 +4893,119 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
             const pedidosEntregados=misRestPedidos.filter(p=>p.estado==="entregado");
             const pedidosCancelados=misRestPedidos.filter(p=>p.estado==="cancelado");
             const pedidosTodos=misRestPedidos;
-            const fechaLocalV=(d)=>new Date(new Date(d).getTime()-new Date(d).getTimezoneOffset()*60000).toISOString().slice(0,10);
-            const hoyV=fechaLocalV(new Date());
-            const sem=fechaLocalV(new Date(Date.now()-7*86400000));
-            const mes=fechaLocalV(new Date(Date.now()-30*86400000));
-            // filtroVentas está en el estado del componente
+            // Fecha forzada a Venezuela (UTC-4), consistente con la sección de pedidos
+            const fechaVE_V=(d)=>new Date(new Date(d).getTime()-4*3600000).toISOString().slice(0,10);
+            const hoyV=fechaVE_V(new Date());
+            const sem=fechaVE_V(new Date(Date.now()-7*86400000));
+            const mes=fechaVE_V(new Date(Date.now()-30*86400000));
+            // Rango del período ANTERIOR (para comparar)
+            const semAnt=fechaVE_V(new Date(Date.now()-14*86400000));
+            const mesAnt=fechaVE_V(new Date(Date.now()-60*86400000));
             const filtroV=filtroVentas;const setFiltroV=setFiltroVentas;
-            const pedFiltV=pedidosEntregados.filter(p=>{
-              const f=fechaLocalV(p.created_at);
-              return filtroV==="hoy"?f===hoyV:filtroV==="semana"?f>=sem:filtroV==="mes"?f>=mes:true;
-            });
+            const enRango=(f,tipo)=>tipo==="hoy"?f===hoyV:tipo==="semana"?f>=sem:tipo==="mes"?f>=mes:true;
+            const pedFiltV=pedidosEntregados.filter(p=>enRango(fechaVE_V(p.created_at),filtroV));
             const totalVendido=pedFiltV.reduce((a,p)=>a+(p.total||0),0);
             const ticketProm=pedFiltV.length>0?totalVendido/pedFiltV.length:0;
+            // PERÍODO ANTERIOR para comparación
+            const pedAnt=pedidosEntregados.filter(p=>{
+              const f=fechaVE_V(p.created_at);
+              if(filtroV==="semana")return f>=semAnt&&f<sem;
+              if(filtroV==="mes")return f>=mesAnt&&f<mes;
+              if(filtroV==="hoy"){const ay=fechaVE_V(new Date(Date.now()-86400000));return f===ay;}
+              return false;
+            });
+            const totalAnt=pedAnt.reduce((a,p)=>a+(p.total||0),0);
+            const variacion=totalAnt>0?Math.round(((totalVendido-totalAnt)/totalAnt)*100):(totalVendido>0?100:0);
+            const hayComparacion=filtroV!=="todo";
+            // TOP PRODUCTOS del período (por cantidad vendida)
+            const conteoProd={};
+            pedFiltV.forEach(p=>(p.items||[]).forEach(it=>{
+              if(it.isPromo)return;
+              const n=it.nombre||"Producto";
+              if(!conteoProd[n])conteoProd[n]={qty:0,monto:0};
+              conteoProd[n].qty+=(it.qty||1);
+              conteoProd[n].monto+=(it.precio||0)*(it.qty||1);
+            }));
+            const topProds=Object.entries(conteoProd).sort((a,b)=>b[1].qty-a[1].qty).slice(0,5);
+            // PRODUCTOS SIN VENTAS (en catálogo pero nunca vendidos en el período)
+            const vendidos=new Set(Object.keys(conteoProd));
+            const sinVentas=(myProds||[]).filter(pr=>!vendidos.has(pr.nombre)).slice(0,5);
+            // VENTAS POR DÍA (últimos 7 días) para el gráfico
+            const dias=[];
+            for(let i=6;i>=0;i--){
+              const d=fechaVE_V(new Date(Date.now()-i*86400000));
+              const tot=pedidosEntregados.filter(p=>fechaVE_V(p.created_at)===d).reduce((a,p)=>a+(p.total||0),0);
+              dias.push({dia:d.slice(5),monto:tot});
+            }
+            const maxDia=Math.max(...dias.map(d=>d.monto),1);
             return(
               <div style={s.pc}>
-                <div style={s.pT}>📈 Dashboard de ventas</div>
+                <div style={s.pT}>📊 Dashboard de ventas</div>
                 {/* FILTROS */}
-                <div style={{display:"flex",gap:6,marginBottom:12}}>
-                  {[["todo","Todo"],["mes","30 días"],["semana","7 días"],["hoy","Hoy"]].map(([v,l])=>(
-                    <button key={v} onClick={()=>setFiltroV(v)} style={{flex:1,padding:"6px 4px",borderRadius:10,border:"none",fontSize:11,fontWeight:700,cursor:"pointer",background:filtroV===v?P:"#f1f5f9",color:filtroV===v?"#fff":"#64748b"}}>{l}</button>
+                <div style={{display:"flex",gap:6,marginBottom:14}}>
+                  {[["todo","Todo"],["mes","Mes"],["semana","Semana"],["hoy","Hoy"]].map(([v,l])=>(
+                    <button key={v} onClick={()=>setFiltroV(v)} style={{flex:1,padding:"7px 4px",borderRadius:8,border:"none",fontSize:12,fontWeight:filtroV===v?700:600,cursor:"pointer",background:filtroV===v?"#0f172a":"#f1f5f9",color:filtroV===v?"#fff":"#64748b"}}>{l}</button>
                   ))}
                 </div>
-                {/* KPIs */}
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
-                  <div style={{...s.statCard,gridColumn:"1/-1"}}>
-                    <div style={{...s.statNum,fontSize:28,color:"#22c55e"}}>${totalVendido.toFixed(2)}</div>
-                    <div style={s.statLbl}>💰 Total vendido (entregados)</div>
-                  </div>
-                  <div style={s.statCard}><div style={{...s.statNum,color:"#6366f1"}}>{pedFiltV.length}</div><div style={s.statLbl}>Pedidos entregados</div></div>
-                  <div style={s.statCard}><div style={{...s.statNum,color:"#f59e0b"}}>${ticketProm.toFixed(2)}</div><div style={s.statLbl}>Ticket promedio</div></div>
-                  <div style={s.statCard}><div style={{...s.statNum,color:"#ef4444"}}>{pedidosCancelados.length}</div><div style={s.statLbl}>Cancelados</div></div>
-                  <div style={s.statCard}><div style={{...s.statNum,color:"#64748b"}}>{pedidosTodos.length}</div><div style={s.statLbl}>Total pedidos</div></div>
+                {/* TOTAL + COMPARACIÓN */}
+                <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:14,padding:"16px",marginBottom:12,textAlign:"center"}}>
+                  <div style={{fontSize:30,fontWeight:900,color:"#16a34a"}}>${totalVendido.toFixed(2)}</div>
+                  <div style={{fontSize:12,color:"#15803d",fontWeight:600,marginBottom:hayComparacion?6:0}}>Total vendido</div>
+                  {hayComparacion&&(
+                    <div style={{fontSize:12,fontWeight:700,color:variacion>=0?"#16a34a":"#dc2626"}}>
+                      {variacion>=0?"▲":"▼"} {Math.abs(variacion)}% vs período anterior
+                    </div>
+                  )}
                 </div>
-                {/* LISTA DE VENTAS */}
-                <div style={{fontSize:12,fontWeight:700,color:"#64748b",marginBottom:8}}>Pedidos entregados</div>
-                {pedFiltV.length===0
-                  ?<div style={{textAlign:"center",padding:"20px 0",color:"#94a3b8",fontSize:13}}>No hay ventas en este período</div>
-                  :pedFiltV.map(ped=>(
-                    <div key={ped.id} style={{padding:"10px 0",borderBottom:"1px solid #f1f5f9"}}>
-                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                        <div style={{fontSize:12,fontWeight:700,color:"#0f172a"}}>{ped.ref} — {ped.cliente_nombre}</div>
-                        <span style={{fontSize:13,fontWeight:800,color:"#22c55e"}}>${(ped.total||0).toFixed(2)}</span>
+                {/* KPIs sobrios */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
+                  <div style={{background:"#f8fafc",border:"1px solid #eef2f6",borderRadius:12,padding:"12px 4px",textAlign:"center"}}><div style={{fontSize:18,fontWeight:800,color:"#334155"}}>{pedFiltV.length}</div><div style={{fontSize:10,color:"#94a3b8",fontWeight:600}}>Entregados</div></div>
+                  <div style={{background:"#f8fafc",border:"1px solid #eef2f6",borderRadius:12,padding:"12px 4px",textAlign:"center"}}><div style={{fontSize:18,fontWeight:800,color:"#334155"}}>${ticketProm.toFixed(2)}</div><div style={{fontSize:10,color:"#94a3b8",fontWeight:600}}>Ticket prom.</div></div>
+                  <div style={{background:"#f8fafc",border:"1px solid #eef2f6",borderRadius:12,padding:"12px 4px",textAlign:"center"}}><div style={{fontSize:18,fontWeight:800,color:"#334155"}}>{pedidosCancelados.length}</div><div style={{fontSize:10,color:"#94a3b8",fontWeight:600}}>Cancelados</div></div>
+                </div>
+                {/* GRÁFICO VENTAS POR DÍA (últimos 7) */}
+                <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:0.5,marginBottom:8}}>Ventas últimos 7 días</div>
+                <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:5,height:90,marginBottom:6,padding:"0 2px"}}>
+                  {dias.map((d,i)=>(
+                    <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                      <div style={{fontSize:9,fontWeight:700,color:"#64748b"}}>{d.monto>0?"$"+d.monto.toFixed(0):""}</div>
+                      <div style={{width:"100%",height:Math.max(4,(d.monto/maxDia)*60),background:d.monto>0?"#16a34a":"#e2e8f0",borderRadius:"4px 4px 0 0",transition:"height 0.3s"}}></div>
+                      <div style={{fontSize:9,color:"#94a3b8"}}>{d.dia}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{borderTop:"1px solid #f1f5f9",margin:"12px 0"}}></div>
+                {/* TOP PRODUCTOS */}
+                <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:0.5,marginBottom:8}}>🏆 Más vendidos</div>
+                {topProds.length===0
+                  ?<div style={{textAlign:"center",padding:"12px 0",color:"#94a3b8",fontSize:12}}>Sin ventas en este período</div>
+                  :topProds.map(([nombre,d],i)=>(
+                    <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:i<topProds.length-1?"1px solid #f1f5f9":"none"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <span style={{fontSize:12,fontWeight:900,color:i===0?"#f59e0b":"#cbd5e1",width:18}}>{i+1}</span>
+                        <span style={{fontSize:13,color:"#0f172a"}}>{nombre}</span>
                       </div>
-                      <div style={{fontSize:11,color:"#94a3b8"}}>{ped.created_at?.slice(0,10)} · {(ped.items||[]).map(i=>`${i.nombre} x${i.qty||1}`).join(", ")}</div>
+                      <div style={{textAlign:"right"}}>
+                        <div style={{fontSize:13,fontWeight:800,color:"#16a34a"}}>{d.qty} u.</div>
+                        <div style={{fontSize:10,color:"#94a3b8"}}>${d.monto.toFixed(2)}</div>
+                      </div>
                     </div>
                   ))
                 }
+                {/* PRODUCTOS SIN VENTAS */}
+                {sinVentas.length>0&&(
+                  <>
+                    <div style={{borderTop:"1px solid #f1f5f9",margin:"12px 0"}}></div>
+                    <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:0.5,marginBottom:6}}>💤 Sin ventas este período</div>
+                    <div style={{fontSize:11,color:"#94a3b8",marginBottom:8}}>Considera promocionarlos o rematarlos</div>
+                    {sinVentas.map((pr,i)=>(
+                      <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:i<sinVentas.length-1?"1px solid #f8fafc":"none"}}>
+                        <span style={{fontSize:13,color:"#64748b"}}>{pr.nombre}</span>
+                        <span style={{fontSize:11,color:"#cbd5e1"}}>{typeof pr.stock==="number"?pr.stock+" en stock":""}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             );
           })()}
