@@ -1,5 +1,5 @@
-// BUILD:1783840000
-"use client"; // Lokl v1783840000
+// BUILD:1783841000
+"use client"; // Lokl v1783841000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -264,7 +264,10 @@ function abrirWhatsApp(numero,mensaje){
 
 // ── FUNCIÓN COMPARTIR ─────────────────────────────────────────────────────────
 function compartirEnWA({titulo,precio,tab,id,emoji="📌"}){
-  const url=APP_URL+(tab?`?tab=${encodeURIComponent(tab)}`:""  )+(id?`&id=${id}`:"");
+  const params=[];
+  if(tab)params.push("tab="+encodeURIComponent(tab));
+  if(id)params.push("id="+encodeURIComponent(id));
+  const url=APP_URL+(params.length?"?"+params.join("&"):"");
   const precioTexto=precio?` — $${parseFloat(precio).toLocaleString()}`:"";
   const msg=`${emoji} *${titulo}*${precioTexto}\n\n📲 Míralo en ${APP_NAME}:\n${url}\n\n_Publicado en ${APP_NAME} · San Fernando de Apure_`;
   abrirWhatsApp(null,msg);
@@ -388,6 +391,7 @@ const VE_ESTADOS_MUNICIPIOS={
   const [cartNegocioNombre,setCartNegocioNombre]=useState("");
   const [cartNegocioWa,setCartNegocioWa]=useState("");
   const [negocioActivo,setNegocioActivo]=useState(null);
+  const [deepLinkListo,setDeepLinkListo]=useState(false);
   const [negocioCatFiltro,setNegocioCatFiltro]=useState(null);
   const [allNegocios,setAllNegocios]=useState([]);
   const [misNegPedidos,setMisNegPedidos]=useState([]);
@@ -588,6 +592,44 @@ const VE_ESTADOS_MUNICIPIOS={
       setTimeout(()=>setShowCiudadModal(true),600);
     }
   },[]);
+
+  // DEEP LINK: si el link trae ?tab=...&id=..., abrir directo esa tienda/producto
+  useEffect(()=>{
+    if(deepLinkListo)return;
+    if(typeof window==="undefined")return;
+    const params=new URLSearchParams(window.location.search);
+    const tabParam=params.get("tab");
+    const idParam=params.get("id");
+    if(!tabParam||!idParam)return;
+    // Esperar a que los datos estén cargados según el tab
+    if(tabParam==="Negocios locales"){
+      if(allNegocios.length===0)return;
+      const n=allNegocios.find(x=>String(x.id)===String(idParam));
+      if(n){
+        setTab("Negocios locales");
+        setNegocioActivo(n);
+        setCartNegocioId(n.id);
+        setCartNegocioNombre(n.negocio);
+        setCartNegocioWa(n.whatsapp_negocio||n.telefono);
+        loadProvResenas(n.id);
+        setDeepLinkListo(true);
+      }
+    } else if(tabParam==="Feria de comida"){
+      if(allRestaurantes.length===0)return;
+      const r=allRestaurantes.find(x=>String(x.id)===String(idParam));
+      if(r){
+        setTab("Feria de comida");
+        setRestauranteActivo(r);
+        setDeepLinkListo(true);
+      }
+    } else if(tabParam==="Servicios"){
+      setTab("Servicios");
+      setDeepLinkListo(true);
+    } else if(["Mercadito local","Clasificados"].includes(tabParam)){
+      setTab(tabParam);
+      setDeepLinkListo(true);
+    }
+  },[allNegocios,allRestaurantes,deepLinkListo]);
 
   // Cargar historial y favoritos cuando el usuario escribe su teléfono
   useEffect(()=>{
