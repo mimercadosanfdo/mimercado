@@ -1,5 +1,5 @@
-// BUILD:1783831000
-"use client"; // Lokl v1783831000
+// BUILD:1783832000
+"use client"; // Lokl v1783832000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -4057,11 +4057,11 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                       if(t.k==="mis_rutas")loadMisRutas(provData.id);
                       if(t.k==="mis_habitaciones")loadMisHabitaciones(provData.id);
                       if(t.k==="mis_turismo")loadMisTurismo(provData.id);
-                    }} style={{background:t.bg,border:"none",borderRadius:16,padding:"16px 14px",textAlign:"left",cursor:"pointer",position:"relative",boxShadow:"0 4px 12px rgba(0,0,0,0.15)",transition:"transform 0.1s"}}>
-                      <div style={{fontSize:26,marginBottom:8,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.2))"}}>{t.icon}</div>
-                      <div style={{fontSize:13,fontWeight:800,color:"#fff",letterSpacing:-0.2}}>{t.label}</div>
-                      <div style={{fontSize:10,color:"rgba(255,255,255,0.65)",marginTop:2,fontWeight:400}}>{t.sub}</div>
-                      {t.n>0&&<span style={{position:"absolute",top:10,right:10,background:"#ef4444",color:"#fff",borderRadius:"50%",width:22,height:22,fontSize:11,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 6px rgba(239,68,68,0.5)"}}>{t.n}</span>}
+                    }} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"16px 14px",textAlign:"left",cursor:"pointer",position:"relative",transition:"transform 0.1s"}}>
+                      <div style={{fontSize:26,marginBottom:8,color:"#16a34a"}}>{t.icon}</div>
+                      <div style={{fontSize:13,fontWeight:800,color:"#0f172a",letterSpacing:-0.2}}>{t.label}</div>
+                      <div style={{fontSize:10,color:"#94a3b8",marginTop:2,fontWeight:400}}>{t.sub}</div>
+                      {t.n>0&&<span style={{position:"absolute",top:10,right:10,background:"#f59e0b",color:"#fff",borderRadius:"50%",width:22,height:22,fontSize:11,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center"}}>{t.n}</span>}
                     </button>
                   ))}
                 </div>
@@ -4659,24 +4659,32 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
               }
               await loadMisRestPedidos(provData.id,provData.negocio);
             };
-            // Filtros
-            // Usar fecha local Venezuela (UTC-4) para evitar desfase
-            const fechaLocal=(d)=>new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
-            const hoy=fechaLocal(new Date());
-            const ayer=fechaLocal(new Date(Date.now()-86400000));
-            const semana=fechaLocal(new Date(Date.now()-7*86400000));
-            // Fecha del pedido también en local
-            const fechaPed=(created_at)=>created_at?fechaLocal(new Date(created_at)):"";
+            // Fecha forzada a Venezuela (UTC-4) — misma función para filtros Y stats
+            const fechaVE=(d)=>{
+              const dt=d instanceof Date?d:new Date(d);
+              // Restar 4h para llevar UTC a hora Venezuela, luego tomar YYYY-MM-DD
+              return new Date(dt.getTime()-4*3600000).toISOString().slice(0,10);
+            };
+            const hoy=fechaVE(new Date());
+            const ayer=fechaVE(new Date(Date.now()-86400000));
+            const semana=fechaVE(new Date(Date.now()-7*86400000));
+            const mesActual=hoy.slice(0,7);   // YYYY-MM
+            const anioActual=hoy.slice(0,4);  // YYYY
+            const fechaPed=(created_at)=>created_at?fechaVE(created_at):"";
             // filtroPed y filtroEstado están en el estado del componente principal
             const pedFiltrados=misRestPedidos.filter(p=>{
               const fecha=fechaPed(p.created_at);
-              const pasaFecha=filtroPed==="hoy"?fecha===hoy:filtroPed==="ayer"?fecha===ayer:filtroPed==="semana"?fecha>=semana:true;
-              const pasaEstado=filtroEstado==="todos"||p.estado===filtroEstado;
+              const pasaFecha=
+                filtroPed==="hoy"?fecha===hoy:
+                filtroPed==="semana"?fecha>=semana:
+                filtroPed==="mes"?fecha.slice(0,7)===mesActual:
+                filtroPed==="anio"?fecha.slice(0,4)===anioActual:
+                true;
+              const pasaEstado=filtroEstado==="todos"||(p.estado||"nuevo")===filtroEstado;
               return pasaFecha&&pasaEstado;
             });
-            // Stats
-            const fechaLocal2=(d)=>new Date(new Date(d).getTime()-new Date(d).getTimezoneOffset()*60000).toISOString().slice(0,10);
-            const totalHoy=misRestPedidos.filter(p=>fechaLocal2(p.created_at)===hoy);
+            // Stats — usan la MISMA función de fecha (consistencia total)
+            const totalHoy=misRestPedidos.filter(p=>fechaPed(p.created_at)===hoy);
             const ingreso=misRestPedidos.filter(p=>p.estado==="entregado").reduce((a,p)=>a+(p.total||0),0);
             const pendientes=misRestPedidos.filter(p=>!["entregado","cancelado"].includes(p.estado||"nuevo"));
             return(
@@ -4695,31 +4703,31 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                     🔄 Actualizar
                   </button>
                 </div>
-                {/* STATS */}
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
-                  <div style={{background:"#eff6ff",borderRadius:12,padding:"12px 6px",textAlign:"center"}}><div style={{fontSize:20,fontWeight:900,color:"#2563eb"}}>{totalHoy.length}</div><div style={{fontSize:11,color:"#64748b",fontWeight:600}}>Hoy</div></div>
-                  <div style={{background:"#fffbeb",borderRadius:12,padding:"12px 6px",textAlign:"center"}}><div style={{fontSize:20,fontWeight:900,color:"#d97706"}}>{pendientes.length}</div><div style={{fontSize:11,color:"#92400e",fontWeight:600}}>Nuevos</div></div>
-                  <div style={{background:"#f0fdf4",borderRadius:12,padding:"12px 6px",textAlign:"center"}}><div style={{fontSize:18,fontWeight:900,color:"#16a34a"}}>${ingreso.toFixed(0)}</div><div style={{fontSize:11,color:"#15803d",fontWeight:600}}>Entregados</div></div>
+                {/* STATS — sobrias, color solo donde importa */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:18}}>
+                  <div style={{background:"#f8fafc",border:"1px solid #eef2f6",borderRadius:12,padding:"12px 6px",textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:"#334155"}}>{totalHoy.length}</div><div style={{fontSize:11,color:"#94a3b8",fontWeight:600}}>Hoy</div></div>
+                  <div style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:12,padding:"12px 6px",textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:"#d97706"}}>{pendientes.length}</div><div style={{fontSize:11,color:"#92400e",fontWeight:600}}>Nuevos</div></div>
+                  <div style={{background:"#f8fafc",border:"1px solid #eef2f6",borderRadius:12,padding:"12px 6px",textAlign:"center"}}><div style={{fontSize:18,fontWeight:800,color:"#16a34a"}}>${ingreso.toFixed(0)}</div><div style={{fontSize:11,color:"#94a3b8",fontWeight:600}}>Ingresos</div></div>
                 </div>
                 {/* FILTRO PERIODO */}
                 <div style={{fontSize:10,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:0.5,marginBottom:6}}>Periodo</div>
-                <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto",paddingBottom:2}}>
-                  {[["hoy","Hoy"],["ayer","Ayer"],["semana","7 días"],["todos","Todos"]].map(([v,l])=>(
-                    <button key={v} onClick={()=>setFiltroPed(v)} style={{flexShrink:0,padding:"6px 14px",borderRadius:20,border:"none",fontSize:12,fontWeight:filtroPed===v?700:600,cursor:"pointer",background:filtroPed===v?"#0f172a":"#f1f5f9",color:filtroPed===v?"#fff":"#64748b"}}>
+                <div style={{display:"flex",gap:6,marginBottom:14}}>
+                  {[["hoy","Hoy"],["semana","Semana"],["mes","Mes"],["anio","Año"]].map(([v,l])=>(
+                    <button key={v} onClick={()=>setFiltroPed(v)} style={{flex:1,padding:"7px 4px",borderRadius:8,border:"none",fontSize:12,fontWeight:filtroPed===v?700:600,cursor:"pointer",background:filtroPed===v?"#0f172a":"#f1f5f9",color:filtroPed===v?"#fff":"#64748b"}}>
                       {l}
                     </button>
                   ))}
                 </div>
-                {/* FILTRO ESTADO — texto corto + contador abajo */}
+                {/* FILTRO ESTADO — texto corto + contador, paleta sobria */}
                 <div style={{fontSize:10,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:0.5,marginBottom:6}}>Estado</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:16}}>
-                  {[["todos","Todos","#1e40af","#dbeafe","#93c5fd"],["nuevo","Nuevos","#d97706","#fef3c7","#fcd34d"],["entregado","Entregados","#16a34a","#f0fdf4","#86efac"],["cancelado","Cancelados","#dc2626","#fef2f2","#fca5a5"]].map(([v,l,col,bgAct,brdAct])=>{
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:18}}>
+                  {[["todos","Todos","#0f172a"],["nuevo","Nuevos","#d97706"],["entregado","Entreg.","#16a34a"],["cancelado","Cancel.","#64748b"]].map(([v,l,col])=>{
                     const cnt=v==="todos"?misRestPedidos.length:misRestPedidos.filter(p=>(p.estado||"nuevo")===v).length;
                     const activo=filtroEstado===v;
                     return(
-                      <button key={v} onClick={()=>setFiltroEstado(v)} style={{padding:"7px 2px",borderRadius:10,border:activo?`1.5px solid ${brdAct}`:"1px solid #e2e8f0",cursor:"pointer",background:activo?bgAct:"#fff",display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
-                        <span style={{fontSize:11,fontWeight:800,color:col,lineHeight:1.1}}>{l}</span>
-                        <span style={{fontSize:14,fontWeight:900,color:col}}>{cnt}</span>
+                      <button key={v} onClick={()=>setFiltroEstado(v)} style={{padding:"8px 2px",borderRadius:10,border:activo?"none":"1px solid #e2e8f0",cursor:"pointer",background:activo?col:"#fff",display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
+                        <span style={{fontSize:11,fontWeight:700,color:activo?"#fff":col,lineHeight:1.1}}>{l}</span>
+                        <span style={{fontSize:15,fontWeight:900,color:activo?"#fff":col}}>{cnt}</span>
                       </button>
                     );
                   })}
