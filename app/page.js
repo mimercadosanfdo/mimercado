@@ -1,5 +1,5 @@
-// BUILD:1783837000
-"use client"; // Lokl v1783837000
+// BUILD:1783838000
+"use client"; // Lokl v1783838000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -2438,15 +2438,24 @@ const VE_ESTADOS_MUNICIPIOS={
             {!negocioCatFiltro&&search.length<2?(
               <>
                 <div style={{padding:"12px 16px 4px"}}>
-                  <div style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:10}}>Explorar por categoría</div>
-                  <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
-                    {NEGOCIO_LOCAL_CATS.map(c=>(
-                      <button key={c.cat} onClick={()=>setNegocioCatFiltro(c.cat)} style={{background:c.color,border:"none",borderRadius:12,padding:"10px 4px",display:"flex",flexDirection:"column",alignItems:"center",gap:4,cursor:"pointer"}}>
-                        <span style={{fontSize:22}}>{c.emoji}</span>
-                        <span style={{fontSize:9,fontWeight:600,color:c.tc,textAlign:"center",lineHeight:1.2}}>{c.cat.split(" ").slice(0,2).join(" ")}</span>
-                      </button>
-                    ))}
-                  </div>
+                  {(()=>{
+                    // Categorías que tienen al menos un producto de una tienda (negocio local)
+                    const idsNeg=new Set(allNegocios.map(n=>n.id));
+                    const catsConProductos=new Set(provProds.filter(p=>idsNeg.has(p.proveedor_id)).map(p=>p.categoria));
+                    const catsVisibles=NEGOCIO_LOCAL_CATS.filter(c=>catsConProductos.has(c.cat));
+                    if(catsVisibles.length===0)return null;
+                    return(<>
+                      <div style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:10}}>Explorar por categoría</div>
+                      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+                        {catsVisibles.map(c=>(
+                          <button key={c.cat} onClick={()=>setNegocioCatFiltro(c.cat)} style={{background:c.color,border:"none",borderRadius:12,padding:"10px 4px",display:"flex",flexDirection:"column",alignItems:"center",gap:4,cursor:"pointer"}}>
+                            <span style={{fontSize:22}}>{c.emoji}</span>
+                            <span style={{fontSize:9,fontWeight:600,color:c.tc,textAlign:"center",lineHeight:1.2}}>{c.cat.split(" ").slice(0,2).join(" ")}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </>);
+                  })()}
                 </div>
                 <div style={{...s.sec,paddingTop:8}}>
                   <div style={{fontSize:14,fontWeight:800,color:"#0f172a",marginBottom:12,letterSpacing:-0.2}}>{allNegocios.length>0?`${allNegocios.length} tienda${allNegocios.length===1?"":"s"} disponible${allNegocios.length===1?"":"s"}`:"Tiendas del centro comercial virtual"}</div>
