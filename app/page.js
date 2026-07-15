@@ -1,5 +1,5 @@
-// BUILD:1783830000
-"use client"; // Lokl v1783830000
+// BUILD:1783831000
+"use client"; // Lokl v1783831000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -414,6 +414,7 @@ const VE_ESTADOS_MUNICIPIOS={
   const [numsPedido,setNumsPedido]=useState({}); // {provNombre: numero_siguiente}
   const [filtroPed,setFiltroPed]=useState("hoy");
   const [filtroEstado,setFiltroEstado]=useState("todos");
+  const [pedidoExpandido,setPedidoExpandido]=useState(null);
   const [editandoPagos,setEditandoPagos]=useState(false);
   const [pagoData,setPagoData]=useState({pago_movil_banco:"",pago_movil_telefono:"",pago_movil_cedula:"",pago_movil_nombre:"",acepta_efectivo:false,acepta_zelle:false,zelle_cuenta:"",acepta_divisas:false,acepta_binance:false,binance_cuenta:""});
   const [favoritos,setFavoritos]=useState({}); // {proveedor_id: true}
@@ -4093,12 +4094,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                     ))}
                   </div>
                 )}
-                {/* Botón volver para secciones simples */}
-                {!["productos","prod_nuevo","prod_aprobados","prod_pendientes","prod_rechazados","promos","promo_nueva","promo_activas","promo_pausadas","promo_pendientes","promo_rechazadas"].includes(provTab)&&(
-                  <button onClick={()=>setProvTab("estado")} style={{display:"flex",alignItems:"center",gap:6,background:"#f1f5f9",border:"none",borderRadius:10,padding:"7px 12px",fontSize:12,fontWeight:600,color:"#475569",cursor:"pointer",marginBottom:12}}>
-                    ← Volver al menú
-                  </button>
-                )}
+                {/* Botón volver para secciones simples — Panel principal ya cumple, se omite duplicado */}
 
           {(provTab==="productos"||provTab==="prod_nuevo"||provTab==="prod_aprobados"||provTab==="prod_pendientes"||provTab==="prod_rechazados")&&(<>
 
@@ -4700,26 +4696,33 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                   </button>
                 </div>
                 {/* STATS */}
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
-                  <div style={s.statCard}><div style={{...s.statNum,fontSize:20,color:"#6366f1"}}>{totalHoy.length}</div><div style={s.statLbl}>Hoy</div></div>
-                  <div style={s.statCard}><div style={{...s.statNum,fontSize:20,color:"#f59e0b"}}>{pendientes.length}</div><div style={s.statLbl}>Pendientes</div></div>
-                  <div style={s.statCard}><div style={{...s.statNum,fontSize:18,color:"#22c55e"}}>${ingreso.toFixed(0)}</div><div style={s.statLbl}>Entregados</div></div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
+                  <div style={{background:"#eff6ff",borderRadius:12,padding:"12px 6px",textAlign:"center"}}><div style={{fontSize:20,fontWeight:900,color:"#2563eb"}}>{totalHoy.length}</div><div style={{fontSize:11,color:"#64748b",fontWeight:600}}>Hoy</div></div>
+                  <div style={{background:"#fffbeb",borderRadius:12,padding:"12px 6px",textAlign:"center"}}><div style={{fontSize:20,fontWeight:900,color:"#d97706"}}>{pendientes.length}</div><div style={{fontSize:11,color:"#92400e",fontWeight:600}}>Nuevos</div></div>
+                  <div style={{background:"#f0fdf4",borderRadius:12,padding:"12px 6px",textAlign:"center"}}><div style={{fontSize:18,fontWeight:900,color:"#16a34a"}}>${ingreso.toFixed(0)}</div><div style={{fontSize:11,color:"#15803d",fontWeight:600}}>Entregados</div></div>
                 </div>
-                {/* FILTRO FECHA */}
-                <div style={{display:"flex",gap:6,marginBottom:8,overflowX:"auto",paddingBottom:4}}>
+                {/* FILTRO PERIODO */}
+                <div style={{fontSize:10,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:0.5,marginBottom:6}}>Periodo</div>
+                <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto",paddingBottom:2}}>
                   {[["hoy","Hoy"],["ayer","Ayer"],["semana","7 días"],["todos","Todos"]].map(([v,l])=>(
-                    <button key={v} onClick={()=>setFiltroPed(v)} style={{flexShrink:0,padding:"5px 12px",borderRadius:20,border:"none",fontSize:11,fontWeight:700,cursor:"pointer",background:filtroPed===v?P:"#f1f5f9",color:filtroPed===v?"#fff":"#64748b"}}>
+                    <button key={v} onClick={()=>setFiltroPed(v)} style={{flexShrink:0,padding:"6px 14px",borderRadius:20,border:"none",fontSize:12,fontWeight:filtroPed===v?700:600,cursor:"pointer",background:filtroPed===v?"#0f172a":"#f1f5f9",color:filtroPed===v?"#fff":"#64748b"}}>
                       {l}
                     </button>
                   ))}
                 </div>
-                {/* FILTRO ESTADO */}
-                <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
-                  {[["todos","Todos"],["nuevo","Nuevos"],["entregado","Entregados"],["cancelado","Cancelados"]].map(([v,l])=>(
-                    <button key={v} onClick={()=>setFiltroEstado(v)} style={{flexShrink:0,padding:"4px 10px",borderRadius:20,border:"none",fontSize:10,fontWeight:700,cursor:"pointer",background:filtroEstado===v?"#0f172a":"#f1f5f9",color:filtroEstado===v?"#fff":"#64748b"}}>
-                      {l} {v!=="todos"&&misRestPedidos.filter(p=>p.estado===v).length>0?`(${misRestPedidos.filter(p=>p.estado===v).length})`:""}
-                    </button>
-                  ))}
+                {/* FILTRO ESTADO — texto corto + contador abajo */}
+                <div style={{fontSize:10,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:0.5,marginBottom:6}}>Estado</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:16}}>
+                  {[["todos","Todos","#1e40af","#dbeafe","#93c5fd"],["nuevo","Nuevos","#d97706","#fef3c7","#fcd34d"],["entregado","Entregados","#16a34a","#f0fdf4","#86efac"],["cancelado","Cancelados","#dc2626","#fef2f2","#fca5a5"]].map(([v,l,col,bgAct,brdAct])=>{
+                    const cnt=v==="todos"?misRestPedidos.length:misRestPedidos.filter(p=>(p.estado||"nuevo")===v).length;
+                    const activo=filtroEstado===v;
+                    return(
+                      <button key={v} onClick={()=>setFiltroEstado(v)} style={{padding:"7px 2px",borderRadius:10,border:activo?`1.5px solid ${brdAct}`:"1px solid #e2e8f0",cursor:"pointer",background:activo?bgAct:"#fff",display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
+                        <span style={{fontSize:11,fontWeight:800,color:col,lineHeight:1.1}}>{l}</span>
+                        <span style={{fontSize:14,fontWeight:900,color:col}}>{cnt}</span>
+                      </button>
+                    );
+                  })}
                 </div>
                 {/* LISTA */}
                 {pedFiltrados.length===0&&(
@@ -4729,21 +4732,40 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                 )}
                 {pedFiltrados.map(ped=>{
                   const est=ESTADOS[ped.estado]||ESTADOS["nuevo"];
+                  const esNuevo=(ped.estado||"nuevo")==="nuevo";
+                  const expandido=esNuevo||pedidoExpandido===ped.id; // nuevos siempre abiertos
                   const siguientes={
                     "nuevo":          ["entregado","cancelado"],
                     "entregado":      [],
                     "cancelado":      [],
                   }[ped.estado||"nuevo"]||[];
-                  return(
-                    <div key={ped.id} style={{background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:14,padding:"14px",marginBottom:10,boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
-                      {/* Header pedido */}
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+                  const fechaTxt=ped.created_at?ped.created_at.slice(11,16):"";
+                  // FILA COLAPSADA (entregados/cancelados)
+                  if(!expandido){
+                    return(
+                      <div key={ped.id} onClick={()=>setPedidoExpandido(ped.id)} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"11px 12px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}}>
                         <div>
-                          <div style={{fontSize:13,fontWeight:800,color:"#0f172a"}}>📋 {ped.ref||"Sin ref"}</div>
+                          <div style={{fontSize:13,fontWeight:700,color:"#334155"}}>{ped.ref||"Sin ref"}</div>
+                          <div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>{fechaTxt} · {ped.cliente_nombre||"Cliente"} · ${(ped.total||0).toFixed(2)}</div>
+                        </div>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <span style={{fontSize:11,fontWeight:700,padding:"3px 9px",borderRadius:7,background:est.bg,color:est.color}}>{est.label}</span>
+                          <span style={{color:"#94a3b8",fontSize:14}}>▾</span>
+                        </div>
+                      </div>
+                    );
+                  }
+                  // TARJETA EXPANDIDA
+                  return(
+                    <div key={ped.id} style={{background:"#fff",border:esNuevo?"1.5px solid #fde68a":"1.5px solid #e2e8f0",borderRadius:14,padding:"14px",marginBottom:10,boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
+                      {/* Header pedido */}
+                      <div onClick={()=>{if(!esNuevo)setPedidoExpandido(null);}} style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8,cursor:esNuevo?"default":"pointer"}}>
+                        <div>
+                          <div style={{fontSize:13,fontWeight:800,color:"#0f172a"}}>{ped.ref||"Sin ref"}</div>
                           <div style={{fontSize:10,color:"#94a3b8",marginTop:2}}>{ped.created_at?.slice(0,16).replace("T"," hs ")}</div>
                         </div>
-                        <span style={{fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:20,background:est.bg,color:est.color,whiteSpace:"nowrap"}}>
-                          {est.label}
+                        <span style={{fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:8,background:est.bg,color:est.color,whiteSpace:"nowrap"}}>
+                          {est.label}{!esNuevo&&" ▴"}
                         </span>
                       </div>
                       {/* Items */}
@@ -4773,7 +4795,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                             return(
                               <button key={sig} onClick={()=>actualizarEstado(ped.id,sig,ped)}
                                 style={{flex:1,padding:"9px",borderRadius:10,border:"none",fontSize:11,fontWeight:800,cursor:"pointer",background:isCancel?"#fee2e2":e.bg,color:isCancel?"#991b1b":e.color}}>
-                                {e.label}
+                                {isCancel?"✕ Cancelar":"✓ Entregado"}
                               </button>
                             );
                           })}
@@ -4782,8 +4804,6 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                       {/* Botón WhatsApp cliente */}
                       <button onClick={()=>{
                         const estadoMsg={
-                          "recibido":"✅ Recibimos tu pedido *"+ped.ref+"* y lo estamos preparando.",
-                          "en_camino":"🚀 Tu pedido *"+ped.ref+"* ya va en camino. ¡Pronto llega!",
                           "entregado":"\u{1F389} Tu pedido *"+ped.ref+"* fue entregado. ¡Gracias por preferirnos!",
                           "cancelado":"\u{1F614} Lamentamos informarte que tu pedido *"+ped.ref+"* fue cancelado. Contáctanos para más info.",
                         }[ped.estado]||"Hola "+ped.cliente_nombre+" \u{1F44B}, te escribimos sobre tu pedido *"+ped.ref+"*.";
