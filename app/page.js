@@ -1,5 +1,5 @@
-// BUILD:1783833000
-"use client"; // Lokl v1783833000
+// BUILD:1783834000
+"use client"; // Lokl v1783834000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -4938,6 +4938,17 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
               dias.push({dia:d.slice(5),monto:tot});
             }
             const maxDia=Math.max(...dias.map(d=>d.monto),1);
+            // CLIENTES: nuevos vs recurrentes (por teléfono, sobre pedidos entregados)
+            const pedidosPorCliente={};
+            pedidosEntregados.forEach(p=>{
+              const tel=(p.cliente_telefono||"").replace(/\D/g,"");
+              if(!tel)return;
+              pedidosPorCliente[tel]=(pedidosPorCliente[tel]||0)+1;
+            });
+            const totalClientes=Object.keys(pedidosPorCliente).length;
+            const clientesRecurrentes=Object.values(pedidosPorCliente).filter(c=>c>1).length;
+            const clientesNuevos=totalClientes-clientesRecurrentes;
+            const pctRecurrentes=totalClientes>0?Math.round((clientesRecurrentes/totalClientes)*100):0;
             return(
               <div style={s.pc}>
                 <div style={s.pT}>📊 Dashboard de ventas</div>
@@ -4963,6 +4974,25 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                   <div style={{background:"#f8fafc",border:"1px solid #eef2f6",borderRadius:12,padding:"12px 4px",textAlign:"center"}}><div style={{fontSize:18,fontWeight:800,color:"#334155"}}>${ticketProm.toFixed(2)}</div><div style={{fontSize:10,color:"#94a3b8",fontWeight:600}}>Ticket prom.</div></div>
                   <div style={{background:"#f8fafc",border:"1px solid #eef2f6",borderRadius:12,padding:"12px 4px",textAlign:"center"}}><div style={{fontSize:18,fontWeight:800,color:"#334155"}}>{pedidosCancelados.length}</div><div style={{fontSize:10,color:"#94a3b8",fontWeight:600}}>Cancelados</div></div>
                 </div>
+                {/* CLIENTES: nuevos vs recurrentes */}
+                <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:0.5,marginBottom:8}}>👥 Tus clientes</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+                  <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:"12px 8px",textAlign:"center"}}>
+                    <div style={{fontSize:20,fontWeight:900,color:"#2563eb"}}>{clientesNuevos}</div>
+                    <div style={{fontSize:11,color:"#1e40af",fontWeight:600}}>Nuevos</div>
+                  </div>
+                  <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:"12px 8px",textAlign:"center"}}>
+                    <div style={{fontSize:20,fontWeight:900,color:"#16a34a"}}>{clientesRecurrentes}</div>
+                    <div style={{fontSize:11,color:"#15803d",fontWeight:600}}>Que repiten</div>
+                  </div>
+                </div>
+                {totalClientes>0&&(
+                  <div style={{background:"#f8fafc",borderRadius:10,padding:"10px 12px",marginBottom:16,fontSize:12,color:"#64748b",textAlign:"center"}}>
+                    {pctRecurrentes>0
+                      ?<><strong style={{color:"#16a34a"}}>{pctRecurrentes}%</strong> de tus clientes ha vuelto a comprar 🎉</>
+                      :"Aún no tienes clientes que repitan — ¡fideliza con buen servicio!"}
+                  </div>
+                )}
                 {/* GRÁFICO VENTAS POR DÍA (últimos 7) */}
                 <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:0.5,marginBottom:8}}>Ventas últimos 7 días</div>
                 <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:5,height:90,marginBottom:6,padding:"0 2px"}}>
