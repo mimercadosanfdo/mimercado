@@ -1,5 +1,5 @@
-// BUILD:1783838000
-"use client"; // Lokl v1783838000
+// BUILD:1783839000
+"use client"; // Lokl v1783839000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1406,6 +1406,7 @@ const VE_ESTADOS_MUNICIPIOS={
 
   const publishProd=async()=>{
     if(!newProd.nombre||!newProd.precio)return setPmsg("Completa nombre y precio");
+    if(provData.tipo_negocio==="Tienda / Negocio local"&&!newProd.categoria)return setPmsg("Selecciona una categoría para tu producto");
     setLoading(true);setPmsg("");
     let foto_url=null,foto_url_2=null,foto_url_3=null,foto_url_4=null;
     if(fotoFile)foto_url=await upload(fotoFile,"productos",`${provData.id}_${Date.now()}`);
@@ -4166,7 +4167,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                     :SERV_CATS[provData.tipo_negocio]
                     ?(SERV_CATS[provData.tipo_negocio])
                     :(provData.categorias?.length>0?provData.categorias:PROV_CATS);
-                  return(<select style={{...s.inp,background:"#fff"}} value={newProd.categoria} onChange={e=>setNewProd({...newProd,categoria:e.target.value,variantes:""})}>{prodCats.map(c=><option key={c}>{c}</option>)}</select>);
+                  return(<select style={{...s.inp,background:"#fff"}} value={newProd.categoria} onChange={e=>setNewProd({...newProd,categoria:e.target.value,variantes:""})}><option value="">Selecciona una categoría...</option>{prodCats.map(c=><option key={c}>{c}</option>)}</select>);
                 })()}
                 {/* CAMPO VARIANTES — solo para categorías específicas de Tienda */}
                 {provData.tipo_negocio==="Tienda / Negocio local"&&VARIANTES_CONFIG[newProd.categoria]&&(
@@ -4282,6 +4283,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                         </div>
                         <button style={{...s.btn,background:"linear-gradient(135deg,#15803d,#22c55e)"}} disabled={loading} onClick={async()=>{
                           if(!newProd.nombre||!newProd.precio)return setPmsg("Completa nombre y precio");
+                          if(provData.tipo_negocio==="Tienda / Negocio local"&&!newProd.categoria)return setPmsg("Selecciona una categoría para tu producto");
                           setLoading(true);
                           let nueva_foto=p.foto_url||null,nueva_foto2=p.foto_url_2||null,nueva_foto3=p.foto_url_3||null,nueva_foto4=p.foto_url_4||null;
                           if(fotoFile)nueva_foto=await upload(fotoFile,"productos",`${provData.id}_${Date.now()}`);
@@ -4306,7 +4308,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                       </div>
                     ):(
                     <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                      <button onClick={()=>{setEditingProdId(`mod_${p.id}`);setNewProd({nombre:p.nombre||"",marca:p.marca||"",presentacion:p.presentacion||"",descripcion:p.descripcion||"",precio:String(p.precio||""),unidad:p.unidad||"porción",categoria:p.categoria||"Comida preparada",stock:p.stock||1,hi:p.horario_inicio||"08:00",hf:p.horario_fin||"18:00",permanente:p.permanente||false});}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#eff6ff",color:"#1d4ed8"}}>✏️ Modificar</button>
+                      <button onClick={()=>{setEditingProdId(`mod_${p.id}`);setNewProd({nombre:p.nombre||"",marca:p.marca||"",presentacion:p.presentacion||"",descripcion:p.descripcion||"",precio:String(p.precio||""),unidad:p.unidad||"porción",categoria:p.categoria||(provData.tipo_negocio==="Tienda / Negocio local"?"":"Comida preparada"),stock:p.stock||1,hi:p.horario_inicio||"08:00",hf:p.horario_fin||"18:00",permanente:p.permanente||false,variantes:p.variantes||"",codigo_ref:p.codigo_ref||""});}} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#eff6ff",color:"#1d4ed8"}}>✏️ Modificar</button>
                       <button onClick={()=>toggleDisp(p.id,p.disponible)} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:p.disponible?"#fff7ed":"#f0fdf4",color:p.disponible?"#c2410c":"#15803d"}}>{p.disponible?"⏸️ Pausar":"▶️ Activar"}</button>
                       <button onClick={()=>setConfirmModal({msg:"¿Eliminar este producto? Esta acción no se puede deshacer.",onOk:async()=>{const{error}=await supabase.from("productos_proveedor").delete().eq("id",p.id);if(error){setPmsg("❌ Error al eliminar: "+error.message);return;}setMyProds(prev=>prev.filter(x=>x.id!==p.id));setPmsg("✅ Producto eliminado");}})} style={{flex:1,padding:"7px",borderRadius:10,border:"none",fontSize:12,fontWeight:600,cursor:"pointer",background:"#fee2e2",color:"#be123c"}}>🗑️ Eliminar</button>
                     </div>
@@ -4367,7 +4369,7 @@ Hola ${proveedorServicioActivo.negocio}, vi tu perfil en Lokl.
                             :provData.tipo_negocio==="Restaurante / Cocina / Comida"
                             ?(provData.categorias?.length>0?provData.categorias:NEGOCIO_CATS_RESTAURANTE)
                             :(provData.categorias?.length>0?provData.categorias:PROV_CATS);
-                          return(<select style={{...s.inp,background:"#fff"}} value={newProd.categoria} onChange={e=>setNewProd({...newProd,categoria:e.target.value})}>{editCats.map(c=><option key={c}>{c}</option>)}</select>);
+                          return(<select style={{...s.inp,background:"#fff"}} value={newProd.categoria} onChange={e=>setNewProd({...newProd,categoria:e.target.value})}><option value="">Selecciona una categoría...</option>{editCats.map(c=><option key={c}>{c}</option>)}</select>);
                         })()}
                         <label style={s.lbl}>Precio ($) *</label>
                         <input style={s.inp} type="number" placeholder="3.50" value={newProd.precio} onChange={e=>setNewProd({...newProd,precio:e.target.value})}/>
