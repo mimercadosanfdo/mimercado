@@ -1,5 +1,5 @@
-// BUILD:1783841000
-"use client"; // Lokl v1783841000
+// BUILD:1783842000
+"use client"; // Lokl v1783842000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -269,7 +269,8 @@ function compartirEnWA({titulo,precio,tab,id,emoji="📌"}){
   if(id)params.push("id="+encodeURIComponent(id));
   const url=APP_URL+(params.length?"?"+params.join("&"):"");
   const precioTexto=precio?` — $${parseFloat(precio).toLocaleString()}`:"";
-  const msg=`${emoji} *${titulo}*${precioTexto}\n\n📲 Míralo en ${APP_NAME}:\n${url}\n\n_Publicado en ${APP_NAME} · San Fernando de Apure_`;
+  const tituloLimpio=(titulo||"").trim();
+  const msg=`${emoji} *${tituloLimpio}*${precioTexto}\n\n📲 Míralo en ${APP_NAME}:\n${url}\n\n_Publicado en ${APP_NAME} · San Fernando de Apure_`;
   abrirWhatsApp(null,msg);
 }
 function BtnCompartir({titulo,precio,tab,id,emoji,small=false}){
@@ -1779,7 +1780,7 @@ const VE_ESTADOS_MUNICIPIOS={
               </span>
             </button>
           )}
-          <button onClick={()=>setTab("Proveedores")} style={{background:"#f6f6f6",border:"1px solid #e0e0e0",borderRadius:"50%",width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:16,flexShrink:0}}>👤</button>
+          <button onClick={()=>setTab("Proveedores")} style={{background:"#f6f6f6",border:"1px solid #e0e0e0",borderRadius:"50%",width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:16,flexShrink:0,overflow:"hidden",padding:0}}>{provData&&provData.logo_url?<img src={provData.logo_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:"👤"}</button>
         </div>
       </div>
       <div style={s.tabs}>
