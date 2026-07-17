@@ -1,11 +1,9 @@
-// BUILD:1783843000
+// BUILD:1783844000
 // Ruta dinámica /tienda/[id] — Server Component
 // Objetivo: que al compartir el link de una tienda por WhatsApp, el preview
 // muestre el LOGO y NOMBRE de esa tienda (Open Graph dinámico leído en servidor).
 // El humano es redirigido a la app existente con el deep link que YA funciona.
 // NO toca page.js. Es un archivo nuevo e independiente.
-
-import { redirect } from "next/navigation";
 
 const SUPABASE_URL = "https://cdiuboyklymirssxperd.supabase.co";
 const SUPABASE_KEY = "sb_publishable_WkUnC5ElLD9xRbhzG_OKFw_13gOTwGk";
@@ -120,17 +118,50 @@ export async function generateMetadata({ params }) {
   };
 }
 
-// --- Página: el humano nunca ve esto; se redirige de inmediato a la app real ---
-// El bot de WhatsApp no ejecuta el redirect (solo lee <head>), así que ve el preview.
-// El navegador humano sí ejecuta el redirect y llega a la tienda de siempre.
+// --- Componente cliente que hace el redirect SOLO en el navegador ---
+// El bot de WhatsApp no ejecuta este JS -> se queda leyendo la metadata (logo correcto).
+// El humano sí lo ejecuta -> es reenviado a la app de siempre.
+function Redirector({ destino, nombre }) {
+  return (
+    <>
+      <meta httpEquiv="refresh" content={"0;url=" + destino} />
+      <div
+        style={{
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          color: "#334155",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "80vh",
+          fontSize: 16,
+          textAlign: "center",
+          padding: 20,
+        }}
+      >
+        <p>
+          Abriendo {nombre}…{" "}
+          <a href={destino} style={{ color: "#16a34a" }}>
+            Toca aquí si no abre
+          </a>
+        </p>
+      </div>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: "location.replace(" + JSON.stringify(destino) + ");",
+        }}
+      />
+    </>
+  );
+}
+
+// --- Página (Server Component) ---
+// NO renderiza <html>/<body> (eso lo pone el layout raíz). Solo el contenido.
+// El redirect ocurre en el navegador vía <script> + meta-refresh, no en el servidor,
+// para que el bot de WhatsApp se quede en esta ruta leyendo la metadata correcta.
 export default async function TiendaPage({ params }) {
   const { id } = params;
   const prov = await getProveedor(id);
-
-  if (!prov) {
-    // Tienda no encontrada -> mandar al inicio de la app
-    redirect(SITE_URL + "/");
-  }
-
-  redirect(deepLink(prov));
+  const destino = prov ? deepLink(prov) : SITE_URL + "/";
+  const nombre = prov ? prov.negocio || "la tienda" : "Lokl";
+  return <Redirector destino={destino} nombre={nombre} />;
 }
