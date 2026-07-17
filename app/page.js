@@ -1,5 +1,5 @@
-// BUILD:1783842000
-"use client"; // Lokl v1783842000
+// BUILD:1783846000
+"use client"; // Lokl v1783846000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -264,10 +264,18 @@ function abrirWhatsApp(numero,mensaje){
 
 // ── FUNCIÓN COMPARTIR ─────────────────────────────────────────────────────────
 function compartirEnWA({titulo,precio,tab,id,emoji="📌"}){
-  const params=[];
-  if(tab)params.push("tab="+encodeURIComponent(tab));
-  if(id)params.push("id="+encodeURIComponent(id));
-  const url=APP_URL+(params.length?"?"+params.join("&"):"");
+  // Tiendas y restaurantes: usar la ruta /tienda/ID para que el preview de WhatsApp
+  // muestre el LOGO de esa tienda (Open Graph dinámico). El resto de rubros
+  // (Clasificados, Mercadito, Servicios) siguen con el link tab+id de siempre.
+  let url;
+  if(id&&(tab==="Negocios locales"||tab==="Feria de comida")){
+    url=APP_URL+"/tienda/"+encodeURIComponent(id);
+  }else{
+    const params=[];
+    if(tab)params.push("tab="+encodeURIComponent(tab));
+    if(id)params.push("id="+encodeURIComponent(id));
+    url=APP_URL+(params.length?"?"+params.join("&"):"");
+  }
   const precioTexto=precio?` — $${parseFloat(precio).toLocaleString()}`:"";
   const tituloLimpio=(titulo||"").trim();
   const msg=`${emoji} *${tituloLimpio}*${precioTexto}\n\n📲 Míralo en ${APP_NAME}:\n${url}\n\n_Publicado en ${APP_NAME} · San Fernando de Apure_`;
