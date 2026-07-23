@@ -1,5 +1,5 @@
-// BUILD:1783846000
-"use client"; // Lokl v1783846000
+// BUILD:1783847000
+"use client"; // Lokl v1783847000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -596,6 +596,7 @@ const VE_ESTADOS_MUNICIPIOS={
 
   useEffect(()=>{
     loadAll();loadRemates();loadServiciosCom();loadClasificados();loadZonasOperacion();loadPromediosResenas();loadProvResenas("super");
+    loadFavoritos();
     // Primera visita: mostrar selector de ciudad
     if(!ubicacionUsuario){
       setTimeout(()=>setShowCiudadModal(true),600);
@@ -1369,8 +1370,9 @@ const VE_ESTADOS_MUNICIPIOS={
   };
   const loadMyPromos=async(pid)=>{const{data}=await supabase.from("promociones_proveedor").select("*").eq("proveedor_id",pid).order("created_at",{ascending:false});if(data)setMyPromos(data);};
   const loadMyVentas=async(pid)=>{const{data}=await supabase.from("ventas").select("*").eq("proveedor_id",pid).order("fecha",{ascending:false}).limit(50);if(data)setMyVentas(data);};
-  const loadFavoritos=async(tel)=>{if(!tel)return;const{data}=await supabase.from("favoritos_cliente").select("proveedor_id").eq("cliente_telefono",tel);if(data){const f={};data.forEach(r=>f[r.proveedor_id]=true);setFavoritos(f);}};
-  const toggleFavorito=async(provId,provNombre)=>{if(!form.telefono)return alert("Ingresa tu teléfono para guardar favoritos");if(favoritos[provId]){await supabase.from("favoritos_cliente").delete().eq("cliente_telefono",form.telefono).eq("proveedor_id",provId);setFavoritos(f=>({...f,[provId]:false}));}else{await supabase.from("favoritos_cliente").insert({cliente_telefono:form.telefono,proveedor_id:provId,proveedor_nombre:provNombre});setFavoritos(f=>({...f,[provId]:true}));}};
+  const getClienteId=()=>{try{let id=localStorage.getItem("lokl_cliente_id");if(!id){id=(crypto&&crypto.randomUUID)?crypto.randomUUID():("c_"+Date.now()+"_"+Math.random().toString(36).slice(2));localStorage.setItem("lokl_cliente_id",id);}return id;}catch{return null;}};
+  const loadFavoritos=async(tel)=>{const cid=getClienteId();const f={};if(cid){const{data:d1}=await supabase.from("favoritos_cliente").select("proveedor_id").eq("cliente_id",cid);if(d1)d1.forEach(r=>f[r.proveedor_id]=true);}if(tel){const{data:d2}=await supabase.from("favoritos_cliente").select("proveedor_id").eq("cliente_telefono",tel);if(d2)d2.forEach(r=>f[r.proveedor_id]=true);}setFavoritos(f);};
+  const toggleFavorito=async(provId,provNombre)=>{const cid=getClienteId();if(!cid)return alert("No se pudo guardar el favorito en este dispositivo");if(favoritos[provId]){await supabase.from("favoritos_cliente").delete().eq("cliente_id",cid).eq("proveedor_id",provId);setFavoritos(f=>({...f,[provId]:false}));}else{await supabase.from("favoritos_cliente").insert({cliente_id:cid,cliente_telefono:form.telefono||null,proveedor_id:provId,proveedor_nombre:provNombre});setFavoritos(f=>({...f,[provId]:true}));}};
   const loadClienteHistorial=async(tel)=>{if(!tel)return;const{data}=await supabase.from("pedidos").select("*").eq("cliente_telefono",tel).order("created_at",{ascending:false}).limit(30);if(data)setClienteHistorial(data);};
   const loadMisClientes=async(provNombre)=>{const{data}=await supabase.from("pedidos").select("cliente_nombre,cliente_telefono,created_at,total,ref").eq("proveedor_nombre",provNombre).order("created_at",{ascending:false});if(data){const mapa={};data.forEach(p=>{const k=p.cliente_telefono;if(!mapa[k])mapa[k]={nombre:p.cliente_nombre,telefono:p.cliente_telefono,ultimoPedido:p.created_at,totalPedidos:0,totalGastado:0};mapa[k].totalPedidos++;mapa[k].totalGastado+=p.total||0;});setMisClientes(Object.values(mapa).sort((a,b)=>new Date(b.ultimoPedido)-new Date(a.ultimoPedido)));}};
 
