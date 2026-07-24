@@ -1,5 +1,5 @@
-// BUILD:1783847000
-"use client"; // Lokl v1783847000
+// BUILD:1783848000
+"use client"; // Lokl v1783848000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -2383,6 +2383,9 @@ const VE_ESTADOS_MUNICIPIOS={
                     💬 Consultar por WhatsApp
                   </button>
                 )}
+                <button onClick={()=>toggleFavorito(negocioActivo.id,negocioActivo.negocio)} title={favoritos[negocioActivo.id]?"Quitar de favoritos":"Seguir esta tienda"} style={{background:favoritos[negocioActivo.id]?"rgba(239,68,68,0.25)":"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:10,padding:"9px 12px",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5,flexShrink:0}}>
+                  {favoritos[negocioActivo.id]?"❤️":"🤍"}
+                </button>
                 <button onClick={()=>compartirEnWA({titulo:negocioActivo.negocio,tab:"Negocios locales",id:negocioActivo.id,emoji:"🏪"})} style={{background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:10,padding:"9px 12px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5,flexShrink:0}}>
                   🔗 Compartir
                 </button>
@@ -2644,6 +2647,9 @@ const VE_ESTADOS_MUNICIPIOS={
               <div style={{padding:"12px 16px 4px",display:"flex",gap:8}}>
                 <button onClick={()=>{const num=((restauranteActivo.whatsapp_negocio||restauranteActivo.telefono)||"").replace(/\D/g,"");const n=num.startsWith("0")?"58"+num.slice(1):num.startsWith("58")?num:"58"+num;window.location.href="https://wa.me/"+n+"?text="+encodeURIComponent("Hola "+restauranteActivo.negocio+", quiero hacer un pedido");}} style={{flex:1,background:"linear-gradient(135deg,#ea580c,#c2410c)",color:"#fff",border:"none",borderRadius:14,padding:"13px",fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 4px 12px rgba(234,88,12,0.35)"}}>
                   🍽️ Pedir por WhatsApp
+                </button>
+                <button onClick={()=>toggleFavorito(restauranteActivo.id,restauranteActivo.negocio)} title={favoritos[restauranteActivo.id]?"Quitar de favoritos":"Seguir este restaurante"} style={{background:favoritos[restauranteActivo.id]?"#fee2e2":"#f0fdf4",border:"1px solid #86efac",borderRadius:14,padding:"13px 14px",color:"#15803d",fontSize:15,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5,flexShrink:0}}>
+                  {favoritos[restauranteActivo.id]?"❤️":"🤍"}
                 </button>
                 <button onClick={()=>compartirEnWA({titulo:restauranteActivo.negocio,tab:"Feria de comida",id:restauranteActivo.id,emoji:"🍽️"})} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:14,padding:"13px 14px",color:"#15803d",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5,flexShrink:0}}>
                   🔗 Compartir
