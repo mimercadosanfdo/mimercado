@@ -1,5 +1,5 @@
-// BUILD:1783849000
-"use client"; // Lokl v1783849000
+// BUILD:1783850000
+"use client"; // Lokl v1783850000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1834,14 +1834,15 @@ const VE_ESTADOS_MUNICIPIOS={
           </div>
         </div>
 
-        {/* ✨ MURO DE NOVEDADES — carrusel de promos de tiendas favoritas (o todas si no hay favoritos) */}
+        {/* ✨ MURO DE NOVEDADES — solo aparece si el cliente sigue tiendas que tienen promos */}
         {!search.trim()&&provPromos.length>0&&(()=>{
           const ahora=Date.now();
           const esReciente=(p)=>{if(!p.created_at)return false;return (ahora-new Date(p.created_at).getTime())<7*24*60*60*1000;};
           const favIds=Object.keys(favoritos).filter(k=>favoritos[k]);
           const promosFav=provPromos.filter(p=>favIds.includes(String(p.proveedor_id)));
-          const hayFav=promosFav.length>0;
-          const lista=(hayFav?promosFav:provPromos).slice().sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,12);
+          // Solo mostramos el muro si hay novedades de tiendas SEGUIDAS (evita redundancia con "Promociones activas")
+          if(promosFav.length===0)return null;
+          const lista=promosFav.slice().sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,12);
           const abrirTiendaDePromo=(p)=>{
             const prov=[...allNegocios,...allRestaurantes].find(n=>String(n.id)===String(p.proveedor_id));
             if(!prov)return;
@@ -1852,8 +1853,7 @@ const VE_ESTADOS_MUNICIPIOS={
           return(
             <div style={{padding:"14px 0 4px"}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 16px 10px"}}>
-                <div style={{fontSize:16,fontWeight:900,color:"#0f172a"}}>✨ {hayFav?"Novedades de tus tiendas":"Novedades"}</div>
-                {!hayFav&&<div style={{fontSize:11,color:"#94a3b8",fontWeight:600}}>Marca ❤️ para seguir</div>}
+                <div style={{fontSize:16,fontWeight:900,color:"#0f172a"}}>✨ Novedades de tus tiendas</div>
               </div>
               <div style={{display:"flex",gap:12,overflowX:"auto",padding:"0 16px 8px",WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}}>
                 {lista.map(p=>{
