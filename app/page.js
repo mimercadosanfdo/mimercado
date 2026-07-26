@@ -1,5 +1,5 @@
-// BUILD:1783850000
-"use client"; // Lokl v1783850000
+// BUILD:1783851000
+"use client"; // Lokl v1783851000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -403,6 +403,7 @@ const VE_ESTADOS_MUNICIPIOS={
   const [deepLinkListo,setDeepLinkListo]=useState(false);
   const [negocioCatFiltro,setNegocioCatFiltro]=useState(null);
   const [allNegocios,setAllNegocios]=useState([]);
+  const [allServicios,setAllServicios]=useState([]);
   const [misNegPedidos,setMisNegPedidos]=useState([]);
   const [cartRestId,setCartRestId]=useState(null);
   const [cartRestNombre,setCartRestNombre]=useState("");
@@ -742,6 +743,8 @@ const VE_ESTADOS_MUNICIPIOS={
       const delMuni=restList.filter(r=>(r.municipio||"San Fernando")===muni);
       setAllRestaurantes(delMuni.filter(r=>r.tipo_negocio==="Restaurante / Cocina / Comida"||!r.tipo_negocio));
       setAllNegocios(delMuni.filter(r=>r.tipo_negocio==="Tienda / Negocio local"));
+      // Servicios: todo lo que NO es restaurante ni tienda (para la búsqueda general)
+      setAllServicios(delMuni.filter(r=>r.tipo_negocio&&r.tipo_negocio!=="Restaurante / Cocina / Comida"&&r.tipo_negocio!=="Tienda / Negocio local"));
     }
   };
 
@@ -1886,7 +1889,13 @@ const VE_ESTADOS_MUNICIPIOS={
               const prodMatch=allProdsConMargen.filter(p=>p.name.toLowerCase().includes(q));
               // Tiendas y restaurantes cuyo NOMBRE coincide con la búsqueda
               const negMatch=[...allNegocios,...allRestaurantes].filter(n=>n.negocio.toLowerCase().includes(q));
-              const totalR=prodMatch.length+negMatch.length;
+              // Servicios (proveedores de servicio) por nombre o descripción
+              const svcMatch=allServicios.filter(sv=>(sv.negocio||"").toLowerCase().includes(q)||(sv.descripcion_negocio||"").toLowerCase().includes(q)||(sv.tipo_negocio||"").toLowerCase().includes(q));
+              // Clasificados por título o descripción
+              const clasMatch=clasificados.filter(c=>(c.titulo||"").toLowerCase().includes(q)||(c.descripcion||"").toLowerCase().includes(q));
+              // Mercadito / remates por título, nombre o descripción
+              const remMatch=remates.filter(r=>(r.titulo||r.nombre||"").toLowerCase().includes(q)||(r.descripcion||"").toLowerCase().includes(q));
+              const totalR=prodMatch.length+negMatch.length+svcMatch.length+clasMatch.length+remMatch.length;
               return(<>
                 <div style={{fontSize:12,color:"#64748b",marginBottom:8,fontWeight:600}}>
                   {totalR+" resultado"+(totalR!==1?"s":"")+" para \""+search+"\""}
@@ -1919,6 +1928,39 @@ const VE_ESTADOS_MUNICIPIOS={
                       <div style={{fontSize:11,color:"#94a3b8"}}>{p.kitchen||p.cat}</div>
                     </div>
                     <div style={{fontSize:13,fontWeight:700,color:"#0f9b6e",flexShrink:0}}>${p.price.toFixed(2)}</div>
+                  </div>
+                ))}
+                {/* SERVICIOS que coinciden */}
+                {svcMatch.slice(0,4).map(sv=>(
+                  <div key={"svc_"+sv.id} onClick={()=>{setTab("Servicios");setSearch("");}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9",cursor:"pointer"}}>
+                    {sv.logo_url?<img src={sv.logo_url} alt="" style={{width:40,height:40,borderRadius:10,objectFit:"cover",flexShrink:0}}/>:<div style={{width:40,height:40,borderRadius:10,background:"#eef2ff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>⚡</div>}
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:13,fontWeight:700,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sv.negocio}</div>
+                      <div style={{fontSize:11,color:"#6366f1",fontWeight:600}}>Servicio · {sv.tipo_negocio||"Ver directorio"}</div>
+                    </div>
+                    <div style={{fontSize:18,color:"#94a3b8",flexShrink:0}}>›</div>
+                  </div>
+                ))}
+                {/* CLASIFICADOS que coinciden */}
+                {clasMatch.slice(0,4).map(c=>(
+                  <div key={"clas_"+c.id} onClick={()=>{setTab("Clasificados");setSearch("");}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9",cursor:"pointer"}}>
+                    {c.foto_url?<img src={c.foto_url} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}}/>:<div style={{width:40,height:40,borderRadius:8,background:"#ecfdf5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📋</div>}
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:13,fontWeight:600,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.titulo}</div>
+                      <div style={{fontSize:11,color:"#059669",fontWeight:600}}>Clasificado</div>
+                    </div>
+                    {c.precio&&<div style={{fontSize:13,fontWeight:700,color:"#059669",flexShrink:0}}>${parseFloat(c.precio).toLocaleString()}</div>}
+                  </div>
+                ))}
+                {/* MERCADITO / REMATES que coinciden */}
+                {remMatch.slice(0,4).map(r=>(
+                  <div key={"rem_"+r.id} onClick={()=>{setTab("Mercadito");setSearch("");}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9",cursor:"pointer"}}>
+                    {r.foto_url?<img src={r.foto_url} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}}/>:<div style={{width:40,height:40,borderRadius:8,background:"#fff7ed",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🏷️</div>}
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:13,fontWeight:600,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.titulo||r.nombre}</div>
+                      <div style={{fontSize:11,color:"#c2410c",fontWeight:600}}>Mercadito</div>
+                    </div>
+                    {r.precio&&<div style={{fontSize:13,fontWeight:700,color:"#c2410c",flexShrink:0}}>${parseFloat(r.precio).toLocaleString()}</div>}
                   </div>
                 ))}
               </>);
