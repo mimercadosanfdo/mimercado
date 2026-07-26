@@ -1,5 +1,5 @@
-// BUILD:1783852000
-"use client"; // Lokl v1783852000
+// BUILD:1783853000
+"use client"; // Lokl v1783853000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1374,6 +1374,33 @@ const VE_ESTADOS_MUNICIPIOS={
   const loadMyPromos=async(pid)=>{const{data}=await supabase.from("promociones_proveedor").select("*").eq("proveedor_id",pid).order("created_at",{ascending:false});if(data)setMyPromos(data);};
   const loadMyVentas=async(pid)=>{const{data}=await supabase.from("ventas").select("*").eq("proveedor_id",pid).order("fecha",{ascending:false}).limit(50);if(data)setMyVentas(data);};
   const getClienteId=()=>{try{let id=localStorage.getItem("lokl_cliente_id");if(!id){id=(crypto&&crypto.randomUUID)?crypto.randomUUID():("c_"+Date.now()+"_"+Math.random().toString(36).slice(2));localStorage.setItem("lokl_cliente_id",id);}return id;}catch{return null;}};
+  // Abre DIRECTO un proveedor de servicio desde la búsqueda: halla su categoría, la activa, carga y lo selecciona
+  const abrirProveedorServicioDirecto=async(prov)=>{
+    const mapaTipoNegocio={
+      "mototaxi":["Mototaxi"],"taxi":["Taxi"],
+      "rutas":["Transporte interurbano (rutas)","Transporte y encomiendas"],
+      "encomiendas":["Encomiendas y mudanzas","Transporte y encomiendas"],
+      "medicos":["Médico / Consultorio"],"enfermeria":["Enfermería a domicilio"],
+      "laboratorios":["Laboratorio clínico"],"odontologia":["Odontología"],
+      "belleza":["Peluquería / Barbería","Manicure / Pedicure","Maquillaje y estética","Lavandería"],
+      "hogar":["Plomería","Electricidad","Pintura y construcción","Limpieza del hogar","Carpintería / Herrería"],
+      "educacion":["Clases y tutorías","Idiomas"],
+      "mecanica":["Mecánica automotriz","Electricidad automotriz"],
+      "hoteles":["Hotel","Posada","Hospedaje","Hotel / Posada"],
+      "turismo":["Finca turística","Tour operador","Campamento","Turismo y aventura","Campamento / Aventura"],
+    };
+    let catId=prov.subcategoria_servicio||null;
+    if(!catId||!mapaTipoNegocio[catId]){
+      catId=Object.keys(mapaTipoNegocio).find(k=>mapaTipoNegocio[k].includes(prov.tipo_negocio))||null;
+    }
+    const cat=SERVICIO_CATEGORIAS.find(c=>c.id===catId);
+    setSearch("");
+    setTab("Servicios");
+    if(!cat){return;} // sin categoría clara: queda en el módulo Servicios
+    setCategoriaServicio(cat);
+    if(cat.id==="rutas")await loadRutasTransporte();else await loadProveedoresServicio(cat.id);
+    setProveedorServicioActivo(prov);
+  };
   const loadFavoritos=async(tel)=>{const cid=getClienteId();const f={};if(cid){const{data:d1}=await supabase.from("favoritos_cliente").select("proveedor_id").eq("cliente_id",cid);if(d1)d1.forEach(r=>f[r.proveedor_id]=true);}if(tel){const{data:d2}=await supabase.from("favoritos_cliente").select("proveedor_id").eq("cliente_telefono",tel);if(d2)d2.forEach(r=>f[r.proveedor_id]=true);}setFavoritos(f);};
   const toggleFavorito=async(provId,provNombre)=>{const cid=getClienteId();if(!cid)return alert("No se pudo guardar el favorito en este dispositivo");if(favoritos[provId]){await supabase.from("favoritos_cliente").delete().eq("cliente_id",cid).eq("proveedor_id",provId);setFavoritos(f=>({...f,[provId]:false}));}else{await supabase.from("favoritos_cliente").insert({cliente_id:cid,cliente_telefono:form.telefono||null,proveedor_id:provId,proveedor_nombre:provNombre});setFavoritos(f=>({...f,[provId]:true}));}};
   const loadClienteHistorial=async(tel)=>{if(!tel)return;const{data}=await supabase.from("pedidos").select("*").eq("cliente_telefono",tel).order("created_at",{ascending:false}).limit(30);if(data)setClienteHistorial(data);};
@@ -1926,7 +1953,9 @@ const VE_ESTADOS_MUNICIPIOS={
                     if(p.cat==="Supermercado"){setCat("Supermercado");setTab("Supermercado");return;}
                     const tn=p.tipoNegocioProv;
                     if(tn&&tn!=="Restaurante / Cocina / Comida"&&tn!=="Tienda / Negocio local"){
-                      // Producto de un proveedor de SERVICIO
+                      // Producto de un proveedor de SERVICIO: abrir ese proveedor directo
+                      const prov=allServicios.find(n=>String(n.id)===String(p.provId));
+                      if(prov){abrirProveedorServicioDirecto(prov);return;}
                       setTab("Servicios");return;
                     }
                     if(tn==="Tienda / Negocio local"){
@@ -1947,7 +1976,7 @@ const VE_ESTADOS_MUNICIPIOS={
                 ))}
                 {/* SERVICIOS que coinciden */}
                 {svcMatch.slice(0,4).map(sv=>(
-                  <div key={"svc_"+sv.id} onClick={()=>{setTab("Servicios");setSearch("");}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9",cursor:"pointer"}}>
+                  <div key={"svc_"+sv.id} onClick={()=>abrirProveedorServicioDirecto(sv)} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9",cursor:"pointer"}}>
                     {sv.logo_url?<img src={sv.logo_url} alt="" style={{width:40,height:40,borderRadius:10,objectFit:"cover",flexShrink:0}}/>:<div style={{width:40,height:40,borderRadius:10,background:"#eef2ff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>⚡</div>}
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:13,fontWeight:700,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sv.negocio}</div>
