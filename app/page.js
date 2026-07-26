@@ -1,5 +1,5 @@
-// BUILD:1783848000
-"use client"; // Lokl v1783848000
+// BUILD:1783849000
+"use client"; // Lokl v1783849000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1834,7 +1834,51 @@ const VE_ESTADOS_MUNICIPIOS={
           </div>
         </div>
 
-        {/* RESULTADOS DE BÚSQUEDA GLOBAL */}
+        {/* ✨ MURO DE NOVEDADES — carrusel de promos de tiendas favoritas (o todas si no hay favoritos) */}
+        {!search.trim()&&provPromos.length>0&&(()=>{
+          const ahora=Date.now();
+          const esReciente=(p)=>{if(!p.created_at)return false;return (ahora-new Date(p.created_at).getTime())<7*24*60*60*1000;};
+          const favIds=Object.keys(favoritos).filter(k=>favoritos[k]);
+          const promosFav=provPromos.filter(p=>favIds.includes(String(p.proveedor_id)));
+          const hayFav=promosFav.length>0;
+          const lista=(hayFav?promosFav:provPromos).slice().sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,12);
+          const abrirTiendaDePromo=(p)=>{
+            const prov=[...allNegocios,...allRestaurantes].find(n=>String(n.id)===String(p.proveedor_id));
+            if(!prov)return;
+            const esNeg=prov.tipo_negocio==="Tienda / Negocio local";
+            if(esNeg){setTab("Negocios locales");setNegocioActivo(prov);setCartNegocioId(prov.id);setCartNegocioNombre(prov.negocio);setCartNegocioWa(prov.whatsapp_negocio||prov.telefono);loadProvResenas(prov.id);}
+            else{setTab("Feria de comida");setRestauranteActivo(prov);}
+          };
+          return(
+            <div style={{padding:"14px 0 4px"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 16px 10px"}}>
+                <div style={{fontSize:16,fontWeight:900,color:"#0f172a"}}>✨ {hayFav?"Novedades de tus tiendas":"Novedades"}</div>
+                {!hayFav&&<div style={{fontSize:11,color:"#94a3b8",fontWeight:600}}>Marca ❤️ para seguir</div>}
+              </div>
+              <div style={{display:"flex",gap:12,overflowX:"auto",padding:"0 16px 8px",WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}}>
+                {lista.map(p=>{
+                  const prov=p.proveedores||{};
+                  return(
+                    <div key={"nov_"+p.id} onClick={()=>abrirTiendaDePromo(p)} style={{flexShrink:0,width:180,background:"#fff",borderRadius:16,border:"1px solid #f1f5f9",boxShadow:"0 2px 8px rgba(0,0,0,0.06)",cursor:"pointer",overflow:"hidden"}}>
+                      <div style={{position:"relative",width:"100%",height:110,background:"#f8fafc"}}>
+                        {p.foto_url?<img src={p.foto_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32}}>🎁</div>}
+                        {esReciente(p)&&<div style={{position:"absolute",top:8,left:8,background:"#ef4444",color:"#fff",fontSize:10,fontWeight:800,padding:"3px 8px",borderRadius:20}}>🆕 Nuevo</div>}
+                      </div>
+                      <div style={{padding:"10px 12px"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                          {prov.logo_url?<img src={prov.logo_url} alt="" style={{width:22,height:22,borderRadius:6,objectFit:"cover",flexShrink:0}}/>:<div style={{width:22,height:22,borderRadius:6,background:"#eff6ff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,flexShrink:0}}>🏪</div>}
+                          <div style={{fontSize:11,color:"#64748b",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{prov.negocio||"Tienda"}</div>
+                        </div>
+                        <div style={{fontSize:13,fontWeight:800,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.nombre}</div>
+                        {p.precio&&<div style={{fontSize:14,fontWeight:900,color:"#16a34a",marginTop:2}}>${parseFloat(p.precio).toLocaleString()}</div>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
         {search.trim()&&(
           <div style={{padding:"8px 16px 0"}}>
             {(()=>{
