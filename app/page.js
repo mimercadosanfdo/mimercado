@@ -1,5 +1,5 @@
-// BUILD:1783851000
-"use client"; // Lokl v1783851000
+// BUILD:1783852000
+"use client"; // Lokl v1783852000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1158,7 +1158,7 @@ const VE_ESTADOS_MUNICIPIOS={
 
   const allProds=[
     ...superProds.map(p=>({id:`sp_${p.id}`,name:p.nombre,cat:"Supermercado",superCat:p.categoria,price:p.precio,unit:p.unidad,emoji:p.emoji||"🛒",margin:0.10,foto:p.foto_url,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,abierto:true})),
-    ...provProds.map(p=>({id:`pv_${p.id}`,name:p.nombre,cat:p.categoria,price:p.precio,unit:p.unidad,emoji:"🍽️",margin:0,kitchen:p.proveedores?.negocio,kitchenWa:p.proveedores?.whatsapp_negocio||p.proveedores?.telefono,kitchenDelivery:p.proveedores?.delivery_propio,kitchenDeliveryCosto:p.proveedores?.delivery_costo||0,kitchenDeliveryGratis:p.proveedores?.delivery_gratis_desde||15,kitchenRetiro:p.proveedores?.permite_retiro,kitchenTipo:p.proveedores?.tipo_operacion_gastro,kitchenEta:p.proveedores?.eta_texto||(p.proveedores?.eta_minutos_min&&p.proveedores?.eta_minutos_max?`${p.proveedores.eta_minutos_min}–${p.proveedores.eta_minutos_max} min`:null),logo:p.proveedores?.logo_url,foto:p.foto_url,foto2:p.foto_url_2,foto3:p.foto_url_3,foto4:p.foto_url_4,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,stock:p.stock,horario:p.permanente?"Siempre disponible":`${p.horario_inicio}–${p.horario_fin}`,tag:p.stock<=3?`Solo ${p.stock} disp.`:null,dbId:p.id,abierto:p.proveedores?.activo!==false&&!p.proveedores?.en_pausa,horarioNeg:p.proveedores?.horario_desde&&p.proveedores?.horario_hasta?`${p.proveedores.horario_desde}–${p.proveedores.horario_hasta}${p.proveedores.horario_desc?" ("+p.proveedores.horario_desc+")":""}`:null,variantes:p.variantes||null})),
+    ...provProds.map(p=>({id:`pv_${p.id}`,name:p.nombre,cat:p.categoria,tipoNegocioProv:p.proveedores?.tipo_negocio,provId:p.proveedor_id,price:p.precio,unit:p.unidad,emoji:"🍽️",margin:0,kitchen:p.proveedores?.negocio,kitchenWa:p.proveedores?.whatsapp_negocio||p.proveedores?.telefono,kitchenDelivery:p.proveedores?.delivery_propio,kitchenDeliveryCosto:p.proveedores?.delivery_costo||0,kitchenDeliveryGratis:p.proveedores?.delivery_gratis_desde||15,kitchenRetiro:p.proveedores?.permite_retiro,kitchenTipo:p.proveedores?.tipo_operacion_gastro,kitchenEta:p.proveedores?.eta_texto||(p.proveedores?.eta_minutos_min&&p.proveedores?.eta_minutos_max?`${p.proveedores.eta_minutos_min}–${p.proveedores.eta_minutos_max} min`:null),logo:p.proveedores?.logo_url,foto:p.foto_url,foto2:p.foto_url_2,foto3:p.foto_url_3,foto4:p.foto_url_4,marca:p.marca,presentacion:p.presentacion,descripcion:p.descripcion,stock:p.stock,horario:p.permanente?"Siempre disponible":`${p.horario_inicio}–${p.horario_fin}`,tag:p.stock<=3?`Solo ${p.stock} disp.`:null,dbId:p.id,abierto:p.proveedores?.activo!==false&&!p.proveedores?.en_pausa,horarioNeg:p.proveedores?.horario_desde&&p.proveedores?.horario_hasta?`${p.proveedores.horario_desde}–${p.proveedores.horario_hasta}${p.proveedores.horario_desc?" ("+p.proveedores.horario_desc+")":""}`:null,variantes:p.variantes||null})),
     ...provPromos.map(pr=>({id:`promo_${pr.id}`,name:pr.nombre,cat:"Comida preparada",price:pr.precio,unit:"promo",emoji:"🎁",margin:0,kitchen:pr.proveedores?.negocio,kitchenWa:pr.proveedores?.whatsapp_negocio||pr.proveedores?.telefono,kitchenDelivery:pr.proveedores?.delivery_propio,kitchenDeliveryCosto:pr.proveedores?.delivery_costo||0,kitchenDeliveryGratis:pr.proveedores?.delivery_gratis_desde||15,kitchenRetiro:pr.proveedores?.permite_retiro,kitchenTipo:pr.proveedores?.tipo_operacion_gastro,logo:pr.proveedores?.logo_url,foto:pr.foto_url,descripcion:pr.descripcion,isPromo:true,tag:"🔥 PROMO",horario:`Hasta ${pr.fecha_fin}`,abierto:pr.proveedores?.activo!==false&&!pr.proveedores?.en_pausa,horarioNeg:pr.proveedores?.horario_desde&&pr.proveedores?.horario_hasta?`${pr.proveedores.horario_desde}–${pr.proveedores.horario_hasta}${pr.proveedores.horario_desc?" ("+pr.proveedores.horario_desc+")":""}`:null})),
   ];
 
@@ -1921,7 +1921,22 @@ const VE_ESTADOS_MUNICIPIOS={
                 })}
                 {/* PRODUCTOS que coinciden */}
                 {prodMatch.slice(0,6).map(p=>(
-                  <div key={p.id} onClick={()=>{setCat(p.cat==="Supermercado"?"Supermercado":p.cat);setTab(p.cat==="Supermercado"?"Supermercado":"Feria de comida");}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9",cursor:"pointer"}}>
+                  <div key={p.id} onClick={()=>{
+                    setSearch("");
+                    if(p.cat==="Supermercado"){setCat("Supermercado");setTab("Supermercado");return;}
+                    const tn=p.tipoNegocioProv;
+                    if(tn&&tn!=="Restaurante / Cocina / Comida"&&tn!=="Tienda / Negocio local"){
+                      // Producto de un proveedor de SERVICIO
+                      setTab("Servicios");return;
+                    }
+                    if(tn==="Tienda / Negocio local"){
+                      // Producto de una TIENDA: abrir esa tienda
+                      const prov=allNegocios.find(n=>String(n.id)===String(p.provId));
+                      if(prov){setTab("Negocios locales");setNegocioActivo(prov);setCartNegocioId(prov.id);setCartNegocioNombre(prov.negocio);setCartNegocioWa(prov.whatsapp_negocio||prov.telefono);loadProvResenas(prov.id);return;}
+                    }
+                    // Por defecto: comida
+                    setCat(p.cat);setTab("Feria de comida");
+                  }} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9",cursor:"pointer"}}>
                     {p.foto?<img src={p.foto} alt="" style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}}/>:<div style={{width:40,height:40,borderRadius:8,background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{p.emoji||"🛒"}</div>}
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:13,fontWeight:600,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</div>
