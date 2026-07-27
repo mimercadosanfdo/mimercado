@@ -1,5 +1,5 @@
-// BUILD:1783853000
-"use client"; // Lokl v1783853000
+// BUILD:1783854000
+"use client"; // Lokl v1783854000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -720,7 +720,7 @@ const VE_ESTADOS_MUNICIPIOS={
     const muni=ubi.municipio;
     const [z,sp,pp,pr,cb]=await Promise.all([
       supabase.from("zonas_delivery").select("*").eq("activa",true).order("municipio"),
-      supabase.from("productos_supermercado").select("*").eq("disponible",true).order("categoria"),
+      supabase.from("productos_supermercado").select("*").eq("disponible",true).eq("municipio",muni).order("categoria"),
       supabase.from("productos_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc,whatsapp_negocio,telefono,suscripcion_activa,delivery_propio,delivery_costo,delivery_gratis_desde,tipo_negocio,instagram,descripcion_negocio,eta_minutos_min,eta_minutos_max,eta_texto,permite_retiro,municipio,estado_ubicacion)").eq("aprobado",true).eq("disponible",true).eq("rechazado",false),
       supabase.from("promociones_proveedor").select("*,proveedores(negocio,logo_url,en_pausa,activo,horario_desde,horario_hasta,horario_desc,whatsapp_negocio,telefono,delivery_propio,delivery_costo,delivery_gratis_desde,permite_retiro,tipo_operacion_gastro,municipio,estado_ubicacion)").eq("aprobada",true).eq("activa",true),
       supabase.from("combos").select("*").eq("activa",true),
@@ -1579,12 +1579,14 @@ const VE_ESTADOS_MUNICIPIOS={
   const addCombo=async()=>{if(!newCombo.nombre||!newCombo.precio)return;await supabase.from("combos").insert({...newCombo,precio:parseFloat(newCombo.precio),activa:true});setNewCombo({nombre:"",descripcion:"",precio:"",temporada:"",fecha_inicio:"",fecha_fin:""});loadAll();loadAdmin();};
 
   const addSuperProd=async()=>{
-    if(!newSP.nombre||!newSP.precio)return;
+    if(!newSP.nombre){alert("⚠️ Escribe el nombre del producto");return;}
+    if(!newSP.precio||isNaN(parseFloat(newSP.precio))){alert("⚠️ Ingresa un precio válido");return;}
     setLoading(true);
     let foto_url=null;
     if(spFoto)foto_url=await upload(spFoto,"productos",`super_${Date.now()}`);
-    await supabase.from("productos_supermercado").insert({nombre:newSP.nombre,categoria:newSP.categoria,marca:newSP.marca||null,presentacion:newSP.presentacion||null,descripcion:newSP.descripcion||null,precio:parseFloat(newSP.precio),unidad:newSP.unidad,emoji:newSP.emoji,foto_url,disponible:true,es_oferta:newSP.es_oferta||false});
+    const{error}=await supabase.from("productos_supermercado").insert({nombre:newSP.nombre,categoria:newSP.categoria,marca:newSP.marca||null,presentacion:newSP.presentacion||null,descripcion:newSP.descripcion||null,precio:parseFloat(newSP.precio),unidad:newSP.unidad,emoji:newSP.emoji,foto_url,disponible:true,es_oferta:newSP.es_oferta||false,municipio:ubiActiva.municipio||"San Fernando",estado:ubiActiva.estado||"Apure"});
     setLoading(false);
+    if(error){alert("❌ No se pudo guardar: "+error.message);return;}
     setNewSP({nombre:"",marca:"",presentacion:"",descripcion:"",precio:"",unidad:"kg",emoji:"🛒",categoria:SUPER_CATS[0],es_oferta:false});
     setSpFoto(null);setSpFotoPreview(null);
     loadAll();
