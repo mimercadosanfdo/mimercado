@@ -1,5 +1,5 @@
-// BUILD:1783854000
-"use client"; // Lokl v1783854000
+// BUILD:1783855000
+"use client"; // Lokl v1783855000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -692,7 +692,7 @@ const VE_ESTADOS_MUNICIPIOS={
         loadMyPromos(provData.id);
         loadMisRestPedidos(provData.id,provData.negocio);
       }
-      if(provMode==="admin"){loadAdmin();loadPedidos();setTab("Proveedores");}
+      if(provMode==="admin"){loadAdmin();loadPedidos();}
     },15000);
     return ()=>clearInterval(interval);
   },[provData,provMode]);
