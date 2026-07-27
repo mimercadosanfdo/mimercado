@@ -1,5 +1,5 @@
-// BUILD:1783856000
-"use client"; // Lokl v1783856000
+// BUILD:1783857000
+"use client"; // Lokl v1783857000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1638,7 +1638,7 @@ const VE_ESTADOS_MUNICIPIOS={
             <button onClick={()=>{setCat("Todo");setSearch("");}} style={{fontSize:10,background:P,color:"#fff",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer"}}>Ver otras opciones</button>
           </div>
         )}
-        {p.foto?<img src={p.foto} alt={p.name} style={s.cImg}/>:<div style={s.cEm}>{p.emoji}</div>}
+        {p.foto?<img src={p.foto} alt={p.name} style={{width:"100%",height:120,objectFit:"contain",background:"#fff",borderRadius:8,marginBottom:4}}/>:<div style={s.cEm}>{p.emoji}</div>}
         {p.isPromo&&<div style={s.promoTag}>🎉 Promoción</div>}
         {p.tag&&!p.isPromo&&<div style={s.tag}>{p.tag}</div>}
         {p.kitchen&&(
