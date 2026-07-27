@@ -1,5 +1,5 @@
-// BUILD:1783855000
-"use client"; // Lokl v1783855000
+// BUILD:1783856000
+"use client"; // Lokl v1783856000
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1733,7 +1733,7 @@ const VE_ESTADOS_MUNICIPIOS={
         {/* 1. IMAGEN — elemento dominante */}
         <div style={{position:"relative",marginBottom:8}}>
           {p.foto
-            ?<img src={p.foto} alt={p.name} style={{width:"100%",height:120,objectFit:"cover",display:"block",borderRadius:"14px 14px 0 0",cursor:"zoom-in"}} onClick={e=>{e.stopPropagation();setImgZoom(p.foto);}}/>
+            ?<img src={p.foto} alt={p.name} style={{width:"100%",height:120,objectFit:"contain",display:"block",borderRadius:"14px 14px 0 0",background:"#fff",cursor:"zoom-in"}} onClick={e=>{e.stopPropagation();setImgZoom(p.foto);}}/>
             :<div style={{height:120,background:"linear-gradient(135deg,#fef3c7,#fde68a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:44,borderRadius:"14px 14px 0 0"}}>🍽️</div>
           }
           {/* 2. BADGE — máximo 1, esquina sup izquierda */}
